@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Interactive second-price auction module.">
+  <title>Second-Price Auction Equilibrium | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/distributions.js"></script>
+  <script defer src="model.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to the main content</a>
+
+  <header class="site-header">
+    <page-header category="Auctions" home="../../index.html"></page-header>
+  </header>
+
+  <main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">The Second-Price Auction Equilibrium</h1>
+      <p>
+        One indivisible object is to be sold in a sealed-bid auction with no reserve
+        price. There are \(n \ge 2\) risk-neutral bidders. Bidders have values \(V_1, \ldots, V_n \overset{\mathrm{i.i.d.}}{\sim}\)
+        \(F(v)\). Each bidder \(i\) privately observes his realized value \(v_i\), hence independent, private values
+        (IPV). We also assume that \(F\) has continuous, strictly positive density
+        \(f\) on a positive support with finite expectation. Next,
+        all bidders simultaneously submit their bids. The highest bidder wins the
+        object, gets his value for the object, and pays the highest opposing bid,
+        while losing bidders get nothing and pay zero. Ties are broken uniformly
+        at random though occur with probability zero since \(f\) is continuous.
+      </p>
+      <p>
+        Consider bidder 1 with value \(v_1\).
+        Suppose bidders
+        \(2,\ldots,n\) bid according to the symmetric, increasing function
+      </p>
+
+      <div class="equation-display" aria-label="beta superscript II of v equals v">
+        \[
+          \beta^{\mathrm{II}}(v_i)=v_i,\quad i=2,\ldots,n.
+        \]
+      </div>
+
+      <p>
+        In the interactive demo, you take the perspective of bidder 1, considering different
+        bids in response to the other bidders using this strategy. Here,
+        \(V_i = a + (b-a)X_i\), where
+        \(X_1, \ldots, X_{n} \overset{\mathrm{i.i.d.}}{\sim} \operatorname{Beta}(\alpha, \beta)\)
+        (\(\alpha = 1\), \(\beta = 1\) for
+        \(\operatorname{Uniform}[a,b]\) values). Choose your value
+        \(v_1\) or randomly draw it. Then, propose a bid
+        \(x_1\), and observe how changing it affects your expected
+        payoff.
+      </p>
+    </section>
+
+    <section class="model-specifications" aria-labelledby="parameters-title">
+      <model-parameter-controls></model-parameter-controls>
+    </section>
+
+    <section class="explorable" aria-label="Interactive second-price auction graph">
+      <div class="interaction-layout">
+        <div class="chart-column">
+          <div class="chart-frame">
+            <svg
+              id="second-price-chart"
+              class="tradeoff-chart"
+              viewBox="0 0 1000 800"
+              role="img"
+              tabindex="0"
+              aria-labelledby="chart-title chart-description"
+              aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
+            >
+              <title id="chart-title">Second-price auction outcomes by proposed bid</title>
+              <desc id="chart-description">Two linked panels show winning probability and expected payoff for the selected bid.</desc>
+            </svg>
+          </div>
+        </div>
+
+        <aside class="choice-controls" aria-label="Bidder controls">
+          <div class="slider-grid">
+            <div class="range-group">
+              <div class="range-label-row">
+                <label id="value-control-label" for="value-slider">Private value, \(v_1\)</label>
+                <input
+                  id="value-number"
+                  class="range-number-input"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="any"
+                  value="50"
+                  inputmode="decimal"
+                  aria-labelledby="value-control-label"
+                >
+              </div>
+              <input id="value-slider" type="range" min="0" max="100" value="50" step="any">
+              <div class="range-endpoints" aria-hidden="true">
+                <span id="value-min-label">\(a=0\)</span>
+                <span id="value-max-label">\(b=100\)</span>
+              </div>
+              <button id="random-value-button" class="text-button" type="button">Draw a private value</button>
+            </div>
+
+            <div class="range-group">
+              <div class="range-label-row">
+                <label id="bid-control-label" for="bid-slider">Proposed bid, \(x_1\)</label>
+                <input
+                  id="bid-number"
+                  class="range-number-input"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="any"
+                  value="30"
+                  inputmode="decimal"
+                  aria-labelledby="bid-control-label"
+                >
+              </div>
+              <input id="bid-slider" type="range" min="0" max="100" value="30" step="any">
+              <div class="range-endpoints" aria-hidden="true">
+                <span id="bid-min-label">\(a=0\)</span>
+                <span id="bid-max-label">\(b=100\)</span>
+              </div>
+              <button id="reset-button" class="text-button" type="button">Reset the example</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <p id="live-summary" class="sr-only" aria-live="polite"></p>
+    </section>
+
+    <section
+      class="derivation"
+      aria-labelledby="dominant-strategy-title"
+    >
+      <h2 id="dominant-strategy-title">Dominant strategy for bidder 1</h2>
+      <p>
+        Notice from the demo where the loss from underbidding and
+        overbidding comes from. Underbidding causes you to lose in cases
+        where you would have won and received a positive payoff. Overbidding
+        causes you to win in cases where you receive a negative payoff and
+        would have preferred to lose. In fact, we can show that
+        it is a weakly dominant strategy to bid <em>truthfully</em>, that
+        is, to bid your own value, in the second-price auction.
+      </p>
+      <p>
+        Suppose bidders \(2,\ldots,n\) bid \(x_2,\ldots,x_n\). Let
+        \(p_1=\max\{x_i \mid i=2,\ldots,n\}\). Let \(x^-\) denote an
+        alternative underbid, so \(x^- < v_1\), and let \(x^+\) denote an
+        alternative overbid, so \(v_1 < x^+\). We consider four cases for
+        \(p_1\):
+      </p>
+      <p>
+        <strong>Case 1:</strong> \(p_1 < x^- < v_1\). With either bid,
+        bidder 1 wins and gets \(v_1-p_1>0\).
+      </p>
+      <p>
+        <strong>Case 2:</strong> \(x^- < p_1 < v_1\). By bidding \(x^-\),
+        bidder 1 loses and gets \(0\), whereas by bidding \(v_1\), he wins
+        and gets \(v_1-p_1>0\).
+      </p>
+      <p>
+        <strong>Case 3:</strong> \(v_1 < p_1 < x^+\). By bidding \(x^+\),
+        bidder 1 wins and gets \(v_1-p_1<0\), whereas by bidding \(v_1\), he
+        loses and gets \(0\).
+      </p>
+      <p>
+        <strong>Case 4:</strong> \(v_1 < x^+ < p_1\). With either bid,
+        bidder 1 loses and gets \(0\).
+      </p>
+      <p>
+        Through these four cases, bidding \(v_1\) gives at least as good of
+        an outcome as, and sometimes a better outcome than, the underbid or
+        overbid. It is also easy to verify that this is true in the cases
+        where \(p_1=x^-\), \(p_1=v_1\), and \(p_1=x^+\). Then, since the
+        initial underbid and overbid were chosen arbitrarily, this holds
+        for all underbids and overbids, which is just all alternative bids.
+        Of course, there is no special reason we considered bidder 1, so it
+        is easy to extend this reasoning to all bidders. 
+      </p>
+    </section>
+
+    <section class="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title">Notes</h2>
+      <ul class="notes-list">
+        <!-- Add user-authored <li> notes here. -->
+          <li>
+            The dominance of truthful bidding is robust under several extensions, including risk aversion,
+            interdependent values, and asymmetric bidders.
+          </li>
+      </ul>
+    </section>
+
+    <section class="references" aria-labelledby="references-title">
+      <h2 id="references-title">References</h2>
+      <ul class="reference-list">
+        <li>
+          Vijay Krishna,
+          <a href="https://shop.elsevier.com/books/auction-theory/krishna/978-0-12-374507-1"><cite>Auction Theory</cite></a>,
+          2nd ed. (Academic Press, 2009), sec. 2.2, Proposition 2.1, p. 13.
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <page-footer></page-footer>
+  </footer>
+</body>
+</html>

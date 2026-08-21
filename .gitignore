@@ -1,0 +1,5 @@
+.chrome-*/
+.edge-*/
+*.log
+Thumbs.db
+.DS_Store

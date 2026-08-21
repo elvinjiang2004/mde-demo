@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Paint a bilateral-trade allocation rule q(v,c) and see its Bayesian IC, ex-post IR, budget-balance, and efficiency properties update live.">
+  <title>The Myerson-Satterthwaite Theorem | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="model.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to the main content</a>
+
+  <header class="site-header">
+    <page-header category="Bilateral Trade" home="../../index.html"></page-header>
+  </header>
+
+  <main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">The Myerson-Satterthwaite Theorem</h1>
+      <p>
+        A seller has an object that she may sell to a buyer. The seller has
+        value \(C \sim F_s(c)\) and the buyer has value \(V \sim F_b(v)\). We
+        assume \(F_s\) has continuous, strictly positive density \(f_s\) on its
+        support \([\underline{c},\overline{c}]\), and, likewise, \(F_b\) has
+        continuous, strictly positive density \(f_b\) on its support
+        \([\underline{v},\overline{v}]\). We also assume the intersection of the
+        supports is also an interval, that is, it is not empty and not a single
+        point. The buyer and seller observe their respective values, \(v\) and
+        \(c\), but not the other's.
+      </p>
+      <p>
+        We want to find a <em>direct</em> bargaining mechanism
+        \((q(v,c),p(v,c))\) in this environment that satisfies:
+      </p>
+      <ol>
+        <li>
+          (Bayesian) Incentive Compatibility (IC): Given the seller reports her
+          true value, it is optimal for the buyer to do the same, and vice versa.
+        </li>
+        <li>
+          (Interim) Individual Rationality (IR): Both the buyer and seller have a weakly
+          positive expected payoff after observing their values.
+        </li>
+        <li>
+          (Weak, ex-ante) Budget Balance (BB): The trade does not need to be subsidized by
+          an outside party in expectation.
+        </li>
+        <li>
+          (Ex-post) Pareto Efficiency (PE): The mechanism maximizes welfare at
+          every realized value profile. In other words, the person who values
+          the object most always ends up with it.
+        </li>
+      </ol>
+      <p>
+        In the interactive demo, try to design a direct bargaining mechanism
+        that satisfies these four properties, or choose from a list of preset
+        mechanisms. Here, \(V,C \mathrel{\overset{\mathrm{i.i.d.}}{\sim}}
+        \operatorname{Uniform}[0,1]\).
+      </p>
+    </section>
+
+    <section class="explorable explorable-divider" aria-label="Allocation-rule painting interface">
+      <div class="interaction-layout bilateral-layout">
+        <div class="bilateral-main-column">
+          <div class="chart-column bilateral-chart-column">
+            <div class="chart-frame">
+              <svg
+                id="paint-chart"
+                class="tradeoff-chart bilateral-paint-chart"
+                viewBox="0 0 480 520"
+                role="img"
+                tabindex="0"
+                aria-labelledby="paint-chart-title paint-chart-description"
+                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r"
+              >
+                <title id="paint-chart-title">Allocation rule q(v,c)</title>
+                <desc id="paint-chart-description">A paintable grid of the probability of trade for every buyer-value, seller-cost pair, each cell split into an independently paintable left (L) and right (R) triangle.</desc>
+              </svg>
+            </div>
+          </div>
+
+          <aside class="choice-controls bilateral-controls" aria-label="Painting controls">
+            <div class="range-group">
+              <div class="range-label-row">
+                <label id="cell-value-control-label" for="cell-value-slider">Allocation probability on this triangle</label>
+                <input
+                  id="cell-value-number"
+                  class="range-number-input"
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0"
+                  inputmode="decimal"
+                  aria-labelledby="cell-value-control-label"
+                >
+              </div>
+              <input id="cell-value-slider" class="bilateral-cell-slider" type="range" min="0" max="1" step="0.01" value="0">
+              <div class="range-endpoints bilateral-cell-slider" aria-hidden="true"><span>0</span><span>1</span></div>
+            </div>
+
+            <div id="posted-price-control" class="range-group" hidden>
+              <div class="range-label-row">
+                <label id="posted-price-control-label" for="posted-price-slider">Posted price, p</label>
+                <input
+                  id="posted-price-number"
+                  class="range-number-input"
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value="0.5"
+                  inputmode="decimal"
+                  aria-labelledby="posted-price-control-label"
+                >
+              </div>
+              <input id="posted-price-slider" class="bilateral-cell-slider" type="range" min="0" max="1" step="0.05" value="0.5">
+              <div class="range-endpoints bilateral-cell-slider" aria-hidden="true"><span>0</span><span>1</span></div>
+            </div>
+
+            <div class="preset-buttons">
+              <span class="preset-buttons-label">Presets:</span>
+              <button id="preset-efficient" class="text-button" type="button">Efficient benchmark (v &gt; c)</button>
+              <button id="preset-always" class="text-button" type="button">Always trade</button>
+              <button id="preset-never" class="text-button" type="button">Never trade</button>
+              <button id="preset-posted-price" class="text-button" type="button">Posted price</button>
+              <button id="preset-chatterjee" class="text-button" type="button">Chatterjee&ndash;Samuelson double auction</button>
+            </div>
+          </aside>
+        </div>
+
+        <div class="diagnostic-panel-grid">
+          <div class="diagnostic-panel">
+            <figure class="diagnostic-figure">
+              <figcaption>Buyer IC \(Q_B(v)\)</figcaption>
+              <svg
+                id="buyer-ic-chart"
+                class="diagnostic-chart"
+                viewBox="0 0 220 240"
+                role="img"
+                aria-labelledby="buyer-ic-chart-title buyer-ic-chart-description"
+              >
+                <title id="buyer-ic-chart-title">Interim buyer probability</title>
+                <desc id="buyer-ic-chart-description">The buyer's interim probability of trade, averaged over the seller's cost, as a function of buyer value.</desc>
+              </svg>
+            </figure>
+            <div id="buyer-ic-text" class="diagnostic-text"></div>
+          </div>
+
+          <div class="diagnostic-panel">
+            <figure class="diagnostic-figure">
+              <figcaption>Seller IC \(Q_S(c)\)</figcaption>
+              <svg
+                id="seller-ic-chart"
+                class="diagnostic-chart"
+                viewBox="0 0 220 240"
+                role="img"
+                aria-labelledby="seller-ic-chart-title seller-ic-chart-description"
+              >
+                <title id="seller-ic-chart-title">Interim seller probability</title>
+                <desc id="seller-ic-chart-description">The seller's interim probability of trade, averaged over the buyer's value, as a function of seller cost.</desc>
+              </svg>
+            </figure>
+            <div id="seller-ic-text" class="diagnostic-text"></div>
+          </div>
+
+          <div class="diagnostic-panel">
+            <figure class="diagnostic-figure">
+              <figcaption>Buyer utility \(U_B\)</figcaption>
+              <svg
+                id="buyer-utility-chart"
+                class="diagnostic-chart"
+                viewBox="0 0 220 240"
+                role="img"
+                aria-labelledby="buyer-utility-chart-title buyer-utility-chart-description"
+              >
+                <title id="buyer-utility-chart-title">Buyer utility</title>
+                <desc id="buyer-utility-chart-description">Buyer utility U sub B at every buyer-value, seller-cost pair.</desc>
+              </svg>
+            </figure>
+            <div id="buyer-utility-text" class="diagnostic-text"></div>
+          </div>
+
+          <div class="diagnostic-panel">
+            <figure class="diagnostic-figure">
+              <figcaption>Seller utility \(U_S\)</figcaption>
+              <svg
+                id="seller-utility-chart"
+                class="diagnostic-chart"
+                viewBox="0 0 220 240"
+                role="img"
+                aria-labelledby="seller-utility-chart-title seller-utility-chart-description"
+              >
+                <title id="seller-utility-chart-title">Seller utility</title>
+                <desc id="seller-utility-chart-description">Seller utility U sub S at every buyer-value, seller-cost pair.</desc>
+              </svg>
+            </figure>
+            <div id="seller-utility-text" class="diagnostic-text"></div>
+          </div>
+
+          <div class="diagnostic-panel">
+            <figure class="diagnostic-figure">
+              <figcaption>Net revenue \(R\)</figcaption>
+              <svg
+                id="budget-chart"
+                class="diagnostic-chart"
+                viewBox="0 0 220 240"
+                role="img"
+                aria-labelledby="budget-chart-title budget-chart-description"
+              >
+                <title id="budget-chart-title">Net revenue</title>
+                <desc id="budget-chart-description">Intermediary net revenue R at every buyer-value, seller-cost pair; green is a surplus, red is a deficit.</desc>
+              </svg>
+            </figure>
+            <div id="budget-text" class="diagnostic-text"></div>
+          </div>
+
+          <div class="diagnostic-panel">
+            <figure class="diagnostic-figure">
+              <figcaption>Efficiency</figcaption>
+              <svg
+                id="efficiency-chart"
+                class="diagnostic-chart"
+                viewBox="0 0 220 240"
+                role="img"
+                aria-labelledby="efficiency-chart-title efficiency-chart-description"
+              >
+                <title id="efficiency-chart-title">Efficiency comparison</title>
+                <desc id="efficiency-chart-description">Orange marks trade where v is less than c; blue marks missing trade where v is greater than c.</desc>
+              </svg>
+            </figure>
+            <div id="efficiency-text" class="diagnostic-text"></div>
+          </div>
+        </div>
+      </div>
+
+      <p id="live-summary" class="sr-only" aria-live="polite"></p>
+    </section>
+
+    <section class="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title">Notes</h2>
+      <ul class="notes-list">
+        <!-- Add user-authored <li> notes here. -->
+      </ul>
+    </section>
+
+    <section class="references" aria-labelledby="references-title">
+      <h2 id="references-title">References</h2>
+      <ul class="reference-list">
+        <li>
+          Myerson, Roger B., and Mark A. Satterthwaite. “Efficient Mechanisms
+          for Bilateral Trading.” <em>Journal of Economic Theory</em> 29, no. 2
+          (1983): 265–281.
+          <a href="https://doi.org/10.1016/0022-0531(83)90048-0">https://doi.org/10.1016/0022-0531(83)90048-0</a>.
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <page-footer></page-footer>
+  </footer>
+</body>
+</html>

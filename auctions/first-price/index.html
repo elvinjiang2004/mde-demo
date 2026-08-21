@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A textbook-style interactive treatment of best-response bidding in an independent-private-values first-price auction.">
+  <title>Best-response bidding in a first-price auction | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/distributions.js"></script>
+  <script defer src="model.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to the main text</a>
+
+  <header class="site-header">
+    <page-header category="Auctions" home="../../index.html"></page-header>
+  </header>
+
+<main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">The IPV First-Price Auction Equilibrium</h1>
+      <p>
+        One indivisible object is to be sold in a sealed-bid auction with no reserve
+        price. There are \(n \ge 2\) risk-neutral bidders. Bidders have values \(V_1, \ldots, V_n \overset{\mathrm{i.i.d.}}{\sim}\)
+        \(F(v)\). Each bidder \(i\) privately observes his realized value \(v_i\) hence independent, private values
+        (IPV). We also assume that \(F\) has continuous, strictly positive density
+        \(f\) on a positive support with finite expectation. Next,
+        all bidders simultaneously submit their bids. The highest bidder wins the
+        object, gets his value for the object, and pays his own bid, while losing
+        bidders get nothing and pay zero. Ties are broken uniformly at random
+        though occur with probability zero since \(f\) is continuous.
+      </p>
+      <p>
+        Consider bidder 1 with value \(v_1\). Let
+        <span class="highest-value-definition" aria-label="Y subscript 1 equals the maximum of X subscript 1 through X subscript n minus 1">
+          \(Y_1 = \max\{X_1, \ldots, X_{n-1}\}\)
+        </span>, where
+        \(X_1,\ldots,X_{n-1}\overset{\mathrm{i.i.d.}}{\sim}F(v)\).
+        Suppose bidders
+        \(2,\ldots,n\) bid according to the symmetric, increasing function
+      </p>
+
+      <div class="equation-display" aria-label="beta superscript I of v equals the expected value of Y subscript 1 conditional on v being greater than Y subscript 1">
+        \[
+          \beta^{\mathrm{I}}(v_i)
+          = \mathbb{E}\!\left[Y_1 \mid v_i > Y_1\right], i = 2, \ldots, n.
+        \]
+      </div>
+
+      <p>
+        In the interactive demo, you take the perspective of bidder 1, considering different
+        bids in response to the other bidders using this strategy. Here,
+        \(V_i = a + (b-a)X_i\), where
+        \(X_1, \ldots, X_{n} \overset{\mathrm{i.i.d.}}{\sim} \operatorname{Beta}(\alpha, \beta)\)
+        (\(\alpha = 1\), \(\beta = 1\) for
+        \(\operatorname{Uniform}[a,b]\) values). Choose your value
+        \(v_1\) or randomly draw it. Then, propose a bid
+        \(x_1\), and observe how changing it affects your expected
+        payoff.
+      </p>
+    </section>
+
+    <section class="model-specifications" aria-labelledby="parameters-title">
+      <model-parameter-controls></model-parameter-controls>
+    </section>
+
+    <section class="explorable" aria-label="Interactive auction graph">
+      <div class="interaction-layout">
+        <div class="chart-column">
+          <div class="chart-frame">
+            <svg
+              id="tradeoff-chart"
+              viewBox="0 0 1000 800"
+              role="img"
+              tabindex="0"
+              aria-labelledby="chart-title chart-description"
+              aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
+            >
+              <title id="chart-title">First-price auction outcomes by proposed bid</title>
+              <desc id="chart-description">The panels show the PDF of the highest opposing bid, beta superscript I of Y subscript 1, and its winning area, followed by its CDF. The rectangle from x 1 to v 1 represents expected payoff, and the horizontal axis identifies payment and payoff upon winning.</desc>
+            </svg>
+          </div>
+        </div>
+
+        <aside class="choice-controls" aria-label="Bidder controls">
+          <div class="slider-grid">
+            <div class="range-group">
+              <div class="range-label-row">
+                <label id="value-control-label" for="value-slider">Private value, \(v_1\)</label>
+                <input
+                  id="value-number"
+                  class="range-number-input"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="any"
+                  value="50"
+                  inputmode="decimal"
+                  aria-labelledby="value-control-label"
+                >
+              </div>
+              <input id="value-slider" type="range" min="0" max="100" value="50" step="0.2">
+              <div class="range-endpoints" aria-hidden="true">
+                <span id="value-min-label">a = 0</span>
+                <span id="value-max-label">b = 100</span>
+              </div>
+              <button id="random-value-button" class="text-button" type="button">Draw a private value</button>
+            </div>
+
+            <div class="range-group">
+              <div class="range-label-row">
+                <label id="bid-control-label" for="bid-slider">Proposed bid, \(x_1\)</label>
+                <input
+                  id="bid-number"
+                  class="range-number-input"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="any"
+                  value="30"
+                  inputmode="decimal"
+                  aria-labelledby="bid-control-label"
+                >
+              </div>
+              <input id="bid-slider" type="range" min="0" max="100" value="30" step="0.2">
+              <div class="range-endpoints" aria-hidden="true">
+                <span id="bid-min-label">a = 0</span>
+                <span id="bid-max-label">b = 100</span>
+              </div>
+              <button id="reset-button" class="text-button" type="button">Reset the example</button>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <p id="live-summary" class="sr-only" aria-live="polite"></p>
+    </section>
+
+    <section
+      class="derivation"
+      aria-labelledby="derivation-title"
+    >
+      <h2 id="derivation-title">Optimal bid for bidder 1</h2>
+      <p>
+        After playing with the bid slider for a few different parameter
+        settings, you may notice that the best bidder 1 can do, across all
+        possible values he may have, is to follow the same bidding strategy as
+        everyone else. Let us verify this more rigorously.
+      </p>
+      <p>
+        Let \(G(y)=F(y)^{n-1}\) denote the distribution function of
+        \(Y_1\), and let \(g\) denote its density. First, notice that it is
+        not optimal to bid above \(\beta^{\mathrm{I}}(b)\), since, by
+        assumption, no opponent will bid above
+        \(\beta^{\mathrm{I}}(b)\). Similarly, there is no gain from bidding
+        below \(\beta^{\mathrm{I}}(a)=a\). Because
+        \(\beta^{\mathrm{I}}\) is continuous and strictly increasing, every
+        remaining bid can be written as \(\beta^{\mathrm{I}}(z)\) for some
+        \(z\in[a,b]\). Thus, we can compare bidding
+        \(\beta^{\mathrm{I}}(v_1)\) with bidding
+        \(\beta^{\mathrm{I}}(z)\). At \(z=a\), the expressions below are
+        understood by continuity.
+      </p>
+      <p id="expected-utility-proof" class="plain-formula">
+        \[
+          \begin{aligned}
+          \mathbb{E}\!\left[
+            u\!\left(v_1,\beta^{\mathrm{I}}(z)\right)
+          \right]
+          &=
+          \underbrace{G(z)}_{\text{probability of winning}}
+          \underbrace{\left(v_1-\beta^{\mathrm{I}}(z)\right)}
+            _{\text{payoff upon winning}} \\
+          &=G(z)\left(v_1-\beta^{\mathrm{I}}(z)\right) \\
+          &=G(z)v_1
+            -G(z)\mathbb{E}\!\left[Y_1\mid Y_1\le z\right] \\
+          &=G(z)v_1-\int_a^z y g(y)\,dy \\
+          &=G(z)v_1-G(z)z+\int_a^z G(y)\,dy \\
+          &=G(z)(v_1-z)+\int_a^z G(y)\,dy.
+          \end{aligned}
+        \]
+      </p>
+      <p>
+        Therefore,
+      </p>
+      <p id="optimality-gap-proof" class="plain-formula">
+        \[
+          \begin{aligned}
+          &\mathbb{E}\!\left[
+            u\!\left(v_1,\beta^{\mathrm{I}}(v_1)\right)
+          \right]
+          -
+          \mathbb{E}\!\left[
+            u\!\left(v_1,\beta^{\mathrm{I}}(z)\right)
+          \right] \\
+          &\quad =
+          G(v_1)(v_1-v_1)+\int_a^{v_1}G(y)\,dy
+          -\left[G(z)(v_1-z)+\int_a^zG(y)\,dy\right] \\
+          &\quad =
+          G(z)(z-v_1)+\int_z^{v_1}G(y)\,dy.
+          \end{aligned}
+        \]
+      </p>
+      <p>
+        Because \(G\) is nondecreasing, this difference is weakly positive for
+        every \(z\in[a,b]\). Thus, given that bidders \(2,\ldots,n\) bid
+        according to \(\beta^{\mathrm{I}}\), it is optimal for bidder 1 to
+        also bid according to \(\beta^{\mathrm{I}}\).
+      </p>
+    </section>
+
+    <section class="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title">Notes</h2>
+      <ul class="notes-list">
+        <!-- Add user-authored <li> notes here. -->
+          <li>
+            A more descriptive name for this setting may be "independent, private values first-price auction with risk-neutral, symmetric bidders,
+            no reserve price, and no budget-constraints," but IPV is a common abbreviation for this setting in the auction-theory literature.
+          </li>
+          <li>
+            We have not shown this equilibrium is unique, but a little more work shows that it is the unique symmetric, increasing equilibrium.
+            See Krishna (2009), sec. 2.3, pp. 14–16.
+            If we do not restrict to symmetric, increasing equilibria, even more work is required.
+          </li>
+
+      </ul>
+    </section>
+
+    <section class="references" aria-labelledby="references-title">
+      <h2 id="references-title">References</h2>
+      <ul class="reference-list">
+        <li>
+          Vijay Krishna,
+          <a href="https://shop.elsevier.com/books/auction-theory/krishna/978-0-12-374507-1"><cite>Auction Theory</cite></a>,
+          2nd ed. (Academic Press, 2009), sec. 2.3, Proposition 2.2,
+          pp. 14–16.
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <page-footer></page-footer>
+  </footer>
+</body>
+</html>

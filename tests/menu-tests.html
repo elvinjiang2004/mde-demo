@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module menu tests</title>
+  <style>
+    body { max-width: 900px; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; }
+    #summary { padding: 0.8rem; border-left: 4px solid #777; }
+    .pass { color: #17613f; }
+    .fail { color: #8e3030; }
+    iframe { position: absolute; width: 1200px; height: 800px; left: -10000px; border: 0; }
+  </style>
+  <script defer src="menu-tests.js"></script>
+</head>
+<body data-status="running">
+  <h1>Module menu tests</h1>
+  <p id="summary">Running tests…</p>
+  <ol id="results"></ol>
+  <iframe id="menu-frame" title="Module menu under test" src="../index.html"></iframe>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FPA interface tests</title>
+  <style>
+    body { max-width: 900px; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; }
+    #summary { padding: 0.8rem; border-left: 4px solid #777; }
+    .pass { color: #17613f; }
+    .fail { color: #8e3030; }
+    iframe { position: absolute; width: 1400px; height: 1100px; left: -10000px; border: 0; }
+  </style>
+  <script defer src="ui-tests.js"></script>
+</head>
+<body data-status="running">
+  <h1>First-price auction interface tests</h1>
+  <p id="summary">Running tests…</p>
+  <ol id="results"></ol>
+  <iframe id="app-frame" title="Prototype under test" src="../auctions/first-price/index.html"></iframe>
+</body>
+</html>
