@@ -190,19 +190,6 @@
       "Density integral", 3e-7);
   });
 
-  test("Payoff-contribution density integrates to expected payoff", function () {
-    var spec = { type: "beta", alpha: 1.8, beta: 2.6 };
-    var value = 0.68;
-    var bid = 0.87;
-    var area = midpointIntegral(function (point) {
-      return model.payoffContributionDensity(
-        value, point, 4, 0, 1, spec
-      );
-    }, 0, bid, 30000);
-    assertClose(area, model.expectedPayoff(value, bid, 4, 0, 1, spec),
-      "Contribution integral", 4e-7);
-  });
-
   test("CDF-area payment and payoff identities agree", function () {
     var spec = { type: "beta", alpha: 3.2, beta: 1.4 };
     var result = model.outcomes(7.3, 6.2, 6, 4, 9, spec);
@@ -260,10 +247,6 @@
       "An underbid should have lower expected payoff.");
     assert(model.expectedPayoff(0.6, 0.9, 4, 0, 1, spec) < truthful,
       "An overbid should have lower expected payoff.");
-    assert(model.payoffContributionDensity(0.6, 0.3, 4, 0, 1, spec) > 0,
-      "The contribution below value should be positive.");
-    assert(model.payoffContributionDensity(0.6, 0.9, 4, 0, 1, spec) < 0,
-      "The contribution above value should be negative.");
   });
 
   test("Endpoint-singular beta shapes do not create NaN model values", function () {
@@ -280,8 +263,7 @@
       upper.expectedPaymentIfWin,
       upper.expectedPayoff,
       upper.expectedPayoffIfWin,
-      model.highestOpponentBidDensity(0, 3, 0, 1, spec),
-      model.payoffContributionDensity(1, 1, 3, 0, 1, spec)
+      model.highestOpponentBidDensity(0, 3, 0, 1, spec)
     ].forEach(function (value) {
       assert(!Number.isNaN(value), "Endpoint output should not be NaN.");
     });

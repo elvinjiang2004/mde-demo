@@ -18,16 +18,17 @@
     return Math.min(upper, Math.max(lower, value));
   }
 
-  function normalizeDistribution(spec) {
-    return distributions.normalizeSpec(spec);
+  function isUniformEquivalent(normalized) {
+    return normalized.type === "uniform" ||
+      (normalized.type === "beta" &&
+        normalized.alpha === 1 && normalized.beta === 1);
   }
 
   function distributionValidation(a, b, spec) {
     var normalized;
 
     try {
-      normalized = normalizeDistribution(spec);
-      normalized = distributions.validate(a, b, normalized);
+      normalized = distributions.validate(a, b, spec);
     } catch (error) {
       return {
         valid: false,
@@ -55,8 +56,6 @@
       errors.push("The lower bound a must be nonnegative.");
     } else if (!(b > a)) {
       errors.push("The upper bound b must be strictly greater than the lower bound a.");
-    } else if (!Number.isFinite(b - a)) {
-      errors.push("The distance between a and b must be finite.");
     }
 
     var distribution = distributionValidation(a, b, spec);
@@ -106,14 +105,6 @@
     return validation.distribution;
   }
 
-  function truthfulBid(value, n, a, b, spec) {
-    requireValidAuction(n, a, b, spec);
-    if (!isFiniteNumber(value) || value < a - EPSILON || value > b + EPSILON) {
-      throw new RangeError("Value must lie in [a, b].");
-    }
-    return clamp(value, a, b);
-  }
-
   function highestOpponentBidCdf(bid, n, a, b, spec) {
     var normalized = requireValidAuction(n, a, b, spec);
     if (!isFiniteNumber(bid)) {
@@ -156,6 +147,10 @@
     if (boundedUpper <= a) {
       return 0;
     }
+    if (isUniformEquivalent(normalized)) {
+      var z = (boundedUpper - a) / (b - a);
+      return (b - a) * Math.pow(z, n) / n;
+    }
     return distributions.integrate(function (point) {
       return Math.pow(
         distributions.cdf(point, a, b, normalized),
@@ -164,19 +159,28 @@
     }, a, boundedUpper);
   }
 
-  function expectedPayment(bid, n, a, b, spec) {
-    var normalized = requireValidAuction(n, a, b, spec);
-    if (!isFiniteNumber(bid) || bid < a - EPSILON || bid > b + EPSILON) {
-      throw new RangeError("Bid must lie in [a, b].");
+  function conditionalExpectedPayment(
+    boundedBid,
+    n,
+    a,
+    b,
+    normalized,
+    focalCdf,
+    probability
+  ) {
+    if (probability === 0) {
+      return null;
+    }
+    if (isUniformEquivalent(normalized)) {
+      return a + ((n - 1) / n) * (boundedBid - a);
     }
 
-    var boundedBid = clamp(bid, a, b);
-    var probability = Math.pow(
-      distributions.cdf(boundedBid, a, b, normalized),
-      n - 1
-    );
-    return boundedBid * probability -
-      cdfIntegral(boundedBid, n, a, b, normalized);
+    // Conditional quantiles avoid cancellation in xG(x) - integral G when
+    // the winning probability is positive but extremely small.
+    return distributions.integrate(function (rank) {
+      var opponentRank = focalCdf * Math.pow(rank, 1 / (n - 1));
+      return distributions.quantile(opponentRank, a, b, normalized);
+    }, 0, 1);
   }
 
   function expectedPaymentIfWin(bid, n, a, b, spec) {
@@ -187,17 +191,15 @@
 
     var boundedBid = clamp(bid, a, b);
     var focalCdf = distributions.cdf(boundedBid, a, b, normalized);
-    var probability = Math.pow(focalCdf, n - 1);
-    if (probability === 0) {
-      return null;
-    }
-
-    // Conditional quantiles avoid cancellation in xG(x) - integral G when
-    // the winning probability is positive but extremely small.
-    return distributions.integrate(function (rank) {
-      var opponentRank = focalCdf * Math.pow(rank, 1 / (n - 1));
-      return distributions.quantile(opponentRank, a, b, normalized);
-    }, 0, 1);
+    return conditionalExpectedPayment(
+      boundedBid,
+      n,
+      a,
+      b,
+      normalized,
+      focalCdf,
+      Math.pow(focalCdf, n - 1)
+    );
   }
 
   function expectedPayoff(value, bid, n, a, b, spec) {
@@ -212,25 +214,6 @@
       cdfIntegral(boundedBid, n, a, b, normalized);
   }
 
-  function expectedPayoffIfWin(value, bid, n, a, b, spec) {
-    requireValidChoice(n, a, b, value, bid, spec);
-    var payment = expectedPaymentIfWin(bid, n, a, b, spec);
-    return payment === null ? null : value - payment;
-  }
-
-  function payoffContributionDensity(value, opponentBid, n, a, b, spec) {
-    requireValidAuction(n, a, b, spec);
-    if (!isFiniteNumber(value) || value < a - EPSILON || value > b + EPSILON) {
-      throw new RangeError("Value must lie in [a, b].");
-    }
-    var difference = value - opponentBid;
-    var density = highestOpponentBidDensity(opponentBid, n, a, b, spec);
-    if (difference === 0 && !Number.isFinite(density)) {
-      return 0;
-    }
-    return difference * density;
-  }
-
   function truthfulExpectedPayoff(value, n, a, b, spec) {
     var normalized = requireValidAuction(n, a, b, spec);
     if (!isFiniteNumber(value) || value < a - EPSILON || value > b + EPSILON) {
@@ -243,23 +226,23 @@
     var normalized = requireValidChoice(n, a, b, value, bid, spec);
     var boundedValue = clamp(value, a, b);
     var boundedBid = clamp(bid, a, b);
-    var probability = winProbability(boundedBid, n, a, b, normalized);
-    var payment = expectedPayment(boundedBid, n, a, b, normalized);
-    var conditionalPayment = expectedPaymentIfWin(
+    var focalCdf = distributions.cdf(boundedBid, a, b, normalized);
+    var probability = Math.pow(focalCdf, n - 1);
+    var bidIntegral = cdfIntegral(boundedBid, n, a, b, normalized);
+    var payment = boundedBid * probability - bidIntegral;
+    var conditionalPayment = conditionalExpectedPayment(
       boundedBid,
       n,
       a,
       b,
-      normalized
+      normalized,
+      focalCdf,
+      probability
     );
-    var payoff = expectedPayoff(
-      boundedValue,
-      boundedBid,
-      n,
-      a,
-      b,
-      normalized
-    );
+    var payoff = (boundedValue - boundedBid) * probability + bidIntegral;
+    var truthfulPayoff = boundedValue === boundedBid ?
+      bidIntegral :
+      cdfIntegral(boundedValue, n, a, b, normalized);
 
     return {
       n: n,
@@ -274,26 +257,13 @@
       expectedPayoff: payoff,
       expectedPayoffIfWin: conditionalPayment === null ?
         null : boundedValue - conditionalPayment,
-      truthfulBid: truthfulBid(boundedValue, n, a, b, normalized),
-      truthfulExpectedPayoff: truthfulExpectedPayoff(
-        boundedValue,
-        n,
-        a,
-        b,
-        normalized
-      )
+      truthfulBid: boundedValue,
+      truthfulExpectedPayoff: truthfulPayoff
     };
   }
 
   function truthfulOutcomes(value, n, a, b, spec) {
-    return outcomes(
-      value,
-      truthfulBid(value, n, a, b, spec),
-      n,
-      a,
-      b,
-      spec
-    );
+    return outcomes(value, value, n, a, b, spec);
   }
 
   global.SPAModel = Object.freeze({
@@ -301,15 +271,11 @@
     clamp: clamp,
     validateAuction: validateAuction,
     validateChoice: validateChoice,
-    truthfulBid: truthfulBid,
     highestOpponentBidCdf: highestOpponentBidCdf,
     highestOpponentBidDensity: highestOpponentBidDensity,
     winProbability: winProbability,
-    expectedPayment: expectedPayment,
     expectedPaymentIfWin: expectedPaymentIfWin,
     expectedPayoff: expectedPayoff,
-    expectedPayoffIfWin: expectedPayoffIfWin,
-    payoffContributionDensity: payoffContributionDensity,
     truthfulExpectedPayoff: truthfulExpectedPayoff,
     outcomes: outcomes,
     truthfulOutcomes: truthfulOutcomes

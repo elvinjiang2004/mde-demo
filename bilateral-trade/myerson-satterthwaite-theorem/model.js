@@ -1,7 +1,6 @@
 (function (global) {
   "use strict";
 
-  var EPSILON = 1e-9;
   var MONOTONICITY_TOLERANCE = 1e-6;
   var BALANCE_TOLERANCE = 1e-6;
 
@@ -26,11 +25,9 @@
   // lower-right triangle (LOWER: local v-offset >= local c-offset, i.e. the
   // higher-v/lower-c half) and an upper-left triangle (UPPER: local
   // v-offset <= local c-offset). A grid is therefore two parallel 20x20
-  // arrays, `lower` and `upper`. Painting a cell sets both triangles to the
-  // same value -- from the outside it is still "one value per 0.05x0.05
-  // square." Only the exact preset generators below (efficientGrid,
-  // postedPriceGrid, chatterjeeSamuelsonGrid) ever set a cell's two
-  // triangles independently, which is what lets a diagonal threshold like
+  // arrays, `lower` and `upper`. The learner can paint either triangle
+  // independently, and the exact preset generators below can likewise set
+  // the two halves separately. This is what lets a diagonal threshold like
   // v=c or v-c=1/4 be represented exactly -- with literally zero
   // approximation error -- whenever that threshold is a whole multiple of
   // CELL_SIZE, because the threshold then runs exactly along that cell's
@@ -55,26 +52,6 @@
     return createCellGrid(
       function () { return value; },
       function () { return value; }
-    );
-  }
-
-  function randomCellGrid(randomFn) {
-    var draw = typeof randomFn === "function" ? randomFn : Math.random;
-    // One random draw per cell, shared by both triangles -- a random grid
-    // represents "as if the learner painted random values," not an
-    // internal diagonal split, since randomness has no diagonal structure.
-    var values = [];
-    var i;
-    var j;
-    for (i = 0; i < CELL_RESOLUTION; i += 1) {
-      values[i] = [];
-      for (j = 0; j < CELL_RESOLUTION; j += 1) {
-        values[i][j] = clamp(draw(), 0, 1);
-      }
-    }
-    return createCellGrid(
-      function (row, col) { return values[row][col]; },
-      function (row, col) { return values[row][col]; }
     );
   }
 
@@ -333,7 +310,8 @@
   }
 
   // Builds another {lower, upper} grid at the same 20x20x2 resolution as q
-  // itself, evaluating fn(v, c, q) at every triangle's own centroid -- so
+  // itself, evaluating fn(v, c, q, i, j, isLower) at every triangle's own
+  // centroid -- so
   // every diagnostic heatmap is drawn from the same triangular mesh the
   // learner paints, with no separate display resolution.
   function pointwiseTriangleGrid(grid, fn) {
@@ -347,26 +325,8 @@
       for (j = 0; j < CELL_RESOLUTION; j += 1) {
         var lc = triangleCentroid(i, j, true);
         var uc = triangleCentroid(i, j, false);
-        lower[i][j] = fn(lc.v, lc.c, grid.lower[i][j]);
-        upper[i][j] = fn(uc.v, uc.c, grid.upper[i][j]);
-      }
-    }
-    return { lower: lower, upper: upper };
-  }
-
-  function elementwiseTriangles(gridA, gridB, fn) {
-    var lower = new Array(CELL_RESOLUTION);
-    var upper = new Array(CELL_RESOLUTION);
-    var i;
-    var j;
-    for (i = 0; i < CELL_RESOLUTION; i += 1) {
-      lower[i] = new Array(CELL_RESOLUTION);
-      upper[i] = new Array(CELL_RESOLUTION);
-      for (j = 0; j < CELL_RESOLUTION; j += 1) {
-        var lc = triangleCentroid(i, j, true);
-        var uc = triangleCentroid(i, j, false);
-        lower[i][j] = fn(gridA.lower[i][j], gridB.lower[i][j], lc.v, lc.c);
-        upper[i][j] = fn(gridA.upper[i][j], gridB.upper[i][j], uc.v, uc.c);
+        lower[i][j] = fn(lc.v, lc.c, grid.lower[i][j], i, j, true);
+        upper[i][j] = fn(uc.v, uc.c, grid.upper[i][j], i, j, false);
       }
     }
     return { lower: lower, upper: upper };
@@ -384,23 +344,13 @@
     });
   }
 
-  function buyerPaymentGrid(grid, buyerUtility) {
-    // p_B(v,c) = v*q(v,c) - U_B(v,c).
-    return elementwiseTriangles(grid, buyerUtility, function (q, uB, v) {
-      return v * q - uB;
-    });
-  }
-
-  function sellerPaymentGrid(grid, sellerUtility) {
-    // p_S(v,c) = c*q(v,c) + U_S(v,c).
-    return elementwiseTriangles(grid, sellerUtility, function (q, uS, v, c) {
-      return c * q + uS;
-    });
-  }
-
-  function revenueGridOf(buyerPayment, sellerPayment) {
-    return elementwiseTriangles(buyerPayment, sellerPayment, function (pB, pS) {
-      return pB - pS;
+  function revenueGrid(grid, buyerUtility, sellerUtility) {
+    return pointwiseTriangleGrid(grid, function (v, c, q, i, j, isLower) {
+      var uB = isLower ? buyerUtility.lower[i][j] : buyerUtility.upper[i][j];
+      var uS = isLower ? sellerUtility.lower[i][j] : sellerUtility.upper[i][j];
+      // Preserve the transfer arithmetic directly:
+      // R = p_B - p_S = (v*q - U_B) - (c*q + U_S).
+      return (v * q - uB) - (c * q + uS);
     });
   }
 
@@ -506,9 +456,7 @@
 
     var buyerUtility = buyerUtilityGrid(grid);
     var sellerUtility = sellerUtilityGrid(grid);
-    var pB = buyerPaymentGrid(grid, buyerUtility);
-    var pS = sellerPaymentGrid(grid, sellerUtility);
-    var revenue = revenueGridOf(pB, pS);
+    var revenue = revenueGrid(grid, buyerUtility, sellerUtility);
 
     // U_B(0,c) = U_S(v,1) = 0 and both are monotone in their own type by
     // construction (dU_B/dv = q >= 0, dU_S/dc = -q <= 0), so the true
@@ -556,8 +504,6 @@
         sellerIcViolationCount: countTrue1D(sellerIcViolations),
         minBuyerUtility: minBuyerUtility,
         minSellerUtility: minSellerUtility,
-        buyerUtilityEverNegative: minBuyerUtility < -BALANCE_TOLERANCE,
-        sellerUtilityEverNegative: minSellerUtility < -BALANCE_TOLERANCE,
         expectedBuyerUtility: eBuyerUtility,
         expectedSellerUtility: eSellerUtility,
         exPostBudgetBalanced: Math.abs(minRevenue) <= BALANCE_TOLERANCE &&
@@ -575,17 +521,14 @@
   }
 
   global.BilateralTradeModel = Object.freeze({
-    EPSILON: EPSILON,
     MONOTONICITY_TOLERANCE: MONOTONICITY_TOLERANCE,
     BALANCE_TOLERANCE: BALANCE_TOLERANCE,
     CELL_RESOLUTION: CELL_RESOLUTION,
     CELL_SIZE: CELL_SIZE,
-    TRIANGLE_AREA: TRIANGLE_AREA,
     clamp: clamp,
     triangleCentroid: triangleCentroid,
     createCellGrid: createCellGrid,
     constantCellGrid: constantCellGrid,
-    randomCellGrid: randomCellGrid,
     efficientGrid: efficientGrid,
     postedPriceGrid: postedPriceGrid,
     chatterjeeSamuelsonGrid: chatterjeeSamuelsonGrid,
@@ -600,19 +543,9 @@
     checkInterimSellerMonotonicity: checkInterimSellerMonotonicity,
     cumulativeBuyerUtilityAt: cumulativeBuyerUtilityAt,
     cumulativeSellerUtilityAt: cumulativeSellerUtilityAt,
-    buyerUtilityGrid: buyerUtilityGrid,
-    sellerUtilityGrid: sellerUtilityGrid,
-    buyerPaymentGrid: buyerPaymentGrid,
-    sellerPaymentGrid: sellerPaymentGrid,
-    revenueGridOf: revenueGridOf,
     welfare: welfare,
     expectedBuyerUtility: expectedBuyerUtility,
     expectedSellerUtility: expectedSellerUtility,
-    minValue: minValue,
-    maxValue: maxValue,
-    overTradeGrid: overTradeGrid,
-    underTradeGrid: underTradeGrid,
-    efficientWelfare: efficientWelfare,
     summarize: summarize
   });
 })(window);

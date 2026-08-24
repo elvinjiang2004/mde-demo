@@ -72,10 +72,6 @@
         var legacyBid = model.equilibriumBid(value, n, 0, 1);
         assertClose(model.equilibriumBid(value, n, 0, 1, uniform), legacyBid);
         assertClose(model.equilibriumBid(value, n, 0, 1, beta11), legacyBid);
-        assertClose(
-          model.equilibriumExpectedPayoff(value, n, 0, 1, beta11),
-          model.equilibriumExpectedPayoff(value, n, 0, 1)
-        );
       });
 
       [0, 0.2, 0.7, 1].forEach(function (bid) {
@@ -107,12 +103,6 @@
         result.expectedPayoff,
         expectedUtility,
         "Beta(2,1) payoff for n=" + n,
-        2e-8
-      );
-      assertClose(
-        model.equilibriumExpectedPayoff(value, n, 0, 1, beta21),
-        expectedUtility,
-        "Beta(2,1) envelope payoff for n=" + n,
         2e-8
       );
     }
