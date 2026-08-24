@@ -35,7 +35,6 @@
     left: 90,
     right: 975
   };
-  var valuePdfSignature = null;
 
   document.addEventListener("DOMContentLoaded", initialize);
 
@@ -215,9 +214,7 @@
     elements.randomValueButton.addEventListener("click", function () {
       var inputA = Number.parseFloat(elements.lowerBound.value);
       var inputB = Number.parseFloat(elements.upperBound.value);
-      var validation = model.validateAuction(
-        state.n, inputA, inputB, distributionSpec()
-      );
+      var validation = validateAuctionInputs(state.n, inputA, inputB);
 
       if (!validation.valid) {
         showError(validation.errors.join(" "));
@@ -289,7 +286,7 @@
     });
 
     elements.chart.addEventListener("keydown", function (event) {
-      var step = rangeStep(state.b - state.a);
+      var step = rangeStep(bidDomainSpan());
       var nextBid = null;
 
       if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
@@ -299,7 +296,7 @@
       } else if (event.key === "Home") {
         nextBid = state.a;
       } else if (event.key === "End") {
-        nextBid = state.b;
+        nextBid = bidUpperBound();
       }
 
       if (nextBid !== null) {
@@ -317,9 +314,7 @@
   function updateBoundsFromInputs() {
     var nextA = Number.parseFloat(elements.lowerBound.value);
     var nextB = Number.parseFloat(elements.upperBound.value);
-    var validation = model.validateAuction(
-      state.n, nextA, nextB, distributionSpec()
-    );
+    var validation = validateAuctionInputs(state.n, nextA, nextB);
 
     if (!validation.valid) {
       showError(validation.errors.join(" "));
@@ -347,7 +342,7 @@
     if (!Number.isFinite(nextBid)) {
       return;
     }
-    state.bid = model.clamp(nextBid, state.a, state.b);
+    state.bid = model.clamp(nextBid, state.a, bidUpperBound());
     elements.bidSlider.value = String(state.bid);
     render();
   }
@@ -379,7 +374,7 @@
     configureRange(
       elements.bidSlider,
       state.a,
-      state.b,
+      bidUpperBound(),
       state.bid
     );
     configureNumberInput(
@@ -392,7 +387,7 @@
     configureNumberInput(
       elements.bidNumber,
       state.a,
-      state.b,
+      bidUpperBound(),
       state.bid,
       formatChoiceNumber
     );
@@ -400,6 +395,22 @@
     elements.betaSlider.value = String(state.beta);
     elements.alphaNumber.value = formatChoiceNumber(state.alpha);
     elements.betaNumber.value = formatChoiceNumber(state.beta);
+  }
+
+  function bidUpperBound() {
+    return state.b;
+  }
+
+  function bidDomainSpan() {
+    return bidUpperBound() - state.a;
+  }
+
+  function validateAuctionInputs(n, a, b) {
+    var validation = model.validateAuction(n, a, b, distributionSpec());
+    return {
+      valid: validation.valid,
+      errors: validation.errors.slice()
+    };
   }
 
   function commitShapeParameter(name, input) {
@@ -434,11 +445,6 @@
     if (!svg) {
       return;
     }
-    var signature = [state.a, state.b, state.alpha, state.beta].join("|");
-    if (signature === valuePdfSignature && svg.childNodes.length > 0) {
-      return;
-    }
-    valuePdfSignature = signature;
 
     var width = 320;
     var height = 120;
@@ -448,13 +454,13 @@
     var base = 91;
     var count = 161;
     var endpointInset = 1 / (count * 3);
-    var span = state.b - state.a;
-    var spec = distributionSpec();
     var samples = [];
     var maximum = 0;
     var i;
 
-    svg.replaceChildren();
+    while (svg.firstChild) {
+      svg.removeChild(svg.firstChild);
+    }
     svg.setAttribute("viewBox", "0 0 " + width + " " + height);
     svg.setAttribute("data-alpha", state.alpha);
     svg.setAttribute("data-beta", state.beta);
@@ -477,12 +483,12 @@
       } else if (ratio === 1) {
         evaluationRatio = 1 - endpointInset;
       }
-      var value = state.a + evaluationRatio * span;
+      var value = state.a + evaluationRatio * (state.b - state.a);
       var density = distributions.pdf(
         value,
         state.a,
         state.b,
-        spec
+        distributionSpec()
       );
       if (!Number.isFinite(density) || density < 0) {
         density = 0;
@@ -585,14 +591,13 @@
   }
 
   function render() {
-    var spec = distributionSpec();
     var validation = model.validateChoice(
       state.n,
       state.a,
       state.b,
       state.value,
       state.bid,
-      spec
+      distributionSpec()
     );
 
     if (!validation.valid) {
@@ -608,15 +613,15 @@
       state.n,
       state.a,
       state.b,
-      spec
+      distributionSpec()
     );
-    var truthful = {
-      bid: current.truthfulBid,
-      winProbability: model.highestOpponentBidCdf(
-        current.truthfulBid, state.n, state.a, state.b, spec
-      ),
-      expectedPayoff: current.truthfulExpectedPayoff
-    };
+    var truthful = model.truthfulOutcomes(
+      state.value,
+      state.n,
+      state.a,
+      state.b,
+      distributionSpec()
+    );
 
     updateControls();
     renderValuePdfPreview();
@@ -684,7 +689,7 @@
     var ratio = (svgX - lastChartLayout.left) /
       (lastChartLayout.right - lastChartLayout.left);
 
-    return state.a + ratio * (state.b - state.a);
+    return state.a + ratio * bidDomainSpan();
   }
 
   function drawChart(current, truthful) {
@@ -693,7 +698,7 @@
     var left = layout.left;
     var right = layout.right;
     var plotWidth = right - left;
-    var xSpan = state.b - state.a;
+    var xSpan = bidDomainSpan();
     var densitySamples = sampleDensity(241, current.bid);
     var cdfSamples = sampleCdf(241, current.bid, state.value);
     var densityMax = densityScaleMaximum(densitySamples) * 1.08;
@@ -744,8 +749,7 @@
       current.bid,
       xScale,
       densityPanel,
-      left,
-      current.winProbability
+      left
     );
     drawCurve(
       svg,
@@ -915,22 +919,25 @@
 
   function sampleDensity(count, selectedBid) {
     var points = [];
-    var spec = distributionSpec();
     var i;
     for (i = 0; i < count; i += 1) {
-      var bid = state.a + (i / (count - 1)) * (state.b - state.a);
+      var bid = state.a + (i / (count - 1)) * bidDomainSpan();
       points.push({
         bid: bid,
-        density: densityForPlot(bid, spec)
+        density: densityForPlot(bid)
       });
     }
+    points.push({
+      bid: state.b,
+      density: densityForPlot(state.b)
+    });
     points.push({
       bid: state.b,
       density: 0
     });
     points.push({
       bid: selectedBid,
-      density: densityForPlot(selectedBid, spec)
+      density: densityForPlot(selectedBid)
     });
     points.sort(function (first, second) {
       if (Math.abs(first.bid - second.bid) > model.EPSILON) {
@@ -941,13 +948,13 @@
     return uniqueDensityPoints(points);
   }
 
-  function densityForPlot(bid, spec) {
+  function densityForPlot(bid) {
     var density = model.highestOpponentBidDensity(
       bid,
       state.n,
       state.a,
       state.b,
-      spec
+      distributionSpec()
     );
     if (Number.isFinite(density) && density >= 0) {
       return density;
@@ -961,19 +968,24 @@
       state.n,
       state.a,
       state.b,
-      spec
+      distributionSpec()
     );
     return Number.isFinite(density) && density >= 0 ? density : 0;
   }
 
   function densityScaleMaximum(points) {
-    var maximum = 0;
-    points.forEach(function (point) {
-      if (Number.isFinite(point.density) && point.density > maximum) {
-        maximum = point.density;
-      }
+    var finite = points.map(function (point) {
+      return point.density;
+    }).filter(function (density) {
+      return Number.isFinite(density) && density > 0;
+    }).sort(function (first, second) {
+      return first - second;
     });
-    return maximum > 0 ? maximum : 1;
+
+    if (finite.length === 0) {
+      return 1;
+    }
+    return finite[finite.length - 1];
   }
 
   function densityY(value, panel) {
@@ -984,10 +996,9 @@
 
   function sampleCdf(count, selectedBid, value) {
     var points = [];
-    var spec = distributionSpec();
     var i;
     for (i = 0; i < count; i += 1) {
-      var bid = state.a + (i / (count - 1)) * (state.b - state.a);
+      var bid = state.a + (i / (count - 1)) * bidDomainSpan();
       points.push({
         bid: bid,
         cdf: model.highestOpponentBidCdf(
@@ -995,11 +1006,11 @@
           state.n,
           state.a,
           state.b,
-          spec
+          distributionSpec()
         )
       });
     }
-    [selectedBid, value].forEach(function (bid) {
+    [state.b, selectedBid, value].forEach(function (bid) {
       points.push({
         bid: bid,
         cdf: model.highestOpponentBidCdf(
@@ -1007,7 +1018,7 @@
           state.n,
           state.a,
           state.b,
-          spec
+          distributionSpec()
         )
       });
     });
@@ -1126,15 +1137,7 @@
     return ticks;
   }
 
-  function drawDensityArea(
-    svg,
-    points,
-    endBid,
-    xScale,
-    panel,
-    left,
-    winProbability
-  ) {
+  function drawDensityArea(svg, points, endBid, xScale, panel, left) {
     var selected = points.filter(function (point) {
       return point.bid <= endBid + model.EPSILON;
     });
@@ -1153,7 +1156,13 @@
       class: "winning-area",
       "data-start-bid": state.a,
       "data-end-bid": endBid,
-      "data-probability": winProbability
+      "data-probability": model.winProbability(
+        endBid,
+        state.n,
+        state.a,
+        state.b,
+        distributionSpec()
+      )
     });
   }
 
@@ -1473,7 +1482,8 @@
 
       sides.some(function (candidateSide) {
         var available = candidateSide === "right" ?
-          right - bidX : bidX - left;
+          right - bidX - horizontalPadding :
+          bidX - left - horizontalPadding;
         var candidateMatch = fitLinesToWidth(available);
         if (candidateMatch) {
           side = candidateSide;
@@ -1511,12 +1521,53 @@
     if (overbid) {
       var selectedProbabilityY = yScale(current.winProbability, panel);
       var truthfulProbabilityY = yScale(truthful.winProbability, panel);
-      placeBesideBid(negative ? "right" : "left");
-      labelY = keepLabelInPanel(
-        negative ?
-          (selectedProbabilityY + truthfulProbabilityY) / 2 :
+      var regionWidth = negative ? bidX - valueX : valueX - left;
+      var regionMatch = fitLinesToWidth(regionWidth);
+
+      if (regionMatch) {
+        lines = regionMatch.lines;
+        block = regionMatch.block;
+        widthFits = true;
+      } else {
+        lines = candidates[candidates.length - 1];
+        block = svgTextBlock(lines, characterWidth, lineHeight);
+      }
+
+      if (negative) {
+        if (regionMatch) {
+          labelX = valueX + horizontalPadding;
+          anchor = "start";
+          placement = "inside-red-area";
+        } else if (right - valueX >= block.width + horizontalPadding + 4) {
+          labelX = valueX + horizontalPadding;
+          anchor = "start";
+          placement = "red-area-right-of-value";
+        } else {
+          labelX = right - 4;
+          anchor = "end";
+          placement = "red-area-right-edge";
+        }
+        labelY = keepLabelInPanel(
+          (selectedProbabilityY + truthfulProbabilityY) / 2,
+          block
+        );
+      } else {
+        labelX = regionMatch ?
+          valueX - horizontalPadding :
+          Math.min(
+            right - 4,
+            Math.max(left + 4 + block.width, valueX - horizontalPadding)
+          );
+        anchor = "end";
+        placement = regionMatch ?
+          "inside-green-area" : "green-area-near-value";
+        labelY = keepLabelInPanel(
           (truthfulProbabilityY + baseY) / 2,
-        block
+          block
+        );
+      }
+      heightFits = block.height + 12 <= Math.abs(
+        baseY - truthfulProbabilityY
       );
     } else {
       var rectangleTop = yScale(current.winProbability, panel);

@@ -24,17 +24,17 @@
       <h1 id="page-title">The Myerson-Satterthwaite Theorem</h1>
       <p>
         A seller has an object that she may sell to a buyer. The seller has
-        value \(C \sim F_S(c)\) and the buyer has value \(V \sim F_B(v)\). We
-        assume \(F_S\) has continuous, strictly positive density \(f_S\) on its
-        support \([\underline{c},\overline{c}]\), and, likewise, \(F_B\) has
-        continuous, strictly positive density \(f_B\) on its support
+        value \(C \sim F_s(c)\) and the buyer has value \(V \sim F_b(v)\). We
+        assume \(F_s\) has continuous, strictly positive density \(f_s\) on its
+        support \([\underline{c},\overline{c}]\), and, likewise, \(F_b\) has
+        continuous, strictly positive density \(f_b\) on its support
         \([\underline{v},\overline{v}]\). We also assume the intersection of the
         supports is also an interval, that is, it is not empty and not a single
         point. The buyer and seller observe their respective values, \(v\) and
         \(c\), but not the other's.
       </p>
       <p>
-        We want to find a <em>direct</em> bargaining mechanism consisting of an allocation rule and a payment rule
+        We want to find a <em>direct</em> bargaining mechanism
         \((q(v,c),p(v,c))\) in this environment that satisfies:
       </p>
       <ol>
@@ -57,9 +57,9 @@
         </li>
       </ol>
       <p>
-        The Myerson-Satterthwaite Theorem says that a such a mechanism does not exist.
         In the interactive demo, try to design a direct bargaining mechanism
-        that satisfies these four properties. Here, \(V,C \mathrel{\overset{\mathrm{i.i.d.}}{\sim}}
+        that satisfies these four properties, or choose from a list of preset
+        mechanisms. Here, \(V,C \mathrel{\overset{\mathrm{i.i.d.}}{\sim}}
         \operatorname{Uniform}[0,1]\).
       </p>
     </section>
@@ -67,7 +67,7 @@
     <section class="explorable explorable-divider" aria-label="Allocation-rule painting interface">
       <div class="interaction-layout bilateral-layout">
         <div class="bilateral-main-column">
-          <div class="chart-column">
+          <div class="chart-column bilateral-chart-column">
             <div class="chart-frame">
               <svg
                 id="paint-chart"
@@ -84,7 +84,7 @@
             </div>
           </div>
 
-          <aside class="choice-controls" aria-label="Painting controls">
+          <aside class="choice-controls bilateral-controls" aria-label="Painting controls">
             <div class="range-group">
               <div class="range-label-row">
                 <label id="cell-value-control-label" for="cell-value-slider">Allocation probability on this triangle</label>
@@ -240,66 +240,6 @@
       </div>
 
       <p id="live-summary" class="sr-only" aria-live="polite"></p>
-    </section>
-
-    <section
-      class="derivation"
-      aria-labelledby="payment-rule-title"
-    >
-      <h2 id="payment-rule-title">Incentive compatibility, individual rationality, and the payment rule</h2>
-      <p>
-        You may wonder why you do not need to specify a payment rule in
-        addition to your allocation rule, even though a direct bargaining
-        mechanism consists of both. Before we can answer this fully, let's
-        specify the following quantities:
-      </p>
-      <p>
-        For a buyer with value \(v\), given the seller reports truthfully:
-      </p>
-      <ul>
-        <li>\(\displaystyle Q_B(v)=\int_{\underline{c}}^{\overline{c}} q(v,c)\,f_S(c)\,dc\), his interim probability of trade;</li>
-        <li>\(\displaystyle P_B(v)=\int_{\underline{c}}^{\overline{c}} p(v,c)\,f_S(c)\,dc\), his interim expected payment from the buyer;</li>
-        <li>\(\displaystyle U_B(v)=v\,Q_B(v)-P_B(v)\), his interim expected payoff;</li>
-        <li>\(\displaystyle \phi_B(v)=v-\frac{1-F_B(v)}{f_B(v)}\), his virtual value.</li>
-      </ul>
-      <p>
-        For a seller with value \(c\), given the buyer reports truthfully:
-      </p>
-      <ul>
-        <li>\(\displaystyle Q_S(c)=\int_{\underline{v}}^{\overline{v}} q(v,c)\,f_B(v)\,dv\), her interim probability of trade;</li>
-        <li>\(\displaystyle P_S(c)=\int_{\underline{v}}^{\overline{v}} p(v,c)\,f_B(v)\,dv\), her interim expected payment to the seller;</li>
-        <li>\(\displaystyle U_S(c)=P_S(c)-c\,Q_S(c)\), her interim expected payoff;</li>
-        <li>\(\displaystyle \phi_S(c)=c+\frac{F_S(c)}{f_S(c)}\), her virtual value.</li>
-      </ul>
-      <p>
-        Now, we can rewrite the IC, IR conditions as
-      </p>
-      <ul>
-        <li>IC: \(\displaystyle U_B(v)\ge vQ_B(v')-P_B(v')\), for all \(v'\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\ge P_S(c')-cQ_S(c')\), for all \(c'\in[\underline{c},\overline{c}]\);</li>
-        <li>IR: \(\displaystyle U_B(v)\ge 0\), for all \(v\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\ge 0\), for all \(c\in[\underline{c},\overline{c}]\).</li>
-      </ul>
-      <p>
-        Theorem 1 from Myerson-Satterthwaite (1983) says,
-      </p>
-      <p>
-        <strong>Theorem:</strong> For any incentive compatible mechanism,
-      </p>
-      <div class="equation-chain-steps">
-        <span class="equation-step-lhs">\(\displaystyle U_B(\underline{v})+U_S(\overline{c}) \)</span>
-        <span class="equation-step-rhs">\(\displaystyle = \min\{U_B(v)\mid v\in[\underline{v},\overline{v}]\} + \min\{U_S(c)\mid c\in[\underline{c},\overline{c}]\} \)</span>
-
-        <span class="equation-step-lhs"></span>
-        <span class="equation-step-rhs">\(\displaystyle = \int_{\underline{c}}^{\overline{c}}\int_{\underline{v}}^{\overline{v}} \big(\phi(v)-\phi(c)\big)\cdot q(v,c)\,f_B(v)f_S(c)\,dv\,dc \)</span>
-
-        <span class="equation-step-lhs"></span>
-        <span class="equation-step-rhs">\(\displaystyle = \mathbb{E}\big[(\phi(v)-\phi(c))\cdot q(v,c)\big]. \)</span>
-      </div>
-      <p>
-        Additionally, there exists a payment rule \(p(v,c)\) such that the
-        mechanism \((q(v,c),p(v,c))\) is IC and IR if and only if \(Q_B\) is weakly
-        increasing, \(Q_S\) is weakly decreasing, and
-        \(\mathbb{E}[(\phi(v)-\phi(c))\cdot q(v,c)]\ge 0\).
-      </p>
     </section>
 
     <section class="notes" aria-labelledby="notes-title">

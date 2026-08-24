@@ -566,10 +566,10 @@
             var bid = appDocument.getElementById("bid-number");
             value.value = "30";
             dispatchChange(value, appWindow);
-            bid.value = "92";
+            bid.value = "90";
             dispatchChange(bid, appWindow);
 
-            var current = model.outcomes(30, 92, 2, 0, 100);
+            var current = model.outcomes(30, 90, 2, 0, 100);
             var truthful = model.truthfulOutcomes(30, 2, 0, 100);
             var expectedLabels = appDocument.querySelectorAll(
               ".expected-payoff-label"

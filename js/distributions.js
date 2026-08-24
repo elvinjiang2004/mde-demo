@@ -85,7 +85,7 @@
         !Number.isFinite(a) || !Number.isFinite(b)) {
       throw new TypeError("Distribution bounds must be finite numbers.");
     }
-    if (a < 0 || b <= a) {
+    if (a < 0 || b <= a || !Number.isFinite(b - a)) {
       throw new RangeError("Distribution bounds must satisfy 0 <= a < b.");
     }
 
@@ -129,7 +129,7 @@
   function pdf(x, a, b, spec) {
     var normalized = validate(a, b, spec);
     requireNumericArgument(x, "x");
-    if (x < a || x > b) {
+    if (x < a || x > b || x === -Infinity || x === Infinity) {
       return 0;
     }
 

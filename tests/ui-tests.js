@@ -152,9 +152,9 @@
             'mjx-merror, [data-mml-node="merror"], .MathJax_Error'
           ),
             "Every TeX expression should render without a MathJax error.");
-          assert(Array.from(appDocument.querySelectorAll(".equation-chain-steps"))
-            .every(function (chain) {
-              return appWindow.getComputedStyle(chain).overflowX === "auto";
+          assert(Array.from(appDocument.querySelectorAll(".plain-formula"))
+            .every(function (formula) {
+              return appWindow.getComputedStyle(formula).overflowX === "auto";
             }),
           "Display formulas should contain long MathJax output at compact widths.");
           assert(!appDocument.querySelector("#tradeoff-chart mjx-container") &&
@@ -309,19 +309,14 @@
               !derivation.hasAttribute("data-distribution-specific") &&
               derivation.querySelector("h2").textContent ===
                 "Optimal bid for bidder 1" &&
-              derivation.querySelectorAll(
-                "#expected-utility-proof .equation-step-rhs:not(.equation-step-extra)"
-              ).length === 6 &&
-              derivation.querySelectorAll(
-                "#optimality-gap-proof .equation-step-rhs:not(.equation-step-extra)"
-              ).length === 2,
+              derivation.querySelectorAll('mjx-container[display="true"]').length === 2,
             "The general optimal-bid proof should be visible for Beta(1,1).");
-            var expectedUtilitySource = Array.from(derivation.querySelectorAll(
+            var expectedUtilitySource = derivation.querySelector(
               '#expected-utility-proof [data-mml-node="math"]'
-            )).map(function (node) { return node.dataset.latex; }).join(" ");
-            var optimalityGapSource = Array.from(derivation.querySelectorAll(
+            ).dataset.latex;
+            var optimalityGapSource = derivation.querySelector(
               '#optimality-gap-proof [data-mml-node="math"]'
-            )).map(function (node) { return node.dataset.latex; }).join(" ");
+            ).dataset.latex;
             assert(derivation.querySelector(
               '[data-mml-node="math"][data-latex="G(y)=F(y)^{n-1}"]'
             ) &&
@@ -349,74 +344,6 @@
             assert(!controls.hidden && !derivation.hidden,
               "Returning both shapes to one should preserve the controls and proof.");
           });
-        }
-      },
-      {
-        name: "Equation-chain dividers reveal only the authored extra steps",
-        run: function () {
-          var toggles = Array.from(appDocument.querySelectorAll(
-            ".equation-chain-divider-toggle"
-          ));
-          assert(toggles.length === 6,
-            "The expected-utility chain's 5 internal gaps and the " +
-              "optimality-gap chain's 1 internal gap should each expose " +
-              "their own divider.");
-          var activeToggles = toggles.filter(function (toggle) {
-            return !toggle.hidden;
-          });
-          assert(activeToggles.length === 2 &&
-            toggles.filter(function (toggle) { return toggle.hidden; }).length === 4,
-          "Only the two gaps with authored extra rows should expose a control.");
-          assert(toggles.every(function (toggle) {
-            return toggle.getAttribute("aria-expanded") === "false";
-          }), "Every divider should start collapsed.");
-          assert(appDocument.querySelectorAll(
-            ".equation-step-rhs.equation-step-extra"
-          ).length === 5,
-          "The two expanded derivations should contain the five authored extra equations.");
-          var rules = appDocument.querySelectorAll(".equation-chain-divider-rule");
-          assert(rules.length === 2 && Array.from(rules).every(function (rule) {
-            return rule.hidden;
-          }), "Each authored block should have one initially hidden closing rule.");
-
-          var toggle = activeToggles[0];
-          var rows = [];
-          var node = toggle.nextElementSibling;
-          while (node && node.classList.contains("equation-step-extra")) {
-            rows.push(node);
-            node = node.nextElementSibling;
-          }
-          var ordinaryRhs = appDocument.querySelector(
-            "#expected-utility-proof .equation-step-rhs:not(.equation-step-extra)"
-          );
-          var extraRhs = rows.filter(function (row) {
-            return row.classList.contains("equation-step-rhs");
-          })[0];
-          try {
-            var ordinaryStyle = appWindow.getComputedStyle(ordinaryRhs);
-            var extraStyle = appWindow.getComputedStyle(extraRhs);
-            ["gridColumnStart", "border", "backgroundColor", "padding",
-              "fontFamily", "fontSize"].forEach(function (property) {
-              assert(extraStyle[property] === ordinaryStyle[property],
-                "An extra step's " + property + " should match an ordinary " +
-                  "step's exactly, so it renders seamlessly inline.");
-            });
-
-            var toggleStyle = appWindow.getComputedStyle(toggle);
-            assert(toggleStyle.gridColumnStart === "1" &&
-              toggleStyle.gridColumnEnd === "-1",
-            "A divider toggle should span the full chain width, not one column.");
-
-            toggle.click();
-            assert(toggle.getAttribute("aria-expanded") === "true" &&
-              rows.every(function (row) { return !row.hidden; }) &&
-              node.classList.contains("equation-chain-divider-rule") && !node.hidden,
-            "Clicking the divider should reveal its authored rows and closing rule.");
-          } finally {
-            if (toggle.getAttribute("aria-expanded") === "true") {
-              toggle.click();
-            }
-          }
         }
       },
       {
@@ -990,6 +917,9 @@
             input(value);
             bid.value = "49";
             input(bid);
+            var narrowRectangle = appDocument.querySelector(
+              ".expected-payoff-rectangle"
+            );
             var narrowLabel = appDocument.querySelector(
               ".expected-payoff-label"
             );

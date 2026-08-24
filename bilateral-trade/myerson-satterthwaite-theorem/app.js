@@ -43,7 +43,7 @@
   };
   var dragActive = false;
   var dragFrameRequested = false;
-  var paintFrameRequested = false;
+  var mathReadyPromise = null;
 
   document.addEventListener("DOMContentLoaded", initialize);
 
@@ -91,8 +91,10 @@
     return document.getElementById(id);
   }
 
-  // --- MathJax: all HTML mathematics is static, so a single initial typeset
-  // (with no dynamic re-typesetting) satisfies the shared contract.
+  // --- MathJax: the only remaining HTML mathematics is the diagnostic
+  // figure captions (the selected-cell control label is now dynamic plain
+  // text, not TeX), so a single initial typeset (no dynamic re-typesetting)
+  // satisfies the shared contract.
   function waitForMathJax() {
     function readyMathJax() {
       var mathJax = window.MathJax;
@@ -123,9 +125,9 @@
 
   function typesetInitialHtmlMath() {
     var targets = Array.prototype.slice.call(document.querySelectorAll(
-      ".introduction, .choice-controls, .explorable, .derivation, .notes, .references"
+      ".introduction, .choice-controls, .explorable, .notes, .references"
     ));
-    window.mechanismMathReady = waitForMathJax().then(function (mathJax) {
+    mathReadyPromise = waitForMathJax().then(function (mathJax) {
       if (!mathJax || targets.length === 0) {
         return null;
       }
@@ -133,6 +135,7 @@
     }).catch(function () {
       // Raw TeX remains visible when the renderer is unavailable.
     });
+    window.mechanismMathReady = mathReadyPromise;
   }
 
   // --- Events
@@ -275,17 +278,7 @@
 
   function paintTriangle(i, j, isLower) {
     hidePostedPriceControl();
-    var selectionChanged = state.selected.i !== i || state.selected.j !== j ||
-      state.selected.isLower !== isLower;
-    var currentValue = isLower ? state.grid.lower[i][j] : state.grid.upper[i][j];
     state.selected = { i: i, j: j, isLower: isLower };
-    if (currentValue === state.cellValue) {
-      syncCellControls();
-      if (selectionChanged && state.lastSummary) {
-        schedulePaintChart();
-      }
-      return;
-    }
     if (isLower) {
       state.grid.lower[i][j] = state.cellValue;
     } else {
@@ -316,15 +309,7 @@
     if (!Number.isFinite(value)) {
       return;
     }
-    var nextValue = model.clamp(value, 0, 1);
-    var currentValue = state.selected.isLower ?
-      state.grid.lower[state.selected.i][state.selected.j] :
-      state.grid.upper[state.selected.i][state.selected.j];
-    state.cellValue = nextValue;
-    if (currentValue === nextValue) {
-      syncCellControls();
-      return;
-    }
+    state.cellValue = model.clamp(value, 0, 1);
     if (state.selected.isLower) {
       state.grid.lower[state.selected.i][state.selected.j] = state.cellValue;
     } else {
@@ -357,10 +342,7 @@
     if (!Number.isFinite(price)) {
       return;
     }
-    var boundedPrice = model.clamp(price, 0, 1);
-    state.postedPrice = Number((
-      Math.round(boundedPrice / CELL_SIZE) * CELL_SIZE
-    ).toFixed(10));
+    state.postedPrice = model.clamp(price, 0, 1);
     elements.postedPriceSlider.value = String(state.postedPrice);
     elements.postedPriceNumber.value = formatQ(state.postedPrice);
     applyPreset(model.postedPriceGrid(state.postedPrice));
@@ -386,21 +368,6 @@
     window.requestAnimationFrame(function () {
       dragFrameRequested = false;
       recomputeAndDrawAll();
-    });
-  }
-
-  function schedulePaintChart() {
-    if (paintFrameRequested || dragFrameRequested) {
-      return;
-    }
-    paintFrameRequested = true;
-    window.requestAnimationFrame(function () {
-      paintFrameRequested = false;
-      // A full repaint requested later in the same frame supersedes this
-      // selection-only redraw.
-      if (!dragFrameRequested && state.lastSummary) {
-        drawPaintChart(state.lastSummary);
-      }
     });
   }
 
@@ -581,7 +548,7 @@
     var svg = elements.paintChart;
     svg.replaceChildren();
     appendSvg(svg, "title", { id: "paint-chart-title" }, "Allocation rule q(v,c)");
-    appendSvg(svg, "desc", { id: "paint-chart-description" }, paintChartDescription());
+    appendSvg(svg, "desc", { id: "paint-chart-description" }, paintChartDescription(summary));
 
     appendSvg(svg, "text", {
       x: MAIN_LAYOUT.left, y: 24, class: "panel-caption"
@@ -812,14 +779,14 @@
             appendSvg(svg, "polygon", {
               points: points,
               fill: mixColor(WHITE, ORANGE, model.clamp(overGrid[i][j], 0, 1)),
-              opacity: 0.55
+              opacity: 0.55, class: "overtrade-fill"
             });
             drawTickAt(svg, cx, cy, triangleSize, "overtrade-mark", 1);
           } else if (underGrid[i][j] > MISMATCH_THRESHOLD) {
             appendSvg(svg, "polygon", {
               points: points,
               fill: mixColor(WHITE, BLUE, model.clamp(underGrid[i][j], 0, 1)),
-              opacity: 0.55
+              opacity: 0.55, class: "undertrade-fill"
             });
             drawTickAt(svg, cx, cy, triangleSize, "undertrade-mark", -1);
           }
@@ -861,9 +828,17 @@
       } else {
         p.textContent = line.text;
       }
-      p.className = "verdict-" + line.state;
+      p.className = line.state === "pass" ? "verdict-pass" :
+        (line.state === "fail" ? "verdict-fail" : "verdict-neutral");
       container.appendChild(p);
     });
+    if (lines.some(function (line) { return line.state === "fail"; })) {
+      container.dataset.state = "fail";
+    } else if (lines.some(function (line) { return line.state === "pass"; })) {
+      container.dataset.state = "pass";
+    } else {
+      container.dataset.state = "neutral";
+    }
   }
 
   function updateDiagnosticText(summary) {
@@ -958,7 +933,7 @@
 
   // --- Accessible descriptions
 
-  function paintChartDescription() {
+  function paintChartDescription(summary) {
     return "A " + R + " by " + R + " paintable grid of 0.05 by 0.05 cells, " +
       "each split by its own diagonal into two independently paintable " +
       "triangles, holding the probability of trade q. The selected " +

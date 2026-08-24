@@ -35,7 +35,6 @@
     right: 975
   };
   var resizeTimer = null;
-  var valuePdfSignature = null;
 
   document.addEventListener("DOMContentLoaded", initialize);
 
@@ -66,7 +65,6 @@
 
     typesetInitialHtmlMath();
     bindEvents();
-    initEquationChainDividers();
     syncControlsFromState();
     render();
   }
@@ -304,45 +302,6 @@
     window.addEventListener("resize", function () {
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(render, 100);
-    });
-  }
-
-  function initEquationChainDividers() {
-    var toggles = Array.prototype.slice.call(
-      document.querySelectorAll(".equation-chain-divider-toggle")
-    );
-
-    toggles.forEach(function (toggle) {
-      var rows = [];
-      var node = toggle.nextElementSibling;
-      while (node && node.classList.contains("equation-step-extra")) {
-        rows.push(node);
-        node = node.nextElementSibling;
-      }
-
-      if (rows.length === 0) {
-        return;
-      }
-
-      var bottomRule = document.createElement("div");
-      bottomRule.className = "equation-chain-divider-rule";
-      bottomRule.hidden = true;
-      rows[rows.length - 1].after(bottomRule);
-
-      toggle.hidden = false;
-      var glyph = toggle.querySelector(".equation-chain-divider-toggle-glyph");
-
-      toggle.addEventListener("click", function () {
-        var expanded = toggle.getAttribute("aria-expanded") === "true";
-        rows.forEach(function (row) {
-          row.hidden = expanded;
-        });
-        bottomRule.hidden = expanded;
-        toggle.setAttribute("aria-expanded", String(!expanded));
-        if (glyph) {
-          glyph.textContent = expanded ? "+" : "−";
-        }
-      });
     });
   }
 
@@ -587,11 +546,6 @@
     if (!svg) {
       return;
     }
-    var signature = [state.a, state.b, state.alpha, state.beta].join("|");
-    if (signature === valuePdfSignature && svg.childNodes.length > 0) {
-      return;
-    }
-    valuePdfSignature = signature;
 
     var width = 320;
     var height = 120;
@@ -752,7 +706,7 @@
     var cdfHeight = layout.cdfHeight;
     var cdfBottom = cdfTop + cdfHeight;
     var span = state.b - state.a;
-    var samples = sampleWinningProbabilities(321);
+    var samples = sampleOutcomes(321);
     var densitySamples = sampleDensity(361, current.bid);
     var densityPeak = densityScaleMaximum(densitySamples.curve);
 
@@ -797,8 +751,7 @@
       Math.min(current.bid, current.maximumEquilibriumBid),
       xScale,
       densityPanel,
-      left,
-      current.winProbability
+      left
     );
     drawCurve(
       svg,
@@ -960,20 +913,20 @@
     );
   }
 
-  function sampleWinningProbabilities(count) {
+  function sampleOutcomes(count) {
     var points = [];
     var span = state.b - state.a;
-    var spec = distributionSpec();
     var i;
 
     for (i = 0; i < count; i += 1) {
-      var bid = state.a + (i / (count - 1)) * span;
-      points.push({
-        bid: bid,
-        winProbability: model.winProbability(
-          bid, state.n, state.a, state.b, spec
-        )
-      });
+      points.push(model.outcomes(
+        state.value,
+        state.a + (i / (count - 1)) * span,
+        state.n,
+        state.a,
+        state.b,
+        distributionSpec()
+      ));
     }
 
     [
@@ -993,13 +946,14 @@
         distributionSpec()
       )
     ].forEach(function (bid) {
-      var boundedBid = model.clamp(bid, state.a, state.b);
-      points.push({
-        bid: boundedBid,
-        winProbability: model.winProbability(
-          boundedBid, state.n, state.a, state.b, spec
-        )
-      });
+      points.push(model.outcomes(
+        state.value,
+        model.clamp(bid, state.a, state.b),
+        state.n,
+        state.a,
+        state.b,
+        distributionSpec()
+      ));
     });
 
     points.sort(function (first, second) {
@@ -1073,13 +1027,18 @@
   }
 
   function densityScaleMaximum(points) {
-    var maximum = 0;
-    points.forEach(function (point) {
-      if (Number.isFinite(point.density) && point.density > maximum) {
-        maximum = point.density;
-      }
+    var finite = points.map(function (point) {
+      return point.density;
+    }).filter(function (density) {
+      return Number.isFinite(density) && density > 0;
+    }).sort(function (first, second) {
+      return first - second;
     });
-    return maximum > 0 ? maximum : 1;
+
+    if (finite.length === 0) {
+      return 1;
+    }
+    return finite[finite.length - 1];
   }
 
   function densityY(value, panel) {
@@ -1199,15 +1158,7 @@
     });
   }
 
-  function drawDensityArea(
-    svg,
-    points,
-    endBid,
-    xScale,
-    panel,
-    left,
-    winProbability
-  ) {
+  function drawDensityArea(svg, points, endBid, xScale, panel, left) {
     if (endBid <= state.a + model.EPSILON) {
       return;
     }
@@ -1243,7 +1194,13 @@
       class: "winning-area",
       "data-metric": "win-probability",
       "data-end-bid": endBid,
-      "data-probability": winProbability
+      "data-probability": model.winProbability(
+        endBid,
+        state.n,
+        state.a,
+        state.b,
+        distributionSpec()
+      )
     });
   }
 

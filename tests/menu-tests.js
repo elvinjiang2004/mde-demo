@@ -38,25 +38,23 @@
         }
       },
       {
-        name: "Auctions, Bilateral Trade, and General Topics are the only categories",
+        name: "Auctions and Bilateral Trade are the only categories",
         run: function () {
           var categories = menuDocument.querySelectorAll(".module-category");
-          assert(categories.length === 3,
-            "The menu should contain exactly three categories.");
+          assert(categories.length === 2,
+            "The menu should contain exactly two categories.");
           var titles = Array.from(categories).map(function (category) {
             return category.querySelector("h2").textContent;
           });
-          assert(titles[0] === "Auctions" && titles[1] === "Bilateral Trade" &&
-            titles[2] === "General Topics",
-          "The categories should be Auctions, Bilateral Trade, and General " +
-            "Topics, in order.");
+          assert(titles[0] === "Auctions" && titles[1] === "Bilateral Trade",
+            "The categories should be Auctions and Bilateral Trade, in order.");
         }
       },
       {
         name: "Modules are arranged in category rows",
         run: function () {
           var rows = menuDocument.querySelectorAll(".module-row");
-          assert(rows.length === 3 &&
+          assert(rows.length === 2 &&
             Array.from(rows).every(function (row) {
               return menuWindow.getComputedStyle(row).display === "flex";
             }),
@@ -65,8 +63,6 @@
             "The Auctions row should contain two module entries.");
           assert(rows[1].querySelectorAll(":scope > li").length === 1,
             "The Bilateral Trade row should contain one module entry.");
-          assert(rows[2].querySelectorAll(":scope > li").length === 2,
-            "The General Topics row should contain two module entries.");
         }
       },
       {
@@ -93,9 +89,8 @@
           assert(link.querySelector(".module-title").textContent ===
             "Second-Price Auction Equilibrium",
           "The second-price module title is incorrect.");
-          assert(menuDocument.querySelectorAll(".module-link").length === 5,
-            "Both auction modules, the bilateral-trade module, and both " +
-            "General Topics modules should be links.");
+          assert(menuDocument.querySelectorAll(".module-link").length === 3,
+            "Both auction modules and the bilateral-trade module should be links.");
           assert(!menuDocument.querySelector(".module-pending") &&
             !menuDocument.querySelector('[aria-disabled="true"]'),
           "No implemented module should remain disabled.");
@@ -112,32 +107,6 @@
           assert(link.querySelector(".module-title").textContent ===
             "Myerson-Satterthwaite Theorem",
           "The bilateral-trade module title is incorrect.");
-        }
-      },
-      {
-        name: "The envelope-theorem module is selectable",
-        run: function () {
-          var link = menuDocument.querySelector(
-            'a.module-link[href="general-topics/envelope-theorem/index.html"]'
-          );
-          assert(link,
-            "The envelope-theorem module should use its explicit index.html route.");
-          assert(link.querySelector(".module-title").textContent ===
-            "The Envelope Theorem",
-          "The envelope-theorem module title is incorrect.");
-        }
-      },
-      {
-        name: "The payments-from-allocation-rule (draft) module is selectable",
-        run: function () {
-          var link = menuDocument.querySelector(
-            'a.module-link[href="general-topics/payments-from-allocation-rule/index.html"]'
-          );
-          assert(link,
-            "The payments-from-allocation-rule module should use its explicit index.html route.");
-          assert(link.querySelector(".module-title").textContent ===
-            "Payments from an Allocation Rule (draft)",
-          "The payments-from-allocation-rule module title is incorrect.");
         }
       }
     ];

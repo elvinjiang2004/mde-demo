@@ -452,68 +452,13 @@ input[type="range"] {
   margin-top: 2.2rem;
 }
 
-.equation-chain-steps {
-  display: grid;
-  grid-template-columns: max-content max-content;
-  column-gap: 0.6rem;
-  row-gap: 0.5rem;
-  align-items: baseline;
+.plain-formula {
   margin: 1.35rem 0 1.5rem 1.5rem;
+  font-size: 1.12rem;
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  font-size: 1.12rem;
-}
-
-.equation-step-lhs,
-.equation-step-rhs {
-  white-space: nowrap;
-}
-
-.equation-chain-divider-rule {
-  grid-column: 1 / -1;
-  height: 1px;
-  margin: 0.3rem 0;
-  background: var(--line-light);
-}
-
-.equation-chain-divider-toggle {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  min-height: 20px;
-  margin: 0.1rem 0;
-  padding: 0;
-  color: var(--muted);
-  background: transparent;
-  border: 0;
-  cursor: pointer;
-}
-
-.equation-chain-divider-toggle::before,
-.equation-chain-divider-toggle::after {
-  content: "";
-  flex: 1 1 auto;
-  height: 1px;
-  background: var(--line);
-}
-
-.equation-chain-divider-toggle:hover::before,
-.equation-chain-divider-toggle:hover::after {
-  background: var(--blue);
-}
-
-.equation-chain-divider-toggle-glyph {
-  flex: 0 0 auto;
-  margin: 0 0.6rem;
-  font-family: var(--text-font);
-  font-size: 0.85rem;
-  line-height: 1;
-}
-
-.equation-chain-divider-toggle:hover .equation-chain-divider-toggle-glyph {
-  color: var(--blue);
+  overflow-wrap: anywhere;
 }
 
 .site-footer {
@@ -903,6 +848,7 @@ input[type="range"] {
 
 .bilateral-paint-chart {
   max-width: 480px;
+  cursor: crosshair;
 }
 
 .bilateral-layout {
@@ -921,6 +867,14 @@ input[type="range"] {
   gap: 1.6rem;
 }
 
+.bilateral-chart-column {
+  min-width: 0;
+}
+
+.bilateral-controls {
+  min-width: 0;
+}
+
 /* The paint-value slider only needs to be as wide as a single diagnostic
    panel: it selects an "ink" level, not a wide continuous range. */
 .bilateral-cell-slider {
@@ -934,6 +888,7 @@ input[type="range"] {
 .preset-buttons {
   margin-top: 1.5rem;
   display: flex;
+  flex-direction: row;
   flex-wrap: wrap;
   align-items: baseline;
   column-gap: 1rem;
@@ -999,6 +954,10 @@ input[type="range"] {
   color: var(--red);
 }
 
+.verdict-neutral {
+  color: var(--ink);
+}
+
 .axis-title {
   fill: var(--muted);
   font-family: var(--text-font);
@@ -1052,217 +1011,6 @@ input[type="range"] {
 .undertrade-mark {
   stroke: var(--blue);
   stroke-width: 1.6;
-}
-
-/* Shared "main chart + two diagnostic panels" layout */
-/* Originally written for the envelope-theorem module, this layout is now
-   shared verbatim by both General Topics modules that use it (the current
-   envelope-theorem module and the payments-from-allocation-rule module):
-   the main chart (660x450 viewBox, see each module's app.js) is
-   deliberately larger than the two diagnostic panels, which share their
-   own smaller 440x300 layout and this same max-width so they match each
-   other. The two column widths together (plus gap) land close to the
-   other modules' combined demo-area width. */
-.envelope-curve-chart {
-  max-width: 660px;
-  cursor: default;
-}
-
-.envelope-layout {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  width: 100%;
-  gap: 2rem;
-}
-
-.envelope-main-column {
-  min-width: 0;
-  flex: 0 1 660px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.6rem;
-}
-
-.envelope-controls {
-  min-width: 0;
-}
-
-.envelope-point-slider {
-  max-width: 320px;
-}
-
-.point-count-buttons {
-  margin-top: 1.2rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.point-count-buttons .text-button {
-  margin-top: 0;
-}
-
-.point-count-buttons .text-button:disabled {
-  color: var(--muted);
-  cursor: not-allowed;
-}
-
-.envelope-diagnostic-column {
-  min-width: min(440px, 100%);
-  flex: 1 1 440px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.8rem;
-}
-
-.envelope-diagnostic-chart {
-  max-width: 440px;
-  cursor: default;
-}
-
-/* Payments-from-allocation-rule module (draft) */
-.control-point {
-  fill: #fff;
-  stroke: var(--blue);
-  stroke-width: 2.2;
-  cursor: ns-resize;
-}
-
-.control-point-selected {
-  stroke: var(--ink);
-  stroke-width: 2.6;
-}
-
-.curve-q {
-  stroke: var(--blue);
-  stroke-width: 2.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.rent-curve {
-  stroke: var(--green);
-  stroke-width: 2.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.rent-area {
-  fill: rgba(35, 116, 81, 0.14);
-  stroke: none;
-}
-
-.deviation-line {
-  stroke: #b7b2a9;
-  stroke-width: 1.1;
-}
-
-.deviation-line-violation {
-  stroke: var(--red);
-  stroke-width: 1.4;
-}
-
-.deviation-line-selected {
-  stroke: var(--blue);
-  stroke-width: 2;
-}
-
-.tangency-point {
-  fill: #fff;
-  stroke: #918b82;
-  stroke-width: 1.2;
-}
-
-.payment-curve {
-  stroke: var(--orange);
-  stroke-width: 2.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* Envelope-theorem module */
-/* Line/segment/bar colors are set per element in app.js (stroke/fill
-   attributes keyed to each line's own letter), not here -- these rules
-   intentionally carry no color of their own. */
-.family-line {
-  stroke-width: 2;
-  fill: none;
-  opacity: 0.55;
-}
-
-.envelope-segment {
-  stroke-width: 3.2;
-  fill: none;
-  stroke-linecap: round;
-}
-
-.kink-marker {
-  fill: var(--ink);
-  stroke: #fff;
-  stroke-width: 1;
-}
-
-.line-endpoint {
-  fill: #fff;
-  stroke-width: 2.2;
-  cursor: move;
-}
-
-.line-endpoint-selected {
-  stroke-width: 2.8;
-}
-
-.point-letter {
-  font-family: var(--text-font);
-  font-size: 11px;
-  font-weight: 700;
-  pointer-events: none;
-}
-
-.point-control-heading {
-  margin: 0 0 0.9rem;
-  color: var(--ink);
-  font-family: var(--text-font);
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-
-.envelope-segment-clamped {
-  stroke-width: 3.2;
-  stroke-linecap: round;
-  stroke-dasharray: 1 5;
-}
-
-.slope-step {
-  stroke-width: 3;
-  fill: none;
-  stroke-linecap: round;
-}
-
-.slope-endpoint {
-  stroke: none;
-}
-
-.slope-jump-guide {
-  stroke: #b7b2a9;
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
-}
-
-.slope-infinite-marker {
-  stroke-width: 1.6;
-  stroke-dasharray: 2 4;
-}
-
-.bound-bar {
-  stroke: none;
-}
-
-.bound-max-guide {
-  stroke: var(--ink);
-  stroke-width: 1;
-  stroke-dasharray: 5 3;
 }
 
 @media (max-width: 1050px) {
@@ -1348,7 +1096,7 @@ input[type="range"] {
     gap: 0.9rem;
   }
 
-  .equation-chain-steps {
+  .plain-formula {
     margin-left: 0;
   }
 
