@@ -3,7 +3,7 @@
 
   var EPSILON = 1e-12;
   var ROOT_ITERATIONS = 20;
-  var maximumBidCache = Object.create(null);
+  var maximumBidCache = null;
   var inverseCache = null;
 
   function isFiniteNumber(value) {
@@ -52,34 +52,6 @@
     ].join("|");
   }
 
-  function appendDistributionErrors(errors, validation) {
-    if (validation === undefined || validation === null || validation === true) {
-      return;
-    }
-
-    if (validation === false) {
-      errors.push("The distribution specification is invalid.");
-      return;
-    }
-
-    if (Array.isArray(validation)) {
-      validation.forEach(function (message) {
-        errors.push(String(message));
-      });
-      return;
-    }
-
-    if (validation.valid === false) {
-      if (Array.isArray(validation.errors) && validation.errors.length > 0) {
-        validation.errors.forEach(function (message) {
-          errors.push(String(message));
-        });
-      } else {
-        errors.push("The distribution specification is invalid.");
-      }
-    }
-  }
-
   function validateAuction(n, a, b, spec) {
     var errors = [];
 
@@ -93,16 +65,11 @@
       errors.push("The lower bound a must be nonnegative.");
     } else if (!(b > a)) {
       errors.push("The upper bound b must be strictly greater than the lower bound a.");
-    } else if (!Number.isFinite(b - a)) {
-      errors.push("The distance between a and b must be finite.");
     }
 
     if (errors.length === 0) {
       try {
-        appendDistributionErrors(
-          errors,
-          distributions().validate(a, b, spec)
-        );
+        distributions().validate(a, b, spec);
       } catch (error) {
         errors.push(error && error.message ?
           error.message :
@@ -201,11 +168,12 @@
   function maximumEquilibriumBid(n, a, b, spec) {
     requireValidAuction(n, a, b, spec);
     var key = auctionKey(n, a, b, spec);
-    if (Object.prototype.hasOwnProperty.call(maximumBidCache, key)) {
-      return maximumBidCache[key];
+    if (maximumBidCache && maximumBidCache.key === key) {
+      return maximumBidCache.value;
     }
-    maximumBidCache[key] = equilibriumBid(b, n, a, b, spec);
-    return maximumBidCache[key];
+    var value = equilibriumBid(b, n, a, b, spec);
+    maximumBidCache = { key: key, value: value };
+    return value;
   }
 
   function opponentValueCutoff(bid, n, a, b, spec) {
@@ -287,13 +255,9 @@
     return candidate;
   }
 
-  function opponentBidPercentile(bid, n, a, b, spec) {
-    var cutoff = opponentValueCutoff(bid, n, a, b, spec);
-    return distributionCdf(cutoff, a, b, spec);
-  }
-
   function winProbability(bid, n, a, b, spec) {
-    var percentile = opponentBidPercentile(bid, n, a, b, spec);
+    var cutoff = opponentValueCutoff(bid, n, a, b, spec);
+    var percentile = distributionCdf(cutoff, a, b, spec);
     return clamp(Math.pow(percentile, n - 1), 0, 1);
   }
 
@@ -361,20 +325,15 @@
     return (value - bid) * winProbability(bid, n, a, b, spec);
   }
 
-  function expectedPayment(bid, n, a, b, spec) {
-    requireValidAuction(n, a, b, spec);
-    if (!isFiniteNumber(bid) || bid < a - EPSILON || bid > b + EPSILON) {
-      throw new RangeError("Bid must lie in [a, b].");
-    }
-    return bid * winProbability(bid, n, a, b, spec);
-  }
-
   function outcomes(value, bid, n, a, b, spec) {
     requireValidChoice(n, a, b, value, bid, spec);
 
     var boundedValue = clamp(value, a, b);
     var boundedBid = clamp(bid, a, b);
-    var probability = winProbability(boundedBid, n, a, b, spec);
+    var cutoff = opponentValueCutoff(boundedBid, n, a, b, spec);
+    var probability = clamp(Math.pow(
+      distributionCdf(cutoff, a, b, spec), n - 1
+    ), 0, 1);
     var paymentIfWin = boundedBid;
     var surplusIfWin = boundedValue - boundedBid;
 
@@ -390,7 +349,7 @@
       surplusIfWin: surplusIfWin,
       expectedPayment: paymentIfWin * probability,
       expectedPayoff: surplusIfWin * probability,
-      opponentValueCutoff: opponentValueCutoff(boundedBid, n, a, b, spec),
+      opponentValueCutoff: cutoff,
       maximumEquilibriumBid: maximumEquilibriumBid(n, a, b, spec)
     };
   }
@@ -398,26 +357,6 @@
   function equilibriumOutcomes(value, n, a, b, spec) {
     var bid = equilibriumBid(value, n, a, b, spec);
     return outcomes(value, bid, n, a, b, spec);
-  }
-
-  function equilibriumExpectedPayoff(value, n, a, b, spec) {
-    requireValidAuction(n, a, b, spec);
-    if (!isFiniteNumber(value) || value < a - EPSILON || value > b + EPSILON) {
-      throw new RangeError("Value must lie in [a, b].");
-    }
-
-    var boundedValue = clamp(value, a, b);
-    if (isUniformEquivalent(spec)) {
-      return Math.pow(boundedValue - a, n) /
-        (n * Math.pow(b - a, n - 1));
-    }
-
-    return integrate(function (candidate) {
-      return Math.pow(
-        distributionCdf(candidate, a, b, spec),
-        n - 1
-      );
-    }, a, boundedValue);
   }
 
   global.FPAModel = Object.freeze({
@@ -428,13 +367,10 @@
     equilibriumBid: equilibriumBid,
     maximumEquilibriumBid: maximumEquilibriumBid,
     opponentValueCutoff: opponentValueCutoff,
-    opponentBidPercentile: opponentBidPercentile,
     winProbability: winProbability,
     highestOpponentBidDensity: highestOpponentBidDensity,
     expectedPayoff: expectedPayoff,
-    expectedPayment: expectedPayment,
     outcomes: outcomes,
-    equilibriumOutcomes: equilibriumOutcomes,
-    equilibriumExpectedPayoff: equilibriumExpectedPayoff
+    equilibriumOutcomes: equilibriumOutcomes
   });
 })(window);

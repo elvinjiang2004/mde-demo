@@ -1,0 +1,13 @@
+After playing with the bid slider for a few different settings, you may notice that the best you can do for bidder 1 across all possible values he may have is to follow the same bidding strategy as everyone else. Let's verify this more rigorously.
+Denote the distribution of Y_1 G(v)=F(v)^(n-1). First, notice that it is not optimal to bid above Beta^I(b), since, by assumption, nobody else will bid above Beta^I(b), and, similarly, it is not optimal to bid below Beta^I(a)=a. Then, lets compare bidding Beta^I(x_i) with bidding Beta^I(z), where z\in[a,b]. 
+E[u(v_1,Beta(z)]=Probability of winning with bid Beta(z) X payoff upon winning with value v_1 and bid Beta(z)
+= G(z)(v_1-Beta(z))
+= G(z)v_1-G(z)E(Y_1|Y_1\leq z]
+= G(z)v_1-\int_0^z vg(v)dv
+= G(z)v_1-G(z)z + int_0^z G(v)dv
+= G(z)(v_1-z) + int_0^z G(v)dv
+
+Then, 
+E[u(v_1,Beta(v_1)]-E[u(v_1,Beta(z)] = G(v_1)(v_1-v_1) + int_0^v_1 G(v)dv- (G(z)(v_1-z) + int_0^z G(v)dv)
+= G(z)(z-v_1) + int_z^v_1 G(v)dv.
+Notice that for all z\in[a,b], this difference is weakly positive. Thus, given bidders 2,...,n bid according to Beta^I, it is optimal for bidder 1 to also bid according to Beta^1.

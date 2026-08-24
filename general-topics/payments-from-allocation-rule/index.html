@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Draft module, pending rework: paint an allocation curve Q(v) with up to nine draggable points and watch the incentive-compatible payment rule and its global-IC envelope update live.">
+  <title>Payments from an Allocation Rule (draft) | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="model.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to the main content</a>
+
+  <header class="site-header">
+    <page-header category="General Topics" home="../../index.html"></page-header>
+  </header>
+
+  <main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">Payments from an Allocation Rule (draft)</h1>
+      <!-- WORK IN PROGRESS: this module was originally built and titled
+           "The Envelope Theorem," using a single-agent quasilinear
+           allocation/payment (Q,P) construction as its running example. At
+           the user's direction that name and slot are being freed for a
+           new, more general module demonstrating Theorem 2 of Milgrom and
+           Segal's "Envelope Theorems for Arbitrary Choice Sets" (2002)
+           directly, without any mechanism-design/IC framing. This page's
+           existing content may instead become the seed of a future revenue
+           -equivalence or optimal-auction module -- not decided yet. Add
+           user-authored introduction here if this module's scope firms up:
+           the single-agent quasilinear environment, the allocation/payment
+           rule (Q,P), and the interactive task (painting Q and reading off
+           what local incentive compatibility forces onto U and P). -->
+    </section>
+
+    <section class="explorable explorable-divider" aria-label="Allocation-curve interface">
+      <div class="envelope-layout">
+        <div class="envelope-main-column">
+          <div class="chart-column">
+            <div class="chart-frame">
+              <svg
+                id="curve-chart"
+                class="tradeoff-chart envelope-curve-chart"
+                viewBox="0 0 660 450"
+                role="img"
+                tabindex="0"
+                aria-labelledby="curve-chart-title curve-chart-description"
+                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
+              >
+                <title id="curve-chart-title">Allocation rule Q(v)</title>
+                <desc id="curve-chart-description">A smooth, shape-preserving cubic Hermite curve through up to nine draggable control points, giving the probability of allocation as a function of type v.</desc>
+              </svg>
+            </div>
+          </div>
+
+          <aside class="choice-controls envelope-controls" aria-label="Point controls">
+            <div class="range-group">
+              <div class="range-label-row">
+                <label id="point-value-control-label" for="point-value-slider">Allocation probability at this point</label>
+                <input
+                  id="point-value-number"
+                  class="range-number-input"
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0"
+                  inputmode="decimal"
+                  aria-labelledby="point-value-control-label"
+                >
+              </div>
+              <input id="point-value-slider" class="envelope-point-slider" type="range" min="0" max="1" step="0.01" value="0">
+              <div class="range-endpoints envelope-point-slider" aria-hidden="true"><span>0</span><span>1</span></div>
+            </div>
+
+            <div class="point-count-buttons">
+              <button id="add-point" class="text-button" type="button">Add point</button>
+              <button id="remove-point" class="text-button" type="button">Remove selected point</button>
+            </div>
+          </aside>
+        </div>
+
+        <div class="envelope-diagnostic-column">
+          <div class="diagnostic-panel">
+            <figure class="diagnostic-figure">
+              <svg
+                id="envelope-chart"
+                class="diagnostic-chart envelope-diagnostic-chart"
+                viewBox="0 0 440 300"
+                role="img"
+                aria-labelledby="envelope-chart-title envelope-chart-description"
+              >
+                <title id="envelope-chart-title">Envelope of deviation payoffs</title>
+                <desc id="envelope-chart-description">The rent curve U(v) shaded beneath it, together with one straight deviation-payoff line per control point; a line rising above U(v) marks a profitable deviation.</desc>
+              </svg>
+            </figure>
+          </div>
+
+          <div class="diagnostic-panel">
+            <figure class="diagnostic-figure">
+              <svg
+                id="payment-chart"
+                class="diagnostic-chart envelope-diagnostic-chart"
+                viewBox="0 0 440 300"
+                role="img"
+                aria-labelledby="payment-chart-title payment-chart-description"
+              >
+                <title id="payment-chart-title">Payment rule</title>
+                <desc id="payment-chart-description">The payment P(v) implied by the painted allocation curve and the envelope formula.</desc>
+              </svg>
+            </figure>
+          </div>
+        </div>
+      </div>
+
+      <p id="live-summary" class="sr-only" aria-live="polite"></p>
+    </section>
+
+    <section class="derivation" aria-labelledby="derivation-title">
+      <h2 id="derivation-title">The envelope formula</h2>
+      <!-- Add user-authored derivation here: local IC and the envelope
+           theorem, U(v) = U(0) + integral of Q, the recovered payment
+           P(v) = vQ(v) - U(v), and the role monotonicity plays in going
+           from local to global IC. -->
+    </section>
+
+    <section class="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title">Notes</h2>
+      <ul class="notes-list">
+        <!-- Add user-authored <li> notes here. -->
+      </ul>
+    </section>
+
+    <section class="references" aria-labelledby="references-title">
+      <h2 id="references-title">References</h2>
+      <ul class="reference-list">
+        <!-- Add user-authored bibliographic <li> references here. -->
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <page-footer></page-footer>
+  </footer>
+</body>
+</html>

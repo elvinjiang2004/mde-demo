@@ -160,51 +160,74 @@
         below \(\beta^{\mathrm{I}}(a)=a\). Because
         \(\beta^{\mathrm{I}}\) is continuous and strictly increasing, every
         remaining bid can be written as \(\beta^{\mathrm{I}}(z)\) for some
-        \(z\in[a,b]\). Thus, we can compare bidding
+        \(z\in[a,b]\). Then, let's compare bidding
         \(\beta^{\mathrm{I}}(v_1)\) with bidding
-        \(\beta^{\mathrm{I}}(z)\). At \(z=a\), the expressions below are
-        understood by continuity.
+        \(\beta^{\mathrm{I}}(z)\). Denote bidder 1's expected utility from bidding some amount
+        \(x_1\in[a,\beta^{\mathrm{I}}(b)]\) by \(U_1(v_1,x_1)\). We have
       </p>
-      <p id="expected-utility-proof" class="plain-formula">
-        \[
-          \begin{aligned}
-          \mathbb{E}\!\left[
-            u\!\left(v_1,\beta^{\mathrm{I}}(z)\right)
-          \right]
-          &=
-          \underbrace{G(z)}_{\text{probability of winning}}
-          \underbrace{\left(v_1-\beta^{\mathrm{I}}(z)\right)}
-            _{\text{payoff upon winning}} \\
-          &=G(z)\left(v_1-\beta^{\mathrm{I}}(z)\right) \\
-          &=G(z)v_1
-            -G(z)\mathbb{E}\!\left[Y_1\mid Y_1\le z\right] \\
-          &=G(z)v_1-\int_a^z y g(y)\,dy \\
-          &=G(z)v_1-G(z)z+\int_a^z G(y)\,dy \\
-          &=G(z)(v_1-z)+\int_a^z G(y)\,dy.
-          \end{aligned}
-        \]
-      </p>
+      <!--
+        Each divider button below controls only the .equation-step-extra
+        row-pairs immediately following it, up to the next ordinary row.
+        To show a more detailed sub-chain at a given point, insert pairs of
+        spans right after that gap's divider button, e.g.:
+          <span class="equation-step-lhs equation-step-extra" hidden></span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = ... \)</span>
+        They render inline with the rest of the chain (no separate box). The
+        divider itself becomes the faint rule above the revealed block when
+        expanded, and a matching faint rule is added below it automatically.
+        A divider button with nothing to control stays entirely hidden.
+      -->
+      <div id="expected-utility-proof" class="equation-chain-steps">
+        <span class="equation-step-lhs">\(\displaystyle U_1 \!\left(v_1,\beta^{\mathrm{I}}(z)\right) \)</span>
+        <span class="equation-step-rhs">\(\displaystyle = \underbrace{G(z)}_{\text{probability of winning}}\times \underbrace{\left(v_1-\beta^{\mathrm{I}}(z)\right)}_{\text{payoff upon winning}} + \underbrace{(1-G(z))}_{\text{probability of losing}}\times \underbrace{0}_{\text{payoff upon losing}} \)</span>
+
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-rhs">\(\displaystyle =G(z)\left(v_1-\beta^{\mathrm{I}}(z)\right) \)</span>
+
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-rhs">\(\displaystyle =G(z)v_1-G(z)\mathbb{E}\!\left[Y_1\mid Y_1\le z\right] \)</span>
+
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+          <span class="equation-step-lhs equation-step-extra" hidden></span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = G(z)v_1 - G(z)\frac{\mathbb{E}\!\left[Y_1 \cdot \mathbb{1}(Y_1\leq z)\right]}{P(Y_1\leq z)} \)</span>
+          <span class="equation-step-lhs equation-step-extra" hidden></span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = G(z)v_1 - G(z)\frac{\int_a^b y g(y) \cdot \mathbb{1}(y\leq z)\,dy}{G(z)} \)</span>
+          <span class="equation-step-lhs equation-step-extra" hidden></span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = G(z)v_1 - \int_a^b y g(y) \cdot \mathbb{1}(y\leq z)\,dy \)</span>
+
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-rhs">\(\displaystyle =G(z)v_1-\int_a^z y g(y)\,dy \)</span>
+
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+        <span class="equation-step-lhs equation-step-extra" hidden></span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = G(z)v_1 - \left[ G(z)z - G(a)a - \int_a^z G(y)\,dy\right] \text{, by integration by parts}\)</span>
+        <span class="equation-step-lhs equation-step-extra" hidden></span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = G(z)v_1 - G(z)z + 0\cdot a + \int_a^z G(y)\,dy \)</span>
+
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-rhs">\(\displaystyle =G(z)v_1-G(z)z+\int_a^z G(y)\,dy \)</span>
+
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-rhs">\(\displaystyle =G(z)(v_1-z)+\int_a^z G(y)\,dy. \)</span>
+      </div>
       <p>
-        Therefore,
+        Therefore, the difference in expected utility between bidding \(\beta^{\mathrm{I}}(v_1)\) and bidding \(\beta^{\mathrm{I}}(z)\) for bidder 1 is
       </p>
-      <p id="optimality-gap-proof" class="plain-formula">
-        \[
-          \begin{aligned}
-          &\mathbb{E}\!\left[
-            u\!\left(v_1,\beta^{\mathrm{I}}(v_1)\right)
-          \right]
-          -
-          \mathbb{E}\!\left[
-            u\!\left(v_1,\beta^{\mathrm{I}}(z)\right)
-          \right] \\
-          &\quad =
-          G(v_1)(v_1-v_1)+\int_a^{v_1}G(y)\,dy
-          -\left[G(z)(v_1-z)+\int_a^zG(y)\,dy\right] \\
-          &\quad =
-          G(z)(z-v_1)+\int_z^{v_1}G(y)\,dy.
-          \end{aligned}
-        \]
-      </p>
+      <div id="optimality-gap-proof" class="equation-chain-steps">
+        <span class="equation-step-lhs">\(\displaystyle U_1 \!\left(v_1,\beta^{\mathrm{I}}(v_1)\right)-U_1 \!\left(v_1,\beta^{\mathrm{I}}(z)\right) \)</span>
+        <span class="equation-step-rhs">\(\displaystyle = \left[G(v_1)(v_1-v_1)+\int_a^{v_1}G(y)\,dy\right]-\left[G(z)(v_1-z)+\int_a^zG(y)\,dy\right] \)</span>
+
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-rhs">\(\displaystyle =G(z)(z-v_1)+\int_z^{v_1}G(y)\,dy. \)</span>
+      </div>
       <p>
         Because \(G\) is nondecreasing, this difference is weakly positive for
         every \(z\in[a,b]\). Thus, given that bidders \(2,\ldots,n\) bid

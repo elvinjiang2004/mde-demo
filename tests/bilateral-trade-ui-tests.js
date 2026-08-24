@@ -60,11 +60,18 @@
 
     function withReset(callback) {
       reset();
+      var result;
       try {
-        callback();
-      } finally {
+        result = callback();
+      } catch (error) {
         reset();
+        throw error;
       }
+      if (result && typeof result.then === "function") {
+        return Promise.resolve(result).finally(reset);
+      }
+      reset();
+      return result;
     }
 
     function numericSvgAttributes(chart) {
@@ -79,8 +86,16 @@
       }).join(" ");
     }
 
-    function firePointer(chart, type, clientX, clientY, pointerId) {
-      chart.dispatchEvent(new appWindow.PointerEvent(type, {
+  function firePointer(chart, type, clientX, clientY, pointerId) {
+    // Synthetic PointerEvents are not registered as active OS pointers, so
+    // Chromium's native setPointerCapture throws before the handler reaches
+    // the painting code. Pointer capture itself is a browser primitive rather
+    // than this module's behavior under test; stub it for these event-driven
+    // mapping and painting checks.
+    chart.setPointerCapture = function () {};
+    chart.hasPointerCapture = function () { return false; };
+    chart.releasePointerCapture = function () {};
+    chart.dispatchEvent(new appWindow.PointerEvent(type, {
         bubbles: true,
         clientX: clientX,
         clientY: clientY,
@@ -172,7 +187,9 @@
       {
         name: "The diagnostic panels carry no explanatory prose or formulas",
         run: function () {
-          assert(!appDocument.querySelector(".equation-display"),
+          assert(!appDocument.querySelector(
+            ".diagnostic-panel-grid .equation-display"
+          ),
             "The diagnostics area should not contain formula blocks.");
           assert(appDocument.querySelectorAll(".diagnostic-panel-grid").length === 1 &&
             appDocument.querySelectorAll(".diagnostic-panel-grid > .diagnostic-panel")
@@ -186,31 +203,29 @@
       {
         name: "The default view paints the efficient benchmark",
         run: function () {
-          withReset(function () {
-            var expected = model.summarize(model.efficientGrid());
-            var buyerIc = appDocument.getElementById("buyer-ic-text");
-            var sellerIc = appDocument.getElementById("seller-ic-text");
-            var efficiency = appDocument.getElementById("efficiency-text");
-            assert(buyerIc.dataset.icImplementable === "true" &&
-              sellerIc.dataset.icImplementable === "true",
-            "The efficient benchmark is IC-implementable.");
-            assert(buyerIc.dataset.buyerIcViolationCount === "0" &&
-              sellerIc.dataset.sellerIcViolationCount === "0",
-            "The efficient benchmark should have zero interim-monotonicity violations.");
-            assertClose(Number(efficiency.dataset.efficiencyLoss), 0,
-              "Efficiency loss should be zero at the efficient benchmark.", 1e-6);
-            assertClose(Number(efficiency.dataset.welfare),
-              expected.verdicts.welfare,
-              "Displayed welfare should match the model.", 1e-6);
-            var budget = appDocument.getElementById("budget-text");
-            assert(budget.dataset.exPostBudgetBalanced === "false",
-              "The efficient benchmark should not be ex-post budget balanced.");
-            assertClose(Number(budget.dataset.expectedRevenue),
-              expected.verdicts.expectedRevenue,
-              "Displayed expected revenue should match the model.", 1e-6);
-            assert(expected.verdicts.expectedRevenue < -0.05,
-              "The efficient benchmark should run a meaningful expected deficit.");
-          });
+          var expected = model.summarize(model.efficientGrid());
+          var buyerIc = appDocument.getElementById("buyer-ic-text");
+          var sellerIc = appDocument.getElementById("seller-ic-text");
+          var efficiency = appDocument.getElementById("efficiency-text");
+          assert(buyerIc.dataset.icImplementable === "true" &&
+            sellerIc.dataset.icImplementable === "true",
+          "The efficient benchmark is IC-implementable.");
+          assert(buyerIc.dataset.buyerIcViolationCount === "0" &&
+            sellerIc.dataset.sellerIcViolationCount === "0",
+          "The efficient benchmark should have zero interim-monotonicity violations.");
+          assertClose(Number(efficiency.dataset.efficiencyLoss), 0,
+            "Efficiency loss should be zero at the efficient benchmark.", 1e-6);
+          assertClose(Number(efficiency.dataset.welfare),
+            expected.verdicts.welfare,
+            "Displayed welfare should match the model.", 1e-6);
+          var budget = appDocument.getElementById("budget-text");
+          assert(budget.dataset.exPostBudgetBalanced === "false",
+            "The efficient benchmark should not be ex-post budget balanced.");
+          assertClose(Number(budget.dataset.expectedRevenue),
+            expected.verdicts.expectedRevenue,
+            "Displayed expected revenue should match the model.", 1e-6);
+          assert(expected.verdicts.expectedRevenue < -0.05,
+            "The efficient benchmark should run a meaningful expected deficit.");
         }
       },
       {
@@ -320,7 +335,7 @@
             ));
             assert(panels.length === 6, "There should be six diagnostic panels.");
             var lastTwoIds = panels.slice(-2).map(function (panel) {
-              return panel.querySelector("svg").id;
+              return panel.querySelector(".diagnostic-chart").id;
             });
             assert(lastTwoIds[0] === "budget-chart" && lastTwoIds[1] === "efficiency-chart",
               "Budget balance and efficiency should be the last two (rightmost) panels.");
@@ -353,15 +368,35 @@
               "Selecting the posted-price preset should reveal its slider.");
 
             var priceSlider = appDocument.getElementById("posted-price-slider");
+            var priceNumber = appDocument.getElementById("posted-price-number");
             var budget = appDocument.getElementById("budget-text");
+            var efficiency = appDocument.getElementById("efficiency-text");
             assert(priceSlider.getAttribute("step") === "0.05",
               "The price slider's step should match the 20-cell grid's 0.05 spacing.");
+
+            priceNumber.value = "0.37";
+            dispatchChange(priceNumber, appWindow);
+            assertClose(Number(priceNumber.value), 0.35,
+              "An off-grid typed price should snap to the nearest cell boundary.", 1e-12);
+            assertClose(Number(priceSlider.value), 0.35,
+              "The slider should display the same snapped posted price.", 1e-12);
+            var snapped = model.summarize(model.postedPriceGrid(0.35));
+            assertClose(Number(budget.dataset.expectedRevenue),
+              snapped.verdicts.expectedRevenue,
+              "The displayed grid should use the snapped posted price.", 1e-9);
+            assertClose(Number(efficiency.dataset.welfare),
+              snapped.verdicts.welfare,
+              "The snapped price should regenerate the allocation and its welfare.", 1e-9);
+
             priceSlider.value = "0.3";
             dispatchInput(priceSlider, appWindow);
             var expected = model.summarize(model.postedPriceGrid(0.3));
             assertClose(Number(budget.dataset.expectedRevenue),
               expected.verdicts.expectedRevenue,
               "Moving the price slider should live-update the induced grid.", 1e-9);
+            assertClose(Number(efficiency.dataset.welfare),
+              expected.verdicts.welfare,
+              "Moving the price slider should update allocation-dependent welfare.", 1e-9);
             assertClose(Number(budget.dataset.expectedRevenue), 0,
               "The posted-price mechanism should be exactly budget balanced.", 1e-9);
             assert(budget.dataset.exPostBudgetBalanced === "true",
@@ -566,7 +601,7 @@
       {
         name: "Painting a non-monotonic pattern flips the IC verdict",
         run: function () {
-          withReset(function () {
+          return withReset(async function () {
             appDocument.getElementById("preset-never").click();
             var chart = appDocument.getElementById("paint-chart");
             var slider = appDocument.getElementById("cell-value-slider");
@@ -583,6 +618,12 @@
               };
             }
 
+            function press(key) {
+              chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
+                key: key, bubbles: true, cancelable: true
+              }));
+            }
+
             // Paint a single isolated triangle to q = 1 amid an otherwise
             // all-zero grid. Its row's interim average rises then falls
             // back to zero (a buyer IC violation), and its column's
@@ -591,11 +632,26 @@
             // only one of the cell's two triangles is painted. Coordinates
             // are inside the current 480x520 plot area (v: 50-450, c: 40-440)
             // and fall exactly on a cell's lower-right (R) triangle.
+            // Put the selected triangle at high v and low c before choosing
+            // q=1. That boundary spike preserves both interim monotonicities,
+            // so the verdict can only flip after the pointer stroke below.
+            var k;
+            for (k = 0; k < model.CELL_RESOLUTION; k += 1) {
+              press("ArrowDown");
+            }
+            press("End");
+            press("r");
             slider.value = "1";
             dispatchInput(slider, appWindow);
+            assert(buyerIc.dataset.icImplementable === "true" &&
+              sellerIc.dataset.icImplementable === "true",
+            "Choosing the paint value should not itself create this test's IC violation.");
             var point = clientOf(90, 240);
             firePointer(chart, "pointerdown", point.x, point.y, 51);
             firePointer(chart, "pointerup", point.x, point.y, 51);
+            await new Promise(function (resolve) {
+              appWindow.requestAnimationFrame(resolve);
+            });
 
             assert(buyerIc.dataset.icImplementable === "false" &&
               sellerIc.dataset.icImplementable === "false",
@@ -620,6 +676,12 @@
             var slider = appDocument.getElementById("cell-value-slider");
             var rect = chart.getBoundingClientRect();
 
+            chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
+              key: "Home", bubbles: true, cancelable: true
+            }));
+            chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
+              key: "r", bubbles: true, cancelable: true
+            }));
             slider.value = "1";
             dispatchInput(slider, appWindow);
 
@@ -633,6 +695,16 @@
             var label = appDocument.getElementById("cell-value-control-label");
             assert(label.textContent.includes("v ∈ [0.95, 1.00)"),
               "Dragging past the right edge should clamp to the rightmost cell.");
+
+            chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
+              key: "Home", bubbles: true, cancelable: true
+            }));
+            chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
+              key: "End", bubbles: true, cancelable: true
+            }));
+            assertClose(Number(slider.value), 1,
+              "Returning to the boundary triangle should recover the value painted by the drag.",
+              1e-9);
           });
         }
       },

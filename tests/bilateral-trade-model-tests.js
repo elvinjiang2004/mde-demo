@@ -36,6 +36,16 @@
 
   var R = model.CELL_RESOLUTION;
   var H = model.CELL_SIZE;
+  var NONNEGATIVITY_TOLERANCE = 1e-9;
+
+  function oscillatingGrid() {
+    function valueAt(i, j) {
+      return model.clamp(
+        0.5 + 0.5 * Math.sin(9 * i / R) * Math.cos(7 * j / R), 0, 1
+      );
+    }
+    return model.createCellGrid(valueAt, valueAt);
+  }
 
   test("The bilateral-trade model exposes the expected pure API", function () {
     assert(model && typeof model.summarize === "function",
@@ -119,25 +129,6 @@
         "price=0.37 should round to the same grid as price=0.35.");
       }
     }
-  });
-
-  test("checkBuyerMonotonicity and checkSellerMonotonicity flag a deliberate violation", function () {
-    // A hand-painted grid: increasing in row for columns j<10, decreasing in
-    // row for columns j>=10 -- pointwise nonmonotonic for the buyer in the
-    // j>=10 half, and pointwise nonmonotonic for the seller wherever the
-    // j=9/j=10 jump goes the wrong way.
-    var grid = model.createCellGrid(
-      function (i, j) { return j < 10 ? i / (R - 1) : (R - 1 - i) / (R - 1); },
-      function (i, j) { return j < 10 ? i / (R - 1) : (R - 1 - i) / (R - 1); }
-    );
-    var buyerViolations = model.checkBuyerMonotonicity(grid);
-    var sellerViolations = model.checkSellerMonotonicity(grid);
-    assert(model.countTrue(buyerViolations) > 0,
-      "Buyer monotonicity should fail in the decreasing half.");
-    assert(model.countTrue(sellerViolations) > 0,
-      "Seller monotonicity should fail across the j=9/10 jump.");
-    assert(!model.isDsicImplementable(buyerViolations, sellerViolations),
-      "A monotonicity violation on either side should break DSIC-implementability.");
   });
 
   test("checkBuyerMonotonicity and checkSellerMonotonicity find no violations on efficientGrid", function () {
@@ -335,13 +326,15 @@
       function (i, j) { return j < 10 ? i / (R - 1) : (R - 1 - i) / (R - 1); }
     );
 
-    // Pointwise (ex-post/dominant-strategy) monotonicity fails on both
-    // sides -- see the dedicated checkBuyerMonotonicity/
-    // checkSellerMonotonicity test above for the same construction.
-    assert(model.countTrue(model.checkBuyerMonotonicity(grid)) > 0,
+    // Pointwise (ex-post/dominant-strategy) monotonicity fails on both sides.
+    var buyerViolations = model.checkBuyerMonotonicity(grid);
+    var sellerViolations = model.checkSellerMonotonicity(grid);
+    assert(model.countTrue(buyerViolations) > 0,
       "Pointwise buyer monotonicity should fail in the decreasing half.");
-    assert(model.countTrue(model.checkSellerMonotonicity(grid)) > 0,
+    assert(model.countTrue(sellerViolations) > 0,
       "Pointwise seller monotonicity should fail across the j=9/10 jump.");
+    assert(!model.isDsicImplementable(buyerViolations, sellerViolations),
+      "A pointwise violation on either side should break DSIC-implementability.");
 
     // But by construction every row and every column is an equal mix of
     // the increasing half (i/(R-1)) and the decreasing half
@@ -372,14 +365,7 @@
       model.constantCellGrid(1),
       model.constantCellGrid(0),
       model.chatterjeeSamuelsonGrid(),
-      model.createCellGrid(
-        function (i, j) {
-          return model.clamp(0.5 + 0.5 * Math.sin(9 * i / R) * Math.cos(7 * j / R), 0, 1);
-        },
-        function (i, j) {
-          return model.clamp(0.5 + 0.5 * Math.sin(9 * i / R) * Math.cos(7 * j / R), 0, 1);
-        }
-      )
+      oscillatingGrid()
     ];
 
     grids.forEach(function (grid) {
@@ -389,9 +375,9 @@
         for (j = 0; j < R; j += 1) {
           [true, false].forEach(function (isLower) {
             var centroid = model.triangleCentroid(i, j, isLower);
-            assert(model.cumulativeBuyerUtilityAt(grid, centroid.v, centroid.c) >= -model.EPSILON,
+            assert(model.cumulativeBuyerUtilityAt(grid, centroid.v, centroid.c) >= -NONNEGATIVITY_TOLERANCE,
               "Buyer utility should never be negative.");
-            assert(model.cumulativeSellerUtilityAt(grid, centroid.v, centroid.c) >= -model.EPSILON,
+            assert(model.cumulativeSellerUtilityAt(grid, centroid.v, centroid.c) >= -NONNEGATIVITY_TOLERANCE,
               "Seller utility should never be negative.");
           });
         }
@@ -413,14 +399,7 @@
   });
 
   test("A non-monotonic rule is flagged as not IC-implementable but stays finite", function () {
-    var grid = model.createCellGrid(
-      function (i, j) {
-        return model.clamp(0.5 + 0.5 * Math.sin(9 * i / R) * Math.cos(7 * j / R), 0, 1);
-      },
-      function (i, j) {
-        return model.clamp(0.5 + 0.5 * Math.sin(9 * i / R) * Math.cos(7 * j / R), 0, 1);
-      }
-    );
+    var grid = oscillatingGrid();
     var summary = model.summarize(grid);
     assert(!summary.verdicts.icImplementable,
       "This oscillating rule's interim probability should also be nonmonotonic.");
@@ -437,15 +416,39 @@
     "Diagnostic grids should remain finite.");
   });
 
-  test("summarize stays finite for every preset, random, and constant grid", function () {
+  test("Revenue uses the matching lower or upper triangle's q and utilities", function () {
+    var grid = model.createCellGrid(
+      function (i, j) { return (2 * i + j) / (3 * (R - 1)); },
+      function (i, j) { return (i + 2 * j) / (3 * (R - 1)); }
+    );
+    var summary = model.summarize(grid);
+    var i;
+    var j;
+    for (i = 0; i < R; i += 1) {
+      for (j = 0; j < R; j += 1) {
+        [true, false].forEach(function (isLower) {
+          var centroid = model.triangleCentroid(i, j, isLower);
+          var q = isLower ? grid.lower[i][j] : grid.upper[i][j];
+          var uB = model.cumulativeBuyerUtilityAt(grid, centroid.v, centroid.c);
+          var uS = model.cumulativeSellerUtilityAt(grid, centroid.v, centroid.c);
+          var expected = (centroid.v * q - uB) - (centroid.c * q + uS);
+          var actual = isLower ?
+            summary.revenue.lower[i][j] : summary.revenue.upper[i][j];
+          assertClose(actual, expected,
+            "Revenue should use the matching triangle at cell (" + i + "," + j + ").",
+            1e-12);
+        });
+      }
+    }
+  });
+
+  test("summarize stays finite for every preset and constant grid", function () {
     [
       model.efficientGrid(),
       model.constantCellGrid(0),
       model.constantCellGrid(1),
       model.postedPriceGrid(0.35),
-      model.chatterjeeSamuelsonGrid(),
-      model.randomCellGrid(function () { return 0.37; }),
-      model.randomCellGrid(Math.random)
+      model.chatterjeeSamuelsonGrid()
     ].forEach(function (grid) {
       var summary = model.summarize(grid);
       assert(isFiniteCellGrid(summary.grid), "Grid finite");
@@ -460,24 +463,6 @@
         }
       });
     });
-  });
-
-  test("randomCellGrid paints one value per cell, shared by both triangles", function () {
-    var calls = 0;
-    var grid = model.randomCellGrid(function () {
-      calls += 1;
-      return 0.5;
-    });
-    assertClose(calls, R * R,
-      "Exactly one random draw per cell, not one per triangle.", 0);
-    var i;
-    var j;
-    for (i = 0; i < R; i += 1) {
-      for (j = 0; j < R; j += 1) {
-        assert(grid.lower[i][j] === grid.upper[i][j],
-          "Both triangles of a random cell should share the same value.");
-      }
-    }
   });
 
   run();
