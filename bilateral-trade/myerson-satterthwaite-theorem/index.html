@@ -68,20 +68,25 @@
       <div class="interaction-layout bilateral-layout">
         <div class="bilateral-main-column">
           <div class="chart-column">
-            <div class="chart-frame">
-              <svg
-                id="paint-chart"
-                class="tradeoff-chart bilateral-paint-chart"
-                viewBox="0 0 480 520"
-                role="img"
-                tabindex="0"
-                aria-labelledby="paint-chart-title paint-chart-description"
-                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r"
-              >
-                <title id="paint-chart-title">Allocation rule q(v,c)</title>
-                <desc id="paint-chart-description">A paintable grid of the probability of trade for every buyer-value, seller-cost pair, each cell split into an independently paintable left (L) and right (R) triangle.</desc>
-              </svg>
-            </div>
+            <figure class="diagnostic-figure math-chart-figure bilateral-main-chart-figure">
+              <figcaption>Allocation rule, \(q(v,c)\)</figcaption>
+              <div class="chart-frame math-chart-frame">
+                <svg
+                  id="paint-chart"
+                  class="tradeoff-chart bilateral-paint-chart"
+                  viewBox="0 0 480 520"
+                  role="img"
+                  tabindex="0"
+                  aria-labelledby="paint-chart-title paint-chart-description"
+                  aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r"
+                >
+                  <title id="paint-chart-title">Allocation rule, q(v,c)</title>
+                  <desc id="paint-chart-description">A paintable grid of the probability of trade for every buyer-value, seller-cost pair, each cell split into an independently paintable left (L) and right (R) triangle.</desc>
+                </svg>
+                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-main-x-axis-label">Buyer value, \(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-main-y-axis-label">Seller value, \(c\)</p>
+              </div>
+            </figure>
           </div>
 
           <aside class="choice-controls" aria-label="Painting controls">
@@ -137,85 +142,105 @@
         <div class="diagnostic-panel-grid">
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure">
-              <figcaption>Buyer IC \(Q_B(v)\)</figcaption>
-              <svg
-                id="buyer-ic-chart"
-                class="diagnostic-chart"
-                viewBox="0 0 220 240"
-                role="img"
-                aria-labelledby="buyer-ic-chart-title buyer-ic-chart-description"
-              >
-                <title id="buyer-ic-chart-title">Interim buyer probability</title>
-                <desc id="buyer-ic-chart-description">The buyer's interim probability of trade, averaged over the seller's cost, as a function of buyer value.</desc>
-              </svg>
+              <figcaption>Buyer IC, \(Q_B(v)\)</figcaption>
+              <div class="math-chart-frame">
+                <svg
+                  id="buyer-ic-chart"
+                  class="diagnostic-chart"
+                  viewBox="0 0 220 240"
+                  role="img"
+                  aria-labelledby="buyer-ic-chart-title buyer-ic-chart-description"
+                >
+                  <title id="buyer-ic-chart-title">Interim buyer probability</title>
+                  <desc id="buyer-ic-chart-description">The buyer's interim probability of trade, averaged over the seller's cost, as a function of buyer value.</desc>
+                </svg>
+                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-diagnostic-x-axis-label">\(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-diagnostic-y-axis-label">\(\Pr(\mathrm{trade})\)</p>
+              </div>
             </figure>
             <div id="buyer-ic-text" class="diagnostic-text"></div>
           </div>
 
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure">
-              <figcaption>Seller IC \(Q_S(c)\)</figcaption>
-              <svg
-                id="seller-ic-chart"
-                class="diagnostic-chart"
-                viewBox="0 0 220 240"
-                role="img"
-                aria-labelledby="seller-ic-chart-title seller-ic-chart-description"
-              >
-                <title id="seller-ic-chart-title">Interim seller probability</title>
-                <desc id="seller-ic-chart-description">The seller's interim probability of trade, averaged over the buyer's value, as a function of seller cost.</desc>
-              </svg>
+              <figcaption>Seller IC, \(Q_S(c)\)</figcaption>
+              <div class="math-chart-frame">
+                <svg
+                  id="seller-ic-chart"
+                  class="diagnostic-chart"
+                  viewBox="0 0 220 240"
+                  role="img"
+                  aria-labelledby="seller-ic-chart-title seller-ic-chart-description"
+                >
+                  <title id="seller-ic-chart-title">Interim seller probability</title>
+                  <desc id="seller-ic-chart-description">The seller's interim probability of trade, averaged over the buyer's value, as a function of seller cost.</desc>
+                </svg>
+                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-diagnostic-x-axis-label">\(c\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-diagnostic-y-axis-label">\(\Pr(\mathrm{trade})\)</p>
+              </div>
             </figure>
             <div id="seller-ic-text" class="diagnostic-text"></div>
           </div>
 
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure">
-              <figcaption>Buyer utility \(U_B\)</figcaption>
-              <svg
-                id="buyer-utility-chart"
-                class="diagnostic-chart"
-                viewBox="0 0 220 240"
-                role="img"
-                aria-labelledby="buyer-utility-chart-title buyer-utility-chart-description"
-              >
-                <title id="buyer-utility-chart-title">Buyer utility</title>
-                <desc id="buyer-utility-chart-description">Buyer utility U sub B at every buyer-value, seller-cost pair.</desc>
-              </svg>
+              <figcaption>Buyer utility, \(U_B\)</figcaption>
+              <div class="math-chart-frame">
+                <svg
+                  id="buyer-utility-chart"
+                  class="diagnostic-chart"
+                  viewBox="0 0 220 240"
+                  role="img"
+                  aria-labelledby="buyer-utility-chart-title buyer-utility-chart-description"
+                >
+                  <title id="buyer-utility-chart-title">Buyer utility</title>
+                  <desc id="buyer-utility-chart-description">Buyer utility U sub B at every buyer-value, seller-cost pair.</desc>
+                </svg>
+                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-diagnostic-x-axis-label">\(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-diagnostic-y-axis-label">\(c\)</p>
+              </div>
             </figure>
             <div id="buyer-utility-text" class="diagnostic-text"></div>
           </div>
 
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure">
-              <figcaption>Seller utility \(U_S\)</figcaption>
-              <svg
-                id="seller-utility-chart"
-                class="diagnostic-chart"
-                viewBox="0 0 220 240"
-                role="img"
-                aria-labelledby="seller-utility-chart-title seller-utility-chart-description"
-              >
-                <title id="seller-utility-chart-title">Seller utility</title>
-                <desc id="seller-utility-chart-description">Seller utility U sub S at every buyer-value, seller-cost pair.</desc>
-              </svg>
+              <figcaption>Seller utility, \(U_S\)</figcaption>
+              <div class="math-chart-frame">
+                <svg
+                  id="seller-utility-chart"
+                  class="diagnostic-chart"
+                  viewBox="0 0 220 240"
+                  role="img"
+                  aria-labelledby="seller-utility-chart-title seller-utility-chart-description"
+                >
+                  <title id="seller-utility-chart-title">Seller utility</title>
+                  <desc id="seller-utility-chart-description">Seller utility U sub S at every buyer-value, seller-cost pair.</desc>
+                </svg>
+                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-diagnostic-x-axis-label">\(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-diagnostic-y-axis-label">\(c\)</p>
+              </div>
             </figure>
             <div id="seller-utility-text" class="diagnostic-text"></div>
           </div>
 
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure">
-              <figcaption>Net revenue \(R\)</figcaption>
-              <svg
-                id="budget-chart"
-                class="diagnostic-chart"
-                viewBox="0 0 220 240"
-                role="img"
-                aria-labelledby="budget-chart-title budget-chart-description"
-              >
-                <title id="budget-chart-title">Net revenue</title>
-                <desc id="budget-chart-description">Intermediary net revenue R at every buyer-value, seller-cost pair; green is a surplus, red is a deficit.</desc>
-              </svg>
+              <figcaption>Net revenue, \(R\)</figcaption>
+              <div class="math-chart-frame">
+                <svg
+                  id="budget-chart"
+                  class="diagnostic-chart"
+                  viewBox="0 0 220 240"
+                  role="img"
+                  aria-labelledby="budget-chart-title budget-chart-description"
+                >
+                  <title id="budget-chart-title">Net revenue</title>
+                  <desc id="budget-chart-description">Intermediary net revenue R at every buyer-value, seller-cost pair; green is a surplus, red is a deficit.</desc>
+                </svg>
+                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-diagnostic-x-axis-label">\(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-diagnostic-y-axis-label">\(c\)</p>
+              </div>
             </figure>
             <div id="budget-text" class="diagnostic-text"></div>
           </div>
@@ -223,16 +248,20 @@
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure">
               <figcaption>Efficiency</figcaption>
-              <svg
-                id="efficiency-chart"
-                class="diagnostic-chart"
-                viewBox="0 0 220 240"
-                role="img"
-                aria-labelledby="efficiency-chart-title efficiency-chart-description"
-              >
-                <title id="efficiency-chart-title">Efficiency comparison</title>
-                <desc id="efficiency-chart-description">Orange marks trade where v is less than c; blue marks missing trade where v is greater than c.</desc>
-              </svg>
+              <div class="math-chart-frame">
+                <svg
+                  id="efficiency-chart"
+                  class="diagnostic-chart"
+                  viewBox="0 0 220 240"
+                  role="img"
+                  aria-labelledby="efficiency-chart-title efficiency-chart-description"
+                >
+                  <title id="efficiency-chart-title">Efficiency comparison</title>
+                  <desc id="efficiency-chart-description">Orange marks trade where v is less than c; blue marks missing trade where v is greater than c.</desc>
+                </svg>
+                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-diagnostic-x-axis-label">\(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-diagnostic-y-axis-label">\(c\)</p>
+              </div>
             </figure>
             <div id="efficiency-text" class="diagnostic-text"></div>
           </div>

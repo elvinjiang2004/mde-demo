@@ -208,7 +208,6 @@
       "The vertical line cannot win a positive-width interval and should not appear in the segments.");
     assert(summary.infiniteLines.length === 1 && summary.infiniteLines[0].id === "V",
       "summarize should separately report the vertical line.");
-    assert(summary.hasInfiniteLine === true);
   });
 
   test("addLine appends a new flat, full-domain line at the family's current average value", function () {
@@ -273,20 +272,6 @@
     var next = model.movePoint(lines, "A", "p1", 0.7, 0.9);
     assertClose(next[0].p1.t, 0.7, "A drag well clear of p0's t should not snap.");
     assert(Number.isFinite(model.slopeOf(next[0])), "The line should remain an ordinary finite-slope line.");
-  });
-
-  test("summarize reports the correct maxAbsSlope for the default family, and excludes infinite lines from it", function () {
-    var summary = model.summarize(model.defaultLines());
-    assertClose(summary.maxAbsSlope, 0.6,
-      "A and B both have slope magnitude 0.6, which exceeds C's slope of 0.");
-
-    var withVertical = model.defaultLines().concat([
-      { id: "D", p0: { t: 0.5, v: 0 }, p1: { t: 0.5, v: 1 } }
-    ]);
-    var summaryWithVertical = model.summarize(withVertical);
-    assertClose(summaryWithVertical.maxAbsSlope, 0.6,
-      "maxAbsSlope should still report the steepest *finite* line, not Infinity.");
-    assert(summaryWithVertical.hasInfiniteLine === true);
   });
 
   run();

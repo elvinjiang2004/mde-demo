@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Drag a family of lines -- either endpoint anywhere along the plot's own edge, including onto a genuinely vertical, infinite-slope line -- and watch their exact upper envelope, active slope, and required domination bound update live: Milgrom and Segal's envelope theorem for arbitrary choice sets.">
+  <meta name="description" content="Drag a family of lines -- either endpoint anywhere along the plot's own edge, including onto a genuinely vertical, infinite-slope line -- and watch their exact upper envelope and active slope update live: Milgrom and Segal's envelope theorem for arbitrary choice sets.">
   <title>The Envelope Theorem | Mechanism Design Explorer</title>
   <link rel="stylesheet" href="../../styles.css">
   <script defer src="../../js/components.js"></script>
@@ -22,116 +22,140 @@
   <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">The Envelope Theorem</h1>
-      <!-- Add user-authored introduction here: the general setup (an
-           arbitrary choice set X, a parameter t, a jointly defined f(x,t),
-           the value function V(t) = sup over x in X of f(x,t)), and a
-           statement of Theorem 2 of Milgrom and Segal, "Envelope Theorems
-           for Arbitrary Choice Sets" (Econometrica 70(2), 2002: 583-601):
-           given f(x,.) absolutely continuous for every x with |f_t(x,t)|
-           bounded by an integrable b(t) uniform in x, V is absolutely
-           continuous, so V(t) = V(0) + integral_0^t f_t(x*(s),s) ds for
-           any selection x*(s) of a maximizer. No mechanism-design or
-           incentive-compatibility framing belongs on this page -- that
-           worked example now lives in the separate, draft "Payments from
-           an Allocation Rule" module. -->
+
+      <p>
+        A single agent wishes to maximize a real-valued function \(f(x,t)\)
+        with \(t\in[0,1]\) with his choice of \(x\in X\). We call \(f\) the
+        <em>objective function</em>, \(t\) a <em>parameter</em>, and \(x\) the
+        <em>choice variable</em>. Denote the following:
+      </p>
+
+      <ul>
+        <li>
+          \(V(t)=\sup\{f(x,t)\mid x\in X\}\), the <em>value function</em> or
+          upper envelope of the family of functions
+          \(\{f(x,t)\mid x\in X\}\).
+        </li>
+        <li>
+          \(X^*(t)=\operatorname*{arg\,max}\{f(x,t)\mid x\in X\}\), the set
+          of maximizers at \(t\).
+        </li>
+        <li>
+          \(x^*(t)\in X^*(t)\ne\varnothing\), a particular selection from
+          the set of maximizers at \(t\).
+        </li>
+      </ul>
+
+      <p>
+        An envelope theorem is one which is concerned with the
+        differentiability of \(V(t)\). There are many different envelope
+        theorems (or perhaps many different versions of the same envelope
+        theorem). We will discuss two that are unique in their generality.
+      </p>
+
+      <p>Theorem 1 from Milgrom and Segal (2002) states,</p>
+      <p>
+        <strong>Theorem:</strong> Let \(t\in(0,1)\) and suppose
+        \(f_t(x^*(t),t)\) exists. If \(V\) is differentiable at \(t\), then
+      </p>
+      <div class="equation-display" aria-label="V prime of t equals the partial derivative of f with respect to t evaluated at x star of t comma t">
+        \[
+          V'(t)=f_t(x^*(t),t).
+        \]
+      </div>
+
+      <p>Theorem 2 from Milgrom and Segal (2002) states,</p>
+      <p><strong>Theorem:</strong> Suppose the following conditions hold:</p>
+      <ol>
+        <li>
+          \(f(x,t)\) is absolutely continuous in \(t\), for all \(x\in X\).
+        </li>
+        <li>
+          There exists an integrable function
+          \(b:[0,1]\to\mathbb{R}_{+}\) such that
+          \(\lvert f_t(x,t)\rvert\le b(t)\) for all \(x\in X\) and almost all
+          \(t\in[0,1]\).
+        </li>
+      </ol>
+
+      <p>
+        Then, \(V\) is absolutely continuous and, thus, differentiable almost
+        everywhere.
+      </p>
+      <p>Suppose additionally,</p>
+      <ol start="3">
+        <li>
+          \(f(x,t)\) is differentiable at every \(t\in[0,1]\), for all
+          \(x\in X\).
+        </li>
+        <li>\(X^*(t)\ne\varnothing\) at almost every \(t\in[0,1]\).</li>
+      </ol>
+      <p>Then, for all \(t\in[0,1]\)</p>
+      <div class="equation-display" aria-label="V of t equals V of zero plus the integral from zero to t of the partial derivative of f with respect to t evaluated at x star of s comma s d s">
+        \[
+          V(t)=V(0)+\int_0^t f_t(x^*(s),s)\,ds.
+        \]
+      </div>
+
+      <p>
+        In the interactive demo, adjust pairs of points that define a family
+        of affine functions and see how the upper envelope behaves. Notice
+        when \(V\) is differentiable, and when it is not.
+        Consider how the conditions of Milgrom and Segal's Theorem 2 are met
+        for this particular family of functions.
+      </p>
     </section>
 
     <section class="explorable explorable-divider" aria-label="Family-of-lines interface">
-      <div class="envelope-layout">
+      <div class="envelope-layout envelope-two-panel-layout">
         <div class="envelope-main-column">
           <div class="chart-column">
-            <div class="chart-frame">
-              <svg
-                id="main-chart"
-                class="tradeoff-chart envelope-curve-chart"
-                viewBox="0 0 660 450"
-                role="img"
-                tabindex="0"
-                aria-labelledby="main-chart-title main-chart-description"
-                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
-              >
-                <title id="main-chart-title">Family of lines and their envelope V(t)</title>
-                <desc id="main-chart-description">A family of straight lines, each with two points independently draggable anywhere along the plot's own edge, with their pointwise-maximum envelope V(t) searched universally and drawn in bold, dotted where it runs outside [0,1].</desc>
-              </svg>
-            </div>
+            <figure class="diagnostic-figure envelope-chart-figure">
+              <figcaption>Envelope, \(V(t)\)</figcaption>
+              <div class="chart-frame envelope-chart-frame">
+                <svg
+                  id="main-chart"
+                  class="tradeoff-chart envelope-curve-chart"
+                  viewBox="0 0 660 450"
+                  role="img"
+                  tabindex="0"
+                  aria-labelledby="main-chart-title main-chart-description"
+                  aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Shift+ArrowLeft Shift+ArrowRight Home End"
+                >
+                  <title id="main-chart-title">Envelope, V(t)</title>
+                  <desc id="main-chart-description">A family of straight lines, each with two points independently draggable anywhere along the plot's own edge, with their pointwise-maximum envelope V(t) searched universally and drawn in bold, dotted where it runs outside [0,1].</desc>
+                </svg>
+                <p class="envelope-chart-axis-label">Parameter, \(t\)</p>
+              </div>
+            </figure>
           </div>
 
-          <aside class="choice-controls envelope-controls" aria-label="Point controls">
-            <p id="point-control-label" class="point-control-heading">Line A, point 1</p>
-
-            <div class="range-group">
-              <div class="range-label-row">
-                <label id="point-t-control-label" for="point-t-number">t-axis intercept</label>
-                <input
-                  id="point-t-number"
-                  class="range-number-input"
-                  type="number"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value="0"
-                  inputmode="decimal"
-                  aria-labelledby="point-t-control-label"
-                >
-              </div>
-              <input id="point-t-slider" class="envelope-point-slider" type="range" min="0" max="1" step="0.01" value="0" aria-labelledby="point-control-label point-t-control-label">
-              <div class="range-endpoints envelope-point-slider" aria-hidden="true"><span>0</span><span>1</span></div>
-            </div>
-
-            <div class="range-group">
-              <div class="range-label-row">
-                <label id="point-v-control-label" for="point-v-number">V(t)-axis intercept</label>
-                <input
-                  id="point-v-number"
-                  class="range-number-input"
-                  type="number"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value="0"
-                  inputmode="decimal"
-                  aria-labelledby="point-v-control-label"
-                >
-              </div>
-              <input id="point-v-slider" class="envelope-point-slider" type="range" min="0" max="1" step="0.01" value="0" aria-labelledby="point-control-label point-v-control-label">
-              <div class="range-endpoints envelope-point-slider" aria-hidden="true"><span>0</span><span>1</span></div>
-            </div>
-
+          <div class="envelope-line-controls" aria-label="Line controls">
+            <p id="point-control-label" class="point-control-heading" aria-live="polite">Line A, point 1</p>
             <div class="point-count-buttons">
               <button id="add-line" class="text-button" type="button">Add line</button>
               <button id="remove-line" class="text-button" type="button">Remove selected line</button>
             </div>
-          </aside>
+          </div>
         </div>
 
         <div class="envelope-diagnostic-column">
           <div class="diagnostic-panel">
-            <figure class="diagnostic-figure">
-              <svg
-                id="slope-chart"
-                class="diagnostic-chart envelope-diagnostic-chart"
-                viewBox="0 0 440 300"
-                role="img"
-                aria-labelledby="slope-chart-title slope-chart-description"
-              >
-                <title id="slope-chart-title">Active slope</title>
-                <desc id="slope-chart-description">The active line's own slope as a step function of t, jumping at each point where the envelope's maximizing line switches; a vertical line's infinite slope is marked by a dotted vertical line, in its own color, instead of a finite step.</desc>
-              </svg>
-            </figure>
-          </div>
-
-          <div class="diagnostic-panel">
-            <figure class="diagnostic-figure">
-              <svg
-                id="bound-chart"
-                class="diagnostic-chart envelope-diagnostic-chart"
-                viewBox="0 0 440 300"
-                role="img"
-                aria-labelledby="bound-chart-title bound-chart-description"
-              >
-                <title id="bound-chart-title">Steepest slope required</title>
-                <desc id="bound-chart-description">The magnitude of each line's own slope; the tallest bar is the smallest bound that currently dominates them all. If any line is vertical, only its bar is shown, at full height, labeled infinity.</desc>
-              </svg>
+            <figure class="diagnostic-figure envelope-chart-figure">
+              <figcaption>Active slope, \(f_t(x^*(t),t)\)</figcaption>
+              <div class="envelope-chart-frame">
+                <svg
+                  id="slope-chart"
+                  class="diagnostic-chart envelope-diagnostic-chart"
+                  viewBox="0 0 660 450"
+                  role="img"
+                  aria-labelledby="slope-chart-title slope-chart-description"
+                >
+                  <title id="slope-chart-title">Active slope, f_t(x*(t),t)</title>
+                  <desc id="slope-chart-description">The active line's own slope as a step function of t, jumping at each point where the envelope's maximizing line switches; a vertical line's infinite slope is marked by a dotted vertical line, in its own color, instead of a finite step.</desc>
+                </svg>
+                <p class="envelope-chart-axis-label">Parameter, \(t\)</p>
+              </div>
             </figure>
           </div>
         </div>

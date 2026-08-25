@@ -556,7 +556,7 @@
             appDocument.querySelectorAll(".expected-payoff-label").length === 1,
           "Probability and expected payoff should each have one in-graph label.");
           var svgText = appDocument.getElementById("tradeoff-chart").textContent;
-          ["Probability of winning =", "Payoff if you win: v₁ − x₁ =",
+          ["Probability of winning =", "Payoff if you win, v₁ − x₁ =",
             "Expected payoff =", "Probability of winning",
             "x₁ = 30", "v₁ = 50"]
             .forEach(function (label) {

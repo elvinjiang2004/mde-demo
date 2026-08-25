@@ -48,8 +48,11 @@ Open these files in a browser to run the test suites:
 - `tests/bilateral-trade-model-tests.html` — bilateral-trade model checks.
 - `tests/bilateral-trade-ui-tests.html` — bilateral-trade interface and SVG checks.
 - `tests/envelope-theorem-model-tests.html` — envelope-theorem model checks.
+- `tests/envelope-theorem-ui-tests.html` — envelope-theorem interface and responsive-layout checks.
 - `tests/payments-from-allocation-rule-model-tests.html` — allocation-rule and
   payment model checks.
+- `tests/payments-from-allocation-rule-ui-tests.html` — allocation-rule interface
+  and SVG checks.
 
 The iframe-based menu and interface checks may require a local static server or
 a browser configuration that permits local-file iframe access. This does not

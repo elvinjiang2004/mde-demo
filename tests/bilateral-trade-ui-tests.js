@@ -169,6 +169,46 @@
             ".explorable mjx-container[jax=\"SVG\"]"
           ).length > 0,
           "The diagnostic figure captions should render as MathJax.");
+          var mixedPlotLabels = [
+            appDocument.querySelector(
+              ".bilateral-main-chart-figure > figcaption"
+            ),
+            appDocument.querySelector(".bilateral-main-x-axis-label"),
+            appDocument.querySelector(".bilateral-main-y-axis-label"),
+            appDocument.getElementById("buyer-ic-chart")
+              .closest("figure").querySelector("figcaption"),
+            appDocument.getElementById("seller-ic-chart")
+              .closest("figure").querySelector("figcaption"),
+            appDocument.getElementById("buyer-utility-chart")
+              .closest("figure").querySelector("figcaption"),
+            appDocument.getElementById("seller-utility-chart")
+              .closest("figure").querySelector("figcaption"),
+            appDocument.getElementById("budget-chart")
+              .closest("figure").querySelector("figcaption")
+          ];
+          mixedPlotLabels.forEach(function (label) {
+            assert(label && label.firstChild &&
+              label.firstChild.nodeType === 3 &&
+              /, $/.test(label.firstChild.nodeValue),
+            "Every mixed plot label should separate its plain text and math " +
+              "with a comma and a space.");
+            assert(label.querySelector('mjx-container[jax="SVG"]'),
+              "Every mixed plot label should render its notation with MathJax.");
+          });
+          var mathOnlyAxes = Array.from(appDocument.querySelectorAll(
+            ".bilateral-diagnostic-x-axis-label, " +
+            ".bilateral-diagnostic-y-axis-label"
+          ));
+          assert(mathOnlyAxes.length === 12,
+            "Each of the six diagnostic plots should keep both existing math-only axes.");
+          mathOnlyAxes.forEach(function (label) {
+            assert(label.querySelectorAll('mjx-container[jax="SVG"]').length === 1,
+              "Each math-only diagnostic axis should have one MathJax rendering.");
+            assert(!label.firstChild ||
+              label.firstChild.nodeType !== 3 ||
+              label.firstChild.nodeValue.trim() === "",
+            "Math-only diagnostic axes should not gain a plain-text prefix.");
+          });
           var budgetCaption = appDocument.querySelector(
             "#budget-chart"
           ).closest("figure").querySelector("figcaption");
@@ -182,6 +222,48 @@
             .textContent.indexOf("∈") >= 0,
           "The selected-cell control label should still render a real " +
             "Unicode ∈ character even without MathJax.");
+          assert(!appDocument.querySelector("#paint-chart .panel-caption") &&
+            !appDocument.querySelector("#paint-chart .axis-title"),
+          "The main plot's mixed title and axes should live outside its SVG.");
+          assert(appDocument.getElementById("paint-chart-title").textContent ===
+            "Allocation rule, q(v,c)",
+          "The main plot's accessible title should mirror the comma-space convention.");
+          var paintRect = appDocument.getElementById("paint-chart")
+            .getBoundingClientRect();
+          var xAxisRect = appDocument.querySelector(".bilateral-main-x-axis-label")
+            .getBoundingClientRect();
+          var yAxisRect = appDocument.querySelector(".bilateral-main-y-axis-label")
+            .getBoundingClientRect();
+          assertClose(xAxisRect.left, paintRect.left,
+            "The HTML buyer-value axis label should begin at the main plot edge.", 1);
+          assertClose(xAxisRect.width, paintRect.width,
+            "The HTML buyer-value axis label should span only the main plot.", 1);
+          assert(yAxisRect.left >= paintRect.left &&
+            yAxisRect.right <= paintRect.right &&
+            yAxisRect.top >= paintRect.top &&
+            yAxisRect.bottom <= paintRect.bottom,
+          "The rotated seller-cost axis label should remain inside the main plot.");
+          [
+            "buyer-ic-chart", "seller-ic-chart", "buyer-utility-chart",
+            "seller-utility-chart", "budget-chart", "efficiency-chart"
+          ].forEach(function (id) {
+            var chart = appDocument.getElementById(id);
+            var chartRect = chart.getBoundingClientRect();
+            var frame = chart.closest(".math-chart-frame");
+            var xRect = frame.querySelector(".bilateral-diagnostic-x-axis-label")
+              .getBoundingClientRect();
+            var yRect = frame.querySelector(".bilateral-diagnostic-y-axis-label")
+              .getBoundingClientRect();
+            assertClose(xRect.left, chartRect.left,
+              "Chart " + id + "'s math-only x label should begin at its plot edge.", 1);
+            assertClose(xRect.width, chartRect.width,
+              "Chart " + id + "'s math-only x label should span only its plot.", 1);
+            assert(yRect.left >= chartRect.left && yRect.right <= chartRect.right &&
+              yRect.top >= chartRect.top && yRect.bottom <= chartRect.bottom,
+            "Chart " + id + "'s math-only y label should stay inside its plot.");
+          });
+          assert(appDocument.querySelectorAll(".explorable svg .axis-title").length === 0,
+            "No static bilateral axis title should remain inside an SVG.");
         }
       },
       {

@@ -5,7 +5,7 @@
   var SVG_NS = "http://www.w3.org/2000/svg";
 
   var MAIN_LAYOUT = { viewWidth: 660, viewHeight: 450, left: 60, right: 630, top: 32, bottom: 388 };
-  var DIAG_LAYOUT = { viewWidth: 440, viewHeight: 300, left: 50, right: 420, top: 28, bottom: 250 };
+  var SLOPE_LAYOUT = MAIN_LAYOUT;
 
   // Colors are keyed to each line's own letter, not its array position, so
   // a given line keeps its color as others are added or removed. Chosen
@@ -20,8 +20,8 @@
   var POINT_RADIUS = 9;
   var POINT_HIT_RADIUS = 18;
   var VALUE_KEY_STEP = 0.02;
-  var DIAG_PAD_FRACTION = 0.12;
-  var DIAG_PAD_MIN = 0.05;
+  var SLOPE_PAD_FRACTION = 0.12;
+  var SLOPE_PAD_MIN = 0.05;
   var VALUE_EPSILON = 1e-6;
 
   var elements = {};
@@ -39,15 +39,10 @@
     elements = {
       mainChart: byId("main-chart"),
       pointControlLabel: byId("point-control-label"),
-      pointTNumber: byId("point-t-number"),
-      pointTSlider: byId("point-t-slider"),
-      pointVNumber: byId("point-v-number"),
-      pointVSlider: byId("point-v-slider"),
       addLine: byId("add-line"),
       removeLine: byId("remove-line"),
       liveSummary: byId("live-summary"),
-      slopeChart: byId("slope-chart"),
-      boundChart: byId("bound-chart")
+      slopeChart: byId("slope-chart")
     };
 
     state.lines = model.defaultLines();
@@ -55,7 +50,7 @@
 
     typesetInitialHtmlMath();
     bindEvents();
-    syncControls();
+    syncInterface();
     recomputeAndDrawAll();
   }
 
@@ -67,10 +62,10 @@
     return LINE_COLORS[id] || "#5f6872";
   }
 
-  // --- MathJax: nothing in the explorable section carries TeX (all three
-  // panel captions are plain SVG text), but the shared typeset call still
-  // includes it, matching every other module's contract, in case the
-  // derivation section's user-authored math needs it later.
+  // --- MathJax: visible panel captions and x-axis labels live in ordinary
+  // HTML beside the graph SVGs, so their TeX is included in this one static
+  // typeset pass. Dynamic graph geometry and accessible SVG metadata remain
+  // plain text, matching the other modules' contract.
   function waitForMathJax() {
     function readyMathJax() {
       var mathJax = window.MathJax;
@@ -101,7 +96,7 @@
 
   function typesetInitialHtmlMath() {
     var targets = Array.prototype.slice.call(document.querySelectorAll(
-      ".introduction, .choice-controls, .explorable, .derivation, .notes, .references"
+      ".introduction, .explorable, .derivation, .notes, .references"
     ));
     window.mechanismMathReady = waitForMathJax().then(function (mathJax) {
       if (!mathJax || targets.length === 0) {
@@ -134,29 +129,6 @@
   // --- Events
 
   function bindEvents() {
-    elements.pointTNumber.addEventListener("change", function () {
-      var next = elements.pointTNumber.valueAsNumber;
-      if (!Number.isFinite(next)) {
-        elements.pointTNumber.value = formatValue(selectedPoint().t);
-        return;
-      }
-      movePointTo(next, selectedPoint().v);
-    });
-    elements.pointTSlider.addEventListener("input", function () {
-      movePointTo(Number.parseFloat(elements.pointTSlider.value), selectedPoint().v);
-    });
-    elements.pointVNumber.addEventListener("change", function () {
-      var next = elements.pointVNumber.valueAsNumber;
-      if (!Number.isFinite(next)) {
-        elements.pointVNumber.value = formatValue(selectedPoint().v);
-        return;
-      }
-      movePointTo(selectedPoint().t, next);
-    });
-    elements.pointVSlider.addEventListener("input", function () {
-      movePointTo(selectedPoint().t, Number.parseFloat(elements.pointVSlider.value));
-    });
-
     elements.addLine.addEventListener("click", function () {
       var result = model.addLine(state.lines);
       if (result.addedId === null) {
@@ -164,7 +136,7 @@
       }
       state.lines = result.lines;
       state.selectedIndex = pointList(state.lines).length - 2;
-      syncControls();
+      syncInterface();
       recomputeAndDrawAll();
     });
 
@@ -175,7 +147,7 @@
       var id = selectedPoint().id;
       state.lines = model.removeLine(state.lines, id);
       state.selectedIndex = model.clamp(state.selectedIndex, 0, pointList(state.lines).length - 1);
-      syncControls();
+      syncInterface();
       recomputeAndDrawAll();
     });
 
@@ -187,7 +159,7 @@
       dragActive = true;
       state.selectedIndex = index;
       elements.mainChart.setPointerCapture(event.pointerId);
-      syncControls();
+      syncInterface();
       dragSetPointFromPointer(event);
     });
 
@@ -211,7 +183,11 @@
     elements.mainChart.addEventListener("keydown", function (event) {
       var handled = true;
       var list = pointList(state.lines);
-      if (event.key === "ArrowLeft") {
+      if (event.key === "ArrowLeft" && event.shiftKey) {
+        movePointTo(selectedPoint().t - VALUE_KEY_STEP, selectedPoint().v);
+      } else if (event.key === "ArrowRight" && event.shiftKey) {
+        movePointTo(selectedPoint().t + VALUE_KEY_STEP, selectedPoint().v);
+      } else if (event.key === "ArrowLeft") {
         selectIndex(state.selectedIndex - 1);
       } else if (event.key === "ArrowRight") {
         selectIndex(state.selectedIndex + 1);
@@ -232,8 +208,8 @@
     });
   }
 
-  // --- Pointer geometry (main chart only; the two diagnostic charts are
-  // read-only). Both plot axes are fixed to [0,1], so this is a plain
+  // --- Pointer geometry (main chart only; the slope chart is read-only).
+  // Both plot axes are fixed to [0,1], so this is a plain
   // linear map, not a data-dependent one.
 
   function svgPointFromEvent(event) {
@@ -278,7 +254,7 @@
     var rawV = pixelToV(svgPoint.y, MAIN_LAYOUT);
     var point = selectedPoint();
     state.lines = model.movePoint(state.lines, point.id, point.which, rawT, rawV);
-    syncControls();
+    syncInterface();
     scheduleRepaint();
   }
 
@@ -287,7 +263,7 @@
   function selectIndex(index) {
     var list = pointList(state.lines);
     state.selectedIndex = model.clamp(index, 0, list.length - 1);
-    syncControls();
+    syncInterface();
     if (state.lastSummary) {
       drawMainChart(state.lastSummary);
     }
@@ -299,7 +275,7 @@
     }
     var point = selectedPoint();
     state.lines = model.movePoint(state.lines, point.id, point.which, t, v);
-    syncControls();
+    syncInterface();
     recomputeAndDrawAll();
   }
 
@@ -314,12 +290,8 @@
     });
   }
 
-  function syncControls() {
+  function syncInterface() {
     var point = selectedPoint();
-    elements.pointTNumber.value = formatValue(point.t);
-    elements.pointTSlider.value = String(point.t);
-    elements.pointVNumber.value = formatValue(point.v);
-    elements.pointVSlider.value = String(point.v);
     elements.pointControlLabel.textContent =
       "Line " + point.id + ", point " + (point.which === "p0" ? "1" : "2");
     elements.addLine.disabled = !model.canAddLine(state.lines);
@@ -331,7 +303,6 @@
     state.lastSummary = summary;
     drawMainChart(summary);
     drawSlopeChart(summary);
-    drawBoundChart(summary);
     updateLiveSummary(summary);
   }
 
@@ -374,11 +345,10 @@
     return ticks.sort(function (a, b) { return a - b; });
   }
 
-  // No y-axis title on any panel: only the numeric y-tick labels identify
-  // the vertical scale. The x-axis title reads "Parameter, t," not "Type,"
-  // since t here is an arbitrary parameter with no mechanism-design
-  // meaning attached.
-  function drawAxisFrame(svg, layout, xLabel, xTicks, yTicks, yMapper, formatYTick) {
+  // No y-axis title on either panel: only the numeric y-tick labels identify
+  // the vertical scale. Each MathJax-rendered x-axis label lives in the
+  // surrounding HTML rather than inside this SVG frame.
+  function drawAxisFrame(svg, layout, xTicks, yTicks, yMapper, formatYTick) {
     var formatY = formatYTick || formatSigned;
     xTicks.forEach(function (value) {
       var x = svgTOf(value, layout);
@@ -407,12 +377,6 @@
       fill: "none", class: "axis-line"
     });
 
-    if (xLabel) {
-      appendSvg(svg, "text", {
-        x: (layout.left + layout.right) / 2, y: layout.bottom + 34,
-        class: "axis-title", "text-anchor": "middle"
-      }, xLabel);
-    }
   }
 
   // Splits one envelope segment (a single line's own extrapolated,
@@ -461,15 +425,12 @@
   function drawMainChart(summary) {
     var svg = elements.mainChart;
     svg.replaceChildren();
-    appendSvg(svg, "title", { id: "main-chart-title" }, "Family of lines and their envelope V(t)");
+    appendSvg(svg, "title", { id: "main-chart-title" }, "Envelope, V(t)");
     appendSvg(svg, "desc", { id: "main-chart-description" }, mainChartDescription(summary));
-    appendSvg(svg, "text", {
-      x: MAIN_LAYOUT.left, y: 24, class: "panel-caption"
-    }, "Envelope V(t) = max of the lines");
 
     var yMapper = function (value) { return svgVOf(value, MAIN_LAYOUT); };
     drawAxisFrame(
-      svg, MAIN_LAYOUT, "Parameter, t",
+      svg, MAIN_LAYOUT,
       [0, 0.25, 0.5, 0.75, 1], [0, 0.25, 0.5, 0.75, 1], yMapper, formatTick
     );
 
@@ -558,42 +519,39 @@
   function drawSlopeChart(summary) {
     var svg = elements.slopeChart;
     svg.replaceChildren();
-    appendSvg(svg, "title", { id: "slope-chart-title" }, "Active slope");
+    appendSvg(svg, "title", { id: "slope-chart-title" }, "Active slope, f_t(x*(t),t)");
     appendSvg(svg, "desc", { id: "slope-chart-description" }, slopeChartDescription(summary));
-    appendSvg(svg, "text", {
-      x: DIAG_LAYOUT.left, y: 18, class: "panel-caption"
-    }, "Active slope f_t(x*(t),t)");
 
     var slopes = summary.segments.length > 0 ?
       summary.segments.map(function (segment) { return segment.slope; }) : [0];
-    var range = padRange(Math.min.apply(null, slopes), Math.max.apply(null, slopes), DIAG_PAD_MIN, DIAG_PAD_FRACTION);
-    var yMapper = makeYMapper(range.yMin, range.yMax, DIAG_LAYOUT);
+    var range = padRange(Math.min.apply(null, slopes), Math.max.apply(null, slopes), SLOPE_PAD_MIN, SLOPE_PAD_FRACTION);
+    var yMapper = makeYMapper(range.yMin, range.yMax, SLOPE_LAYOUT);
 
     drawAxisFrame(
-      svg, DIAG_LAYOUT, "Parameter, t",
+      svg, SLOPE_LAYOUT,
       [0, 0.25, 0.5, 0.75, 1], niceTicks(range.yMin, range.yMax), yMapper, formatSigned
     );
 
     summary.segments.forEach(function (segment, index) {
       var y = yMapper(segment.slope);
       appendSvg(svg, "line", {
-        x1: svgTOf(segment.t0, DIAG_LAYOUT), y1: y,
-        x2: svgTOf(segment.t1, DIAG_LAYOUT), y2: y,
+        x1: svgTOf(segment.t0, SLOPE_LAYOUT), y1: y,
+        x2: svgTOf(segment.t1, SLOPE_LAYOUT), y2: y,
         class: "slope-step", stroke: colorForId(segment.id)
       });
       appendSvg(svg, "circle", {
-        cx: svgTOf(segment.t0, DIAG_LAYOUT), cy: y, r: 3,
+        cx: svgTOf(segment.t0, SLOPE_LAYOUT), cy: y, r: 3,
         class: "slope-endpoint", fill: colorForId(segment.id)
       });
       appendSvg(svg, "circle", {
-        cx: svgTOf(segment.t1, DIAG_LAYOUT), cy: y, r: 3,
+        cx: svgTOf(segment.t1, SLOPE_LAYOUT), cy: y, r: 3,
         class: "slope-endpoint", fill: colorForId(segment.id)
       });
       var next = summary.segments[index + 1];
       if (next && Math.abs(next.t0 - segment.t1) < 1e-6) {
         appendSvg(svg, "line", {
-          x1: svgTOf(segment.t1, DIAG_LAYOUT), y1: y,
-          x2: svgTOf(segment.t1, DIAG_LAYOUT), y2: yMapper(next.slope),
+          x1: svgTOf(segment.t1, SLOPE_LAYOUT), y1: y,
+          x2: svgTOf(segment.t1, SLOPE_LAYOUT), y2: yMapper(next.slope),
           class: "slope-jump-guide"
         });
       }
@@ -606,92 +564,20 @@
     summary.infiniteLines.forEach(function (line) {
       var t = line.p0.t;
       appendSvg(svg, "line", {
-        x1: svgTOf(t, DIAG_LAYOUT), y1: DIAG_LAYOUT.top,
-        x2: svgTOf(t, DIAG_LAYOUT), y2: DIAG_LAYOUT.bottom,
+        x1: svgTOf(t, SLOPE_LAYOUT), y1: SLOPE_LAYOUT.top,
+        x2: svgTOf(t, SLOPE_LAYOUT), y2: SLOPE_LAYOUT.bottom,
         class: "slope-infinite-marker", stroke: colorForId(line.id)
       });
     });
-  }
-
-  function drawBoundChart(summary) {
-    var svg = elements.boundChart;
-    svg.replaceChildren();
-    appendSvg(svg, "title", { id: "bound-chart-title" }, "Steepest slope required");
-    appendSvg(svg, "desc", { id: "bound-chart-description" }, boundChartDescription(summary));
-    appendSvg(svg, "text", {
-      x: DIAG_LAYOUT.left, y: 18, class: "panel-caption"
-    }, "|Slope| by line");
-
-    var n = summary.lines.length;
-    var slotWidth = (DIAG_LAYOUT.right - DIAG_LAYOUT.left) / n;
-    var barWidth = Math.min(36, slotWidth * 0.5);
-
-    if (summary.hasInfiniteLine) {
-      // No finite height represents infinity: every non-infinite line's
-      // bar is suppressed entirely, the infinite line(s) are drawn at the
-      // full height of the panel, and the top tick reads the word
-      // "infinity" instead of a number.
-      var yMapper = makeYMapper(0, 1, DIAG_LAYOUT);
-      drawAxisFrame(svg, DIAG_LAYOUT, null, [], [0], yMapper, formatSigned);
-      appendSvg(svg, "text", {
-        x: DIAG_LAYOUT.left - 10, y: DIAG_LAYOUT.top + 4, class: "axis-text", "text-anchor": "end"
-      }, "∞");
-
-      summary.lines.forEach(function (line, index) {
-        var slotCenter = DIAG_LAYOUT.left + slotWidth * (index + 0.5);
-        appendSvg(svg, "text", {
-          x: slotCenter, y: DIAG_LAYOUT.bottom + 18, class: "axis-text", "text-anchor": "middle"
-        }, line.id);
-        if (!Number.isFinite(model.slopeOf(line))) {
-          appendSvg(svg, "rect", {
-            x: slotCenter - barWidth / 2, y: DIAG_LAYOUT.top,
-            width: barWidth, height: DIAG_LAYOUT.bottom - DIAG_LAYOUT.top,
-            class: "bound-bar", fill: colorForId(line.id)
-          });
-        }
-      });
-      return;
-    }
-
-    var magnitudes = summary.lines.map(function (line) { return Math.abs(model.slopeOf(line)); });
-    var maxMagnitude = Math.max.apply(null, magnitudes.concat([0]));
-    var yMax = Math.max(DIAG_PAD_MIN, maxMagnitude * (1 + DIAG_PAD_FRACTION));
-    var yMapperNormal = makeYMapper(0, yMax, DIAG_LAYOUT);
-
-    drawAxisFrame(svg, DIAG_LAYOUT, null, [], [0, yMax], yMapperNormal, formatSigned);
-
-    var baseline = yMapperNormal(0);
-    summary.lines.forEach(function (line, index) {
-      var slotCenter = DIAG_LAYOUT.left + slotWidth * (index + 0.5);
-      var magnitude = Math.abs(model.slopeOf(line));
-      var top = yMapperNormal(magnitude);
-      appendSvg(svg, "rect", {
-        x: slotCenter - barWidth / 2, y: top,
-        width: barWidth, height: Math.max(0, baseline - top),
-        class: "bound-bar", fill: colorForId(line.id)
-      });
-      appendSvg(svg, "text", {
-        x: slotCenter, y: DIAG_LAYOUT.bottom + 18, class: "axis-text", "text-anchor": "middle"
-      }, line.id);
-    });
-
-    if (maxMagnitude > 0) {
-      appendSvg(svg, "line", {
-        x1: DIAG_LAYOUT.left, y1: yMapperNormal(maxMagnitude),
-        x2: DIAG_LAYOUT.right, y2: yMapperNormal(maxMagnitude),
-        class: "bound-max-guide"
-      });
-    }
   }
 
   function updateLiveSummary(summary) {
     elements.liveSummary.textContent =
       "There are " + summary.lines.length + " lines. " +
       "The envelope has " + summary.kinks.length +
-      (summary.kinks.length === 1 ? " switch (kink). " : " switches (kinks). ") +
-      (summary.hasInfiniteLine ?
-        "At least one line is currently vertical, with infinite slope. " :
-        "The steepest line currently has slope magnitude " + formatSigned(summary.maxAbsSlope) + ".");
+      (summary.kinks.length === 1 ? " switch (kink)." : " switches (kinks).") +
+      (summary.infiniteLines.length > 0 ?
+        " At least one line is currently vertical, with infinite slope." : "");
   }
 
   // --- Accessible descriptions
@@ -705,7 +591,9 @@
       "shown dotted where that line's own value runs outside [0,1]. The " +
       "selected point is line " + point.id + "'s point " +
       (point.which === "p0" ? "1" : "2") + ", at t = " + formatValue(point.t) +
-      ", value " + formatValue(point.v) + ".";
+      ", value " + formatValue(point.v) + ". Left and Right select a point; " +
+      "Up and Down move it vertically; Shift plus Left or Right moves it " +
+      "horizontally when it lies on a horizontal edge.";
   }
 
   function slopeChartDescription(summary) {
@@ -714,19 +602,6 @@
       "envelope's maximizing line switches. A vertical line's infinite " +
       "slope is marked by a dotted vertical line, in its own color, at " +
       "its own t instead of a finite step.";
-  }
-
-  function boundChartDescription(summary) {
-    if (summary.hasInfiniteLine) {
-      return "At least one line is currently vertical: its bar is drawn " +
-        "at the full height of the panel, labeled infinity, and every " +
-        "other line's bar is suppressed.";
-    }
-    return "The magnitude of each line's own slope. The tallest bar is the " +
-      "smallest bound that currently dominates every line's slope; " +
-      "narrowing a line's own t-domain while keeping its value swinging " +
-      "from 0 to 1 can always raise this bar further, with no fixed " +
-      "ceiling, since both plot axes stay fixed to [0,1].";
   }
 
   // --- Formatting

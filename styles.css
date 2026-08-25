@@ -147,13 +147,17 @@ p {
 }
 
 .equation-display {
-  margin: 1.8rem 0;
+  margin: 0.5rem 0 0.65rem;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 0.65rem;
   font-size: inherit;
+}
+
+.equation-display > mjx-container[jax="SVG"][display="true"] {
+  margin: 0;
 }
 
 .fraction {
@@ -1054,15 +1058,9 @@ input[type="range"] {
   stroke-width: 1.6;
 }
 
-/* Shared "main chart + two diagnostic panels" layout */
-/* Originally written for the envelope-theorem module, this layout is now
-   shared verbatim by both General Topics modules that use it (the current
-   envelope-theorem module and the payments-from-allocation-rule module):
-   the main chart (660x450 viewBox, see each module's app.js) is
-   deliberately larger than the two diagnostic panels, which share their
-   own smaller 440x300 layout and this same max-width so they match each
-   other. The two column widths together (plus gap) land close to the
-   other modules' combined demo-area width. */
+/* Shared General Topics chart layout. Payments uses the larger-main plus
+   smaller-diagnostics defaults below. The envelope-theorem page adds a
+   scoped two-panel modifier so its two remaining charts are equal-sized. */
 .envelope-curve-chart {
   max-width: 660px;
   cursor: default;
@@ -1119,6 +1117,109 @@ input[type="range"] {
 .envelope-diagnostic-chart {
   max-width: 440px;
   cursor: default;
+}
+
+.envelope-layout.envelope-two-panel-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 660px));
+  justify-content: space-between;
+}
+
+.envelope-two-panel-layout .envelope-main-column,
+.envelope-two-panel-layout .envelope-diagnostic-column {
+  width: 100%;
+  min-width: 0;
+  max-width: 660px;
+}
+
+.envelope-two-panel-layout .envelope-main-column {
+  gap: 0.8rem;
+}
+
+.envelope-two-panel-layout .envelope-diagnostic-column {
+  display: block;
+}
+
+.envelope-two-panel-layout .envelope-diagnostic-chart {
+  max-width: 660px;
+}
+
+.envelope-chart-figure > figcaption,
+.math-chart-figure > figcaption {
+  min-height: 1.25rem;
+}
+
+.envelope-chart-frame,
+.math-chart-frame {
+  position: relative;
+}
+
+.envelope-chart-axis-label,
+.math-chart-axis-label {
+  position: absolute;
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--text-font);
+  font-size: clamp(9px, 1.82vw, 12px);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.envelope-chart-axis-label,
+.math-chart-x-axis-label {
+  right: 0;
+  bottom: 3%;
+  left: 0;
+  text-align: center;
+}
+
+.math-chart-y-axis-label {
+  transform: translate(-50%, -50%) rotate(-90deg);
+  transform-origin: center;
+}
+
+.bilateral-main-x-axis-label {
+  bottom: 7%;
+}
+
+.bilateral-main-y-axis-label {
+  top: 46.154%;
+  left: 3.333%;
+}
+
+.bilateral-diagnostic-x-axis-label {
+  bottom: 7%;
+}
+
+.bilateral-diagnostic-y-axis-label {
+  top: 40.625%;
+  left: 4.091%;
+}
+
+.envelope-diagnostic-column .math-chart-figure,
+.envelope-diagnostic-column .math-chart-frame {
+  width: 100%;
+  max-width: 440px;
+}
+
+.envelope-chart-axis-label mjx-container,
+.math-chart-axis-label mjx-container {
+  margin: 0;
+}
+
+.envelope-line-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+}
+
+.envelope-line-controls .point-control-heading,
+.envelope-line-controls .point-count-buttons {
+  margin: 0;
 }
 
 /* Payments-from-allocation-rule module (draft) */
@@ -1182,7 +1283,7 @@ input[type="range"] {
 }
 
 /* Envelope-theorem module */
-/* Line/segment/bar colors are set per element in app.js (stroke/fill
+/* Line/segment colors are set per element in app.js (stroke/fill
    attributes keyed to each line's own letter), not here -- these rules
    intentionally carry no color of their own. */
 .family-line {
@@ -1255,16 +1356,6 @@ input[type="range"] {
   stroke-dasharray: 2 4;
 }
 
-.bound-bar {
-  stroke: none;
-}
-
-.bound-max-guide {
-  stroke: var(--ink);
-  stroke-width: 1;
-  stroke-dasharray: 5 3;
-}
-
 @media (max-width: 1050px) {
   .interaction-layout {
     grid-template-columns: 1fr;
@@ -1272,6 +1363,11 @@ input[type="range"] {
 
   .choice-controls {
     padding: 1.35rem 0 0;
+  }
+
+  .envelope-layout.envelope-two-panel-layout {
+    grid-template-columns: minmax(0, 660px);
+    justify-content: center;
   }
 
   .slider-grid {

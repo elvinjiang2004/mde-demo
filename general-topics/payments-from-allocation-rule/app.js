@@ -333,8 +333,8 @@
   }
 
   // No y-axis title: only the numeric y-tick labels identify the vertical
-  // scale, so every panel keeps just an x-axis title beneath it.
-  function drawAxisFrame(svg, layout, xLabel, xTicks, yTicks, yMapper) {
+  // scale. Static x-axis titles live in MathJax-enabled HTML outside the SVG.
+  function drawAxisFrame(svg, layout, xTicks, yTicks, yMapper) {
     xTicks.forEach(function (value) {
       var x = svgXOf(value, layout);
       appendSvg(svg, "line", {
@@ -362,10 +362,6 @@
       fill: "none", class: "axis-line"
     });
 
-    appendSvg(svg, "text", {
-      x: (layout.left + layout.right) / 2, y: layout.bottom + 34,
-      class: "axis-title", "text-anchor": "middle"
-    }, xLabel);
   }
 
   // Converts a monotone-cubic-Hermite segment into the exact equivalent
@@ -402,15 +398,12 @@
   function drawCurveChart(summary) {
     var svg = elements.curveChart;
     svg.replaceChildren();
-    appendSvg(svg, "title", { id: "curve-chart-title" }, "Allocation rule Q(v)");
+    appendSvg(svg, "title", { id: "curve-chart-title" }, "Allocation rule, Q(v)");
     appendSvg(svg, "desc", { id: "curve-chart-description" }, curveChartDescription(summary));
-    appendSvg(svg, "text", {
-      x: MAIN_LAYOUT.left, y: 24, class: "panel-caption"
-    }, "Allocation rule Q(v)");
 
     var yMapper = function (value) { return svgYOf01(value, MAIN_LAYOUT); };
     drawAxisFrame(
-      svg, MAIN_LAYOUT, "Type, v",
+      svg, MAIN_LAYOUT,
       [0, 0.25, 0.5, 0.75, 1], [0, 0.25, 0.5, 0.75, 1], yMapper
     );
 
@@ -433,10 +426,6 @@
     svg.replaceChildren();
     appendSvg(svg, "title", { id: "envelope-chart-title" }, "Envelope of deviation payoffs");
     appendSvg(svg, "desc", { id: "envelope-chart-description" }, envelopeChartDescription(summary));
-    appendSvg(svg, "text", {
-      x: DIAG_LAYOUT.left, y: 18, class: "panel-caption"
-    }, "Information rent U(v)");
-
     var uSamples = buildDenseSamples(summary.curve.U, CURVE_SAMPLE_COUNT);
     var allValues = uSamples.map(function (s) { return s.value; });
     summary.violations.forEach(function (viol) {
@@ -451,7 +440,7 @@
     var yMapper = makeYMapper(yMin, yMax, DIAG_LAYOUT);
 
     drawAxisFrame(
-      svg, DIAG_LAYOUT, "Type, v",
+      svg, DIAG_LAYOUT,
       [0, 0.25, 0.5, 0.75, 1], niceTicks(yMin, yMax), yMapper
     );
 
@@ -499,10 +488,6 @@
     svg.replaceChildren();
     appendSvg(svg, "title", { id: "payment-chart-title" }, "Payment rule");
     appendSvg(svg, "desc", { id: "payment-chart-description" }, paymentChartDescription());
-    appendSvg(svg, "text", {
-      x: DIAG_LAYOUT.left, y: 18, class: "panel-caption"
-    }, "Payment rule P(v)");
-
     var pSamples = buildDenseSamples(summary.curve.P, CURVE_SAMPLE_COUNT);
     var values = pSamples.map(function (s) { return s.value; });
     var yMin = Math.min(0, Math.min.apply(null, values));
@@ -513,7 +498,7 @@
     var yMapper = makeYMapper(yMin, yMax, DIAG_LAYOUT);
 
     drawAxisFrame(
-      svg, DIAG_LAYOUT, "Type, v",
+      svg, DIAG_LAYOUT,
       [0, 0.25, 0.5, 0.75, 1], niceTicks(yMin, yMax), yMapper
     );
 

@@ -1750,7 +1750,7 @@
       "data-signed-width": signedPayoffIfWin,
       "data-signed-payoff-if-win": signedPayoffIfWin
     });
-    var label = "Payoff if you win: v₁ − x₁ = " +
+    var label = "Payoff if you win, v₁ − x₁ = " +
       formatMoney(signedPayoffIfWin, state.b - state.a);
     var labelWidth = label.length * (layout.compact ? 5.6 : 5.9);
     var labelX = (bracketLeft + bracketRight) / 2;

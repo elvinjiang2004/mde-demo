@@ -41,20 +41,24 @@
       <div class="envelope-layout">
         <div class="envelope-main-column">
           <div class="chart-column">
-            <div class="chart-frame">
-              <svg
-                id="curve-chart"
-                class="tradeoff-chart envelope-curve-chart"
-                viewBox="0 0 660 450"
-                role="img"
-                tabindex="0"
-                aria-labelledby="curve-chart-title curve-chart-description"
-                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
-              >
-                <title id="curve-chart-title">Allocation rule Q(v)</title>
-                <desc id="curve-chart-description">A smooth, shape-preserving cubic Hermite curve through up to nine draggable control points, giving the probability of allocation as a function of type v.</desc>
-              </svg>
-            </div>
+            <figure class="diagnostic-figure math-chart-figure">
+              <figcaption>Allocation rule, \(Q(v)\)</figcaption>
+              <div class="chart-frame math-chart-frame">
+                <svg
+                  id="curve-chart"
+                  class="tradeoff-chart envelope-curve-chart"
+                  viewBox="0 0 660 450"
+                  role="img"
+                  tabindex="0"
+                  aria-labelledby="curve-chart-title curve-chart-description"
+                  aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
+                >
+                  <title id="curve-chart-title">Allocation rule, Q(v)</title>
+                  <desc id="curve-chart-description">A smooth, shape-preserving cubic Hermite curve through up to nine draggable control points, giving the probability of allocation as a function of type v.</desc>
+                </svg>
+                <p class="math-chart-axis-label math-chart-x-axis-label">Type, \(v\)</p>
+              </div>
+            </figure>
           </div>
 
           <aside class="choice-controls envelope-controls" aria-label="Point controls">
@@ -86,32 +90,40 @@
 
         <div class="envelope-diagnostic-column">
           <div class="diagnostic-panel">
-            <figure class="diagnostic-figure">
-              <svg
-                id="envelope-chart"
-                class="diagnostic-chart envelope-diagnostic-chart"
-                viewBox="0 0 440 300"
-                role="img"
-                aria-labelledby="envelope-chart-title envelope-chart-description"
-              >
-                <title id="envelope-chart-title">Envelope of deviation payoffs</title>
-                <desc id="envelope-chart-description">The rent curve U(v) shaded beneath it, together with one straight deviation-payoff line per control point; a line rising above U(v) marks a profitable deviation.</desc>
-              </svg>
+            <figure class="diagnostic-figure math-chart-figure">
+              <figcaption>Information rent, \(U(v)\)</figcaption>
+              <div class="math-chart-frame">
+                <svg
+                  id="envelope-chart"
+                  class="diagnostic-chart envelope-diagnostic-chart"
+                  viewBox="0 0 440 300"
+                  role="img"
+                  aria-labelledby="envelope-chart-title envelope-chart-description"
+                >
+                  <title id="envelope-chart-title">Envelope of deviation payoffs</title>
+                  <desc id="envelope-chart-description">The rent curve U(v) shaded beneath it, together with one straight deviation-payoff line per control point; a line rising above U(v) marks a profitable deviation.</desc>
+                </svg>
+                <p class="math-chart-axis-label math-chart-x-axis-label">Type, \(v\)</p>
+              </div>
             </figure>
           </div>
 
           <div class="diagnostic-panel">
-            <figure class="diagnostic-figure">
-              <svg
-                id="payment-chart"
-                class="diagnostic-chart envelope-diagnostic-chart"
-                viewBox="0 0 440 300"
-                role="img"
-                aria-labelledby="payment-chart-title payment-chart-description"
-              >
-                <title id="payment-chart-title">Payment rule</title>
-                <desc id="payment-chart-description">The payment P(v) implied by the painted allocation curve and the envelope formula.</desc>
-              </svg>
+            <figure class="diagnostic-figure math-chart-figure">
+              <figcaption>Payment rule, \(P(v)\)</figcaption>
+              <div class="math-chart-frame">
+                <svg
+                  id="payment-chart"
+                  class="diagnostic-chart envelope-diagnostic-chart"
+                  viewBox="0 0 440 300"
+                  role="img"
+                  aria-labelledby="payment-chart-title payment-chart-description"
+                >
+                  <title id="payment-chart-title">Payment rule</title>
+                  <desc id="payment-chart-description">The payment P(v) implied by the painted allocation curve and the envelope formula.</desc>
+                </svg>
+                <p class="math-chart-axis-label math-chart-x-axis-label">Type, \(v\)</p>
+              </div>
             </figure>
           </div>
         </div>

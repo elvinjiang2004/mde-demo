@@ -302,20 +302,11 @@
     var infiniteLines = lines.filter(function (line) {
       return !Number.isFinite(slopeOf(line));
     });
-    var maxAbsSlope = 0;
-    lines.forEach(function (line) {
-      var magnitude = Math.abs(slopeOf(line));
-      if (Number.isFinite(magnitude)) {
-        maxAbsSlope = Math.max(maxAbsSlope, magnitude);
-      }
-    });
     return {
       lines: lines,
       segments: segments,
       kinks: kinks,
-      infiniteLines: infiniteLines,
-      hasInfiniteLine: infiniteLines.length > 0,
-      maxAbsSlope: maxAbsSlope
+      infiniteLines: infiniteLines
     };
   }
 

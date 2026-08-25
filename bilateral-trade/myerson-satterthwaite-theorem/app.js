@@ -511,7 +511,7 @@
     }
   }
 
-  function drawFrame(svg, layout, vLabel, cLabel, compact) {
+  function drawFrame(svg, layout, compact) {
     var ticks = compact ? [0, 1] : [0, 0.25, 0.5, 0.75, 1];
     ticks.forEach(function (value) {
       var x = svgXOf(value, layout);
@@ -546,18 +546,6 @@
       class: "diagonal-guide"
     });
 
-    appendSvg(svg, "text", {
-      x: (layout.left + layout.right) / 2,
-      y: layout.bottom + (compact ? 32 : 40),
-      class: "axis-title", "text-anchor": "middle"
-    }, vLabel);
-    appendSvg(svg, "text", {
-      x: layout.left - (compact ? 26 : 34),
-      y: (layout.top + layout.bottom) / 2,
-      class: "axis-title", "text-anchor": "middle",
-      transform: "rotate(-90 " + (layout.left - (compact ? 26 : 34)) + " " +
-        ((layout.top + layout.bottom) / 2) + ")"
-    }, cLabel);
   }
 
   function drawTickAt(svg, x, y, size, className, direction) {
@@ -580,15 +568,11 @@
   function drawPaintChart(summary) {
     var svg = elements.paintChart;
     svg.replaceChildren();
-    appendSvg(svg, "title", { id: "paint-chart-title" }, "Allocation rule q(v,c)");
+    appendSvg(svg, "title", { id: "paint-chart-title" }, "Allocation rule, q(v,c)");
     appendSvg(svg, "desc", { id: "paint-chart-description" }, paintChartDescription());
 
-    appendSvg(svg, "text", {
-      x: MAIN_LAYOUT.left, y: 24, class: "panel-caption"
-    }, "Allocation rule q(v,c)");
-
     drawTriangleMesh(svg, summary.grid, MAIN_LAYOUT, qColor);
-    drawFrame(svg, MAIN_LAYOUT, "Buyer value, v", "Seller cost, c", false);
+    drawFrame(svg, MAIN_LAYOUT, false);
 
     var cellBounds = cellRect(state.selected.i, state.selected.j, MAIN_LAYOUT);
     var corners = cellCorners(state.selected.i, state.selected.j, MAIN_LAYOUT);
@@ -634,7 +618,7 @@
   // vertical step between consecutive cells. "ascending" selects the
   // required direction: nondecreasing for the buyer, nonincreasing for the
   // seller.
-  function drawLineFrame(svg, layout, xLabel) {
+  function drawLineFrame(svg, layout) {
     var ticks = [0, 1];
     ticks.forEach(function (value) {
       var x = svgXOf(value, layout);
@@ -663,27 +647,16 @@
       fill: "none", class: "axis-line"
     });
 
-    appendSvg(svg, "text", {
-      x: (layout.left + layout.right) / 2, y: layout.bottom + 32,
-      class: "axis-title", "text-anchor": "middle"
-    }, xLabel);
-    appendSvg(svg, "text", {
-      x: layout.left - 26, y: (layout.top + layout.bottom) / 2,
-      class: "axis-title", "text-anchor": "middle",
-      transform: "rotate(-90 " + (layout.left - 26) + " " +
-        ((layout.top + layout.bottom) / 2) + ")"
-    }, "Pr(trade)");
   }
 
   function drawStepChart(
-    svg, idPrefix, titleText, descText, values, violations, layout, xLabel,
-    ascending
+    svg, idPrefix, titleText, descText, values, violations, layout, ascending
   ) {
     svg.replaceChildren();
     appendSvg(svg, "title", { id: idPrefix + "-title" }, titleText);
     appendSvg(svg, "desc", { id: idPrefix + "-description" }, descText);
 
-    drawLineFrame(svg, layout, xLabel);
+    drawLineFrame(svg, layout);
 
     var segments = [];
     var i;
@@ -729,7 +702,7 @@
     drawStepChart(
       elements.buyerIcChart, "buyer-ic-chart", "Interim buyer probability",
       buyerIcChartDescription(summary), summary.interimBuyerProbability,
-      summary.buyerIcViolations, DIAG_LAYOUT, "v", true
+      summary.buyerIcViolations, DIAG_LAYOUT, true
     );
   }
 
@@ -737,7 +710,7 @@
     drawStepChart(
       elements.sellerIcChart, "seller-ic-chart", "Interim seller probability",
       sellerIcChartDescription(summary), summary.interimSellerProbability,
-      summary.sellerIcViolations, DIAG_LAYOUT, "c", false
+      summary.sellerIcViolations, DIAG_LAYOUT, false
     );
   }
 
@@ -765,7 +738,7 @@
     appendSvg(svg, "title", { id: idPrefix + "-title" }, titleText);
     appendSvg(svg, "desc", { id: idPrefix + "-description" }, descText);
     drawTriangleMesh(svg, grid, DIAG_LAYOUT, colorFn);
-    drawFrame(svg, DIAG_LAYOUT, "v", "c", true);
+    drawFrame(svg, DIAG_LAYOUT, true);
   }
 
   function drawBudgetChart(summary) {
@@ -782,7 +755,7 @@
     drawTriangleMesh(svg, summary.revenue, DIAG_LAYOUT, function (value) {
       return divergingScale(value, extent);
     });
-    drawFrame(svg, DIAG_LAYOUT, "v", "c", true);
+    drawFrame(svg, DIAG_LAYOUT, true);
   }
 
   function drawEfficiencyChart(summary) {
@@ -827,7 +800,7 @@
       }
     });
 
-    drawFrame(svg, DIAG_LAYOUT, "v", "c", true);
+    drawFrame(svg, DIAG_LAYOUT, true);
   }
 
   // --- Diagnostic text (colored green when a condition holds, red when not)
