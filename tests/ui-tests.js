@@ -96,7 +96,12 @@
             "../../js/components.js",
             "../../js/mathjax-config.js",
             "../../assets/mathjax/tex-svg.js",
+            "../../js/mathjax-runtime.js",
             "../../js/distributions.js",
+            "../../js/math-utils.js",
+            "../../js/svg-utils.js",
+            "../../js/equation-chain.js",
+            "../../js/auction-controls.js",
             "model.js",
             "app.js"
           ]), "The shared page-scaffolding components must load before MathJax, " +
@@ -107,6 +112,12 @@
           assert(appWindow.MathJax && /^4\./.test(appWindow.MathJax.version) &&
             typeof appWindow.MathJax.typesetPromise === "function",
           "The local MathJax 4 SVG renderer should be available.");
+          assert(appWindow.MechanismMath &&
+            typeof appWindow.MechanismMath.typesetInitial === "function" &&
+            typeof appWindow.MechanismMath.setText === "function" &&
+            appWindow.mechanismMathReady &&
+            typeof appWindow.mechanismMathReady.then === "function",
+          "The shared MathJax lifecycle and readiness promise should be available.");
           assert(distributions && typeof distributions.quantile === "function",
             "AuctionDistributions should be available to the page.");
           assert(model && typeof model.outcomes === "function",
@@ -225,9 +236,10 @@
             "The demo-to-derivation boundary should remain.");
           assert(notes && borderWidth(notes, "Top") > 0,
             "The Notes section should have its requested faint separator.");
+          var chartFrame = appDocument.getElementById("tradeoff-chart").parentElement;
           assert(borderWidth(appDocument.querySelector(".site-header"), "Bottom") === 0 &&
-            borderWidth(appDocument.querySelector(".chart-frame"), "Top") === 0 &&
-            borderWidth(appDocument.querySelector(".chart-frame"), "Bottom") === 0 &&
+            borderWidth(chartFrame, "Top") === 0 &&
+            borderWidth(chartFrame, "Bottom") === 0 &&
             borderWidth(appDocument.querySelector(".choice-controls"), "Left") === 0 &&
             borderWidth(appDocument.querySelector(".site-footer"), "Top") === 0,
             "Decorative page and chart-frame rules should be removed.");

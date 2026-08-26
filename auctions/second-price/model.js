@@ -10,13 +10,8 @@
     );
   }
 
-  function isFiniteNumber(value) {
-    return typeof value === "number" && Number.isFinite(value);
-  }
-
-  function clamp(value, lower, upper) {
-    return Math.min(upper, Math.max(lower, value));
-  }
+  var isFiniteNumber = global.NumberUtils.isFiniteNumber;
+  var clamp = global.NumberUtils.clamp;
 
   function isUniformEquivalent(normalized) {
     return normalized.type === "uniform" ||

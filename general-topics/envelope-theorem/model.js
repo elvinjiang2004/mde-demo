@@ -19,9 +19,7 @@
   var MIN_LINES = 1;
   var MAX_LINES = LABEL_POOL.length;
 
-  function clamp(value, lower, upper) {
-    return Math.min(upper, Math.max(lower, value));
-  }
+  var clamp = global.NumberUtils.clamp;
 
   // A default family with two crossings, so the envelope shows three
   // segments (and two kinks) as soon as the page loads, before the learner

@@ -9,6 +9,9 @@
   <script defer src="../../js/components.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/math-utils.js"></script>
+  <script defer src="../../js/svg-utils.js"></script>
   <script defer src="model.js"></script>
   <script defer src="app.js"></script>
 </head>
@@ -42,7 +45,7 @@
         </li>
         <li>
           \(x^*(t)\in X^*(t)\ne\varnothing\), a particular selection from
-          the set of maximizers at \(t\).
+          the non-empty set of maximizers at \(t\).
         </li>
       </ul>
 
@@ -100,22 +103,22 @@
       <p>
         In the interactive demo, adjust pairs of points that define a family
         of affine functions and see how the upper envelope behaves. Notice
-        when \(V\) is differentiable, and when it is not.
+        when \(V\) is differentiable and when it is not.
         Consider how the conditions of Milgrom and Segal's Theorem 2 are met
         for this particular family of functions.
       </p>
     </section>
 
     <section class="explorable explorable-divider" aria-label="Family-of-lines interface">
-      <div class="envelope-layout envelope-two-panel-layout">
-        <div class="envelope-main-column">
+      <div class="main-diagnostic-layout two-panel-layout">
+        <div class="main-column main-column-660">
           <div class="chart-column">
             <figure class="diagnostic-figure envelope-chart-figure">
               <figcaption>Envelope, \(V(t)\)</figcaption>
-              <div class="chart-frame envelope-chart-frame">
+              <div class="envelope-chart-frame">
                 <svg
                   id="main-chart"
-                  class="tradeoff-chart envelope-curve-chart"
+                  class="tradeoff-chart chart-660x450"
                   viewBox="0 0 660 450"
                   role="img"
                   tabindex="0"
@@ -130,7 +133,7 @@
             </figure>
           </div>
 
-          <div class="envelope-line-controls" aria-label="Line controls">
+          <div class="control-row" aria-label="Line controls">
             <p id="point-control-label" class="point-control-heading" aria-live="polite">Line A, point 1</p>
             <div class="point-count-buttons">
               <button id="add-line" class="text-button" type="button">Add line</button>
@@ -139,14 +142,14 @@
           </div>
         </div>
 
-        <div class="envelope-diagnostic-column">
+        <div class="diagnostic-column diagnostic-column-440">
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure envelope-chart-figure">
               <figcaption>Active slope, \(f_t(x^*(t),t)\)</figcaption>
               <div class="envelope-chart-frame">
                 <svg
                   id="slope-chart"
-                  class="diagnostic-chart envelope-diagnostic-chart"
+                  class="diagnostic-chart chart-660x450"
                   viewBox="0 0 660 450"
                   role="img"
                   aria-labelledby="slope-chart-title slope-chart-description"
@@ -165,24 +168,9 @@
     </section>
 
     <section class="derivation" aria-labelledby="derivation-title">
-      <h2 id="derivation-title">Theorem 2</h2>
-      <!-- Add user-authored derivation here: the full statement and proof
-           sketch of Theorem 2, the role of the uniform integrable bound
-           b(t), and why a finite family of ordinary (finite-slope) lines
-           always trivially satisfies it (V is automatically
-           piecewise-linear, hence Lipschitz, hence absolutely continuous)
-           even though no fixed b(t) could dominate every family reachable
-           by dragging: either endpoint of a line may be dragged onto the
-           plot's own top or bottom edge (not only the left/right edges),
-           and dragging one point close enough to the other's own t snaps
-           the line to a genuinely vertical, infinite-slope line rather
-           than merely a very steep finite one. The envelope search itself
-           is universal -- every finite-slope line's own affine formula is
-           extended over the whole domain, not only the sub-interval the
-           learner actually drew it across -- so the true V(t) can run
-           outside [0,1]; the plot clamps and dots it there rather than
-           rescaling, since both axes stay fixed. -->
-    </section>
+      <h2 id="derivation-title">The Envelope Theorem for mechanisms</h2>
+
+      </section>
 
     <section class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>

@@ -456,9 +456,22 @@ input[type="range"] {
   margin-top: 2.2rem;
 }
 
+/* Every chain row is four cells in this order:
+     .equation-step-connector  the step joiner (\iff, \Rightarrow); may be empty
+     .equation-step-lhs        the left expression, right-aligned
+     .equation-step-relation   the relation itself (=, \geq, \leq)
+     .equation-step-rhs        the right expression, left-aligned
+   The two expression columns are fractions, not `max-content`, on purpose.
+   A content-sized column is only as wide as the rows currently *visible*, so
+   revealing a hidden step would widen it and shove the relation column
+   sideways. Sizing them as equal fractions makes the relation's position a
+   function of the container alone, so it cannot move when a step is revealed
+   -- and needs no script to measure anything. The two `max-content` columns
+   hold single symbols whose width does not vary between rows. */
 .equation-chain-steps {
   display: grid;
-  grid-template-columns: max-content max-content;
+  grid-template-columns:
+    max-content minmax(0, 1fr) max-content minmax(0, 1fr);
   column-gap: 0.6rem;
   row-gap: 0.5rem;
   align-items: baseline;
@@ -469,9 +482,35 @@ input[type="range"] {
   font-size: 1.12rem;
 }
 
+.equation-step-connector,
 .equation-step-lhs,
+.equation-step-relation,
 .equation-step-rhs {
   white-space: nowrap;
+}
+
+/* Both expressions face the relation between them, the way LaTeX's align
+   environment lines a chain up on its relation symbol. */
+.equation-step-lhs {
+  text-align: right;
+}
+
+.equation-step-connector,
+.equation-step-relation,
+.equation-step-rhs {
+  text-align: left;
+}
+
+/* Content-sized columns, for a lopsided chain where equal halves would strand
+   one side behind a wide empty gutter -- first-price's chains state their
+   left-hand side once and leave it empty on every continuation row, so half
+   the width would be blank. Safe there because no hidden step widens a column
+   left of the relation: those rows' connector and left cells are empty too, so
+   revealing them still cannot move the relation. Only reach for this after
+   checking that holds, since content sizing is what re-admits reveal-time
+   movement in the general case. */
+.equation-chain-content-widths {
+  grid-template-columns: repeat(4, max-content);
 }
 
 .equation-chain-divider-rule {
@@ -905,29 +944,13 @@ input[type="range"] {
   border-top: 1px solid var(--line);
 }
 
-.bilateral-paint-chart {
+.chart-480x520 {
   max-width: 480px;
-}
-
-.bilateral-layout {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  width: 100%;
-  gap: 2rem;
-}
-
-.bilateral-main-column {
-  min-width: 0;
-  flex: 0 1 480px;
-  display: flex;
-  flex-direction: column;
-  gap: 1.6rem;
 }
 
 /* The paint-value slider only needs to be as wide as a single diagnostic
    panel: it selects an "ink" level, not a wide continuous range. */
-.bilateral-cell-slider {
+.slider-220 {
   max-width: 220px;
 }
 
@@ -973,7 +996,7 @@ input[type="range"] {
 
 .diagnostic-figure figcaption {
   margin: 0 0 0.3rem;
-  color: var(--ink);
+  color: #000;
   font-family: var(--text-font);
   font-size: 0.82rem;
   font-weight: 700;
@@ -1001,13 +1024,6 @@ input[type="range"] {
 
 .verdict-fail {
   color: var(--red);
-}
-
-.axis-title {
-  fill: var(--muted);
-  font-family: var(--text-font);
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .diagonal-guide {
@@ -1058,15 +1074,26 @@ input[type="range"] {
   stroke-width: 1.6;
 }
 
-/* Shared General Topics chart layout. Payments uses the larger-main plus
-   smaller-diagnostics defaults below. The envelope-theorem page adds a
-   scoped two-panel modifier so its two remaining charts are equal-sized. */
-.envelope-curve-chart {
+/* Shared General Topics chart layout, named for the viewBox each class
+   matches rather than the module that first used it -- payments-from-
+   allocation-rule's main chart and envelope-theorem's main and slope charts
+   are all 660x450, so all three share .chart-660x450 directly. Payments'
+   two smaller diagnostic charts are 440x300 and share .chart-440x300.
+   Envelope-theorem's own diagnostic column additionally applies its scoped
+   two-panel modifier below so its two 660x450 charts sit equal-sized. */
+.chart-660x450 {
   max-width: 660px;
   cursor: default;
 }
 
-.envelope-layout {
+/* Shared "main chart column + diagnostic column/grid" demo layout, used by
+   bilateral-trade, envelope-theorem, and payments-from-allocation-rule.
+   Named for structural role and control width, not for whichever module
+   first used them -- .main-diagnostic-layout and .main-column were
+   previously duplicated as bilateral-/envelope-prefixed twins that differed
+   only in the main column's flex-basis, which now lives in the small
+   -480/-660 width modifiers below. */
+.main-diagnostic-layout {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
@@ -1074,19 +1101,28 @@ input[type="range"] {
   gap: 2rem;
 }
 
-.envelope-main-column {
+.main-column {
   min-width: 0;
-  flex: 0 1 660px;
   display: flex;
   flex-direction: column;
   gap: 1.6rem;
 }
 
-.envelope-controls {
+.main-column-480 {
+  flex: 0 1 480px;
+}
+
+.main-column-660 {
+  flex: 0 1 660px;
+}
+
+/* A flex child needs its own min-width:0 to shrink below its content's
+   natural width instead of overflowing its allotted share of the row. */
+.shrink-to-fit {
   min-width: 0;
 }
 
-.envelope-point-slider {
+.slider-320 {
   max-width: 320px;
 }
 
@@ -1106,44 +1142,52 @@ input[type="range"] {
   cursor: not-allowed;
 }
 
-.envelope-diagnostic-column {
-  min-width: min(440px, 100%);
-  flex: 1 1 440px;
+.diagnostic-column {
   display: flex;
   flex-direction: column;
   gap: 1.8rem;
 }
 
-.envelope-diagnostic-chart {
+.diagnostic-column-440 {
+  min-width: min(440px, 100%);
+  flex: 1 1 440px;
+}
+
+.chart-440x300 {
   max-width: 440px;
   cursor: default;
 }
 
-.envelope-layout.envelope-two-panel-layout {
+/* Envelope-theorem's own modifier: instead of the shared big-main-chart
+   plus smaller-diagnostics default, its main and diagnostic columns become
+   two equal 660px panels side by side. */
+.main-diagnostic-layout.two-panel-layout {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 660px));
   justify-content: space-between;
 }
 
-.envelope-two-panel-layout .envelope-main-column,
-.envelope-two-panel-layout .envelope-diagnostic-column {
+.two-panel-layout .main-column,
+.two-panel-layout .diagnostic-column {
   width: 100%;
   min-width: 0;
   max-width: 660px;
 }
 
-.envelope-two-panel-layout .envelope-main-column {
+.two-panel-layout .main-column {
   gap: 0.8rem;
 }
 
-.envelope-two-panel-layout .envelope-diagnostic-column {
+.two-panel-layout .diagnostic-column {
   display: block;
 }
 
-.envelope-two-panel-layout .envelope-diagnostic-chart {
-  max-width: 660px;
-}
-
+/* Envelope-theorem's diagnostic (slope) chart is genuinely 660x450, the
+   same geometry as its main chart, not the 440x300 that .diagnostic-column
+   caps .math-chart-figure/-frame to below for payments-from-allocation-
+   rule's smaller diagnostic charts. Its figure/frame/axis-label keep this
+   separate name specifically so they don't inherit that cap; otherwise
+   they're identical to their .math-chart-* counterparts. */
 .envelope-chart-figure > figcaption,
 .math-chart-figure > figcaption {
   min-height: 1.25rem;
@@ -1158,7 +1202,7 @@ input[type="range"] {
 .math-chart-axis-label {
   position: absolute;
   margin: 0;
-  color: var(--muted);
+  color: #000;
   font-family: var(--text-font);
   font-size: clamp(9px, 1.82vw, 12px);
   font-weight: 700;
@@ -1180,26 +1224,31 @@ input[type="range"] {
   transform-origin: center;
 }
 
-.bilateral-main-x-axis-label {
+.chart-480x520-x-axis-label {
   bottom: 7%;
 }
 
-.bilateral-main-y-axis-label {
+.chart-480x520-y-axis-label {
   top: 46.154%;
   left: 3.333%;
 }
 
-.bilateral-diagnostic-x-axis-label {
+.chart-220x240-x-axis-label {
   bottom: 7%;
 }
 
-.bilateral-diagnostic-y-axis-label {
+.chart-220x240-y-axis-label {
   top: 40.625%;
   left: 4.091%;
 }
 
-.envelope-diagnostic-column .math-chart-figure,
-.envelope-diagnostic-column .math-chart-frame {
+/* Scoped to .diagnostic-column rather than .chart-440x300 directly, since
+   this constrains the figure/frame wrapper (caption and axis-label
+   included), not just the chart SVG. Envelope-theorem's own diagnostic
+   panel avoids this cap by using .envelope-chart-figure/-frame instead of
+   .math-chart-figure/-frame -- see the comment on those below. */
+.diagnostic-column .math-chart-figure,
+.diagnostic-column .math-chart-frame {
   width: 100%;
   max-width: 440px;
 }
@@ -1209,7 +1258,7 @@ input[type="range"] {
   margin: 0;
 }
 
-.envelope-line-controls {
+.control-row {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -1217,8 +1266,8 @@ input[type="range"] {
   gap: 0.75rem 1.25rem;
 }
 
-.envelope-line-controls .point-control-heading,
-.envelope-line-controls .point-count-buttons {
+.control-row .point-control-heading,
+.control-row .point-count-buttons {
   margin: 0;
 }
 
@@ -1365,7 +1414,7 @@ input[type="range"] {
     padding: 1.35rem 0 0;
   }
 
-  .envelope-layout.envelope-two-panel-layout {
+  .main-diagnostic-layout.two-panel-layout {
     grid-template-columns: minmax(0, 660px);
     justify-content: center;
   }

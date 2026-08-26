@@ -13,9 +13,7 @@
   var CELL_SIZE = 1 / CELL_RESOLUTION;
   var TRIANGLE_AREA = (CELL_SIZE * CELL_SIZE) / 2;
 
-  function clamp(value, lower, upper) {
-    return Math.min(upper, Math.max(lower, value));
-  }
+  var clamp = global.NumberUtils.clamp;
 
   function clampIndex(index) {
     return Math.max(0, Math.min(CELL_RESOLUTION - 1, index));

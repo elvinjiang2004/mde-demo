@@ -6,13 +6,8 @@
   var maximumBidCache = null;
   var inverseCache = null;
 
-  function isFiniteNumber(value) {
-    return typeof value === "number" && Number.isFinite(value);
-  }
-
-  function clamp(value, lower, upper) {
-    return Math.min(upper, Math.max(lower, value));
-  }
+  var isFiniteNumber = global.NumberUtils.isFiniteNumber;
+  var clamp = global.NumberUtils.clamp;
 
   function distributions() {
     if (!global.AuctionDistributions) {

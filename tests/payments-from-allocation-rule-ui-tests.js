@@ -115,9 +115,18 @@
             "../../js/components.js",
             "../../js/mathjax-config.js",
             "../../assets/mathjax/tex-svg.js",
+            "../../js/mathjax-runtime.js",
+            "../../js/math-utils.js",
+            "../../js/svg-utils.js",
             "model.js",
             "app.js"
           ]), "The page should keep the established local script order.");
+          assert(appWindow.MechanismMath &&
+            typeof appWindow.MechanismMath.typesetInitial === "function" &&
+            typeof appWindow.MechanismMath.setText === "function" &&
+            appWindow.mechanismMathReady &&
+            typeof appWindow.mechanismMathReady.then === "function",
+          "The shared MathJax lifecycle and readiness promise should be available.");
 
           var captions = Array.from(appDocument.querySelectorAll(
             ".math-chart-figure > figcaption"

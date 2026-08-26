@@ -2,7 +2,9 @@
   "use strict";
 
   var model = window.EnvelopeTheoremModel;
-  var SVG_NS = "http://www.w3.org/2000/svg";
+  var math = window.MechanismMath;
+  var appendSvg = window.SvgUtils.appendSvg;
+  var formatTick = window.SvgUtils.formatTick;
 
   var MAIN_LAYOUT = { viewWidth: 660, viewHeight: 450, left: 60, right: 630, top: 32, bottom: 388 };
   var SLOPE_LAYOUT = MAIN_LAYOUT;
@@ -48,7 +50,11 @@
     state.lines = model.defaultLines();
     state.selectedIndex = 0;
 
-    typesetInitialHtmlMath();
+    // Nothing in the explorable section carries TeX (both panel captions
+    // are plain SVG text), but this still typesets it, matching every
+    // other module's contract, in case the derivation section's
+    // user-authored math needs it later.
+    math.typesetInitial(".introduction, .explorable, .derivation, .notes, .references");
     bindEvents();
     syncInterface();
     recomputeAndDrawAll();
@@ -60,52 +66,6 @@
 
   function colorForId(id) {
     return LINE_COLORS[id] || "#5f6872";
-  }
-
-  // --- MathJax: visible panel captions and x-axis labels live in ordinary
-  // HTML beside the graph SVGs, so their TeX is included in this one static
-  // typeset pass. Dynamic graph geometry and accessible SVG metadata remain
-  // plain text, matching the other modules' contract.
-  function waitForMathJax() {
-    function readyMathJax() {
-      var mathJax = window.MathJax;
-      if (!mathJax || typeof mathJax.typesetPromise !== "function") {
-        return null;
-      }
-      if (mathJax.startup && mathJax.startup.promise) {
-        return Promise.resolve(mathJax.startup.promise).then(function () {
-          return mathJax;
-        });
-      }
-      return Promise.resolve(mathJax);
-    }
-
-    var ready = readyMathJax();
-    if (ready) {
-      return ready;
-    }
-    if (document.readyState === "complete") {
-      return Promise.resolve(null);
-    }
-    return new Promise(function (resolve) {
-      window.addEventListener("load", function () {
-        resolve(readyMathJax());
-      }, { once: true });
-    });
-  }
-
-  function typesetInitialHtmlMath() {
-    var targets = Array.prototype.slice.call(document.querySelectorAll(
-      ".introduction, .explorable, .derivation, .notes, .references"
-    ));
-    window.mechanismMathReady = waitForMathJax().then(function (mathJax) {
-      if (!mathJax || targets.length === 0) {
-        return null;
-      }
-      return mathJax.typesetPromise(targets);
-    }).catch(function () {
-      // Raw TeX remains visible when the renderer is unavailable.
-    });
   }
 
   // --- Points: each line contributes two independently selectable points
@@ -615,19 +575,4 @@
     return cleaned.toFixed(2);
   }
 
-  function formatTick(value) {
-    return value.toFixed(value === 0 || value === 1 ? 0 : 2);
-  }
-
-  function appendSvg(parent, name, attributes, text) {
-    var node = document.createElementNS(SVG_NS, name);
-    Object.keys(attributes || {}).forEach(function (key) {
-      node.setAttribute(key, String(attributes[key]));
-    });
-    if (typeof text === "string") {
-      node.textContent = text;
-    }
-    parent.appendChild(node);
-    return node;
-  }
 }());

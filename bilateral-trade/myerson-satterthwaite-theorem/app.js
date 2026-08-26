@@ -2,7 +2,9 @@
   "use strict";
 
   var model = window.BilateralTradeModel;
-  var SVG_NS = "http://www.w3.org/2000/svg";
+  var math = window.MechanismMath;
+  var appendSvg = window.SvgUtils.appendSvg;
+  var formatTick = window.SvgUtils.formatTick;
   var R = model.CELL_RESOLUTION;
   var CELL_SIZE = model.CELL_SIZE;
   var MISMATCH_THRESHOLD = 0.02;
@@ -38,7 +40,6 @@
     // the upper-left (higher-c/lower-v) triangle, labeled "L".
     selected: { i: 0, j: 0, isLower: true },
     cellValue: 0,
-    postedPrice: 0.5,
     lastSummary: null
   };
   var dragActive = false;
@@ -50,17 +51,8 @@
   function initialize() {
     elements = {
       paintChart: byId("paint-chart"),
-      cellValueControlLabel: byId("cell-value-control-label"),
       cellValueSlider: byId("cell-value-slider"),
       cellValueNumber: byId("cell-value-number"),
-      postedPriceControl: byId("posted-price-control"),
-      postedPriceSlider: byId("posted-price-slider"),
-      postedPriceNumber: byId("posted-price-number"),
-      presetEfficient: byId("preset-efficient"),
-      presetAlways: byId("preset-always"),
-      presetNever: byId("preset-never"),
-      presetPostedPrice: byId("preset-posted-price"),
-      presetChatterjee: byId("preset-chatterjee"),
       liveSummary: byId("live-summary"),
       buyerIcChart: byId("buyer-ic-chart"),
       buyerIcText: byId("buyer-ic-text"),
@@ -81,7 +73,12 @@
     state.selected = { i: center, j: center, isLower: true };
     state.cellValue = state.grid.lower[center][center];
 
-    typesetInitialHtmlMath();
+    // .choice-controls is nested inside .explorable, so listing both would
+    // hand MathJax the same subtree twice and render its math twice over.
+    math.typesetInitial(
+      ".introduction, .explorable, .derivation, .notes, .references"
+    );
+    window.EquationChain.initDividers();
     bindEvents();
     syncCellControls();
     recomputeAndDrawAll();
@@ -89,50 +86,6 @@
 
   function byId(id) {
     return document.getElementById(id);
-  }
-
-  // --- MathJax: all HTML mathematics is static, so a single initial typeset
-  // (with no dynamic re-typesetting) satisfies the shared contract.
-  function waitForMathJax() {
-    function readyMathJax() {
-      var mathJax = window.MathJax;
-      if (!mathJax || typeof mathJax.typesetPromise !== "function") {
-        return null;
-      }
-      if (mathJax.startup && mathJax.startup.promise) {
-        return Promise.resolve(mathJax.startup.promise).then(function () {
-          return mathJax;
-        });
-      }
-      return Promise.resolve(mathJax);
-    }
-
-    var ready = readyMathJax();
-    if (ready) {
-      return ready;
-    }
-    if (document.readyState === "complete") {
-      return Promise.resolve(null);
-    }
-    return new Promise(function (resolve) {
-      window.addEventListener("load", function () {
-        resolve(readyMathJax());
-      }, { once: true });
-    });
-  }
-
-  function typesetInitialHtmlMath() {
-    var targets = Array.prototype.slice.call(document.querySelectorAll(
-      ".introduction, .choice-controls, .explorable, .derivation, .notes, .references"
-    ));
-    window.mechanismMathReady = waitForMathJax().then(function (mathJax) {
-      if (!mathJax || targets.length === 0) {
-        return null;
-      }
-      return mathJax.typesetPromise(targets);
-    }).catch(function () {
-      // Raw TeX remains visible when the renderer is unavailable.
-    });
   }
 
   // --- Events
@@ -148,39 +101,6 @@
         return;
       }
       setSelectedCellValue(next);
-    });
-
-    elements.presetEfficient.addEventListener("click", function () {
-      hidePostedPriceControl();
-      applyPreset(model.efficientGrid());
-    });
-    elements.presetAlways.addEventListener("click", function () {
-      hidePostedPriceControl();
-      applyPreset(model.constantCellGrid(1));
-    });
-    elements.presetNever.addEventListener("click", function () {
-      hidePostedPriceControl();
-      applyPreset(model.constantCellGrid(0));
-    });
-    elements.presetChatterjee.addEventListener("click", function () {
-      hidePostedPriceControl();
-      applyPreset(model.chatterjeeSamuelsonGrid());
-    });
-    elements.presetPostedPrice.addEventListener("click", function () {
-      showPostedPriceControl();
-      applyPreset(model.postedPriceGrid(state.postedPrice));
-    });
-
-    elements.postedPriceSlider.addEventListener("input", function () {
-      setPostedPrice(Number.parseFloat(elements.postedPriceSlider.value));
-    });
-    elements.postedPriceNumber.addEventListener("change", function () {
-      var next = elements.postedPriceNumber.valueAsNumber;
-      if (!Number.isFinite(next)) {
-        elements.postedPriceNumber.value = formatQ(state.postedPrice);
-        return;
-      }
-      setPostedPrice(next);
     });
 
     elements.paintChart.addEventListener("pointerdown", function (event) {
@@ -274,7 +194,6 @@
   }
 
   function paintTriangle(i, j, isLower) {
-    hidePostedPriceControl();
     var selectionChanged = state.selected.i !== i || state.selected.j !== j ||
       state.selected.isLower !== isLower;
     var currentValue = isLower ? state.grid.lower[i][j] : state.grid.upper[i][j];
@@ -334,47 +253,18 @@
     recomputeAndDrawAll();
   }
 
-  function applyPreset(grid) {
-    state.grid = grid;
-    state.cellValue = state.selected.isLower ?
-      grid.lower[state.selected.i][state.selected.j] :
-      grid.upper[state.selected.i][state.selected.j];
-    syncCellControls();
-    recomputeAndDrawAll();
-  }
-
-  function showPostedPriceControl() {
-    elements.postedPriceControl.hidden = false;
-    elements.postedPriceSlider.value = String(state.postedPrice);
-    elements.postedPriceNumber.value = formatQ(state.postedPrice);
-  }
-
-  function hidePostedPriceControl() {
-    elements.postedPriceControl.hidden = true;
-  }
-
-  function setPostedPrice(price) {
-    if (!Number.isFinite(price)) {
-      return;
-    }
-    var boundedPrice = model.clamp(price, 0, 1);
-    state.postedPrice = Number((
-      Math.round(boundedPrice / CELL_SIZE) * CELL_SIZE
-    ).toFixed(10));
-    elements.postedPriceSlider.value = String(state.postedPrice);
-    elements.postedPriceNumber.value = formatQ(state.postedPrice);
-    applyPreset(model.postedPriceGrid(state.postedPrice));
-  }
-
+  // The visible label stays the static "Allocation probability on selected
+  // triangle" authored in the HTML: naming the selected triangle's own cell
+  // ranges there made it long enough to wrap its trailing ", R"/", L" onto
+  // a second line. Which triangle is selected is still shown by the
+  // in-graph cell label drawn on the chart, and still announced to screen
+  // readers through the slider's aria-valuetext below.
   function syncCellControls() {
     elements.cellValueSlider.value = String(state.cellValue);
     elements.cellValueNumber.value = formatQ(state.cellValue);
-    var description = formatSelectionDescription();
-    elements.cellValueControlLabel.textContent =
-      "Allocation probability on " + description;
     elements.cellValueSlider.setAttribute(
       "aria-valuetext",
-      "q = " + formatQ(state.cellValue) + " on " + description
+      "q = " + formatQ(state.cellValue) + " on " + formatSelectionDescription()
     );
   }
 
@@ -1005,19 +895,4 @@
     return cleaned.toFixed(3);
   }
 
-  function formatTick(value) {
-    return value.toFixed(value === 0 || value === 1 ? 0 : 2);
-  }
-
-  function appendSvg(parent, name, attributes, text) {
-    var node = document.createElementNS(SVG_NS, name);
-    Object.keys(attributes || {}).forEach(function (key) {
-      node.setAttribute(key, String(attributes[key]));
-    });
-    if (typeof text === "string") {
-      node.textContent = text;
-    }
-    parent.appendChild(node);
-    return node;
-  }
 }());

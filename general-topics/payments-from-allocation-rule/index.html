@@ -9,6 +9,9 @@
   <script defer src="../../js/components.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/math-utils.js"></script>
+  <script defer src="../../js/svg-utils.js"></script>
   <script defer src="model.js"></script>
   <script defer src="app.js"></script>
 </head>
@@ -38,15 +41,15 @@
     </section>
 
     <section class="explorable explorable-divider" aria-label="Allocation-curve interface">
-      <div class="envelope-layout">
-        <div class="envelope-main-column">
+      <div class="main-diagnostic-layout">
+        <div class="main-column main-column-660">
           <div class="chart-column">
             <figure class="diagnostic-figure math-chart-figure">
               <figcaption>Allocation rule, \(Q(v)\)</figcaption>
-              <div class="chart-frame math-chart-frame">
+              <div class="math-chart-frame">
                 <svg
                   id="curve-chart"
-                  class="tradeoff-chart envelope-curve-chart"
+                  class="tradeoff-chart chart-660x450"
                   viewBox="0 0 660 450"
                   role="img"
                   tabindex="0"
@@ -61,7 +64,7 @@
             </figure>
           </div>
 
-          <aside class="choice-controls envelope-controls" aria-label="Point controls">
+          <aside class="choice-controls shrink-to-fit" aria-label="Point controls">
             <div class="range-group">
               <div class="range-label-row">
                 <label id="point-value-control-label" for="point-value-slider">Allocation probability at this point</label>
@@ -77,8 +80,8 @@
                   aria-labelledby="point-value-control-label"
                 >
               </div>
-              <input id="point-value-slider" class="envelope-point-slider" type="range" min="0" max="1" step="0.01" value="0">
-              <div class="range-endpoints envelope-point-slider" aria-hidden="true"><span>0</span><span>1</span></div>
+              <input id="point-value-slider" class="slider-320" type="range" min="0" max="1" step="0.01" value="0">
+              <div class="range-endpoints slider-320" aria-hidden="true"><span>0</span><span>1</span></div>
             </div>
 
             <div class="point-count-buttons">
@@ -88,14 +91,14 @@
           </aside>
         </div>
 
-        <div class="envelope-diagnostic-column">
+        <div class="diagnostic-column diagnostic-column-440">
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure math-chart-figure">
               <figcaption>Information rent, \(U(v)\)</figcaption>
               <div class="math-chart-frame">
                 <svg
                   id="envelope-chart"
-                  class="diagnostic-chart envelope-diagnostic-chart"
+                  class="diagnostic-chart chart-440x300"
                   viewBox="0 0 440 300"
                   role="img"
                   aria-labelledby="envelope-chart-title envelope-chart-description"
@@ -114,7 +117,7 @@
               <div class="math-chart-frame">
                 <svg
                   id="payment-chart"
-                  class="diagnostic-chart envelope-diagnostic-chart"
+                  class="diagnostic-chart chart-440x300"
                   viewBox="0 0 440 300"
                   role="img"
                   aria-labelledby="payment-chart-title payment-chart-description"

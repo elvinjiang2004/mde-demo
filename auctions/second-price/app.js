@@ -3,7 +3,16 @@
 
   var model = window.SPAModel;
   var distributions = window.AuctionDistributions;
-  var SVG_NS = "http://www.w3.org/2000/svg";
+  var math = window.MechanismMath;
+  var appendSvg = window.SvgUtils.appendSvg;
+  var auctionControls = window.AuctionControls;
+  var rangeStep = auctionControls.rangeStep;
+  var formatEditableNumber = auctionControls.formatEditableNumber;
+  var formatChoiceNumber = auctionControls.formatChoiceNumber;
+  var configureRange = auctionControls.configureRange;
+  var configureNumberInput = auctionControls.configureNumberInput;
+  var commitTypedChoice = auctionControls.commitTypedChoice;
+  var setBid, setValue, setShapeParameter, commitShapeParameter;
   var DEFAULTS = {
     n: 2,
     a: 0,
@@ -27,9 +36,6 @@
   var elements = {};
   var chartDragActive = false;
   var resizeTimer = null;
-  var mathTypesetQueue = Promise.resolve();
-  var mathLoadPromise = null;
-  var mathRequestVersions = new WeakMap();
   var lastChartLayout = {
     width: 1000,
     left: 90,
@@ -64,7 +70,21 @@
       chart: byId("second-price-chart")
     };
 
-    typesetInitialHtmlMath();
+    var valueBidControls = auctionControls.createValueBidControls(
+      state, elements, render
+    );
+    setBid = valueBidControls.setBid;
+    setValue = valueBidControls.setValue;
+    var shapeParameterControls = auctionControls.createShapeParameterControls(
+      state, elements, render
+    );
+    setShapeParameter = shapeParameterControls.setShapeParameter;
+    commitShapeParameter = shapeParameterControls.commitShapeParameter;
+
+    math.typesetInitial(
+      ".introduction, .model-specifications, .choice-controls, .derivation, " +
+      ".notes, .references"
+    );
     bindEvents();
     syncControlsFromState();
     render();
@@ -72,96 +92,6 @@
 
   function byId(id) {
     return document.getElementById(id);
-  }
-
-  function waitForMathJax() {
-    function readyMathJax() {
-      var mathJax = window.MathJax;
-      if (!mathJax || typeof mathJax.typesetPromise !== "function") {
-        return null;
-      }
-      if (mathJax.startup && mathJax.startup.promise) {
-        return Promise.resolve(mathJax.startup.promise).then(function () {
-          return mathJax;
-        });
-      }
-      return Promise.resolve(mathJax);
-    }
-
-    var ready = readyMathJax();
-    if (ready) {
-      return ready;
-    }
-    if (document.readyState === "complete") {
-      return Promise.resolve(null);
-    }
-    if (!mathLoadPromise) {
-      mathLoadPromise = new Promise(function (resolve) {
-        window.addEventListener("load", function () {
-          resolve(readyMathJax());
-        }, { once: true });
-      }).then(function (mathJax) {
-        return mathJax;
-      });
-    }
-    return mathLoadPromise;
-  }
-
-  function setMathText(element, texSource) {
-    if (!element || element.namespaceURI === SVG_NS ||
-        element.dataset.mathSource === texSource) {
-      return;
-    }
-
-    var version = (mathRequestVersions.get(element) || 0) + 1;
-    mathRequestVersions.set(element, version);
-    element.dataset.mathSource = texSource;
-
-    var update = mathTypesetQueue.catch(function () {
-      // Leave the next update usable if MathJax failed on an earlier node.
-    }).then(function () {
-      if (mathRequestVersions.get(element) !== version) {
-        return null;
-      }
-      return waitForMathJax().then(function (mathJax) {
-        if (mathRequestVersions.get(element) !== version) {
-          return null;
-        }
-        if (mathJax && typeof mathJax.typesetClear === "function") {
-          mathJax.typesetClear([element]);
-        }
-        element.textContent = texSource;
-        if (!mathJax) {
-          return null;
-        }
-        return mathJax.typesetPromise([element]);
-      });
-    });
-    mathTypesetQueue = update.catch(function () {
-      // Raw TeX remains visible when the renderer is unavailable or fails.
-    });
-    window.mechanismMathReady = mathTypesetQueue;
-  }
-
-  function typesetInitialHtmlMath() {
-    var targets = Array.prototype.slice.call(document.querySelectorAll(
-      ".introduction, .model-specifications, .choice-controls, .derivation, " +
-      ".notes, .references"
-    ));
-    var initialTypeset = mathTypesetQueue.catch(function () {
-      // Keep initial typesetting independent of an earlier dynamic failure.
-    }).then(function () {
-      return waitForMathJax();
-    }).then(function (mathJax) {
-      if (!mathJax || targets.length === 0) {
-        return null;
-      }
-      return mathJax.typesetPromise(targets);
-    });
-    mathTypesetQueue = initialTypeset.catch(function () {
-      // Keep a resolved public readiness hook if MathJax cannot render.
-    });
-    window.mechanismMathReady = mathTypesetQueue;
   }
 
   function bindEvents() {
@@ -343,43 +273,18 @@
     render();
   }
 
-  function setBid(nextBid) {
-    if (!Number.isFinite(nextBid)) {
-      return;
-    }
-    state.bid = model.clamp(nextBid, state.a, state.b);
-    elements.bidSlider.value = String(state.bid);
-    render();
-  }
-
-  function setValue(nextValue) {
-    if (!Number.isFinite(nextValue)) {
-      return;
-    }
-    state.value = model.clamp(nextValue, state.a, state.b);
-    elements.valueSlider.value = String(state.value);
-    render();
-  }
-
-  function commitTypedChoice(input, currentValue, setter, formatter) {
-    var nextValue = input.valueAsNumber;
-    if (!Number.isFinite(nextValue)) {
-      input.value = (formatter || formatEditableNumber)(currentValue);
-      return;
-    }
-    setter(nextValue);
-  }
-
   function syncControlsFromState() {
     elements.bidderCount.value = String(state.n);
     elements.lowerBound.value = String(state.a);
     elements.upperBound.value = String(state.b);
 
-    configureRange(elements.valueSlider, state.a, state.b, state.value);
+    var step = rangeStep(state.b - state.a);
+    configureRange(elements.valueSlider, state.a, state.b, step, state.value);
     configureRange(
       elements.bidSlider,
       state.a,
       state.b,
+      step,
       state.bid
     );
     configureNumberInput(
@@ -400,25 +305,6 @@
     elements.betaSlider.value = String(state.beta);
     elements.alphaNumber.value = formatChoiceNumber(state.alpha);
     elements.betaNumber.value = formatChoiceNumber(state.beta);
-  }
-
-  function commitShapeParameter(name, input) {
-    var nextValue = input.valueAsNumber;
-    if (!Number.isFinite(nextValue)) {
-      input.value = formatChoiceNumber(state[name]);
-      return;
-    }
-    setShapeParameter(name, nextValue);
-  }
-
-  function setShapeParameter(name, nextValue) {
-    if (!Number.isFinite(nextValue)) {
-      return;
-    }
-    state[name] = Math.round(model.clamp(nextValue, 0.2, 10) * 10) / 10;
-    elements[name + "Slider"].value = String(state[name]);
-    elements[name + "Number"].value = formatChoiceNumber(state[name]);
-    render();
   }
 
   function distributionSpec() {
@@ -554,26 +440,6 @@
     elements.upperBound.value = formatEditableNumber(state.b);
   }
 
-  function configureRange(range, min, max, value) {
-    range.min = String(min);
-    range.max = String(max);
-    range.step = "any";
-    range.value = String(model.clamp(value, min, max));
-  }
-
-  function configureNumberInput(input, min, max, value, formatter) {
-    input.min = String(min);
-    input.max = String(max);
-    input.step = "any";
-    input.value = (formatter || formatEditableNumber)(
-      model.clamp(value, min, max)
-    );
-  }
-
-  function rangeStep(span) {
-    return Math.max(span / 500, Number.EPSILON);
-  }
-
   function showError(message) {
     elements.inputError.textContent = message;
     elements.inputError.hidden = false;
@@ -633,10 +499,10 @@
     elements.bidSlider.value = String(state.bid);
     elements.valueNumber.value = formatChoiceNumber(state.value);
     elements.bidNumber.value = formatChoiceNumber(state.bid);
-    setMathText(elements.valueMinLabel, "\\(a=" + lowerText + "\\)");
-    setMathText(elements.valueMaxLabel, "\\(b=" + upperText + "\\)");
-    setMathText(elements.bidMinLabel, "\\(a=" + lowerText + "\\)");
-    setMathText(elements.bidMaxLabel, "\\(b=" + upperText + "\\)");
+    math.setText(elements.valueMinLabel, "\\(a=" + lowerText + "\\)");
+    math.setText(elements.valueMaxLabel, "\\(b=" + upperText + "\\)");
+    math.setText(elements.bidMinLabel, "\\(a=" + lowerText + "\\)");
+    math.setText(elements.bidMaxLabel, "\\(b=" + upperText + "\\)");
 
     elements.valueSlider.setAttribute(
       "aria-valuetext",
@@ -1905,18 +1771,6 @@
     return text;
   }
 
-  function appendSvg(parent, name, attributes, text) {
-    var element = document.createElementNS(SVG_NS, name);
-    Object.keys(attributes || {}).forEach(function (key) {
-      element.setAttribute(key, String(attributes[key]));
-    });
-    if (text !== undefined) {
-      element.textContent = text;
-    }
-    parent.appendChild(element);
-    return element;
-  }
-
   function roundCoordinate(value) {
     return Math.round(value * 1000) / 1000;
   }
@@ -1951,20 +1805,6 @@
       minimumFractionDigits: 0,
       maximumFractionDigits: digits
     }).format(cleaned);
-  }
-
-  function formatEditableNumber(value) {
-    if (!Number.isFinite(value)) {
-      return "";
-    }
-    return String(Number.parseFloat(value.toPrecision(12)));
-  }
-
-  function formatChoiceNumber(value) {
-    if (!Number.isFinite(value)) {
-      return "";
-    }
-    return String(Number.parseFloat(value.toFixed(1)));
   }
 
   function distributionSummary() {

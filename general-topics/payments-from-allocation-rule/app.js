@@ -2,7 +2,9 @@
   "use strict";
 
   var model = window.PaymentsFromAllocationRuleModel;
-  var SVG_NS = "http://www.w3.org/2000/svg";
+  var math = window.MechanismMath;
+  var appendSvg = window.SvgUtils.appendSvg;
+  var formatTick = window.SvgUtils.formatTick;
 
   // The main chart is deliberately larger than the two diagnostic panels
   // (it is the one thing the learner actually edits), and the pair share a
@@ -44,7 +46,11 @@
     state.points = model.defaultPoints();
     state.selectedIndex = Math.floor(state.points.length / 2);
 
-    typesetInitialHtmlMath();
+    // .choice-controls is nested inside .explorable, so listing both would
+    // hand MathJax the same subtree twice and render its math twice over.
+    math.typesetInitial(
+      ".introduction, .explorable, .derivation, .notes, .references"
+    );
     bindEvents();
     syncPointControls();
     recomputeAndDrawAll();
@@ -52,50 +58,6 @@
 
   function byId(id) {
     return document.getElementById(id);
-  }
-
-  // --- MathJax: all page mathematics is static HTML, so a single initial
-  // typeset (with no dynamic re-typesetting) satisfies the shared contract.
-  function waitForMathJax() {
-    function readyMathJax() {
-      var mathJax = window.MathJax;
-      if (!mathJax || typeof mathJax.typesetPromise !== "function") {
-        return null;
-      }
-      if (mathJax.startup && mathJax.startup.promise) {
-        return Promise.resolve(mathJax.startup.promise).then(function () {
-          return mathJax;
-        });
-      }
-      return Promise.resolve(mathJax);
-    }
-
-    var ready = readyMathJax();
-    if (ready) {
-      return ready;
-    }
-    if (document.readyState === "complete") {
-      return Promise.resolve(null);
-    }
-    return new Promise(function (resolve) {
-      window.addEventListener("load", function () {
-        resolve(readyMathJax());
-      }, { once: true });
-    });
-  }
-
-  function typesetInitialHtmlMath() {
-    var targets = Array.prototype.slice.call(document.querySelectorAll(
-      ".introduction, .choice-controls, .explorable, .derivation, .notes, .references"
-    ));
-    window.mechanismMathReady = waitForMathJax().then(function (mathJax) {
-      if (!mathJax || targets.length === 0) {
-        return null;
-      }
-      return mathJax.typesetPromise(targets);
-    }).catch(function () {
-      // Raw TeX remains visible when the renderer is unavailable.
-    });
   }
 
   // --- Events
@@ -556,19 +518,4 @@
     return cleaned.toFixed(2);
   }
 
-  function formatTick(value) {
-    return value.toFixed(value === 0 || value === 1 ? 0 : 2);
-  }
-
-  function appendSvg(parent, name, attributes, text) {
-    var node = document.createElementNS(SVG_NS, name);
-    Object.keys(attributes || {}).forEach(function (key) {
-      node.setAttribute(key, String(attributes[key]));
-    });
-    if (typeof text === "string") {
-      node.textContent = text;
-    }
-    parent.appendChild(node);
-    return node;
-  }
 }());

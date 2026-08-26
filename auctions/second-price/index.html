@@ -9,7 +9,11 @@
   <script defer src="../../js/components.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/distributions.js"></script>
+  <script defer src="../../js/math-utils.js"></script>
+  <script defer src="../../js/svg-utils.js"></script>
+  <script defer src="../../js/auction-controls.js"></script>
   <script defer src="model.js"></script>
   <script defer src="app.js"></script>
 </head>
@@ -66,7 +70,7 @@
     <section class="explorable" aria-label="Interactive second-price auction graph">
       <div class="interaction-layout">
         <div class="chart-column">
-          <div class="chart-frame">
+          <div>
             <svg
               id="second-price-chart"
               class="tradeoff-chart"

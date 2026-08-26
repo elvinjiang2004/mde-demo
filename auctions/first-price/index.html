@@ -9,7 +9,12 @@
   <script defer src="../../js/components.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/distributions.js"></script>
+  <script defer src="../../js/math-utils.js"></script>
+  <script defer src="../../js/svg-utils.js"></script>
+  <script defer src="../../js/equation-chain.js"></script>
+  <script defer src="../../js/auction-controls.js"></script>
   <script defer src="model.js"></script>
   <script defer src="app.js"></script>
 </head>
@@ -71,7 +76,7 @@
     <section class="explorable" aria-label="Interactive auction graph">
       <div class="interaction-layout">
         <div class="chart-column">
-          <div class="chart-frame">
+          <div>
             <svg
               id="tradeoff-chart"
               viewBox="0 0 1000 800"
@@ -177,56 +182,82 @@
         expanded, and a matching faint rule is added below it automatically.
         A divider button with nothing to control stays entirely hidden.
       -->
-      <div id="expected-utility-proof" class="equation-chain-steps">
+      <div id="expected-utility-proof" class="equation-chain-steps equation-chain-content-widths">
+        <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle U_1 \!\left(v_1,\beta^{\mathrm{I}}(z)\right) \)</span>
-        <span class="equation-step-rhs">\(\displaystyle = \underbrace{G(z)}_{\text{probability of winning}}\times \underbrace{\left(v_1-\beta^{\mathrm{I}}(z)\right)}_{\text{payoff upon winning}} + \underbrace{(1-G(z))}_{\text{probability of losing}}\times \underbrace{0}_{\text{payoff upon losing}} \)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \underbrace{G(z)}_{\text{probability of winning}}\times \underbrace{\left(v_1-\beta^{\mathrm{I}}(z)\right)}_{\text{payoff upon winning}} + \underbrace{(1-G(z))}_{\text{probability of losing}}\times \underbrace{0}_{\text{payoff upon losing}} \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
 
+        <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
-        <span class="equation-step-rhs">\(\displaystyle =G(z)\left(v_1-\beta^{\mathrm{I}}(z)\right) \)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(z)\left(v_1-\beta^{\mathrm{I}}(z)\right) \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
 
+        <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
-        <span class="equation-step-rhs">\(\displaystyle =G(z)v_1-G(z)\mathbb{E}\!\left[Y_1\mid Y_1\le z\right] \)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(z)v_1-G(z)\mathbb{E}\!\left[Y_1\mid Y_1\le z\right] \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+          <span class="equation-step-connector equation-step-extra" hidden></span>
           <span class="equation-step-lhs equation-step-extra" hidden></span>
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = G(z)v_1 - G(z)\frac{\mathbb{E}\!\left[Y_1 \cdot \mathbb{1}(Y_1\leq z)\right]}{P(Y_1\leq z)} \)</span>
+          <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - G(z)\frac{\mathbb{E}\!\left[Y_1 \cdot \mathbb{1}(Y_1\leq z)\right]}{P(Y_1\leq z)} \)</span>
+          <span class="equation-step-connector equation-step-extra" hidden></span>
           <span class="equation-step-lhs equation-step-extra" hidden></span>
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = G(z)v_1 - G(z)\frac{\int_a^b y g(y) \cdot \mathbb{1}(y\leq z)\,dy}{G(z)} \)</span>
+          <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - G(z)\frac{\int_a^b y g(y) \cdot \mathbb{1}(y\leq z)\,dy}{G(z)} \)</span>
+          <span class="equation-step-connector equation-step-extra" hidden></span>
           <span class="equation-step-lhs equation-step-extra" hidden></span>
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = G(z)v_1 - \int_a^b y g(y) \cdot \mathbb{1}(y\leq z)\,dy \)</span>
+          <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - \int_a^b y g(y) \cdot \mathbb{1}(y\leq z)\,dy \)</span>
 
+        <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
-        <span class="equation-step-rhs">\(\displaystyle =G(z)v_1-\int_a^z y g(y)\,dy \)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(z)v_1-\int_a^z y g(y)\,dy \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+        <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = G(z)v_1 - \left[ G(z)z - G(a)a - \int_a^z G(y)\,dy\right] \text{, by integration by parts}\)</span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - \left[ G(z)z - G(a)a - \int_a^z G(y)\,dy\right] \text{, by integration by parts}\)</span>
+        <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = G(z)v_1 - G(z)z + 0\cdot a + \int_a^z G(y)\,dy \)</span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - G(z)z + 0\cdot a + \int_a^z G(y)\,dy \)</span>
 
+        <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
-        <span class="equation-step-rhs">\(\displaystyle =G(z)v_1-G(z)z+\int_a^z G(y)\,dy \)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(z)v_1-G(z)z+\int_a^z G(y)\,dy \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
 
+        <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
-        <span class="equation-step-rhs">\(\displaystyle =G(z)(v_1-z)+\int_a^z G(y)\,dy. \)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(z)(v_1-z)+\int_a^z G(y)\,dy. \)</span>
       </div>
       <p>
         Therefore, the difference in expected utility between bidding \(\beta^{\mathrm{I}}(v_1)\) and bidding \(\beta^{\mathrm{I}}(z)\) for bidder 1 is
       </p>
-      <div id="optimality-gap-proof" class="equation-chain-steps">
+      <div id="optimality-gap-proof" class="equation-chain-steps equation-chain-content-widths">
+        <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle U_1 \!\left(v_1,\beta^{\mathrm{I}}(v_1)\right)-U_1 \!\left(v_1,\beta^{\mathrm{I}}(z)\right) \)</span>
-        <span class="equation-step-rhs">\(\displaystyle = \left[G(v_1)(v_1-v_1)+\int_a^{v_1}G(y)\,dy\right]-\left[G(z)(v_1-z)+\int_a^zG(y)\,dy\right] \)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \left[G(v_1)(v_1-v_1)+\int_a^{v_1}G(y)\,dy\right]-\left[G(z)(v_1-z)+\int_a^zG(y)\,dy\right] \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
 
+        <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
-        <span class="equation-step-rhs">\(\displaystyle =G(z)(z-v_1)+\int_z^{v_1}G(y)\,dy. \)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(z)(z-v_1)+\int_z^{v_1}G(y)\,dy. \)</span>
       </div>
       <p>
         Because \(G\) is nondecreasing, this difference is weakly positive for

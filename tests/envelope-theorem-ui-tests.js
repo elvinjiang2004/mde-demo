@@ -142,9 +142,18 @@
             "../../js/components.js",
             "../../js/mathjax-config.js",
             "../../assets/mathjax/tex-svg.js",
+            "../../js/mathjax-runtime.js",
+            "../../js/math-utils.js",
+            "../../js/svg-utils.js",
             "model.js",
             "app.js"
           ]), "The page should keep the established local script order.");
+          assert(appWindow.MechanismMath &&
+            typeof appWindow.MechanismMath.typesetInitial === "function" &&
+            typeof appWindow.MechanismMath.setText === "function" &&
+            appWindow.mechanismMathReady &&
+            typeof appWindow.mechanismMathReady.then === "function",
+          "The shared MathJax lifecycle and readiness promise should be available.");
           assert(appDocument.querySelectorAll('.introduction mjx-container[jax="SVG"]').length > 0,
             "The introduction should contain rendered mathematics.");
           assert(!/\\\(|\\\[/.test(appDocument.querySelector(".introduction").textContent),
@@ -181,7 +190,7 @@
       {
         name: "The two desktop plots have equal 660-by-450 geometry and fill the demo width",
         run: function () {
-          var layout = appDocument.querySelector(".envelope-two-panel-layout");
+          var layout = appDocument.querySelector(".two-panel-layout");
           var main = appDocument.getElementById("main-chart");
           var slope = appDocument.getElementById("slope-chart");
           var mainRect = main.getBoundingClientRect();

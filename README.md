@@ -70,6 +70,11 @@ affect ordinary use of the menu or module pages.
 - `styles.css` — shared module and menu styles.
 - `assets/mathjax/` — vendored MathJax 4 TeX-to-SVG build and offline assets.
 - `js/mathjax-config.js` — shared local MathJax configuration.
+- `js/mathjax-runtime.js` — shared initial and dynamic MathJax lifecycle.
 - `js/distributions.js` — shared auction distribution functions.
+- `js/math-utils.js` — shared pure-number helpers for every model layer.
+- `js/svg-utils.js` — shared SVG chart-drawing helpers for every app layer.
+- `js/auction-controls.js` — shared value/bid and shape-parameter control
+  logic for first-price and second-price.
 - `js/components.js` — shared page and parameter-control components.
 - `tests/` — browser-run checks for shared code and each module.

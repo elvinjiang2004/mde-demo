@@ -22,9 +22,7 @@
   var MIN_TOTAL_POINTS = 2;
   var MAX_TOTAL_POINTS = 9;
 
-  function clamp(value, lower, upper) {
-    return Math.min(upper, Math.max(lower, value));
-  }
+  var clamp = global.NumberUtils.clamp;
 
   function clampHeight(value) {
     return clamp(value, 0, 1);

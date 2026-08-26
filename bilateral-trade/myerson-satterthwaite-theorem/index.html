@@ -9,6 +9,10 @@
   <script defer src="../../js/components.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/math-utils.js"></script>
+  <script defer src="../../js/svg-utils.js"></script>
+  <script defer src="../../js/equation-chain.js"></script>
   <script defer src="model.js"></script>
   <script defer src="app.js"></script>
 </head>
@@ -34,8 +38,8 @@
         \(c\), but not the other's.
       </p>
       <p>
-        We want to find a <em>direct</em> bargaining mechanism consisting of an allocation rule and a payment rule
-        \((q(v,c),p(v,c))\) in this environment that satisfies:
+        We want to find a <em>direct</em> bargaining mechanism consisting of an allocation rule and two payment rules
+        \((q(v,c),p_B(v,c),p_S(v,c))\) in this environment that satisfies:
       </p>
       <ol>
         <li>
@@ -58,22 +62,22 @@
       </ol>
       <p>
         The Myerson-Satterthwaite Theorem says that a such a mechanism does not exist.
-        In the interactive demo, try to design a direct bargaining mechanism
-        that satisfies these four properties. Here, \(V,C \mathrel{\overset{\mathrm{i.i.d.}}{\sim}}
+        In the interactive demo, design a direct bargaining mechanism
+        and see where it fails. Here, \(V,C \mathrel{\overset{\mathrm{i.i.d.}}{\sim}}
         \operatorname{Uniform}[0,1]\).
       </p>
     </section>
 
     <section class="explorable explorable-divider" aria-label="Allocation-rule painting interface">
-      <div class="interaction-layout bilateral-layout">
-        <div class="bilateral-main-column">
+      <div class="main-diagnostic-layout">
+        <div class="main-column main-column-480">
           <div class="chart-column">
-            <figure class="diagnostic-figure math-chart-figure bilateral-main-chart-figure">
+            <figure class="diagnostic-figure math-chart-figure">
               <figcaption>Allocation rule, \(q(v,c)\)</figcaption>
-              <div class="chart-frame math-chart-frame">
+              <div class="math-chart-frame">
                 <svg
                   id="paint-chart"
-                  class="tradeoff-chart bilateral-paint-chart"
+                  class="tradeoff-chart chart-480x520"
                   viewBox="0 0 480 520"
                   role="img"
                   tabindex="0"
@@ -83,8 +87,8 @@
                   <title id="paint-chart-title">Allocation rule, q(v,c)</title>
                   <desc id="paint-chart-description">A paintable grid of the probability of trade for every buyer-value, seller-cost pair, each cell split into an independently paintable left (L) and right (R) triangle.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-main-x-axis-label">Buyer value, \(v\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-main-y-axis-label">Seller value, \(c\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
               </div>
             </figure>
           </div>
@@ -92,7 +96,7 @@
           <aside class="choice-controls" aria-label="Painting controls">
             <div class="range-group">
               <div class="range-label-row">
-                <label id="cell-value-control-label" for="cell-value-slider">Allocation probability on this triangle</label>
+                <label id="cell-value-control-label" for="cell-value-slider">Allocation probability, \(q(v,c)\), on selected triangle</label>
                 <input
                   id="cell-value-number"
                   class="range-number-input"
@@ -105,36 +109,8 @@
                   aria-labelledby="cell-value-control-label"
                 >
               </div>
-              <input id="cell-value-slider" class="bilateral-cell-slider" type="range" min="0" max="1" step="0.01" value="0">
-              <div class="range-endpoints bilateral-cell-slider" aria-hidden="true"><span>0</span><span>1</span></div>
-            </div>
-
-            <div id="posted-price-control" class="range-group" hidden>
-              <div class="range-label-row">
-                <label id="posted-price-control-label" for="posted-price-slider">Posted price, p</label>
-                <input
-                  id="posted-price-number"
-                  class="range-number-input"
-                  type="number"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value="0.5"
-                  inputmode="decimal"
-                  aria-labelledby="posted-price-control-label"
-                >
-              </div>
-              <input id="posted-price-slider" class="bilateral-cell-slider" type="range" min="0" max="1" step="0.05" value="0.5">
-              <div class="range-endpoints bilateral-cell-slider" aria-hidden="true"><span>0</span><span>1</span></div>
-            </div>
-
-            <div class="preset-buttons">
-              <span class="preset-buttons-label">Presets:</span>
-              <button id="preset-efficient" class="text-button" type="button">Efficient benchmark (v &gt; c)</button>
-              <button id="preset-always" class="text-button" type="button">Always trade</button>
-              <button id="preset-never" class="text-button" type="button">Never trade</button>
-              <button id="preset-posted-price" class="text-button" type="button">Posted price</button>
-              <button id="preset-chatterjee" class="text-button" type="button">Chatterjee&ndash;Samuelson double auction</button>
+              <input id="cell-value-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0">
+              <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
             </div>
           </aside>
         </div>
@@ -142,7 +118,7 @@
         <div class="diagnostic-panel-grid">
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure">
-              <figcaption>Buyer IC, \(Q_B(v)\)</figcaption>
+              <figcaption>Buyer IC</figcaption>
               <div class="math-chart-frame">
                 <svg
                   id="buyer-ic-chart"
@@ -154,8 +130,8 @@
                   <title id="buyer-ic-chart-title">Interim buyer probability</title>
                   <desc id="buyer-ic-chart-description">The buyer's interim probability of trade, averaged over the seller's cost, as a function of buyer value.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-diagnostic-x-axis-label">\(v\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-diagnostic-y-axis-label">\(\Pr(\mathrm{trade})\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">\(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">\(Q_B(v)\)</p>
               </div>
             </figure>
             <div id="buyer-ic-text" class="diagnostic-text"></div>
@@ -163,7 +139,7 @@
 
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure">
-              <figcaption>Seller IC, \(Q_S(c)\)</figcaption>
+              <figcaption>Seller IC</figcaption>
               <div class="math-chart-frame">
                 <svg
                   id="seller-ic-chart"
@@ -175,8 +151,8 @@
                   <title id="seller-ic-chart-title">Interim seller probability</title>
                   <desc id="seller-ic-chart-description">The seller's interim probability of trade, averaged over the buyer's value, as a function of seller cost.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-diagnostic-x-axis-label">\(c\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-diagnostic-y-axis-label">\(\Pr(\mathrm{trade})\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">\(c\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">\(Q_S(c)\)</p>
               </div>
             </figure>
             <div id="seller-ic-text" class="diagnostic-text"></div>
@@ -196,8 +172,8 @@
                   <title id="buyer-utility-chart-title">Buyer utility</title>
                   <desc id="buyer-utility-chart-description">Buyer utility U sub B at every buyer-value, seller-cost pair.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-diagnostic-x-axis-label">\(v\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-diagnostic-y-axis-label">\(c\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">\(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">\(c\)</p>
               </div>
             </figure>
             <div id="buyer-utility-text" class="diagnostic-text"></div>
@@ -217,8 +193,8 @@
                   <title id="seller-utility-chart-title">Seller utility</title>
                   <desc id="seller-utility-chart-description">Seller utility U sub S at every buyer-value, seller-cost pair.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-diagnostic-x-axis-label">\(v\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-diagnostic-y-axis-label">\(c\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">\(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">\(c\)</p>
               </div>
             </figure>
             <div id="seller-utility-text" class="diagnostic-text"></div>
@@ -238,8 +214,8 @@
                   <title id="budget-chart-title">Net revenue</title>
                   <desc id="budget-chart-description">Intermediary net revenue R at every buyer-value, seller-cost pair; green is a surplus, red is a deficit.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-diagnostic-x-axis-label">\(v\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-diagnostic-y-axis-label">\(c\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">\(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">\(c\)</p>
               </div>
             </figure>
             <div id="budget-text" class="diagnostic-text"></div>
@@ -259,8 +235,8 @@
                   <title id="efficiency-chart-title">Efficiency comparison</title>
                   <desc id="efficiency-chart-description">Orange marks trade where v is less than c; blue marks missing trade where v is greater than c.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label bilateral-diagnostic-x-axis-label">\(v\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label bilateral-diagnostic-y-axis-label">\(c\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">\(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">\(c\)</p>
               </div>
             </figure>
             <div id="efficiency-text" class="diagnostic-text"></div>
@@ -277,9 +253,9 @@
     >
       <h2 id="payment-rule-title">Incentive compatibility, individual rationality, and the payment rule</h2>
       <p>
-        You may wonder why you do not need to specify a payment rule in
+        You may wonder why you do not need to specify the payment rules in
         addition to your allocation rule, even though a direct bargaining
-        mechanism consists of both. Before we can answer this fully, let's
+        mechanism consists of all three. Before we can answer this fully, let's
         specify the following quantities:
       </p>
       <p>
@@ -287,7 +263,7 @@
       </p>
       <ul>
         <li>\(\displaystyle Q_B(v)=\int_{\underline{c}}^{\overline{c}} q(v,c)\,f_S(c)\,dc\), his interim probability of trade;</li>
-        <li>\(\displaystyle P_B(v)=\int_{\underline{c}}^{\overline{c}} p(v,c)\,f_S(c)\,dc\), his interim expected payment from the buyer;</li>
+        <li>\(\displaystyle P_B(v)=\int_{\underline{c}}^{\overline{c}} p_B(v,c)\,f_S(c)\,dc\), his interim expected payment from the buyer;</li>
         <li>\(\displaystyle U_B(v)=v\,Q_B(v)-P_B(v)\), his interim expected payoff;</li>
         <li>\(\displaystyle \phi_B(v)=v-\frac{1-F_B(v)}{f_B(v)}\), his virtual value.</li>
       </ul>
@@ -296,7 +272,7 @@
       </p>
       <ul>
         <li>\(\displaystyle Q_S(c)=\int_{\underline{v}}^{\overline{v}} q(v,c)\,f_B(v)\,dv\), her interim probability of trade;</li>
-        <li>\(\displaystyle P_S(c)=\int_{\underline{v}}^{\overline{v}} p(v,c)\,f_B(v)\,dv\), her interim expected payment to the seller;</li>
+        <li>\(\displaystyle P_S(c)=\int_{\underline{v}}^{\overline{v}} p_S(c,v)\,f_B(v)\,dv\), her interim expected payment to the seller;</li>
         <li>\(\displaystyle U_S(c)=P_S(c)-c\,Q_S(c)\), her interim expected payoff;</li>
         <li>\(\displaystyle \phi_S(c)=c+\frac{F_S(c)}{f_S(c)}\), her virtual value.</li>
       </ul>
@@ -308,26 +284,64 @@
         <li>IR: \(\displaystyle U_B(v)\ge 0\), for all \(v\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\ge 0\), for all \(c\in[\underline{c},\overline{c}]\).</li>
       </ul>
       <p>
-        Theorem 1 from Myerson-Satterthwaite (1983) says,
+        We have the following theorem thanks to Börgers, et al. (2015):
       </p>
       <p>
-        <strong>Theorem:</strong> For any incentive compatible mechanism,
+        <strong>Theorem:</strong> 
+        An allocation rule \(q(v,c)\) is IC and IR implementable by some payment rules 
+        if and only if \(Q_B\) is weakly increasing and \(Q_S\) is weakly decreasing.
       </p>
-      <div class="equation-chain-steps">
-        <span class="equation-step-lhs">\(\displaystyle U_B(\underline{v})+U_S(\overline{c}) \)</span>
-        <span class="equation-step-rhs">\(\displaystyle = \min\{U_B(v)\mid v\in[\underline{v},\overline{v}]\} + \min\{U_S(c)\mid c\in[\underline{c},\overline{c}]\} \)</span>
-
-        <span class="equation-step-lhs"></span>
-        <span class="equation-step-rhs">\(\displaystyle = \int_{\underline{c}}^{\overline{c}}\int_{\underline{v}}^{\overline{v}} \big(\phi(v)-\phi(c)\big)\cdot q(v,c)\,f_B(v)f_S(c)\,dv\,dc \)</span>
-
-        <span class="equation-step-lhs"></span>
-        <span class="equation-step-rhs">\(\displaystyle = \mathbb{E}\big[(\phi(v)-\phi(c))\cdot q(v,c)\big]. \)</span>
+      <p>
+        <em>Proof:</em> Start with the forward implication.
+        Suppose \(q(v,c)\) is IC and IR implementable by some payment rules. Then, for the buyer, suppose \(v_1\le v_2\). 
+        By IC,
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = v_2Q_B(v_2)-P_B(v_2)\geq v_2Q_B(v_1)-P_B(v_1). \)</span>
+      </p>
+      <div class="equation-display" aria-label="IC1">
+        \[
+          U_B(v_1) = v_1Q_B(v_1)-P_B(v_1)\geq v_1Q_B(v_2)-P_B(v_2)
+        \]
+      </div>
+      <div class="equation-display" aria-label="IC1">
+        \[
+          U_B(v_2) = v_2Q_B(v_2)-P_B(v_2)\geq v_2Q_B(v_1)-P_B(v_1).
+        \]
       </div>
       <p>
-        Additionally, there exists a payment rule \(p(v,c)\) such that the
-        mechanism \((q(v,c),p(v,c))\) is IC and IR if and only if \(Q_B\) is weakly
-        increasing, \(Q_S\) is weakly decreasing, and
-        \(\mathbb{E}[(\phi(v)-\phi(c))\cdot q(v,c)]\ge 0\).
+        Adding the two inequalities gives
+      </p>
+      <div id="expected-utility-proof" class="equation-chain-steps">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle v_1Q_B(v_1)-P_B(v_1) + v_2Q_B(v_2)-P_B(v_2)\)</span>
+        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_1Q_B(v_2)-P_B(v_2) + v_2Q_B(v_1)-P_B(v_1)\)</span>
+
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+
+        <span class="equation-step-connector equation-step-extra" hidden>\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle v_1Q_B(v_1) + v_2Q_B(v_2)\)</span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_1Q_B(v_2) + v_2Q_B(v_1)\)</span>
+
+        <span class="equation-step-connector equation-step-extra" hidden>\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle v_1Q_B(v_1) + v_2Q_B(v_2) - v_1Q_B(v_2) - v_2Q_B(v_1)\)</span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle 0\)</span>
+
+        <span class="equation-step-connector equation-step-extra" hidden>\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle v_1(Q_B(v_1)-Q_B(v_2)) - v_2(Q_B(v_1)-Q_B(v_2))\)</span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle 0\)</span>
+
+        <span class="equation-step-connector">\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs">\(\displaystyle (v_1-v_2)(Q_B(v_1)-Q_B(v_2))\)</span>
+        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs">\(\displaystyle 0\)</span>
+
+      </div>
+      <p>
+        Since \((v_1 - v_2)\le 0\), dividing over flips the inequality, giving \(Q_B(v_1)-Q_B(v_2)\le 0\), or \(Q_B(v_1)\le Q_B(v_2)\).
+        A similar argument shows that \(Q_S\) is weakly decreasing.
       </p>
     </section>
 
@@ -341,6 +355,17 @@
     <section class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>
       <ul class="reference-list">
+        <li>
+          Börgers, Tilman, Daniel Krähmer, and Roland Strausz.
+          <em>An Introduction to the Theory of Mechanism Design</em>, 63–71.
+          Oxford University Press, 2015.
+        </li>
+        <li>
+          Börgers, Tilman, and Peter Norman. “A note on budget balance under
+          interim participation constraints: the case of independent types.”
+          <em>Economic Theory</em> 39, no. 3 (2009): 477–489.
+          <a href="https://doi.org/10.1007/s00199-008-0347-7">https://doi.org/10.1007/s00199-008-0347-7</a>.
+        </li>
         <li>
           Myerson, Roger B., and Mark A. Satterthwaite. “Efficient Mechanisms
           for Bilateral Trading.” <em>Journal of Economic Theory</em> 29, no. 2

@@ -54,26 +54,11 @@
     var appWindow = frame.contentWindow;
     var model = appWindow.BilateralTradeModel;
 
-    function reset() {
-      appDocument.getElementById("preset-efficient").click();
-    }
-
-    function withReset(callback) {
-      reset();
-      var result;
-      try {
-        result = callback();
-      } catch (error) {
-        reset();
-        throw error;
-      }
-      if (result && typeof result.then === "function") {
-        return Promise.resolve(result).finally(reset);
-      }
-      reset();
-      return result;
-    }
-
+    // The page intentionally offers no preset or reset control, so there is
+    // no UI affordance that restores the initial efficient grid. Tests that
+    // need a known starting grid paint one instead (see paintEntireGrid),
+    // and the suite is ordered so the tests that mutate the grid run after
+    // the ones that read the as-loaded default.
     function numericSvgAttributes(chart) {
       var names = [
         "x", "x1", "x2", "y", "y1", "y2", "cx", "cy",
@@ -84,6 +69,58 @@
           return element.getAttribute(name) || "";
         }).join(" ");
       }).join(" ");
+    }
+
+  // Fills every triangle with one value using only real painting, standing
+  // in for the removed never-trade/always-trade presets. A single drag holds
+  // the chosen paint value fixed while the pointer visits all 800 triangle
+  // centroids, so the whole grid ends at that value.
+  function paintEntireGrid(value) {
+      var chart = appDocument.getElementById("paint-chart");
+      var slider = appDocument.getElementById("cell-value-slider");
+      var rect = chart.getBoundingClientRect();
+      var viewWidth = chart.viewBox.baseVal.width;
+      var viewHeight = chart.viewBox.baseVal.height;
+      // Matches MAIN_LAYOUT in the module's app.js.
+      var left = 50;
+      var right = 450;
+      var top = 40;
+      var bottom = 440;
+      var R = model.CELL_RESOLUTION;
+
+      slider.value = String(value);
+      dispatchInput(slider, appWindow);
+
+      function clientOf(svgX, svgY) {
+        return {
+          x: rect.left + (svgX / viewWidth) * rect.width,
+          y: rect.top + (svgY / viewHeight) * rect.height
+        };
+      }
+
+      // Both triangles of a cell, offset to either side of the cell's own
+      // diagonal so each centroid lands unambiguously inside one of them.
+      function centroidClient(i, j, isLower) {
+        var cell = (right - left) / R;
+        var svgX = left + (i + (isLower ? 2 / 3 : 1 / 3)) * cell;
+        var svgY = bottom - (j + (isLower ? 1 / 3 : 2 / 3)) *
+          ((bottom - top) / R);
+        return clientOf(svgX, svgY);
+      }
+
+      var first = centroidClient(0, 0, true);
+      firePointer(chart, "pointerdown", first.x, first.y, 91);
+      var i;
+      var j;
+      for (i = 0; i < R; i += 1) {
+        for (j = 0; j < R; j += 1) {
+          var lowerPoint = centroidClient(i, j, true);
+          firePointer(chart, "pointermove", lowerPoint.x, lowerPoint.y, 91);
+          var upperPoint = centroidClient(i, j, false);
+          firePointer(chart, "pointermove", upperPoint.x, upperPoint.y, 91);
+        }
+      }
+      firePointer(chart, "pointerup", first.x, first.y, 91);
     }
 
   function firePointer(chart, type, clientX, clientY, pointerId) {
@@ -113,6 +150,10 @@
             "../../js/components.js",
             "../../js/mathjax-config.js",
             "../../assets/mathjax/tex-svg.js",
+            "../../js/mathjax-runtime.js",
+            "../../js/math-utils.js",
+            "../../js/svg-utils.js",
+            "../../js/equation-chain.js",
             "model.js",
             "app.js"
           ]), "Shared components and local MathJax should load before the " +
@@ -123,6 +164,12 @@
           assert(appWindow.MathJax && /^4\./.test(appWindow.MathJax.version) &&
             typeof appWindow.MathJax.typesetPromise === "function",
           "The local MathJax 4 SVG renderer should be available.");
+          assert(appWindow.MechanismMath &&
+            typeof appWindow.MechanismMath.typesetInitial === "function" &&
+            typeof appWindow.MechanismMath.setText === "function" &&
+            appWindow.mechanismMathReady &&
+            typeof appWindow.mechanismMathReady.then === "function",
+          "The shared MathJax lifecycle and readiness promise should be available.");
           assert(model && typeof model.summarize === "function",
             "BilateralTradeModel should be available to the page.");
           assert(appWindow.FPAModel === undefined && appWindow.SPAModel === undefined,
@@ -150,14 +197,32 @@
             "The introduction's mathematical notation should render with MathJax.");
           assert(appDocument.querySelectorAll(".notes-list li").length === 0,
             "The Notes list should stay empty pending user-authored bullets.");
-          var references = appDocument.querySelectorAll(".reference-list li");
-          assert(references.length === 1 &&
-            /Myerson/.test(references[0].textContent) &&
-            /Satterthwaite/.test(references[0].textContent) &&
-            references[0].querySelector(
-              'a[href="https://doi.org/10.1016/0022-0531(83)90048-0"]'
+          var references = Array.from(
+            appDocument.querySelectorAll(".reference-list li")
+          );
+          assert(references.length === 3,
+            "References should list the three requested works.");
+          var referenceText = references.map(function (item) {
+            return item.textContent;
+          }).join(" ");
+          assert(/Myerson/.test(referenceText) &&
+            /Satterthwaite/.test(referenceText) &&
+            appDocument.querySelector(
+              '.reference-list a[href="https://doi.org/10.1016/0022-0531(83)90048-0"]'
             ),
           "References should contain the requested 1983 Myerson-Satterthwaite paper.");
+          assert(/Börgers/.test(referenceText) &&
+            /Krähmer/.test(referenceText) && /Strausz/.test(referenceText) &&
+            /An Introduction to the Theory of Mechanism Design/.test(referenceText) &&
+            /63–71/.test(referenceText),
+          "References should contain the requested Börgers mechanism-design " +
+            "text, cited to its pages 63-71.");
+          assert(/Norman/.test(referenceText) &&
+            /budget balance under/.test(referenceText) &&
+            appDocument.querySelector(
+              '.reference-list a[href="https://doi.org/10.1007/s00199-008-0347-7"]'
+            ),
+          "References should contain the requested Börgers-Norman budget-balance note.");
         }
       },
       {
@@ -170,15 +235,10 @@
           ).length > 0,
           "The diagnostic figure captions should render as MathJax.");
           var mixedPlotLabels = [
-            appDocument.querySelector(
-              ".bilateral-main-chart-figure > figcaption"
-            ),
-            appDocument.querySelector(".bilateral-main-x-axis-label"),
-            appDocument.querySelector(".bilateral-main-y-axis-label"),
-            appDocument.getElementById("buyer-ic-chart")
+            appDocument.getElementById("paint-chart")
               .closest("figure").querySelector("figcaption"),
-            appDocument.getElementById("seller-ic-chart")
-              .closest("figure").querySelector("figcaption"),
+            appDocument.querySelector(".chart-480x520-x-axis-label"),
+            appDocument.querySelector(".chart-480x520-y-axis-label"),
             appDocument.getElementById("buyer-utility-chart")
               .closest("figure").querySelector("figcaption"),
             appDocument.getElementById("seller-utility-chart")
@@ -195,9 +255,21 @@
             assert(label.querySelector('mjx-container[jax="SVG"]'),
               "Every mixed plot label should render its notation with MathJax.");
           });
+          var plainTextCaptions = [
+            { id: "buyer-ic-chart", text: "Buyer IC" },
+            { id: "seller-ic-chart", text: "Seller IC" }
+          ];
+          plainTextCaptions.forEach(function (entry) {
+            var label = appDocument.getElementById(entry.id)
+              .closest("figure").querySelector("figcaption");
+            assert(label.textContent === entry.text,
+              "The " + entry.id + " figcaption should stay plain text with no math.");
+            assert(!label.querySelector('mjx-container[jax="SVG"]'),
+              "The " + entry.id + " figcaption should not render any MathJax notation.");
+          });
           var mathOnlyAxes = Array.from(appDocument.querySelectorAll(
-            ".bilateral-diagnostic-x-axis-label, " +
-            ".bilateral-diagnostic-y-axis-label"
+            ".chart-220x240-x-axis-label, " +
+            ".chart-220x240-y-axis-label"
           ));
           assert(mathOnlyAxes.length === 12,
             "Each of the six diagnostic plots should keep both existing math-only axes.");
@@ -215,13 +287,22 @@
           assert(budgetCaption.querySelector('mjx-container[jax="SVG"]') &&
             !/\\\(/.test(budgetCaption.textContent),
           "The net-revenue figcaption should render as MathJax, not raw TeX.");
-          assert(appDocument.getElementById("cell-value-control-label")
-            .querySelectorAll("mjx-container").length === 0,
-          "The selected-cell control label is dynamic plain text, not MathJax.");
-          assert(appDocument.getElementById("cell-value-control-label")
-            .textContent.indexOf("∈") >= 0,
-          "The selected-cell control label should still render a real " +
-            "Unicode ∈ character even without MathJax.");
+          var cellControlLabel = appDocument
+            .getElementById("cell-value-control-label");
+          assert(cellControlLabel.querySelector('mjx-container[jax="SVG"]'),
+            "The static control label's q(v,c) should render as MathJax.");
+          assert(!/\\\(/.test(cellControlLabel.textContent),
+            "The control label should retain no raw TeX delimiter.");
+          assert(cellControlLabel.firstChild &&
+            cellControlLabel.firstChild.nodeType === 3 &&
+            /, $/.test(cellControlLabel.firstChild.nodeValue),
+          "The control label should follow the site's comma-space " +
+            "convention before its notation.");
+          assert(appDocument.getElementById("cell-value-slider")
+            .getAttribute("aria-valuetext").indexOf("∈") >= 0,
+          "The slider's accessible value text, which names the selected " +
+            "triangle, should use a real Unicode ∈ character rather than " +
+            "MathJax, since it updates on every paint stroke.");
           assert(!appDocument.querySelector("#paint-chart .panel-caption") &&
             !appDocument.querySelector("#paint-chart .axis-title"),
           "The main plot's mixed title and axes should live outside its SVG.");
@@ -230,9 +311,9 @@
           "The main plot's accessible title should mirror the comma-space convention.");
           var paintRect = appDocument.getElementById("paint-chart")
             .getBoundingClientRect();
-          var xAxisRect = appDocument.querySelector(".bilateral-main-x-axis-label")
+          var xAxisRect = appDocument.querySelector(".chart-480x520-x-axis-label")
             .getBoundingClientRect();
-          var yAxisRect = appDocument.querySelector(".bilateral-main-y-axis-label")
+          var yAxisRect = appDocument.querySelector(".chart-480x520-y-axis-label")
             .getBoundingClientRect();
           assertClose(xAxisRect.left, paintRect.left,
             "The HTML buyer-value axis label should begin at the main plot edge.", 1);
@@ -250,9 +331,9 @@
             var chart = appDocument.getElementById(id);
             var chartRect = chart.getBoundingClientRect();
             var frame = chart.closest(".math-chart-frame");
-            var xRect = frame.querySelector(".bilateral-diagnostic-x-axis-label")
+            var xRect = frame.querySelector(".chart-220x240-x-axis-label")
               .getBoundingClientRect();
-            var yRect = frame.querySelector(".bilateral-diagnostic-y-axis-label")
+            var yRect = frame.querySelector(".chart-220x240-y-axis-label")
               .getBoundingClientRect();
             assertClose(xRect.left, chartRect.left,
               "Chart " + id + "'s math-only x label should begin at its plot edge.", 1);
@@ -311,59 +392,34 @@
         }
       },
       {
-        name: "Preset buttons reproduce their model-level closed forms",
+        name: "No preset or reset controls remain on the page",
         run: function () {
-          withReset(function () {
-            assert(!appDocument.getElementById("preset-random") &&
-              !appDocument.getElementById("reset-button"),
-            "Random and Reset the example should no longer be offered.");
-            assert(appDocument.getElementById("preset-posted-price") &&
-              appDocument.getElementById("preset-chatterjee"),
-            "Posted price and Chatterjee-Samuelson presets should be offered.");
-
-            var buyerIc = appDocument.getElementById("buyer-ic-text");
-            var sellerIc = appDocument.getElementById("seller-ic-text");
-
-            appDocument.getElementById("preset-always").click();
-            var budget = appDocument.getElementById("budget-text");
-            var buyerUtility = appDocument.getElementById("buyer-utility-text");
-            assertClose(Number(budget.dataset.expectedRevenue), -1,
-              "Always-trade should have an exact expected deficit of 1.", 1e-6);
-            assertClose(Number(buyerUtility.dataset.minBuyerUtility), 0,
-              "Minimum buyer utility should still vanish at v = 0.", 1e-6);
-            assertClose(Number(buyerUtility.dataset.expectedBuyerUtility), 0.5,
-              "Expected buyer rent under certain trade equals E[V] = 0.5.", 1e-6);
-            assert(buyerIc.dataset.icImplementable === "true" &&
-              sellerIc.dataset.icImplementable === "true",
-            "A constant allocation rule is trivially IC on both sides.");
-
-            appDocument.getElementById("preset-never").click();
-            assertClose(Number(budget.dataset.expectedRevenue), 0,
-              "Never-trade should be exactly expected-revenue neutral.", 1e-9);
-            assert(budget.dataset.exPostBudgetBalanced === "true",
-              "Never-trade should be exactly ex-post budget balanced.");
-
-            appDocument.getElementById("preset-efficient").click();
-            var efficiency = appDocument.getElementById("efficiency-text");
-            assertClose(Number(efficiency.dataset.efficiencyLoss), 0,
-              "The efficient preset should have zero efficiency loss.", 1e-6);
-            assertClose(Number(buyerUtility.dataset.expectedBuyerUtility), 1 / 6,
-              "Expected buyer rent at the efficient benchmark equals E[(V-C)+] = 1/6 " +
-              "exactly, not just approximately, under the triangular mesh.",
-              1e-6);
-            assert(buyerIc.dataset.icImplementable === "true" &&
-              sellerIc.dataset.icImplementable === "true" &&
-              buyerIc.dataset.buyerIcViolationCount === "0" &&
-              sellerIc.dataset.sellerIcViolationCount === "0",
-            "The efficient benchmark's interim probabilities are exactly monotonic.");
+          assert(!appDocument.querySelector(".preset-buttons") &&
+            !appDocument.getElementById("reset-button"),
+          "The preset row and a reset button should both be absent.");
+          [
+            "preset-efficient", "preset-always", "preset-never",
+            "preset-posted-price", "preset-chatterjee", "preset-random"
+          ].forEach(function (id) {
+            assert(!appDocument.getElementById(id),
+              "Preset control " + id + " should no longer exist.");
           });
+          assert(!appDocument.getElementById("posted-price-control") &&
+            !appDocument.getElementById("posted-price-slider") &&
+            !appDocument.getElementById("posted-price-number"),
+          "The posted-price control belonged to a preset and should be gone.");
+          var controls = appDocument.querySelector(".choice-controls");
+          assert(controls.querySelectorAll(".range-group").length === 1,
+            "Only the selected-triangle allocation control should remain.");
+          assert(controls.querySelectorAll("button").length === 0,
+            "The painting controls should offer no buttons at all.");
         }
       },
       {
         name: "The main column and diagnostic grid sit side by side with a compact q slider",
         run: function () {
-          withReset(function () {
-            var mainColumn = appDocument.querySelector(".bilateral-main-column");
+          (function () {
+            var mainColumn = appDocument.querySelector(".main-column-480");
             var grid = appDocument.querySelector(".diagnostic-panel-grid");
             assert(mainColumn && mainColumn.contains(
               appDocument.getElementById("paint-chart")
@@ -373,7 +429,7 @@
             assert(grid && appWindow.getComputedStyle(grid).display === "grid",
               "The six diagnostic panels should be arranged in a grid.");
 
-            var layout = appDocument.querySelector(".bilateral-layout");
+            var layout = appDocument.querySelector(".main-diagnostic-layout");
             assert(layout.contains(mainColumn) && layout.contains(grid) &&
               mainColumn.compareDocumentPosition(grid) &
                 appWindow.Node.DOCUMENT_POSITION_FOLLOWING,
@@ -390,28 +446,13 @@
             assert(Number.isFinite(sliderMaxWidth) &&
               sliderMaxWidth < chartMaxWidth,
             "The q slider should be visually much smaller than the main chart.");
-          });
-        }
-      },
-      {
-        name: "Presets are laid out horizontally with a Presets: label",
-        run: function () {
-          withReset(function () {
-            var container = appDocument.querySelector(".preset-buttons");
-            var label = container.querySelector(".preset-buttons-label");
-            assert(label && label.textContent.trim() === "Presets:",
-              "The preset buttons should be introduced with a Presets: label.");
-            assert(appWindow.getComputedStyle(container).flexDirection === "row",
-              "The preset buttons should be arranged horizontally.");
-            assert(container.firstElementChild === label,
-              "The Presets: label should precede the buttons.");
-          });
+          }());
         }
       },
       {
         name: "The diagnostic plots form a three-column by two-row wide-screen grid",
         run: function () {
-          withReset(function () {
+          (function () {
             var panels = Array.from(appDocument.querySelectorAll(
               ".diagnostic-panel-grid > .diagnostic-panel"
             ));
@@ -430,135 +471,18 @@
             assert(columns === 3 && rows === 2,
               "The six plots should form exactly three columns and two rows at the test width.");
 
-            var layout = appDocument.querySelector(".bilateral-layout");
+            var layout = appDocument.querySelector(".main-diagnostic-layout");
             var contentWidth = appDocument.querySelector("main.page-width")
               .getBoundingClientRect().width;
             assert(Math.abs(layout.getBoundingClientRect().width - contentWidth) < 1,
               "The interactive demo should use the auction pages' full shared content width.");
-          });
-        }
-      },
-      {
-        name: "The posted-price preset shows an adjustable price slider that live-updates the grid",
-        run: function () {
-          withReset(function () {
-            var control = appDocument.getElementById("posted-price-control");
-            assert(control.hidden, "The posted-price control should start hidden.");
-
-            appDocument.getElementById("preset-posted-price").click();
-            assert(!control.hidden,
-              "Selecting the posted-price preset should reveal its slider.");
-
-            var priceSlider = appDocument.getElementById("posted-price-slider");
-            var priceNumber = appDocument.getElementById("posted-price-number");
-            var budget = appDocument.getElementById("budget-text");
-            var efficiency = appDocument.getElementById("efficiency-text");
-            assert(priceSlider.getAttribute("step") === "0.05",
-              "The price slider's step should match the 20-cell grid's 0.05 spacing.");
-
-            priceNumber.value = "0.37";
-            dispatchChange(priceNumber, appWindow);
-            assertClose(Number(priceNumber.value), 0.35,
-              "An off-grid typed price should snap to the nearest cell boundary.", 1e-12);
-            assertClose(Number(priceSlider.value), 0.35,
-              "The slider should display the same snapped posted price.", 1e-12);
-            var snapped = model.summarize(model.postedPriceGrid(0.35));
-            assertClose(Number(budget.dataset.expectedRevenue),
-              snapped.verdicts.expectedRevenue,
-              "The displayed grid should use the snapped posted price.", 1e-9);
-            assertClose(Number(efficiency.dataset.welfare),
-              snapped.verdicts.welfare,
-              "The snapped price should regenerate the allocation and its welfare.", 1e-9);
-
-            priceSlider.value = "0.3";
-            dispatchInput(priceSlider, appWindow);
-            var expected = model.summarize(model.postedPriceGrid(0.3));
-            assertClose(Number(budget.dataset.expectedRevenue),
-              expected.verdicts.expectedRevenue,
-              "Moving the price slider should live-update the induced grid.", 1e-9);
-            assertClose(Number(efficiency.dataset.welfare),
-              expected.verdicts.welfare,
-              "Moving the price slider should update allocation-dependent welfare.", 1e-9);
-            assertClose(Number(budget.dataset.expectedRevenue), 0,
-              "The posted-price mechanism should be exactly budget balanced.", 1e-9);
-            assert(budget.dataset.exPostBudgetBalanced === "true",
-              "Posted price should be exactly ex-post budget balanced, not just in expectation.");
-
-            appDocument.getElementById("preset-always").click();
-            assert(control.hidden,
-              "Selecting a different preset should hide the price slider again.");
-
-            appDocument.getElementById("preset-posted-price").click();
-            var chart = appDocument.getElementById("paint-chart");
-            var rect = chart.getBoundingClientRect();
-            firePointer(chart, "pointerdown",
-              rect.left + rect.width * 0.5, rect.top + rect.height * 0.5, 71);
-            firePointer(chart, "pointerup",
-              rect.left + rect.width * 0.5, rect.top + rect.height * 0.5, 71);
-            assert(control.hidden,
-              "Painting manually should hide the price slider (it no longer governs the grid).");
-          });
-        }
-      },
-      {
-        name: "The Chatterjee-Samuelson preset is IC-implementable with a small positive efficiency loss",
-        run: function () {
-          withReset(function () {
-            appDocument.getElementById("preset-chatterjee").click();
-            var buyerIc = appDocument.getElementById("buyer-ic-text");
-            var sellerIc = appDocument.getElementById("seller-ic-text");
-            var efficiency = appDocument.getElementById("efficiency-text");
-            var budget = appDocument.getElementById("budget-text");
-
-            assert(buyerIc.dataset.icImplementable === "true" &&
-              sellerIc.dataset.icImplementable === "true",
-            "The double auction's induced allocation should be IC-implementable.");
-            var loss = Number(efficiency.dataset.efficiencyLoss);
-            assert(loss > 0 && loss < 1 / 6,
-              "The double auction should be inefficient but far better than never trading.");
-            assertClose(Number(budget.dataset.expectedRevenue), 0,
-              "The double auction's expected revenue should be exactly zero.", 0.01);
-          });
-        }
-      },
-      {
-        name: "The net-revenue plot stays a heatmap; its text is a single expected-revenue line",
-        run: function () {
-          withReset(function () {
-            var chart = appDocument.getElementById("budget-chart");
-            assert(chart.querySelectorAll("polygon").length === 800,
-              "The net-revenue plot should still render the full pointwise " +
-              "v-c heatmap (800 triangles), unchanged from the other heatmap panels.");
-
-            var text = appDocument.getElementById("budget-text");
-            appDocument.getElementById("preset-always").click();
-            assert(text.querySelectorAll("p").length === 1,
-              "The text below the plot should be a single line, not the " +
-              "previous three (ex-post BB, ex-post no-deficit, expected).");
-            assert(text.querySelector("p").textContent ===
-              "Expected revenue: -1.000.",
-              "That single line should read only the expected revenue, " +
-              "with no separate no-deficit yes/no wording.");
-            assert(text.querySelector("p").className === "verdict-fail",
-              "Always-trade's guaranteed deficit should still color the line red.");
-
-            appDocument.getElementById("preset-never").click();
-            assert(text.querySelectorAll("p").length === 1 &&
-              text.querySelector("p").textContent === "Expected revenue: 0.000." &&
-              text.querySelector("p").className === "verdict-pass",
-            "Never-trade's exact zero revenue (no deficit) should read as a single green line.");
-
-            assert(text.dataset.exPostBudgetBalanced !== undefined &&
-              text.dataset.exPostNoDeficit !== undefined,
-            "The ex-post verdicts should remain available as data attributes " +
-              "even though they are no longer separately rendered as text.");
-          });
+          }());
         }
       },
       {
         name: "IR utility text reports expected rent, always green since IR cannot fail",
         run: function () {
-          withReset(function () {
+          (function () {
             var buyerUtility = appDocument.getElementById("buyer-utility-text");
             var sellerUtility = appDocument.getElementById("seller-utility-text");
             assert(buyerUtility.textContent.includes("Expected buyer rent") &&
@@ -572,22 +496,32 @@
               sellerUtility.querySelector("p").className === "verdict-pass",
             "Expected-rent lines are always the pass color, since ex-post " +
               "IR holds automatically for any q in [0,1].");
-          });
+          }());
         }
       },
       {
-        name: "The selected-cell slider, number input, and dynamic label stay synchronized",
+        name: "The selected-cell slider and number input stay synchronized under a static label",
         run: function () {
-          withReset(function () {
+          (function () {
             var slider = appDocument.getElementById("cell-value-slider");
             var number = appDocument.getElementById("cell-value-number");
             var label = appDocument.getElementById("cell-value-control-label");
 
-            assert(label.textContent.startsWith("Allocation probability on v ∈ ["),
-              "The label should describe the selected triangle's v and c " +
-              "ranges using set-membership notation (v ∈ [...)).");
-            assert(/, [LR]$/.test(label.textContent),
-              "The label should end with the selected triangle's L/R side.");
+            // The label is deliberately static: naming the selected cell's
+            // own ranges here made it wrap its trailing ", R"/", L" onto a
+            // second line. The selection is identified in-graph and through
+            // the slider's aria-valuetext instead. Its own q(v,c) is
+            // MathJax, so compare the surrounding prose rather than the
+            // whole textContent.
+            assert(/^Allocation probability,\s*$/.test(label.firstChild.nodeValue) &&
+              /on selected triangle\s*$/.test(label.lastChild.nodeValue),
+            "The control label should keep its short static wording around " +
+              "the rendered q(v,c).");
+            assert(!/∈|\[0\./.test(label.textContent),
+              "The label should no longer embed live cell coordinates.");
+            assert(/, [LR]$/.test(slider.getAttribute("aria-valuetext")),
+              "The slider's accessible value text should still end with the " +
+              "selected triangle's L/R side.");
 
             slider.value = "0.73";
             dispatchInput(slider, appWindow);
@@ -603,29 +537,31 @@
             dispatchChange(number, appWindow);
             assert(number.value === "0.20",
               "An invalid typed value should revert to the last valid choice.");
-          });
+          }());
         }
       },
       {
-        name: "The selected cell's range in the label and in-graph marker update dynamically",
+        name: "The selected cell's range in the in-graph marker and value text updates dynamically",
         run: function () {
-          withReset(function () {
+          (function () {
             var chart = appDocument.getElementById("paint-chart");
-            var label = appDocument.getElementById("cell-value-control-label");
-            var before = label.textContent;
+            var slider = appDocument.getElementById("cell-value-slider");
+            var staticLabel = appDocument.getElementById("cell-value-control-label")
+              .textContent;
+            var before = slider.getAttribute("aria-valuetext");
 
             chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
               key: "ArrowRight", bubbles: true, cancelable: true
             }));
-            assert(label.textContent !== before,
-              "ArrowRight should move the selected cell and update the label.");
+            assert(slider.getAttribute("aria-valuetext") !== before,
+              "ArrowRight should move the selected cell and update the value text.");
             assert(chart.querySelector(".cell-label"),
               "An in-graph label should identify the selected cell.");
 
             chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
               key: "Home", bubbles: true, cancelable: true
             }));
-            assert(label.textContent.includes("v ∈ [0.00, 0.05)"),
+            assert(slider.getAttribute("aria-valuetext").includes("v ∈ [0.00, 0.05)"),
               "Home should move the selection to the leftmost cell, v in [0, 0.05).");
             assert(chart.querySelector(".cell-label").textContent.startsWith("[0.00, 0.05)"),
               "The in-graph label should also reflect the leftmost cell.");
@@ -633,41 +569,47 @@
             chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
               key: "End", bubbles: true, cancelable: true
             }));
-            assert(label.textContent.includes("v ∈ [0.95, 1.00)"),
+            assert(slider.getAttribute("aria-valuetext").includes("v ∈ [0.95, 1.00)"),
               "End should move the selection to the rightmost cell, v in [0.95, 1).");
+            assert(appDocument.getElementById("cell-value-control-label")
+              .textContent === staticLabel,
+            "The visible control label should stay static while the " +
+              "selection moves.");
 
             assert(chart.getAttribute("aria-keyshortcuts").includes("ArrowUp") &&
               chart.getAttribute("aria-keyshortcuts").includes("Home") &&
               chart.getAttribute("aria-keyshortcuts").includes("l") &&
               chart.getAttribute("aria-keyshortcuts").includes("r"),
             "Declared keyboard shortcuts should match the implemented keys.");
-          });
+          }());
         }
       },
       {
         name: "L and R keys select the two triangles of the current cell independently",
         run: function () {
-          withReset(function () {
-            appDocument.getElementById("preset-never").click();
+          (function () {
+            paintEntireGrid(0);
             var chart = appDocument.getElementById("paint-chart");
             var slider = appDocument.getElementById("cell-value-slider");
-            var label = appDocument.getElementById("cell-value-control-label");
 
             function press(key) {
               chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
                 key: key, bubbles: true, cancelable: true
               }));
             }
+            function valueText() {
+              return slider.getAttribute("aria-valuetext");
+            }
 
             press("Home");
             press("r");
-            assert(label.textContent.endsWith(", R"),
+            assert(valueText().endsWith(", R"),
               "Pressing r should select the right (lower) triangle.");
             slider.value = "0.8";
             dispatchInput(slider, appWindow);
 
             press("l");
-            assert(label.textContent.endsWith(", L"),
+            assert(valueText().endsWith(", L"),
               "Pressing l should select the left (upper) triangle of the same cell.");
             assertClose(Number(slider.value), 0,
               "The L triangle should still read its own (untouched, 0) " +
@@ -677,14 +619,14 @@
             assertClose(Number(slider.value), 0.8,
               "Reselecting R should show the 0.8 it was painted with, " +
               "confirming the two triangles hold independent values.", 1e-9);
-          });
+          }());
         }
       },
       {
         name: "Painting a non-monotonic pattern flips the IC verdict",
         run: function () {
-          return withReset(async function () {
-            appDocument.getElementById("preset-never").click();
+          return (async function () {
+            paintEntireGrid(0);
             var chart = appDocument.getElementById("paint-chart");
             var slider = appDocument.getElementById("cell-value-slider");
             var buyerIc = appDocument.getElementById("buyer-ic-text");
@@ -746,14 +688,14 @@
             var budget = appDocument.getElementById("budget-text");
             assert(!/formal value only|not IC-implementable/.test(budget.textContent),
               "The budget text no longer carries a not-IC-implementable caveat.");
-          });
+          }());
         }
       },
       {
         name: "Dragging beyond the plot edge still paints the boundary cell",
         run: function () {
-          withReset(function () {
-            appDocument.getElementById("preset-never").click();
+          (function () {
+            paintEntireGrid(0);
             var chart = appDocument.getElementById("paint-chart");
             var slider = appDocument.getElementById("cell-value-slider");
             var rect = chart.getBoundingClientRect();
@@ -774,9 +716,9 @@
             firePointer(chart, "pointerup",
               rect.right + 200, rect.top + rect.height * 0.5, 61);
 
-            var label = appDocument.getElementById("cell-value-control-label");
-            assert(label.textContent.includes("v ∈ [0.95, 1.00)"),
-              "Dragging past the right edge should clamp to the rightmost cell.");
+            assert(slider.getAttribute("aria-valuetext")
+              .includes("v ∈ [0.95, 1.00)"),
+            "Dragging past the right edge should clamp to the rightmost cell.");
 
             chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
               key: "Home", bubbles: true, cancelable: true
@@ -787,13 +729,13 @@
             assertClose(Number(slider.value), 1,
               "Returning to the boundary triangle should recover the value painted by the drag.",
               1e-9);
-          });
+          }());
         }
       },
       {
         name: "Every SVG panel keeps finite coordinates and an accessible title/description",
         run: function () {
-          withReset(function () {
+          (function () {
             [
               "paint-chart", "buyer-ic-chart", "seller-ic-chart",
               "buyer-utility-chart", "seller-utility-chart", "budget-chart",
@@ -807,13 +749,13 @@
               assert(chart.querySelectorAll("mjx-container").length === 0,
                 "Chart " + id + " should not contain MathJax output.");
             });
-          });
+          }());
         }
       },
       {
         name: "The accessible live summary reports the current diagnostics",
         run: function () {
-          withReset(function () {
+          (function () {
             var summary = appDocument.getElementById("live-summary");
             assert(summary.getAttribute("aria-live") === "polite",
               "The live summary should be politely announced.");
@@ -823,7 +765,7 @@
             assert(summary.textContent.includes("Expected budget balance") ||
               summary.textContent.includes("budget"),
             "The live summary should describe the budget-balance state.");
-          });
+          }());
         }
       }
     ];

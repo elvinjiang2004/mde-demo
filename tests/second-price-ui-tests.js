@@ -99,7 +99,11 @@
             "../../js/components.js",
             "../../js/mathjax-config.js",
             "../../assets/mathjax/tex-svg.js",
+            "../../js/mathjax-runtime.js",
             "../../js/distributions.js",
+            "../../js/math-utils.js",
+            "../../js/svg-utils.js",
+            "../../js/auction-controls.js",
             "model.js",
             "app.js"
           ]), "Shared components, local MathJax, and the shared kernel should " +
@@ -110,6 +114,12 @@
           assert(appWindow.MathJax && /^4\./.test(appWindow.MathJax.version) &&
             typeof appWindow.MathJax.typesetPromise === "function",
           "The local MathJax 4 SVG renderer should be available.");
+          assert(appWindow.MechanismMath &&
+            typeof appWindow.MechanismMath.typesetInitial === "function" &&
+            typeof appWindow.MechanismMath.setText === "function" &&
+            appWindow.mechanismMathReady &&
+            typeof appWindow.mechanismMathReady.then === "function",
+          "The shared MathJax lifecycle and readiness promise should be available.");
           assert(distributions && typeof distributions.quantile === "function",
             "AuctionDistributions should be available to the page.");
           assert(model && typeof model.outcomes === "function",
@@ -751,15 +761,24 @@
             var bidSlider = appDocument.getElementById("bid-slider");
             var chart = appDocument.getElementById("second-price-chart");
 
-            assert(valueSlider.step === "any" && bidSlider.step === "any",
-              "Sliders should preserve arbitrary typed and random values.");
+            assert(valueSlider.step === "0.2" && bidSlider.step === "0.2",
+              "Sliders should be quantized to 1/500 of the [a, b] span, " +
+                "matching the chart's own keyboard-nudge step.");
+
+            // The slider is quantized to a 0.2 step (see the step assertion
+            // above), so it can only ever land within half a step of a
+            // typed value that doesn't itself fall on a step boundary --
+            // state.value itself stays exact, but the slider's own DOM
+            // value is now necessarily an approximation of it, matching
+            // first-price's already-quantized sliders.
+            var QUANTIZATION_TOLERANCE = 0.1;
 
             valueNumber.value = "65.26";
             dispatchChange(valueNumber, appWindow);
             assert(valueNumber.value === "65.3",
               "The displayed private value should round to one decimal place.");
             assertClose(Number(valueSlider.value), 65.26,
-              "Typed value should update its slider.");
+              "Typed value should update its slider.", QUANTIZATION_TOLERANCE);
             assertClose(Number(appDocument.querySelector(
               ".truthful-marker"
             ).dataset.truthfulBid), 65.26,
@@ -770,9 +789,12 @@
 
             valueNumber.value = "65.04";
             dispatchChange(valueNumber, appWindow);
-            assert(valueNumber.value === "65" &&
-              Number(valueSlider.value) === 65.04,
-            "Rounding to a whole displayed value should preserve the exact choice.");
+            assert(valueNumber.value === "65",
+              "A typed value that rounds to a whole number should omit the decimal.");
+            assertClose(Number(valueSlider.value), 65.04,
+              "Rounding to a whole displayed value should still land the " +
+                "quantized slider within one step of the exact typed choice.",
+              QUANTIZATION_TOLERANCE);
 
             valueSlider.value = "70";
             dispatchInput(valueSlider, appWindow);
@@ -784,7 +806,7 @@
             assert(bidNumber.value === "95.7",
               "The bid field should retain one necessary decimal place.");
             assertClose(Number(bidSlider.value), 95.7,
-              "Typed bid should update its slider.");
+              "Typed bid should update its slider.", QUANTIZATION_TOLERANCE);
             assertClose(Number(appDocument.querySelector(
               ".winning-probability-guide-line"
             ).dataset.probability), 0.957,
