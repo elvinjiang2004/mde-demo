@@ -121,8 +121,6 @@
     var density = distributions.pdf(bid, a, b, normalized);
     var result = (n - 1) * Math.pow(probability, n - 2) * density;
 
-    // A singular beta density can otherwise produce 0 * Infinity at a.
-    // Use a one-sided value so graph sampling never receives NaN.
     if (Number.isNaN(result) && bid === a) {
       var interior = a + (b - a) * 1e-9;
       probability = distributions.cdf(interior, a, b, normalized);
@@ -170,8 +168,6 @@
       return a + ((n - 1) / n) * (boundedBid - a);
     }
 
-    // Conditional quantiles avoid cancellation in xG(x) - integral G when
-    // the winning probability is positive but extremely small.
     return distributions.integrate(function (rank) {
       var opponentRank = focalCdf * Math.pow(rank, 1 / (n - 1));
       return distributions.quantile(opponentRank, a, b, normalized);

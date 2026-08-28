@@ -54,11 +54,6 @@
     var appWindow = frame.contentWindow;
     var model = appWindow.BilateralTradeModel;
 
-    // The page intentionally offers no preset or reset control, so there is
-    // no UI affordance that restores the initial efficient grid. Tests that
-    // need a known starting grid paint one instead (see paintEntireGrid),
-    // and the suite is ordered so the tests that mutate the grid run after
-    // the ones that read the as-loaded default.
     function numericSvgAttributes(chart) {
       var names = [
         "x", "x1", "x2", "y", "y1", "y2", "cx", "cy",
@@ -71,17 +66,12 @@
       }).join(" ");
     }
 
-  // Fills every triangle with one value using only real painting, standing
-  // in for the removed never-trade/always-trade presets. A single drag holds
-  // the chosen paint value fixed while the pointer visits all 800 triangle
-  // centroids, so the whole grid ends at that value.
   function paintEntireGrid(value) {
       var chart = appDocument.getElementById("paint-chart");
       var slider = appDocument.getElementById("cell-value-slider");
       var rect = chart.getBoundingClientRect();
       var viewWidth = chart.viewBox.baseVal.width;
       var viewHeight = chart.viewBox.baseVal.height;
-      // Matches MAIN_LAYOUT in the module's app.js.
       var left = 50;
       var right = 450;
       var top = 40;
@@ -98,8 +88,6 @@
         };
       }
 
-      // Both triangles of a cell, offset to either side of the cell's own
-      // diagonal so each centroid lands unambiguously inside one of them.
       function centroidClient(i, j, isLower) {
         var cell = (right - left) / R;
         var svgX = left + (i + (isLower ? 2 / 3 : 1 / 3)) * cell;
@@ -124,11 +112,6 @@
     }
 
   function firePointer(chart, type, clientX, clientY, pointerId) {
-    // Synthetic PointerEvents are not registered as active OS pointers, so
-    // Chromium's native setPointerCapture throws before the handler reaches
-    // the painting code. Pointer capture itself is a browser primitive rather
-    // than this module's behavior under test; stub it for these event-driven
-    // mapping and painting checks.
     chart.setPointerCapture = function () {};
     chart.hasPointerCapture = function () { return false; };
     chart.releasePointerCapture = function () {};
@@ -195,13 +178,16 @@
           "The supplied introduction should retain its three prose blocks and four conditions.");
           assert(introduction.querySelectorAll('mjx-container[jax="SVG"]').length > 0,
             "The introduction's mathematical notation should render with MathJax.");
-          assert(appDocument.querySelectorAll(".notes-list li").length === 0,
-            "The Notes list should stay empty pending user-authored bullets.");
+          var notes = Array.from(appDocument.querySelectorAll(".notes-list li"));
+          assert(notes.length > 0, "The Notes list should carry its authored bullets.");
+          assert(notes.every(function (note) {
+            return note.textContent.trim().length > 0;
+          }), "No Notes bullet should be empty.");
           var references = Array.from(
             appDocument.querySelectorAll(".reference-list li")
           );
-          assert(references.length === 3,
-            "References should list the three requested works.");
+          assert(references.length === 4,
+            "References should list the four requested works.");
           var referenceText = references.map(function (item) {
             return item.textContent;
           }).join(" ");
@@ -223,6 +209,13 @@
               '.reference-list a[href="https://doi.org/10.1007/s00199-008-0347-7"]'
             ),
           "References should contain the requested Börgers-Norman budget-balance note.");
+          assert(/Milgrom/.test(referenceText) && /Segal/.test(referenceText) &&
+            /Envelope Theorems for Arbitrary\s+Choice Sets/.test(referenceText) &&
+            appDocument.querySelector(
+              '.reference-list a[href="https://doi.org/10.1111/1468-0262.00296"]'
+            ),
+          "References should contain Milgrom-Segal (2002), which the proof " +
+            "cites in text for its Corollary 1.");
         }
       },
       {
@@ -507,12 +500,6 @@
             var number = appDocument.getElementById("cell-value-number");
             var label = appDocument.getElementById("cell-value-control-label");
 
-            // The label is deliberately static: naming the selected cell's
-            // own ranges here made it wrap its trailing ", R"/", L" onto a
-            // second line. The selection is identified in-graph and through
-            // the slider's aria-valuetext instead. Its own q(v,c) is
-            // MathJax, so compare the surrounding prose rather than the
-            // whole textContent.
             assert(/^Allocation probability,\s*$/.test(label.firstChild.nodeValue) &&
               /on selected triangle\s*$/.test(label.lastChild.nodeValue),
             "The control label should keep its short static wording around " +
@@ -648,17 +635,6 @@
               }));
             }
 
-            // Paint a single isolated triangle to q = 1 amid an otherwise
-            // all-zero grid. Its row's interim average rises then falls
-            // back to zero (a buyer IC violation), and its column's
-            // interim average does the same across seller cost (a seller
-            // IC violation) -- one paint stroke breaks both, even though
-            // only one of the cell's two triangles is painted. Coordinates
-            // are inside the current 480x520 plot area (v: 50-450, c: 40-440)
-            // and fall exactly on a cell's lower-right (R) triangle.
-            // Put the selected triangle at high v and low c before choosing
-            // q=1. That boundary spike preserves both interim monotonicities,
-            // so the verdict can only flip after the pointer stroke below.
             var k;
             for (k = 0; k < model.CELL_RESOLUTION; k += 1) {
               press("ArrowDown");

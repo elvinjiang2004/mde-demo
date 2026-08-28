@@ -6,11 +6,6 @@
   var appendSvg = window.SvgUtils.appendSvg;
   var formatTick = window.SvgUtils.formatTick;
 
-  // The main chart is deliberately larger than the two diagnostic panels
-  // (it is the one thing the learner actually edits), and the pair share a
-  // second, smaller layout so they match each other. Neither carries a
-  // y-axis title -- only the numeric y-tick labels identify the vertical
-  // scale -- so the left margin only needs to fit those numbers.
   var MAIN_LAYOUT = { viewWidth: 660, viewHeight: 450, left: 60, right: 630, top: 32, bottom: 388 };
   var DIAG_LAYOUT = { viewWidth: 440, viewHeight: 300, left: 50, right: 420, top: 28, bottom: 250 };
 
@@ -46,8 +41,6 @@
     state.points = model.defaultPoints();
     state.selectedIndex = Math.floor(state.points.length / 2);
 
-    // .choice-controls is nested inside .explorable, so listing both would
-    // hand MathJax the same subtree twice and render its math twice over.
     math.typesetInitial(
       ".introduction, .explorable, .derivation, .notes, .references"
     );
@@ -59,8 +52,6 @@
   function byId(id) {
     return document.getElementById(id);
   }
-
-  // --- Events
 
   function bindEvents() {
     elements.pointValueSlider.addEventListener("input", function () {
@@ -148,9 +139,6 @@
     });
   }
 
-  // --- Pointer geometry (main chart only; the two diagnostic charts are
-  // read-only)
-
   function svgPointFromEvent(event) {
     var rect = elements.curveChart.getBoundingClientRect();
     if (!(rect.width > 0) || !(rect.height > 0)) {
@@ -194,8 +182,6 @@
     dragSetHeight(q);
   }
 
-  // --- State updates
-
   function selectIndex(index) {
     state.selectedIndex = model.clamp(index, 0, state.points.length - 1);
     syncPointControls();
@@ -214,9 +200,6 @@
     recomputeAndDrawAll();
   }
 
-  // Pointer drags call this instead of setSelectedHeight so repaints are
-  // batched to one per animation frame, matching the bilateral-trade
-  // module's drag handling.
   function dragSetHeight(value) {
     if (!Number.isFinite(value)) {
       return;
@@ -259,8 +242,6 @@
     updateLiveSummary(summary);
   }
 
-  // --- Geometry helpers
-
   function svgXOf(v, layout) {
     return layout.left + v * (layout.right - layout.left);
   }
@@ -294,8 +275,6 @@
     return ticks.sort(function (a, b) { return a - b; });
   }
 
-  // No y-axis title: only the numeric y-tick labels identify the vertical
-  // scale. Static x-axis titles live in MathJax-enabled HTML outside the SVG.
   function drawAxisFrame(svg, layout, xTicks, yTicks, yMapper) {
     xTicks.forEach(function (value) {
       var x = svgXOf(value, layout);
@@ -326,9 +305,6 @@
 
   }
 
-  // Converts a monotone-cubic-Hermite segment into the exact equivalent
-  // cubic Bezier control points, so the curve is drawn as a real SVG path
-  // -- an exact rendering of the interpolant, not a sampled polyline.
   function hermitePathD(curve, layout, yMapper) {
     var points = curve.points;
     var tangents = curve.tangents;
@@ -354,8 +330,6 @@
     }
     return d;
   }
-
-  // --- Panels
 
   function drawCurveChart(summary) {
     var svg = elements.curveChart;
@@ -479,8 +453,6 @@
       "There are " + summary.points.length + " control points.";
   }
 
-  // --- Accessible descriptions
-
   function curveChartDescription(summary) {
     return "A shape-preserving cubic Hermite curve through " + summary.points.length +
       " draggable control points on [0,1], giving the allocation probability " +
@@ -502,8 +474,6 @@
     return "The payment rule P(v) = vQ(v) - U(v) implied by the painted " +
       "allocation curve.";
   }
-
-  // --- Formatting
 
   function formatQ(value) {
     return value.toFixed(2);

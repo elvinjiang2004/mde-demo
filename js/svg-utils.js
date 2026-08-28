@@ -1,6 +1,5 @@
 "use strict";
 
-// Shared SVG chart-drawing helpers used by every module's app.js.
 window.SvgUtils = Object.freeze({
   appendSvg: function (parent, name, attributes, text) {
     var node = document.createElementNS("http://www.w3.org/2000/svg", name);

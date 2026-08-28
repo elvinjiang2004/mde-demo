@@ -216,9 +216,6 @@
     var lowerEndpointIsSingular;
     var upperEndpointIsSingular;
 
-    // A fifth-power change of variables is applied at both endpoints. It
-    // removes the integrable endpoint singularities produced by every Beta
-    // density in the supported shape range without evaluating fn at an end.
     function endpointRegularizedIntegrand(t) {
       var t2 = t * t;
       var t4 = t2 * t2;
@@ -241,10 +238,6 @@
         throw new RangeError("Integrand must be finite inside the interval.");
       }
 
-      // Addition or subtraction can round a point extremely close to a
-      // nonzero endpoint back onto that endpoint. Infer the local power-law
-      // limit of the already-regularized integrand from two representable
-      // points. For a Beta density its exponent is 5 * shape - 1 >= 0.
       return extrapolateRegularizedSide(t, fromLower, baseT);
     }
 

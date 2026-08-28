@@ -211,8 +211,6 @@
     if (candidate <= lower || candidate >= upper) {
       candidate = 0.5 * (lower + upper);
     }
-    /* The shared quadrature has 1e-8 default accuracy, so a tighter root
-       residual would only repeat noisy integral evaluations. */
     var bidTolerance = 1e-8 * Math.max(1, b - a);
     var iteration;
 
@@ -262,11 +260,6 @@
       return 0;
     }
 
-    /*
-     * If H(x)=F(beta^{-1}(x))^(n-1), the equilibrium ODE implies
-     * H'(x)=H(x)/(beta^{-1}(x)-x). This avoids differentiating a
-     * numerically inverted strategy in the interior of its support.
-     */
     if (bid > a + EPSILON) {
       var cutoff = opponentValueCutoff(bid, n, a, b, spec);
       var probability = Math.pow(
@@ -280,7 +273,6 @@
       }
     }
 
-    /* A finite forward average is used at a potentially singular endpoint. */
     var supportLength = highestBid - a;
     if (supportLength <= EPSILON) {
       return 0;

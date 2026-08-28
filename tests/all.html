@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>All suites | Mechanism Design Explorer</title>
+  <style>
+    body {
+      max-width: 860px;
+      margin: 2.5rem auto;
+      padding: 0 1rem;
+      color: #172331;
+      background: #f5f2e9;
+      font-family: system-ui, sans-serif;
+    }
+    h1 { font-family: Georgia, serif; font-weight: 500; }
+    #summary {
+      padding: 1rem;
+      background: white;
+      border-left: 5px solid #777;
+      font-size: 1.05rem;
+    }
+    #summary.pass { border-left-color: #17613f; }
+    #summary.fail { border-left-color: #8e3030; }
+    #summary.blocked { border-left-color: #8a6d1f; }
+    #note { font-size: 0.9rem; color: #4a5666; }
+    #note code { background: #ece7da; padding: 0.1rem 0.25rem; }
+    #note pre {
+      background: white;
+      padding: 0.6rem 0.8rem;
+      overflow-x: auto;
+      border-left: 3px solid #ded8ca;
+    }
+    table { border-collapse: collapse; width: 100%; margin-top: 1.2rem; }
+    th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid #ded8ca; }
+    th { font-weight: 700; }
+    td.status { white-space: nowrap; font-variant-numeric: tabular-nums; }
+    .pass { color: #17613f; }
+    .fail { color: #8e3030; }
+    .pending { color: #4a5666; }
+    a { color: #145c8e; }
+    #frames { position: absolute; left: -10000px; top: 0; }
+    #frames iframe { width: 1400px; height: 1100px; border: 0; }
+  </style>
+  <script defer src="all.js"></script>
+</head>
+<body data-status="running">
+  <h1>All suites</h1>
+  <p id="summary">Running…</p>
+  <p id="note">
+    Every suite here is loaded in an iframe, so this page must be served over
+    HTTP. Run <code>py -m http.server 8000</code> from the repository root and
+    open <code>http://localhost:8000/tests/all.html</code>.
+  </p>
+  <table>
+    <thead>
+      <tr><th>Suite</th><th>Kind</th><th class="status">Result</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <div id="frames" aria-hidden="true"></div>
+</body>
+</html>

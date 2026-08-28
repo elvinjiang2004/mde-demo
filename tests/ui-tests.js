@@ -102,6 +102,7 @@
             "../../js/svg-utils.js",
             "../../js/equation-chain.js",
             "../../js/auction-controls.js",
+            "../../js/auction-chart.js",
             "model.js",
             "app.js"
           ]), "The shared page-scaffolding components must load before MathJax, " +

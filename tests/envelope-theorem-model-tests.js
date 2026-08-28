@@ -177,9 +177,6 @@
       { id: "B", p0: { t: 0.7, v: 0.5 }, p1: { t: 1, v: 0.5 } }
     ];
     var segments = model.computeEnvelope(lines);
-    // Both lines are flat at 0.5 everywhere (their own extrapolation), so
-    // there is no gap and no crossing: a single segment covering all of
-    // [0,1], won by whichever of A/B is evaluated first at the tie.
     assert(segments.length === 1, "Two flat, equal-height lines have no crossing, so one segment covers [0,1].");
     assertClose(segments[0].t0, 0); assertClose(segments[0].t1, 1);
     assert(model.V(lines, 0.5) === 0.5,
@@ -251,7 +248,6 @@
   test("movePoint projects onto the perimeter and updates only the targeted point, without mutation", function () {
     var lines = model.defaultLines();
     var next = model.movePoint(lines, "B", "p1", 0.6, 0.9);
-    // (0.6, 0.9): distances are left=0.6, right=0.4, bottom=0.9, top=0.1 -> nearest is top.
     assertClose(next[1].p1.t, 0.6); assertClose(next[1].p1.v, 1);
     assertClose(next[1].p0.t, 0); assertClose(next[1].p0.v, 0.9, "The untouched point of the same line is unchanged.");
     assertClose(lines[1].p1.t, 1, "movePoint should not mutate the input array.");

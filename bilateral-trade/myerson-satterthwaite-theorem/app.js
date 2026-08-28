@@ -35,9 +35,6 @@
   var elements = {};
   var state = {
     grid: null,
-    // isLower selects which of a cell's two triangles is active: true is
-    // the lower-right (higher-v/lower-c) triangle, labeled "R"; false is
-    // the upper-left (higher-c/lower-v) triangle, labeled "L".
     selected: { i: 0, j: 0, isLower: true },
     cellValue: 0,
     lastSummary: null
@@ -73,8 +70,6 @@
     state.selected = { i: center, j: center, isLower: true };
     state.cellValue = state.grid.lower[center][center];
 
-    // .choice-controls is nested inside .explorable, so listing both would
-    // hand MathJax the same subtree twice and render its math twice over.
     math.typesetInitial(
       ".introduction, .explorable, .derivation, .notes, .references"
     );
@@ -87,8 +82,6 @@
   function byId(id) {
     return document.getElementById(id);
   }
-
-  // --- Events
 
   function bindEvents() {
     elements.cellValueSlider.addEventListener("input", function () {
@@ -160,10 +153,6 @@
     });
   }
 
-  // Maps a pointer event to the specific triangle under it: which cell
-  // (i,j), and whether the local position sits on the lower-right ("R")
-  // or upper-left ("L") side of that cell's own diagonal (local v-offset
-  // vs. local c-offset).
   function pointerToTriangle(event) {
     var rect = elements.paintChart.getBoundingClientRect();
     if (!(rect.width > 0) || !(rect.height > 0)) {
@@ -253,12 +242,6 @@
     recomputeAndDrawAll();
   }
 
-  // The visible label stays the static "Allocation probability on selected
-  // triangle" authored in the HTML: naming the selected triangle's own cell
-  // ranges there made it long enough to wrap its trailing ", R"/", L" onto
-  // a second line. Which triangle is selected is still shown by the
-  // in-graph cell label drawn on the chart, and still announced to screen
-  // readers through the slider's aria-valuetext below.
   function syncCellControls() {
     elements.cellValueSlider.value = String(state.cellValue);
     elements.cellValueNumber.value = formatQ(state.cellValue);
@@ -286,8 +269,6 @@
     paintFrameRequested = true;
     window.requestAnimationFrame(function () {
       paintFrameRequested = false;
-      // A full repaint requested later in the same frame supersedes this
-      // selection-only redraw.
       if (!dragFrameRequested && state.lastSummary) {
         drawPaintChart(state.lastSummary);
       }
@@ -306,8 +287,6 @@
     updateDiagnosticText(summary);
     updateLiveSummary(summary);
   }
-
-  // --- Color scales
 
   function mixColor(c0, c1, t) {
     var r = Math.round(c0[0] + (c1[0] - c0[0]) * t);
@@ -331,15 +310,6 @@
 
   var qColor = sequentialScale(BLUE);
   var utilityColor = sequentialScale(GREEN);
-
-  // --- Geometry
-  //
-  // Every v-c panel (the main paint chart, the two utility heatmaps, net
-  // revenue, and efficiency) is drawn as R x R full-width 0.05 x 0.05
-  // cells, each cut by its own bottom-left-to-top-right diagonal into two
-  // triangles -- exactly the mesh the model computes on, with no separate,
-  // finer display resolution and no interpolation. The two IC panels are
-  // step charts (see drawStepChart below), not v-c heatmaps.
 
   function svgXOf(v, layout) {
     return layout.left + v * (layout.right - layout.left);
@@ -453,8 +423,6 @@
     }
   }
 
-  // --- Panels
-
   function drawPaintChart(summary) {
     var svg = elements.paintChart;
     svg.replaceChildren();
@@ -474,9 +442,6 @@
     drawCellLabel(svg, MAIN_LAYOUT, cellBounds);
   }
 
-  // A small halo-backed label identifying the selected triangle's cell
-  // range and L/R side, anchored above the cell and flipping below/sideways
-  // so it never leaves the plot area near an edge.
   function drawCellLabel(svg, layout, cursorRect) {
     var text = formatCellRange(state.selected.i) + " × " +
       formatCellRange(state.selected.j) + " " + formatSelectionSide();
@@ -501,13 +466,6 @@
     }, text);
   }
 
-  // Bayesian IC is a statement about the interim (own-type-averaged)
-  // allocation probability, cell-averaged into a 1D step function of the
-  // agent's own type, so it is drawn as a staircase rather than a v-c
-  // heatmap: one horizontal segment per cell (its exact average), one
-  // vertical step between consecutive cells. "ascending" selects the
-  // required direction: nondecreasing for the buyer, nonincreasing for the
-  // seller.
   function drawLineFrame(svg, layout) {
     var ticks = [0, 1];
     ticks.forEach(function (value) {
@@ -693,15 +651,6 @@
     drawFrame(svg, DIAG_LAYOUT, true);
   }
 
-  // --- Diagnostic text (colored green when a condition holds, red when not)
-
-  // A line's content is either a plain string (line.text) or, for lines
-  // that need a subscripted variable like Q_B, an array of segments
-  // (line.segments): a plain string appends as text, and a [base, sub]
-  // pair appends the base text followed by an actual <sub> element -- a
-  // lightweight DOM-level rendering, not MathJax, consistent with this
-  // frequently-updating diagnostic text staying outside the MathJax
-  // typesetting lifecycle used for the page's static prose.
   function appendFormattedText(container, segments) {
     segments.forEach(function (segment) {
       if (typeof segment === "string") {
@@ -770,10 +719,6 @@
       state: v.sellerIcViolationCount > 0 ? "fail" : "pass"
     }]);
 
-    // Ex-post IR is automatic under this construction for any q in [0,1]
-    // (U_B(0,c) = U_S(v,1) = 0 and both are monotone in their own type by
-    // construction), so IR always holds and these lines are always the
-    // pass color, not conditioned on v.icImplementable or anything else.
     var buyerUtilityLines = [{
       text: "Expected buyer rent: " + formatSigned(v.expectedBuyerUtility) + ".",
       state: "pass"
@@ -819,8 +764,6 @@
       formatSigned(v.efficiencyLoss) + ".";
   }
 
-  // --- Accessible descriptions
-
   function paintChartDescription() {
     return "A " + R + " by " + R + " paintable grid of 0.05 by 0.05 cells, " +
       "each split by its own diagonal into two independently paintable " +
@@ -859,8 +802,6 @@
       "Efficiency loss is " + formatSigned(summary.verdicts.efficiencyLoss) + ".";
   }
 
-  // --- Formatting
-
   function formatQ(value) {
     return value.toFixed(2);
   }
@@ -874,16 +815,10 @@
       formatCoord((index + 1) * CELL_SIZE) + ")";
   }
 
-  // "R" for the lower-right triangle, "L" for the upper-left triangle --
-  // the two triangles a cell is split into by its own diagonal.
   function formatSelectionSide() {
     return state.selected.isLower ? "R" : "L";
   }
 
-  // A plain Unicode "∈" (not MathJax): this label updates on every paint
-  // stroke, arrow key, and drag frame, and re-typesetting MathJax that
-  // often would add visible lag/flicker for no benefit -- "∈" is an
-  // ordinary math character that renders correctly in any font without it.
   function formatSelectionDescription() {
     return "v ∈ " + formatCellRange(state.selected.i) +
       ", c ∈ " + formatCellRange(state.selected.j) +

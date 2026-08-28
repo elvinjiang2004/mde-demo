@@ -104,6 +104,7 @@
             "../../js/math-utils.js",
             "../../js/svg-utils.js",
             "../../js/auction-controls.js",
+            "../../js/auction-chart.js",
             "model.js",
             "app.js"
           ]), "Shared components, local MathJax, and the shared kernel should " +
@@ -765,12 +766,6 @@
               "Sliders should be quantized to 1/500 of the [a, b] span, " +
                 "matching the chart's own keyboard-nudge step.");
 
-            // The slider is quantized to a 0.2 step (see the step assertion
-            // above), so it can only ever land within half a step of a
-            // typed value that doesn't itself fall on a step boundary --
-            // state.value itself stays exact, but the slider's own DOM
-            // value is now necessarily an approximation of it, matching
-            // first-price's already-quantized sliders.
             var QUANTIZATION_TOLERANCE = 0.1;
 
             valueNumber.value = "65.26";

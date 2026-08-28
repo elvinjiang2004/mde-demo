@@ -38,6 +38,11 @@ The menu contains three categories:
 
 Open these files in a browser to run the test suites:
 
+- `tests/all.html` — runs every suite below and reports one total. It loads
+  each suite in an iframe, so it must be served over HTTP: run
+  `py -m http.server 8000` from the repository root and open
+  `http://localhost:8000/tests/all.html`. Opened directly as a file it says
+  so rather than reporting failures.
 - `tests/menu-tests.html` — menu structure, categories, routes, and availability.
 - `tests/distribution-tests.html` — shared Uniform/Beta kernel checks.
 - `tests/components-tests.html` — shared page-component checks.
@@ -76,5 +81,7 @@ affect ordinary use of the menu or module pages.
 - `js/svg-utils.js` — shared SVG chart-drawing helpers for every app layer.
 - `js/auction-controls.js` — shared value/bid and shape-parameter control
   logic for first-price and second-price.
+- `js/auction-chart.js` — shared panel scaffolding, SVG primitives, and result
+  formatting for first-price and second-price.
 - `js/components.js` — shared page and parameter-control components.
 - `tests/` — browser-run checks for shared code and each module.

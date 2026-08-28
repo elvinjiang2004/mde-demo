@@ -1,9 +1,5 @@
 "use strict";
 
-// Shared explicit-typesetting lifecycle for every module page. MathJax's
-// automatic startup typesetting is disabled in mathjax-config.js, so modules
-// register their own HTML containers while this runtime owns readiness,
-// serialization, and stale dynamic-update suppression.
 (function () {
   var SVG_NS = "http://www.w3.org/2000/svg";
   var typesetQueue = Promise.resolve();
@@ -45,7 +41,6 @@
 
   function publish(queue) {
     typesetQueue = queue.catch(function () {
-      // Raw TeX remains visible and later requests stay usable after failure.
     });
     window.mechanismMathReady = typesetQueue;
     return typesetQueue;
@@ -56,7 +51,6 @@
       document.querySelectorAll(selector)
     );
     var initialTypeset = typesetQueue.catch(function () {
-      // Keep initial typesetting independent of an earlier dynamic failure.
     }).then(function () {
       return waitForMathJax();
     }).then(function (mathJax) {
@@ -79,7 +73,6 @@
     element.dataset.mathSource = texSource;
 
     var update = typesetQueue.catch(function () {
-      // Leave the next update usable if an earlier request failed.
     }).then(function () {
       if (requestVersions.get(element) !== version) {
         return null;

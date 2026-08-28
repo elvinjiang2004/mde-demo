@@ -9,11 +9,6 @@
   var MAIN_LAYOUT = { viewWidth: 660, viewHeight: 450, left: 60, right: 630, top: 32, bottom: 388 };
   var SLOPE_LAYOUT = MAIN_LAYOUT;
 
-  // Colors are keyed to each line's own letter, not its array position, so
-  // a given line keeps its color as others are added or removed. Chosen
-  // distinct from the semantic blue/green/orange/red used elsewhere on the
-  // site (allocation/rent/payment/violation), since here color means
-  // nothing but "which arbitrary choice this is."
   var LINE_COLORS = {
     A: "#1b6fa8", B: "#a85416", C: "#237451", D: "#963c3c",
     E: "#7a4fa3", F: "#b8860b", G: "#0f8a8a", H: "#5f6872"
@@ -50,10 +45,6 @@
     state.lines = model.defaultLines();
     state.selectedIndex = 0;
 
-    // Nothing in the explorable section carries TeX (both panel captions
-    // are plain SVG text), but this still typesets it, matching every
-    // other module's contract, in case the derivation section's
-    // user-authored math needs it later.
     math.typesetInitial(".introduction, .explorable, .derivation, .notes, .references");
     bindEvents();
     syncInterface();
@@ -68,11 +59,6 @@
     return LINE_COLORS[id] || "#5f6872";
   }
 
-  // --- Points: each line contributes two independently selectable points
-  // (p0 and p1), flattened into one ordered list so ArrowLeft/ArrowRight
-  // can cycle through all of them exactly as the sibling module cycles
-  // through its shared spline's points.
-
   function pointList(lines) {
     var list = [];
     lines.forEach(function (line) {
@@ -85,8 +71,6 @@
   function selectedPoint() {
     return pointList(state.lines)[state.selectedIndex];
   }
-
-  // --- Events
 
   function bindEvents() {
     elements.addLine.addEventListener("click", function () {
@@ -168,10 +152,6 @@
     });
   }
 
-  // --- Pointer geometry (main chart only; the slope chart is read-only).
-  // Both plot axes are fixed to [0,1], so this is a plain
-  // linear map, not a data-dependent one.
-
   function svgPointFromEvent(event) {
     var rect = elements.mainChart.getBoundingClientRect();
     if (!(rect.width > 0) || !(rect.height > 0)) {
@@ -217,8 +197,6 @@
     syncInterface();
     scheduleRepaint();
   }
-
-  // --- State updates
 
   function selectIndex(index) {
     var list = pointList(state.lines);
@@ -266,8 +244,6 @@
     updateLiveSummary(summary);
   }
 
-  // --- Geometry helpers
-
   function svgTOf(t, layout) {
     return layout.left + t * (layout.right - layout.left);
   }
@@ -305,9 +281,6 @@
     return ticks.sort(function (a, b) { return a - b; });
   }
 
-  // No y-axis title on either panel: only the numeric y-tick labels identify
-  // the vertical scale. Each MathJax-rendered x-axis label lives in the
-  // surrounding HTML rather than inside this SVG frame.
   function drawAxisFrame(svg, layout, xTicks, yTicks, yMapper, formatYTick) {
     var formatY = formatYTick || formatSigned;
     xTicks.forEach(function (value) {
@@ -339,13 +312,6 @@
 
   }
 
-  // Splits one envelope segment (a single line's own extrapolated,
-  // possibly out-of-[0,1] values at its two ends) into display pieces: any
-  // portion within [0,1] is returned as an ordinary solid piece, and any
-  // portion above 1 or below 0 is returned clamped to that boundary,
-  // marked so the caller draws it dotted. A segment can cross at most two
-  // boundaries (into range, then out the other side), since it is a
-  // single affine function.
   function clipSegmentForDisplay(segment) {
     var boundaries = [{ t: segment.t0, v: segment.v0 }];
     [0, 1].forEach(function (target) {
@@ -380,8 +346,6 @@
     return pieces;
   }
 
-  // --- Panels
-
   function drawMainChart(summary) {
     var svg = elements.mainChart;
     svg.replaceChildren();
@@ -394,9 +358,6 @@
       [0, 0.25, 0.5, 0.75, 1], [0, 0.25, 0.5, 0.75, 1], yMapper, formatTick
     );
 
-    // Both diagonals, faint: together they mark the four regions a drag
-    // snaps into (left/right/bottom/top edge), since each region is
-    // exactly "closer to that edge than to any other."
     appendSvg(svg, "line", {
       x1: svgTOf(0, MAIN_LAYOUT), y1: svgVOf(0, MAIN_LAYOUT),
       x2: svgTOf(1, MAIN_LAYOUT), y2: svgVOf(1, MAIN_LAYOUT),
@@ -408,10 +369,6 @@
       class: "diagonal-guide"
     });
 
-    // Every line, drawn only across its own native domain (a literal
-    // vertical segment if its two points share a t), at consistent medium
-    // opacity in its own color -- always visible, whether or not it is
-    // currently winning anywhere.
     summary.lines.forEach(function (line) {
       appendSvg(svg, "line", {
         x1: svgTOf(line.p0.t, MAIN_LAYOUT), y1: svgVOf(line.p0.v, MAIN_LAYOUT),
@@ -420,10 +377,6 @@
       });
     });
 
-    // The bold envelope: each exact segment split into display pieces --
-    // solid where the winning line's own (universally-extended) value
-    // stays within [0,1], dotted and clamped to the top/bottom edge where
-    // it does not, since the search is universal but the plot is not.
     summary.segments.forEach(function (segment) {
       var pieces = clipSegmentForDisplay(segment);
       pieces.forEach(function (piece) {
@@ -444,10 +397,6 @@
       });
     });
 
-    // Kinks: exactly where the argmax switches, marked directly on V --
-    // only when the switch itself is visible on screen; a switch that
-    // happens entirely off-scale (both neighbors clamped) is not marked,
-    // since nothing distinguishable is visible there.
     summary.kinks.forEach(function (kink) {
       if (kink.value < -VALUE_EPSILON || kink.value > 1 + VALUE_EPSILON) {
         return;
@@ -517,10 +466,6 @@
       }
     });
 
-    // A vertical (infinite-slope) line has no finite height to plot at;
-    // it is marked instead by a dotted vertical line, in its own color,
-    // spanning the whole panel at its own t, independent of whether it
-    // ever wins the envelope.
     summary.infiniteLines.forEach(function (line) {
       var t = line.p0.t;
       appendSvg(svg, "line", {
@@ -539,8 +484,6 @@
       (summary.infiniteLines.length > 0 ?
         " At least one line is currently vertical, with infinite slope." : "");
   }
-
-  // --- Accessible descriptions
 
   function mainChartDescription(summary) {
     var point = selectedPoint();
@@ -563,8 +506,6 @@
       "slope is marked by a dotted vertical line, in its own color, at " +
       "its own t instead of a finite step.";
   }
-
-  // --- Formatting
 
   function formatValue(value) {
     return value.toFixed(2);

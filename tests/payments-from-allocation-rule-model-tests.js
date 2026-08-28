@@ -25,9 +25,6 @@
     }
   }
 
-  // Local fixtures standing in for the module's former preset buttons (now
-  // removed from the product), kept here because the underlying shapes are
-  // still useful regression cases for the model's math.
   function evenPoints(qs) {
     return [0, 0.25, 0.5, 0.75, 1].map(function (v, index) {
       return { v: v, q: qs[index] };
@@ -36,10 +33,8 @@
 
   var NEVER_POINTS = evenPoints([0, 0, 0, 0, 0]);
   var ALWAYS_POINTS = evenPoints([1, 1, 1, 1, 1]);
-  var LINEAR_POINTS = evenPoints([0, 0.25, 0.5, 0.75, 1]); // Q(v) = v
+  var LINEAR_POINTS = evenPoints([0, 0.25, 0.5, 0.75, 1]);
 
-  // Deliberately non-monotonic (up, down, up, down), so global IC should
-  // fail without anything else needing to be painted.
   var NON_MONOTONIC_POINTS = evenPoints([0.2, 0.85, 0.3, 0.8, 0.45]);
 
   test("The payments-from-allocation-rule model exposes the expected pure API", function () {
@@ -78,10 +73,6 @@
 
   test("Evenly-spaced points on Q(v)=v reproduce Q(v)=v and U(v)=v^2/2 exactly, not just at the five points", function () {
     var curve = model.buildCurve(LINEAR_POINTS);
-    // Evenly-spaced points lying exactly on a line give every secant the
-    // same slope, so the Fritsch-Carlson tangents all equal that slope too
-    // (no rescaling triggered) -- the monotone Hermite interpolant reduces
-    // to the line itself everywhere, not merely at the five control points.
     [0.1, 0.37, 0.6, 0.83].forEach(function (v) {
       assertClose(curve.Q(v), v, "Q(v) should equal v at every v, not only at control points.");
       assertClose(curve.U(v), v * v / 2, "U(v) should equal v^2/2 exactly (closed-form).");

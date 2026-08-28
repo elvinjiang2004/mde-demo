@@ -1,20 +1,5 @@
 "use strict";
 
-// Shared page scaffolding, defined once instead of copy-pasted into every
-// module's index.html. Each element below renders into its own light DOM
-// (no shadow root), so the nodes it produces are ordinary document
-// children: reachable by document.getElementById/querySelector exactly
-// like hand-written markup, styled by the shared styles.css with no extra
-// selectors, and expanded before any other deferred script runs, since
-// every page loads this file with `defer` ahead of its model.js/app.js and
-// custom elements upgrade as soon as they are defined. This keeps the
-// project static and build-free: no bundler, no templating language, just
-// a browser-native API.
-//
-// `class ... extends HTMLElement` is the one deliberate exception to this
-// project's otherwise ES5 (var, no arrow functions, no template literals)
-// style: the Custom Elements API requires a real ES6 class, since
-// HTMLElement cannot be subclassed with a plain ES5 constructor function.
 (function () {
   function define(tagName, ElementClass) {
     if (!window.customElements.get(tagName)) {
@@ -22,10 +7,6 @@
     }
   }
 
-  // The wordmark-plus-category row inside every page's own hand-written
-  // <header class="site-header">. The outer <header> stays in each
-  // index.html (not templated here) so its "banner" landmark role and the
-  // .site-header CSS selector keep working with no extra attributes.
   class PageHeader extends HTMLElement {
     connectedCallback() {
       var home = this.getAttribute("home") || "index.html";
@@ -48,8 +29,6 @@
     }
   }
 
-  // The identical content inside every page's own hand-written
-  // <footer class="site-footer">, kept native for the same reason.
   class PageFooter extends HTMLElement {
     connectedCallback() {
       var wrapper = document.createElement("div");
@@ -59,14 +38,6 @@
     }
   }
 
-  // The Beta-shape model-parameter controls (bidder count, support bounds,
-  // alpha/beta shape sliders, live "PDF of Value" preview) that first-price
-  // and second-price share byte-for-byte. Used inside each page's own
-  // <section class="model-specifications" aria-labelledby="parameters-title">,
-  // which stays hand-written so aria-labelledby keeps resolving to the
-  // id="parameters-title" heading rendered inside this element (light DOM,
-  // so the id is just an ordinary document id, reachable the same way
-  // whether the heading was typed by hand or injected here).
   var MODEL_PARAMETER_CONTROLS_HTML = [
     '<h2 id="parameters-title">Model parameters</h2>',
     '<div',

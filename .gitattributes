@@ -1,0 +1,7 @@
+# Every tracked file in this repository is text. Pinning the working tree to
+# LF keeps it independent of each machine's core.autocrlf setting, so a
+# checkout on Windows and a checkout on Linux hold identical bytes.
+#
+# No binaries are tracked: the vendored MathJax build under assets/ is all
+# JavaScript and JSON, and reference PDFs are excluded by .gitignore.
+* text=auto eol=lf

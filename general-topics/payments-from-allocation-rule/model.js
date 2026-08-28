@@ -2,23 +2,9 @@
   "use strict";
 
   var EPSILON = 1e-9;
-  // Violations are decided from a dense sample of a continuous inequality,
-  // not from a handful of exactly-comparable grid values (contrast the
-  // bilateral-trade module's interim-monotonicity check, which compares
-  // finitely many exact cell averages) -- see findViolations below -- so
-  // this tolerance is looser than that module's MONOTONICITY_TOLERANCE.
   var VIOLATION_TOLERANCE = 1e-3;
   var SAMPLES_PER_SEGMENT = 40;
 
-  // The two endpoints v=0 and v=1 always exist (the domain must be fully
-  // covered for the Hermite interpolant to be defined everywhere); "up to
-  // nine points" therefore means up to seven interior points the learner
-  // adds on top of those two. Nine (not ten) is deliberate: repeated adds
-  // bisect the largest gap, and starting from the five default points that
-  // sequence reaches a perfectly even 0.125 spacing at exactly nine points
-  // (0, 0.125, 0.25, ..., 1) -- a tenth add would break that even spacing
-  // by bisecting again down to an off-grid 0.0625, which is worth avoiding
-  // rather than exposing as the normal end state of repeated adding.
   var MIN_TOTAL_POINTS = 2;
   var MAX_TOTAL_POINTS = 9;
 
@@ -32,16 +18,11 @@
     return points.slice().sort(function (a, b) { return a.v - b.v; });
   }
 
-  // Q(v) = v: a smooth, strictly increasing default, so the module opens on
-  // a curve that already satisfies global IC everywhere, before the learner
-  // paints or breaks anything.
   function defaultPoints() {
     return [0, 0.25, 0.5, 0.75, 1].map(function (v) {
       return { v: v, q: v };
     });
   }
-
-  // --- Point-set editing -----------------------------------------------
 
   function canAddPoint(points) {
     return points.length < MAX_TOTAL_POINTS;
@@ -51,11 +32,6 @@
     return points.length > MIN_TOTAL_POINTS && index > 0 && index < points.length - 1;
   }
 
-  // Inserts a new interior point in the middle of whichever gap between
-  // consecutive points is currently largest, so repeated adds spread out
-  // rather than clustering. Its height is read off the curve's own current
-  // value there, so adding a point never changes Q's shape at the instant
-  // it is added -- only dragging it afterward does.
   function addPoint(points) {
     var sorted = sortedPoints(points);
     if (!canAddPoint(sorted)) {
@@ -94,18 +70,6 @@
     return next;
   }
 
-  // --- Monotone cubic Hermite tangents (Fritsch-Carlson) ----------------
-  //
-  // Initial tangents are the average of adjacent secants; each segment's
-  // pair of tangents is then rescaled (the classic alpha^2+beta^2<=9 test)
-  // so the curve never overshoots a locally-monotone run of points, and
-  // forced to zero at any point where the incoming and outgoing secants
-  // have opposite signs -- a genuine local max/min *among the placed
-  // points*, which the learner is free to create on purpose by dragging.
-  // This is what makes the envelope panel trustworthy: the
-  // curve between two points never wiggles beyond what the points
-  // themselves imply, so a violation shown there is never a spline
-  // artifact, and a real one is never hidden by one either.
   function monotoneTangents(points) {
     var n = points.length;
     var secants = new Array(n - 1);
@@ -156,9 +120,6 @@
     return n - 2;
   }
 
-  // Cubic Hermite basis functions on t in [0,1], and their exact
-  // antiderivatives (so U(v) below is a closed-form quartic, not a
-  // numerical quadrature of Q).
   function h00(t) { var t2 = t * t; return 2 * t2 * t - 3 * t2 + 1; }
   function h10(t) { var t2 = t * t; return t2 * t - 2 * t2 + t; }
   function h01(t) { var t2 = t * t; return -2 * t2 * t + 3 * t2; }
@@ -193,9 +154,6 @@
       );
     }
 
-    // Exact definite integral of the Hermite segment `seg` from its own
-    // start out to local parameter t -- a closed-form quartic evaluation,
-    // not a numerical quadrature.
     function segmentIntegral(seg, t) {
       var p0 = points[seg];
       var p1 = points[seg + 1];
@@ -249,16 +207,6 @@
     return samples;
   }
 
-  // For every control point r, treat it as a candidate deviation report:
-  // the deviation payoff line is ell(v) = (v - r)*Q(r) + U(r) (the line
-  // through (r, U(r)) with slope Q(r), i.e. v*Q(r) - P(r) rewritten so it
-  // needs no separate P lookup). Local IC guarantees U touches this line
-  // exactly at v=r; global IC additionally requires the line never rise
-  // above U anywhere else. Whether it does is answered by sampling densely
-  // rather than by exact root-finding -- U - ell is a quartic per segment,
-  // and locating its exact extrema would need solving a cubic -- so this
-  // one check, unlike Q/U/P themselves, is a numerical search rather than
-  // a closed form.
   function findViolations(points, curve) {
     var samples = buildSampleGrid(points, SAMPLES_PER_SEGMENT).map(function (v) {
       return { v: v, u: curve.U(v) };

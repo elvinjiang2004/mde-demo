@@ -2,30 +2,14 @@
   "use strict";
 
   var EPSILON = 1e-9;
-  // Once a drag brings a point's t within this distance of its own line's
-  // other (untouched) point, movePoint snaps it to exactly that t -- a
-  // genuine vertical line, infinite slope -- rather than letting it settle
-  // at an ever-larger but still finite slope. This is a deliberate snap,
-  // matching the perimeter snap in projectToEdge, not a numerical safety
-  // margin: the module is meant to reach true verticality, not merely
-  // approach it.
   var VERTICAL_SNAP_THRESHOLD = 0.01;
 
-  // Lines are letter-labeled, not numbered, specifically to underline that
-  // X carries no order or topology of its own -- the point of Milgrom and
-  // Segal's "arbitrary choice sets" is that X need not be a subset of R^n
-  // at all. The pool caps how many lines can exist at once.
   var LABEL_POOL = ["A", "B", "C", "D", "E", "F", "G", "H"];
   var MIN_LINES = 1;
   var MAX_LINES = LABEL_POOL.length;
 
   var clamp = global.NumberUtils.clamp;
 
-  // A default family with two crossings, so the envelope shows three
-  // segments (and two kinks) as soon as the page loads, before the learner
-  // drags anything. Both points of every default line sit on the vertical
-  // edges (t=0, t=1), the special case that reproduces the module's
-  // original fixed-domain behavior.
   function defaultLines() {
     return [
       { id: "A", p0: { t: 0, v: 0.2 }, p1: { t: 1, v: 0.8 } },
@@ -46,9 +30,6 @@
     return null;
   }
 
-  // A vertical line (p1.t === p0.t exactly, reached only via movePoint's
-  // own snap) has no finite slope; its sign is taken from which endpoint
-  // is higher, independent of which of p0/p1 that happens to be.
   function slopeOf(line) {
     var dt = line.p1.t - line.p0.t;
     if (dt === 0) {
@@ -59,12 +40,6 @@
     return (line.p1.v - line.p0.v) / dt;
   }
 
-  // Deliberately *not* restricted to [p0.t, p1.t]: this is the line's own
-  // affine formula, extended to the whole domain, since computeEnvelope
-  // searches for the envelope universally rather than only where each
-  // line was actually drawn. For a vertical line this has no single
-  // well-defined value; callers should check slopeOf first, since
-  // computeEnvelope/V never call valueAt on a vertical line.
   function valueAt(line, t) {
     var dt = line.p1.t - line.p0.t;
     if (dt === 0) {
@@ -73,16 +48,6 @@
     return line.p0.v + (line.p1.v - line.p0.v) * (t - line.p0.t) / dt;
   }
 
-  // The nearest point on the plot's own perimeter (all four edges) to a raw
-  // (t,v), clamped into [0,1] first. Ties are broken in a fixed order
-  // (left, right, bottom, top) using an epsilon-tolerant comparison rather
-  // than exact equality -- an exact tie such as (0.1, 0.9) has left
-  // distance 0.1 and top distance 1-0.9, which are mathematically equal
-  // but not bit-for-bit equal in IEEE 754, so comparing against the raw
-  // minimum plus a small tolerance is what actually makes the tie-break
-  // order deterministic. The four regions this partitions the square into
-  // are exactly separated by its two diagonals, which the main panel draws
-  // faintly as a visual guide to where a drag will snap.
   function projectToEdge(t, v) {
     var ct = clamp(t, 0, 1);
     var cv = clamp(v, 0, 1);
@@ -97,13 +62,6 @@
     return { t: ct, v: 1 };
   }
 
-  // Exact crossing t, in the open interval (0,1), of two lines' own affine
-  // formulas extended universally -- not restricted to either line's own
-  // [p0.t,p1.t] -- or null if they are parallel (including identical), one
-  // of them is vertical (not affine, so this formula does not apply), or
-  // the crossing falls outside (0,1). Solved directly from the two
-  // point-slope forms, so this is closed form, never a numerical search,
-  // even though each line's own p0.t may not be 0.
   function crossing(lineA, lineB) {
     var slopeA = slopeOf(lineA);
     var slopeB = slopeOf(lineB);
@@ -121,14 +79,6 @@
     return t;
   }
 
-  // The upper envelope over t in [0,1], searched universally: every line
-  // with a finite slope is treated as defined for the whole domain (its
-  // own extension, not merely the segment the learner actually drew), so
-  // there is always a well-defined maximizer among the finite-slope lines
-  // -- no gaps. Vertical (infinite-slope) lines are excluded from this
-  // search entirely, since they are not affine functions of t and cannot
-  // meaningfully "win" a positive-width interval; they are tracked
-  // separately (see summarize) and displayed on their own.
   function V(lines, t) {
     var best = -Infinity;
     lines.forEach(function (line) {
@@ -143,14 +93,6 @@
     return best;
   }
 
-  // The upper envelope of finitely many universally-extended lines is
-  // itself exactly piecewise-linear: between any two consecutive pairwise
-  // crossings the ranking cannot change, so evaluating every finite-slope
-  // line once at each sub-interval's midpoint identifies its winner
-  // exactly, with no sampling or search. Segment values are the winning
-  // line's own extrapolated value, which may fall outside [0,1] -- display
-  // code is responsible for clamping, not this function, which reports the
-  // true envelope. Adjacent sub-intervals sharing a winner are merged.
   function computeEnvelope(lines) {
     var finiteLines = [];
     var originalIndex = [];
@@ -219,10 +161,6 @@
     return merged;
   }
 
-  // The kinks are exactly the joints between consecutive merged segments:
-  // genuine argmax switches, each with the two one-sided slopes on either
-  // side. Since computeEnvelope no longer produces gaps, every joint is a
-  // genuine kink.
   function computeKinks(segments) {
     var kinks = [];
     var i;
@@ -237,8 +175,6 @@
     return kinks;
   }
 
-  // --- Line-set editing ---------------------------------------------
-
   function canAddLine(lines) {
     return lines.length < MAX_LINES;
   }
@@ -247,9 +183,6 @@
     return lines.length > MIN_LINES;
   }
 
-  // A new line opens flat, spanning the full domain at the family's
-  // current average value, so it is clearly visible without instantly
-  // dominating the envelope; the learner then drags it into shape.
   function addLine(lines) {
     if (!canAddLine(lines)) {
       return { lines: lines, addedId: null };
@@ -273,11 +206,6 @@
     return lines.filter(function (line) { return line.id !== id; });
   }
 
-  // Moves whichever of a line's two points is targeted ("p0" or "p1") to
-  // the nearest point on the plot's perimeter to the given raw (t,v). If
-  // that lands within VERTICAL_SNAP_THRESHOLD of the line's *other* point
-  // (in t), it snaps to exactly that t instead, producing a genuine
-  // vertical line -- see slopeOf.
   function movePoint(lines, id, which, rawT, rawV) {
     return lines.map(function (line) {
       if (line.id !== id) {

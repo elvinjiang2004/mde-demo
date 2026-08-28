@@ -431,6 +431,15 @@ input[type="range"] {
   border-top: 1px solid var(--line);
 }
 
+.has-qed {
+  display: flow-root;
+}
+
+.qed {
+  float: right;
+  margin-left: 0.75rem;
+}
+
 .notes {
   margin-top: 2.4rem;
   padding-top: 1.6rem;
@@ -456,18 +465,6 @@ input[type="range"] {
   margin-top: 2.2rem;
 }
 
-/* Every chain row is four cells in this order:
-     .equation-step-connector  the step joiner (\iff, \Rightarrow); may be empty
-     .equation-step-lhs        the left expression, right-aligned
-     .equation-step-relation   the relation itself (=, \geq, \leq)
-     .equation-step-rhs        the right expression, left-aligned
-   The two expression columns are fractions, not `max-content`, on purpose.
-   A content-sized column is only as wide as the rows currently *visible*, so
-   revealing a hidden step would widen it and shove the relation column
-   sideways. Sizing them as equal fractions makes the relation's position a
-   function of the container alone, so it cannot move when a step is revealed
-   -- and needs no script to measure anything. The two `max-content` columns
-   hold single symbols whose width does not vary between rows. */
 .equation-chain-steps {
   display: grid;
   grid-template-columns:
@@ -489,8 +486,6 @@ input[type="range"] {
   white-space: nowrap;
 }
 
-/* Both expressions face the relation between them, the way LaTeX's align
-   environment lines a chain up on its relation symbol. */
 .equation-step-lhs {
   text-align: right;
 }
@@ -501,16 +496,12 @@ input[type="range"] {
   text-align: left;
 }
 
-/* Content-sized columns, for a lopsided chain where equal halves would strand
-   one side behind a wide empty gutter -- first-price's chains state their
-   left-hand side once and leave it empty on every continuation row, so half
-   the width would be blank. Safe there because no hidden step widens a column
-   left of the relation: those rows' connector and left cells are empty too, so
-   revealing them still cannot move the relation. Only reach for this after
-   checking that holds, since content sizing is what re-admits reveal-time
-   movement in the general case. */
 .equation-chain-content-widths {
   grid-template-columns: repeat(4, max-content);
+}
+
+.equation-chain-wide-rhs {
+  grid-template-columns: max-content max-content max-content minmax(0, 1fr);
 }
 
 .equation-chain-divider-rule {
@@ -566,7 +557,6 @@ input[type="range"] {
   font-size: 0.76rem;
 }
 
-/* Module menu */
 .catalog-main {
   min-height: calc(100vh - 120px);
 }
@@ -639,7 +629,6 @@ input[type="range"] {
   word-break: break-word;
 }
 
-/* SVG chart */
 .panel-background {
   fill: #fff;
 }
@@ -931,13 +920,6 @@ input[type="range"] {
   border: 0 !important;
 }
 
-/* Bilateral-trade module */
-/* This page has no .model-specifications section (fixed Uniform[0,1]
-   types, no shape controls), so .explorable would otherwise sit flush
-   against the introduction with no rule between them. This modifier
-   reproduces the same top margin/padding/border-top the auction pages'
-   .model-specifications section uses for that same introduction-to-demo
-   boundary, so the rule's spacing matches across all three modules. */
 .explorable-divider {
   margin-top: 3.2rem;
   padding-top: 1.45rem;
@@ -948,34 +930,8 @@ input[type="range"] {
   max-width: 480px;
 }
 
-/* The paint-value slider only needs to be as wide as a single diagnostic
-   panel: it selects an "ink" level, not a wide continuous range. */
 .slider-220 {
   max-width: 220px;
-}
-
-#posted-price-control {
-  margin-top: 1.2rem;
-}
-
-.preset-buttons {
-  margin-top: 1.5rem;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  column-gap: 1rem;
-  row-gap: 0.5rem;
-}
-
-.preset-buttons .text-button {
-  margin-top: 0;
-}
-
-.preset-buttons-label {
-  color: var(--ink);
-  font-family: var(--text-font);
-  font-size: 0.88rem;
-  font-weight: 700;
 }
 
 .diagnostic-panel-grid {
@@ -1074,25 +1030,11 @@ input[type="range"] {
   stroke-width: 1.6;
 }
 
-/* Shared General Topics chart layout, named for the viewBox each class
-   matches rather than the module that first used it -- payments-from-
-   allocation-rule's main chart and envelope-theorem's main and slope charts
-   are all 660x450, so all three share .chart-660x450 directly. Payments'
-   two smaller diagnostic charts are 440x300 and share .chart-440x300.
-   Envelope-theorem's own diagnostic column additionally applies its scoped
-   two-panel modifier below so its two 660x450 charts sit equal-sized. */
 .chart-660x450 {
   max-width: 660px;
   cursor: default;
 }
 
-/* Shared "main chart column + diagnostic column/grid" demo layout, used by
-   bilateral-trade, envelope-theorem, and payments-from-allocation-rule.
-   Named for structural role and control width, not for whichever module
-   first used them -- .main-diagnostic-layout and .main-column were
-   previously duplicated as bilateral-/envelope-prefixed twins that differed
-   only in the main column's flex-basis, which now lives in the small
-   -480/-660 width modifiers below. */
 .main-diagnostic-layout {
   display: flex;
   flex-wrap: wrap;
@@ -1116,8 +1058,6 @@ input[type="range"] {
   flex: 0 1 660px;
 }
 
-/* A flex child needs its own min-width:0 to shrink below its content's
-   natural width instead of overflowing its allotted share of the row. */
 .shrink-to-fit {
   min-width: 0;
 }
@@ -1158,9 +1098,6 @@ input[type="range"] {
   cursor: default;
 }
 
-/* Envelope-theorem's own modifier: instead of the shared big-main-chart
-   plus smaller-diagnostics default, its main and diagnostic columns become
-   two equal 660px panels side by side. */
 .main-diagnostic-layout.two-panel-layout {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 660px));
@@ -1182,12 +1119,6 @@ input[type="range"] {
   display: block;
 }
 
-/* Envelope-theorem's diagnostic (slope) chart is genuinely 660x450, the
-   same geometry as its main chart, not the 440x300 that .diagnostic-column
-   caps .math-chart-figure/-frame to below for payments-from-allocation-
-   rule's smaller diagnostic charts. Its figure/frame/axis-label keep this
-   separate name specifically so they don't inherit that cap; otherwise
-   they're identical to their .math-chart-* counterparts. */
 .envelope-chart-figure > figcaption,
 .math-chart-figure > figcaption {
   min-height: 1.25rem;
@@ -1242,11 +1173,6 @@ input[type="range"] {
   left: 4.091%;
 }
 
-/* Scoped to .diagnostic-column rather than .chart-440x300 directly, since
-   this constrains the figure/frame wrapper (caption and axis-label
-   included), not just the chart SVG. Envelope-theorem's own diagnostic
-   panel avoids this cap by using .envelope-chart-figure/-frame instead of
-   .math-chart-figure/-frame -- see the comment on those below. */
 .diagnostic-column .math-chart-figure,
 .diagnostic-column .math-chart-frame {
   width: 100%;
@@ -1271,7 +1197,6 @@ input[type="range"] {
   margin: 0;
 }
 
-/* Payments-from-allocation-rule module (draft) */
 .control-point {
   fill: #fff;
   stroke: var(--blue);
@@ -1331,10 +1256,6 @@ input[type="range"] {
   stroke-linejoin: round;
 }
 
-/* Envelope-theorem module */
-/* Line/segment colors are set per element in app.js (stroke/fill
-   attributes keyed to each line's own letter), not here -- these rules
-   intentionally carry no color of their own. */
 .family-line {
   stroke-width: 2;
   fill: none;

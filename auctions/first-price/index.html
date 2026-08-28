@@ -15,6 +15,7 @@
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/equation-chain.js"></script>
   <script defer src="../../js/auction-controls.js"></script>
+  <script defer src="../../js/auction-chart.js"></script>
   <script defer src="model.js"></script>
   <script defer src="app.js"></script>
 </head>
@@ -170,18 +171,6 @@
         \(\beta^{\mathrm{I}}(z)\). Denote bidder 1's expected utility from bidding some amount
         \(x_1\in[a,\beta^{\mathrm{I}}(b)]\) by \(U_1(v_1,x_1)\). We have
       </p>
-      <!--
-        Each divider button below controls only the .equation-step-extra
-        row-pairs immediately following it, up to the next ordinary row.
-        To show a more detailed sub-chain at a given point, insert pairs of
-        spans right after that gap's divider button, e.g.:
-          <span class="equation-step-lhs equation-step-extra" hidden></span>
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = ... \)</span>
-        They render inline with the rest of the chain (no separate box). The
-        divider itself becomes the faint rule above the revealed block when
-        expanded, and a matching faint rule is added below it automatically.
-        A divider button with nothing to control stays entirely hidden.
-      -->
       <div id="expected-utility-proof" class="equation-chain-steps equation-chain-content-widths">
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle U_1 \!\left(v_1,\beta^{\mathrm{I}}(z)\right) \)</span>
@@ -260,17 +249,17 @@
         <span class="equation-step-rhs">\(\displaystyle G(z)(z-v_1)+\int_z^{v_1}G(y)\,dy. \)</span>
       </div>
       <p>
-        Because \(G\) is nondecreasing, this difference is weakly positive for
+        Because \(G\) is weakly increasing, this difference is weakly positive for
         every \(z\in[a,b]\). Thus, given that bidders \(2,\ldots,n\) bid
         according to \(\beta^{\mathrm{I}}\), it is optimal for bidder 1 to
         also bid according to \(\beta^{\mathrm{I}}\).
       </p>
+      
     </section>
 
     <section class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
       <ul class="notes-list">
-        <!-- Add user-authored <li> notes here. -->
           <li>
             A more descriptive name for this setting may be "independent, private values first-price auction with risk-neutral, symmetric bidders,
             no reserve price, and no budget-constraints," but IPV is a common abbreviation for this setting in the auction-theory literature.

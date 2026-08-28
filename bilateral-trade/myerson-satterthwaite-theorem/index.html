@@ -280,75 +280,422 @@
         Now, we can rewrite the IC, IR conditions as
       </p>
       <ul>
-        <li>IC: \(\displaystyle U_B(v)\ge vQ_B(v')-P_B(v')\), for all \(v'\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\ge P_S(c')-cQ_S(c')\), for all \(c'\in[\underline{c},\overline{c}]\);</li>
-        <li>IR: \(\displaystyle U_B(v)\ge 0\), for all \(v\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\ge 0\), for all \(c\in[\underline{c},\overline{c}]\).</li>
+        <li>IC: \(\displaystyle U_B(v)\geq \underbrace{vQ_B(v')-P_B(v')}_{\text{Payoff from misreporting } v'}\), for all \(v'\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\geq \underbrace{P_S(c')-cQ_S(c')}_{\text{Payoff from misreporting } c'}\), for all \(c'\in[\underline{c},\overline{c}]\);</li>
+        <li>IR: \(\displaystyle U_B(v)\geq 0\), for all \(v\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\geq 0\), for all \(c\in[\underline{c},\overline{c}]\).</li>
       </ul>
       <p>
-        We have the following theorem thanks to Börgers, et al. (2015):
+        We have the following theorem regarding the implementability of an allocation rule \(q(v,c)\):
       </p>
       <p>
         <strong>Theorem:</strong> 
-        An allocation rule \(q(v,c)\) is IC and IR implementable by some payment rules 
-        if and only if \(Q_B\) is weakly increasing and \(Q_S\) is weakly decreasing.
+        An allocation rule \(q(v,c)\) is IC implementable by some payment rules 
+        if and only if \(Q_B\) is weakly increasing and \(Q_S\) is weakly decreasing. Furthermore, the payment
+        rules must set interim expected payments as
       </p>
+            <div class="equation-display" aria-label="IC implementable payment rules for the buyer and seller">
+        \[
+          P_B(v,c)=P_B(\underline{v})+vQ_B(v)-\int_{\underline{v}}^v Q_B(t)\,dt,\text{ and }
+          P_S(v,c)=P_S(\overline{c})+\int_c^{\overline{c}} Q_S(t)\,dt-cQ_S(c).
+        \]
+      </div>
       <p>
         <em>Proof:</em> Start with the forward implication.
-        Suppose \(q(v,c)\) is IC and IR implementable by some payment rules. Then, for the buyer, suppose \(v_1\le v_2\). 
-        By IC,
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle = v_2Q_B(v_2)-P_B(v_2)\geq v_2Q_B(v_1)-P_B(v_1). \)</span>
+        For the buyer, for all \(v, v'\), by IC
       </p>
-      <div class="equation-display" aria-label="IC1">
-        \[
-          U_B(v_1) = v_1Q_B(v_1)-P_B(v_1)\geq v_1Q_B(v_2)-P_B(v_2)
-        \]
-      </div>
-      <div class="equation-display" aria-label="IC1">
-        \[
-          U_B(v_2) = v_2Q_B(v_2)-P_B(v_2)\geq v_2Q_B(v_1)-P_B(v_1).
-        \]
-      </div>
-      <p>
-        Adding the two inequalities gives
-      </p>
-      <div id="expected-utility-proof" class="equation-chain-steps">
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle v_1Q_B(v_1)-P_B(v_1) + v_2Q_B(v_2)-P_B(v_2)\)</span>
-        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
-        <span class="equation-step-rhs">\(\displaystyle v_1Q_B(v_2)-P_B(v_2) + v_2Q_B(v_1)-P_B(v_1)\)</span>
 
+      <div id="buyer-monotonicity-envelope-proof" class="equation-chain-steps">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle U_B(v) \)</span>
+        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs">\(\displaystyle vQ_B(v')-P_B(v') \)</span>
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
 
-        <span class="equation-step-connector equation-step-extra" hidden>\(\displaystyle \iff\)</span>
-        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle v_1Q_B(v_1) + v_2Q_B(v_2)\)</span>
-        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \geq\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_1Q_B(v_2) + v_2Q_B(v_1)\)</span>
-
-        <span class="equation-step-connector equation-step-extra" hidden>\(\displaystyle \iff\)</span>
-        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle v_1Q_B(v_1) + v_2Q_B(v_2) - v_1Q_B(v_2) - v_2Q_B(v_1)\)</span>
-        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \geq\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle 0\)</span>
-
-        <span class="equation-step-connector equation-step-extra" hidden>\(\displaystyle \iff\)</span>
-        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle v_1(Q_B(v_1)-Q_B(v_2)) - v_2(Q_B(v_1)-Q_B(v_2))\)</span>
-        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \geq\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle 0\)</span>
-
-        <span class="equation-step-connector">\(\displaystyle \iff\)</span>
-        <span class="equation-step-lhs">\(\displaystyle (v_1-v_2)(Q_B(v_1)-Q_B(v_2))\)</span>
-        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
-        <span class="equation-step-rhs">\(\displaystyle 0\)</span>
+        <span class="equation-step-connector">\(\displaystyle \iff \)</span>
+        <span class="equation-step-lhs">\(\displaystyle U_B(v) \)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \max\left\{ vQ_B(v')-P_B(v')| v' \in [\underline{v},\overline{v}] \right\} \)</span>
 
       </div>
+
+    <p>
+      Then, \(U_B(v)\) is the upper envelope of a family of affine functions\(\implies\) it is convex \(\implies\)
+      it is absolutely continuous \(\implies\) its derivative exists almost everywhere.
+      By the envelope theorem, we can differentiate through the maximum almost everywhere,
+      so \(U_B'(v)=Q_B(v)\) almost everywhere, and so \(Q_B\) is weakly increasing, since \(U_B\) is convex.
+      A similar argument using lower envelopes and concavity shows that \(Q_S\) is weakly decreasing.
+    </p>
+    <p>
+      Once we have \(Q_B\) and \(Q_S\), Corollary 1 in Milgrom and Segal (2002) states that
+      \(U_B\) and \(U_S\) satisfy the integral conditions
+    </p>
+
+      <div id="IC integral conditions" class="equation-chain-steps">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle U_B(v) = U_B(\underline{v}) + \int_{\underline{v}}^v Q_B(t) \, dt\)</span>
+        <span class="equation-step-relation">\(\displaystyle \text{and} \)</span>
+        <span class="equation-step-rhs">\(\displaystyle U_S(c) = U_S(\overline{c}) + \int_c^{\overline{c}} Q_S(t) \, dt. \)</span>
+
+      </div>
+      
+    <p>
+      Then solving for the interim expected payments,
+    </p>
+      <div id="payment-rule-construction" class="equation-chain-steps">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle U_B(\underline{v}) + \int_{\underline{v}}^v Q_B(t)\, dt = v\,Q_B(v)-P_B(v)\)</span>
+        <span class="equation-step-relation">\(\displaystyle \text{and} \)</span>
+        <span class="equation-step-rhs">\(\displaystyle U_S(\overline{c}) + \int_c^{\overline{c}} Q_S(t)\, dt = P_S(c)-c\,Q_S(c) \)</span>
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+
+        <span class="equation-step-connector" >\(\displaystyle \iff \)</span>
+        <span class="equation-step-lhs" >\(\displaystyle  P_B(v)= v\,Q_B(v)-U_B(\underline{v})-\int_{\underline{v}}^v Q_B(t)\, dt \) </span>
+        <span class="equation-step-relation" >\(\displaystyle \text{and} \)</span>
+        <span class="equation-step-rhs" >\(\displaystyle P_S(c) = U_S(\overline{c}) + \int_c^{\overline{c}} Q_S(t)\, dt+c\,Q_S(c) \)</span>
+      </div>
+    <p>
+      And we can set ex-post payments as \(p_B(v,c)=P_B(v)\) and \(p_S(v,c)=P_S(c)\).
+    </p>
+
       <p>
-        Since \((v_1 - v_2)\le 0\), dividing over flips the inequality, giving \(Q_B(v_1)-Q_B(v_2)\le 0\), or \(Q_B(v_1)\le Q_B(v_2)\).
-        A similar argument shows that \(Q_S\) is weakly decreasing.
+      For the reverse implication, suppose \(Q_B\) is weakly increasing, \(Q_S\) is weakly decreasing,
+      and the payments imply the above interim expected payments. 
+      Let's verify that this mechanism is IC. For a buyer with value \(v\), for all \(v'\in[\underline{v},\overline{v}]\),
+      the difference between the expected payoff from truthfully reporting \(v\) and misreporting \(v'\) is
+      </p>
+
+      <div id="buyer-ic-verification" class="equation-chain-steps equation-chain-wide-rhs">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle U_B(v) - \left[vQ_B(v')-P_B(v')\right] \)</span>
+        <span class="equation-step-relation">\(\displaystyle =  \)</span>
+        <span class="equation-step-rhs">\(\displaystyle \left[vQ_B(v)-P_B(v)\right] - \left[vQ_B(v')-P_B(v')\right] \)</span>
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+
+        <span class="equation-step-connector">\(\displaystyle  \)</span>
+        <span class="equation-step-lhs">\(\displaystyle  \) </span>
+        <span class="equation-step-relation">\(\displaystyle = \)</span>
+        <span class="equation-step-rhs">\(\displaystyle \left[vQ_B(v)-\left(vQ_B(v)-U_B(\underline{v})-\int_{\underline{v}}^v Q_B(t)\, dt\right)\right] - \left[vQ_B(v')-\left(v'Q_B(v')-U_B(\underline{v'})-\int_{\underline{v'}}^{v'} Q_B(t)\, dt\right)\right] \)</span>
+
+        <span class="equation-step-connector">\(\displaystyle  \)</span>
+        <span class="equation-step-lhs">\(\displaystyle  \) </span>
+        <span class="equation-step-relation">\(\displaystyle = \)</span>
+        <span class="equation-step-rhs">\(\displaystyle U_B(\underline{v}) - U_B(\underline{v'}) + \int_{\underline{v}}^v Q_B(t)\, dt - vQ_B(v')+v'Q_B(v')-\int_{\underline{v'}}^{v'} Q_B(t)\, dt \)</span>
+
+        <span class="equation-step-connector">\(\displaystyle  \)</span>
+        <span class="equation-step-lhs">\(\displaystyle  \) </span>
+        <span class="equation-step-relation">\(\displaystyle = \)</span>
+        <span class="equation-step-rhs">\(\displaystyle Q_B(v')(v'-v) + \int_{v'}^v Q_B(t)\, dt \).</span>
+      </div>
+      <p class="has-qed">
+        Because \(Q_B\) is weakly increasing, this difference is weakly positive for all \(v,v'\in[\underline{v},\overline{v}]\).
+        A similar argument gives the seller's IC condition. Thus, the mechanism is IC.
+        <span class="qed">\(\blacksquare\)</span>
+      </p>
+      <p>
+        Notice in the above payments we are free to choose \(U_B(\underline{v})\) and \(U_S(\overline{c})\)
+        without affecting IC implementability. As long as we choose \(U_B(\underline{v})\geq 0\) and \(U_S(\overline{c})\geq 0\),
+        the mechanism will also be IR, since \(Q_B(v)\geq 0\) and \(Q_S(c)\geq 0\).
+      </p>
+
+
+    </section>
+
+
+
+    <section class="derivation" aria-labelledby="budget-balance-title">
+      <h2 id="budget-balance-title">Budget balance</h2>
+      <p>
+        Now that we have interim expected payments, we can calculate ex-ante
+        expected payments from the buyer and to the seller directly. First, from the buyer, we can expect to receive
+      </p>
+
+      <div id="expected-buyer-payment" class="equation-chain-steps equation-chain-wide-rhs">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[p_B(v,c)\right]\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[P_B(v)\right]\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} P_B(v)\,f_B(v)\,dv\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} \left(vQ_B(v)-U_B(\underline{v})-\int_{\underline{v}}^{v} Q_B(t)\,dt\right) f_B(v)\,dv\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} \left(vQ_B(v)-U_B(\underline{v})\right) f_B(v)\,dv - \int_{\underline{v}}^{\overline{v}}\int_{\underline{v}}^{v} Q_B(t)\,dt\,f_B(v)\,dv.\)</span>
+      </div>
+
+      <p>
+        To compute this, we first simplify the final term.
+      </p>
+
+      <div id="fubini-simplification" class="equation-chain-steps equation-chain-wide-rhs">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}}\int_{\underline{v}}^{v} Q_B(t)\,dt\,f_B(v)\,dv\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}}\int_{\underline{v}}^{v} Q_B(t)\,f_B(v)\,dt\,dv\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}}\int_{t}^{\overline{v}} Q_B(t)\,f_B(v)\,dv\,dt \text{, by Fubini's Theorem}\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} Q_B(t)\int_{t}^{\overline{v}} f_B(v)\,dv\,dt\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} Q_B(t)\left(\int_{\underline{v}}^{\overline{v}} f_B(v)\,dv-\int_{\underline{v}}^{t} f_B(v)\,dv\right)dt\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} Q_B(t)\left(1-F_B(t)\right)dt\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} Q_B(v)\left(1-F_B(v)\right)dv.\)</span>
+      </div>
+
+      <p>
+        Substituting back into the earlier expected payment calculation,
+      </p>
+
+      <div id="buyer-payment-virtual-value" class="equation-chain-steps equation-chain-wide-rhs">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[p_B(v,c)\right]\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} vQ_B(v)\,f_B(v)\,dv - \int_{\underline{v}}^{\overline{v}} U_B(\underline{v})\,f_B(v)\,dv - \int_{\underline{v}}^{\overline{v}} Q_B(v)\left(1-F_B(v)\right)dv\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} vQ_B(v)f_B(v)\,dv -U_B(\underline{v}) - \int_{\underline{v}}^{\overline{v}} Q_B(v)\frac{1-F_B(v)}{f_B(v)}f_B(v)\,dv\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle -U_B(\underline{v}) + \int_{\underline{v}}^{\overline{v}} Q_B(v)\left(v-\frac{1-F_B(v)}{f_B(v)}\right)f_B(v)\,dv\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle -U_B(\underline{v}) + \int_{\underline{v}}^{\overline{v}} Q_B(v)\,\phi_B(v)\,f_B(v)\,dv\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle -U_B(\underline{v}) + \mathbb{E}\!\left[Q_B(v)\,\phi_B(v)\right],\)</span>
+      </div>
+
+      <p>
+        recalling the earlier definition of the buyer's virtual value
+        \(\phi_B(v)\).
+      </p>
+
+      <p>
+        For the step involving Fubini's Theorem, note that we assume \(f_B\) is
+        continuous on the compact interval \([\underline{v},\overline{v}]\), and
+        is therefore bounded. Similarly \(Q_B\) is, by definition, bounded. Thus, the
+        integrand is absolutely integrable, permitting the change in integration
+        order.
+      </p>
+
+      <p>
+        Again, a similar calculation gives, for the seller,
+      </p>
+
+      <div class="equation-display" aria-label="E of p subscript S of v comma c equals U subscript S at the upper bound of c plus E of q of v comma c times phi subscript S of c">
+        \[
+          \mathbb{E}\!\left[p_S(v,c)\right]
+          = U_S(\overline{c}) + \mathbb{E}\!\left[Q_S(c)\,\phi_S(c)\right].
+        \]
+      </div>
+
+      <p>
+        Now, we can rewrite the BB condition as 
+      </p>
+
+      <div class="equation-display" aria-label="E of p subscript B of v comma c minus p subscript S of v comma c equals minus U subscript B at the lower bound of v minus U subscript S at the upper bound of c plus E of q of v comma c times the quantity phi subscript B of v minus phi subscript S of c">
+        \[
+          \mathbb{E}\!\left[p_B(v,c)\right] - \mathbb{E}\!\left[p_S(v,c)\right]
+          = -U_B(\underline{v}) - U_S(\overline{c})
+            + \mathbb{E}\!\left[Q_B(v)\,\phi_B(v)\right] - \mathbb{E}\!\left[Q_S(c)\,\phi_S(c)\right]\geq 0.
+        \]
+      </div>
+
+    </section>
+
+    <section class="derivation" aria-labelledby="efficiency-title">
+      <h2 id="efficiency-title">Efficiency</h2>
+      <p>
+        The efficient allocation rule specifies trade when \(v>c\) and no trade
+        when \(v&lt;c\). That is, \(q(v,c)=\mathbb{1}(v>c)\) is the efficient
+        allocation rule. This has interim allocation probabilities
+      </p>
+
+      <div class="equation-display" aria-label="Q subscript B of v equals the probability that C is at most v, which equals F subscript S of v, and Q subscript S of c equals the probability that V is at least c, which equals one minus F subscript B of c">
+        \[
+          Q_B(v)=P(C\leq v)=F_S(v)
+          \quad\text{and}\quad
+          Q_S(c)=P(V\geq c)=1-F_B(c).
+        \]
+      </div>
+
+      <p>
+        These are weakly monotone in the right directions, so this allocation
+        rule is IC implementable. For the best chance of budget balance while preserving IR, let's
+        assign \(U_B(\underline{v})=0\) and \(U_S(\overline{c})=0\). Now it remains to check, is this BB?
+      </p>
+
+      <p>
+        Substituting interim allocation probabilities into the BB condition from
+        above,
+      </p>
+
+      <div id="efficient-budget-balance" class="equation-chain-steps equation-chain-wide-rhs">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation"></span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[p_B(v,c)\right]-\mathbb{E}\!\left[p_S(v,c)\right]\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[Q_B(v)\,\phi_B(v)\right]-\mathbb{E}\!\left[Q_S(c)\,\phi_S(c)\right]\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[F_S(v)\left(v-\frac{1-F_B(v)}{f_B(v)}\right)\right]-\mathbb{E}\!\left[\left(1-F_B(c)\right)\left(c+\frac{F_S(c)}{f_S(c)}\right)\right]\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} F_S(v)\left(v-\frac{1-F_B(v)}{f_B(v)}\right)f_B(v)\,dv-\int_{\underline{c}}^{\overline{c}} \left(1-F_B(c)\right)\left(c+\frac{F_S(c)}{f_S(c)}\right)f_S(c)\,dc\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \left[\int_{\underline{v}}^{\overline{v}} F_S(v)\,v\,f_B(v)\,dv-\int_{\underline{v}}^{\overline{v}} F_S(v)\frac{1-F_B(v)}{f_B(v)}f_B(v)\,dv\right]-\left[\int_{\underline{c}}^{\overline{c}} \left(1-F_B(c)\right)c\,f_S(c)\,dc+\int_{\underline{c}}^{\overline{c}} \left(1-F_B(c)\right)\frac{F_S(c)}{f_S(c)}f_S(c)\,dc\right]\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} F_S(v)\,v\,f_B(v)\,dv-\int_{\underline{c}}^{\overline{c}} \left(1-F_B(c)\right)c\,f_S(c)\,dc-\int_{\underline{v}}^{\overline{v}} F_S(v)\left(1-F_B(v)\right)dv-\int_{\underline{c}}^{\overline{c}} \left(1-F_B(c)\right)F_S(c)\,dc.\)</span>
+      </div>
+
+      <p>
+        Let's simplify the first two terms.
+      </p>
+
+      <div id="efficient-first-two-terms" class="equation-chain-steps equation-chain-wide-rhs">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation"></span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} F_S(v)\,v\,f_B(v)\,dv-\int_{\underline{c}}^{\overline{c}} \left(1-F_B(c)\right)c\,f_S(c)\,dc\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[V F_S(V)\right]-\mathbb{E}\!\left[C\left(1-F_B(C)\right)\right]\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[V\,P(C\leq V\mid V)\right]-\mathbb{E}\!\left[C\,P(V\geq C\mid C)\right]\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[V\,\mathbb{1}(C\leq V)\right]-\mathbb{E}\!\left[C\,\mathbb{1}(C\leq V)\right]\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\!\!\int_{-\infty}^{\infty} v\,\mathbb{1}(c\leq v)f_B(v)f_S(c)\,dv\,dc-\int_{-\infty}^{\infty}\!\!\int_{-\infty}^{\infty} c\,\mathbb{1}(c\leq v)f_B(v)f_S(c)\,dv\,dc\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\!\!\int_{-\infty}^{\infty}(v-c)\,\mathbb{1}(c\leq v)\,f_B(v)f_S(c)\,dv\,dc\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\!\!\int_{-\infty}^{\infty}\left(\int_{-\infty}^{\infty}\mathbb{1}(c\leq x)\,\mathbb{1}(x\leq v)\,dx\right)f_B(v)f_S(c)\,dv\,dc \text{, by the layer-cake representation}\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\left(\int_{-\infty}^{\infty}\mathbb{1}(c\leq x)f_S(c)\,dc\right)\left(\int_{-\infty}^{\infty}\mathbb{1}(x\leq v)f_B(v)\,dv\right)dx \text{, by Fubini's Theorem}\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\left(\int_{-\infty}^{x}f_S(c)\,dc\right)\left(\int_{x}^{\infty}f_B(v)\,dv\right)dx\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty} F_S(x)\left(1-F_B(x)\right)dx.\)</span>
+      </div>
+
+      <p>
+        The layer-cake representation for \(v-c\) when \(v\geq c\) is
+      </p>
+
+      <div class="equation-display" aria-label="v minus c equals the integral from c to v of d x, which equals the integral over the whole line of the indicator that c is at most x times the indicator that x is at most v, d x">
+        \[
+          v-c=\int_c^v dx=\int_{-\infty}^{\infty}\mathbb{1}(c\leq x)\,\mathbb{1}(x\leq v)\,dx.
+        \]
+      </div>
+      <p>
+        Then, substituting back into the earlier BB condition calculation,
+      </p>
+      <div id="final expected revenue" class="equation-chain-steps"></div>
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[p_B(v,c)\right]-\mathbb{E}\!\left[p_S(v,c)\right]\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty} F_S(x)\left(1-F_B(x)\right)dx - \int_{\underline{v}}^{\overline{v}} F_S(v)\left(1-F_B(v)\right)dv-\int_{\underline{c}}^{\overline{c}} \left(1-F_B(c)\right)F_S(c)\,dc.\)</span>
+
+      <p>
+        First, notice the integrands for the three terms are the same.
+        Then, notice that the integral on the overlapping interval between the two supports
+        \([\underline{v},\overline{v}]\) and \([\underline{c},\overline{c}]\)
+        is subtracted twice from the first integral, which covers the entire real line (importantly,
+        it covers both supports). The three terms cancel,
+        but leave behind one of these subtractions. Since we assumed strictly positive density on both supports, this remaining integral is strictly negative.
+        Thus, the efficient allocation rule is not BB.
       </p>
     </section>
+
 
     <section class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
       <ul class="notes-list">
-        <!-- Add user-authored <li> notes here. -->
+          <li>
+            Most of the times, the Myerson-Satterthwaite theorem is stated for ex-post BB.
+            Börgers and Norman (2009) show that the two problems are equivalent, that is,
+            if a mechanism is ex-ante BB, then it can be modified to be ex-post BB while preserving IC and IR.
+          </li>
+          <li>
+            Relaxing any condition fully usually makes the problem rather trivial. Some partial relaxations
+            admit interesting solutions. For example, if we relax PE and instead search for a
+            second-best mechanism that maximizes expected welfare subject to IC, IR, and BB we
+            get the Chatterjee-Samuelson double auction. If we relax interim IR to ex-ante IR,
+            the AGV mechanism is satisfactory under certain conditions.
+          </li>
+
       </ul>
     </section>
 
@@ -365,6 +712,11 @@
           interim participation constraints: the case of independent types.”
           <em>Economic Theory</em> 39, no. 3 (2009): 477–489.
           <a href="https://doi.org/10.1007/s00199-008-0347-7">https://doi.org/10.1007/s00199-008-0347-7</a>.
+        </li>
+        <li>
+          Milgrom, Paul, and Ilya Segal. “Envelope Theorems for Arbitrary
+          Choice Sets.” <em>Econometrica</em> 70, no. 2 (2002): 583–601.
+          <a href="https://doi.org/10.1111/1468-0262.00296">https://doi.org/10.1111/1468-0262.00296</a>.
         </li>
         <li>
           Myerson, Roger B., and Mark A. Satterthwaite. “Efficient Mechanisms

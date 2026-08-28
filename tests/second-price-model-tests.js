@@ -117,7 +117,6 @@
   });
 
   test("Shifted Beta(2,1) has the analytic second-price outcomes", function () {
-    // On [2,6], F(x)=((x-2)/4)^2. With two opponents, G(x)=F(x)^2.
     var result = model.outcomes(5, 4, 3, 2, 6, betaTwoOne);
     assert(result.distribution.type === "beta",
       "The normalized distribution should remain beta.");
@@ -157,7 +156,6 @@
   });
 
   test("Highest-opponent CDF and PDF apply the selected beta shape", function () {
-    // Beta(2,1) on [0,1]: F(.5)=.25 and f(.5)=1.
     assertClose(model.highestOpponentBidCdf(
       0.5, 2, 0, 1, betaTwoOne
     ), 0.25, "One-opponent CDF");

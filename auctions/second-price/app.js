@@ -13,6 +13,20 @@
   var configureNumberInput = auctionControls.configureNumberInput;
   var commitTypedChoice = auctionControls.commitTypedChoice;
   var setBid, setValue, setShapeParameter, commitShapeParameter;
+  var chart = window.AuctionChart;
+  var formatMoney = chart.formatMoney;
+  var formatDensityAxis = chart.formatDensityAxis;
+  var formatProbabilityAxis = chart.formatProbabilityAxis;
+  var formatPercent = chart.formatPercent;
+  var roundCoordinate = chart.roundCoordinate;
+  var yScale = chart.yScale;
+  var densityY = chart.densityY;
+  var densityScaleMaximum = chart.densityScaleMaximum;
+  var uniqueByBid = chart.uniqueByBid;
+  var panelTicks = chart.panelTicks;
+  var drawPanelScaffold = chart.drawPanelScaffold;
+  var drawCurve = chart.drawCurve;
+  var drawCircle = chart.drawCircle;
   var DEFAULTS = {
     n: 2,
     a: 0,
@@ -92,6 +106,20 @@
 
   function byId(id) {
     return document.getElementById(id);
+  }
+
+  function drawDiamond(svg, x, y, className) {
+    chart.drawDiamond(svg, x, y, className, 8);
+  }
+
+  function getChartLayout() {
+    return chart.chartLayout(
+      elements.chart.parentElement.clientWidth ||
+        elements.chart.clientWidth ||
+        1000,
+      { endpointLabelY: 746 },
+      { endpointLabelY: 726 }
+    );
   }
 
   function bindEvents() {
@@ -185,7 +213,6 @@
       try {
         elements.chart.setPointerCapture(event.pointerId);
       } catch (error) {
-        // Synthetic pointer events do not always establish an active pointer.
       }
       setBid(bid);
     });
@@ -832,22 +859,6 @@
     return Number.isFinite(density) && density >= 0 ? density : 0;
   }
 
-  function densityScaleMaximum(points) {
-    var maximum = 0;
-    points.forEach(function (point) {
-      if (Number.isFinite(point.density) && point.density > maximum) {
-        maximum = point.density;
-      }
-    });
-    return maximum > 0 ? maximum : 1;
-  }
-
-  function densityY(value, panel) {
-    var bounded = Number.isFinite(value) ?
-      model.clamp(value, panel.min, panel.max) : panel.max;
-    return yScale(bounded, panel);
-  }
-
   function sampleCdf(count, selectedBid, value) {
     var points = [];
     var spec = distributionSpec();
@@ -890,106 +901,6 @@
       return Math.abs(point.bid - previous.bid) > model.EPSILON ||
         Math.abs(point.density - previous.density) > model.EPSILON;
     });
-  }
-
-  function uniqueByBid(points) {
-    return points.filter(function (point, index) {
-      return index === 0 ||
-        Math.abs(point.bid - points[index - 1].bid) > model.EPSILON;
-    });
-  }
-
-  function getChartLayout() {
-    var availableWidth =
-      elements.chart.parentElement.clientWidth ||
-      elements.chart.clientWidth ||
-      1000;
-    var compact = availableWidth < 700;
-
-    if (compact) {
-      return {
-        width: 560,
-        height: 820,
-        left: 72,
-        right: 544,
-        densityTop: 80,
-        densityHeight: 170,
-        cdfTop: 350,
-        cdfHeight: 350,
-        endpointLabelY: 746,
-        compact: true
-      };
-    }
-
-    return {
-      width: 1000,
-      height: 800,
-      left: 90,
-      right: 975,
-      densityTop: 70,
-      densityHeight: 170,
-      cdfTop: 330,
-      cdfHeight: 350,
-      endpointLabelY: 726,
-      compact: false
-    };
-  }
-
-  function yScale(value, panel) {
-    var ratio = (value - panel.min) / (panel.max - panel.min);
-    return panel.top + panel.height - ratio * panel.height;
-  }
-
-  function drawPanelScaffold(svg, panel, left, right) {
-    appendSvg(svg, "rect", {
-      x: left,
-      y: panel.top,
-      width: right - left,
-      height: panel.height,
-      class: "panel-background"
-    });
-
-    appendSvg(svg, "text", {
-      x: left,
-      y: panel.top - 27,
-      class: "panel-caption"
-    }, panel.title);
-
-    panelTicks(panel.min, panel.max, panel.tickCount).forEach(function (tick) {
-      var y = yScale(tick, panel);
-      appendSvg(svg, "line", {
-        x1: left,
-        y1: y,
-        x2: right,
-        y2: y,
-        class: Math.abs(tick) <= model.EPSILON ?
-          "zero-line" : "grid-line"
-      });
-      appendSvg(svg, "text", {
-        x: left - 10,
-        y: y + 4,
-        class: "axis-text",
-        "text-anchor": "end"
-      }, panel.format(tick));
-    });
-
-    appendSvg(svg, "line", {
-      x1: left,
-      y1: panel.top,
-      x2: left,
-      y2: panel.top + panel.height,
-      class: "axis-line"
-    });
-
-  }
-
-  function panelTicks(minimum, maximum, count) {
-    var ticks = [];
-    var i;
-    for (i = 0; i <= count; i += 1) {
-      ticks.push(minimum + (i / count) * (maximum - minimum));
-    }
-    return ticks;
   }
 
   function drawDensityArea(
@@ -1701,38 +1612,6 @@
     });
   }
 
-  function drawCurve(svg, points, getX, getY, className) {
-    var path = "";
-    points.forEach(function (point, index) {
-      path += (index === 0 ? "M " : " L ") +
-        roundCoordinate(getX(point)) + " " +
-        roundCoordinate(getY(point));
-    });
-    appendSvg(svg, "path", { d: path, class: className });
-  }
-
-  function drawCircle(svg, x, y, className) {
-    appendSvg(svg, "circle", {
-      cx: x,
-      cy: y,
-      r: 6,
-      class: className
-    });
-  }
-
-  function drawDiamond(svg, x, y, className) {
-    var radius = 8;
-    var points = [
-      [x, y - radius],
-      [x + radius, y],
-      [x, y + radius],
-      [x - radius, y]
-    ].map(function (point) {
-      return roundCoordinate(point[0]) + "," + roundCoordinate(point[1]);
-    }).join(" ");
-    appendSvg(svg, "polygon", { points: points, class: className });
-  }
-
   function svgTextBlock(lines, characterWidth, lineHeight) {
     var maximumLength = lines.reduce(function (maximum, line) {
       return Math.max(maximum, line.length);
@@ -1771,10 +1650,6 @@
     return text;
   }
 
-  function roundCoordinate(value) {
-    return Math.round(value * 1000) / 1000;
-  }
-
   function chartDescription(current, truthful) {
     var span = state.b - state.a;
     var payment = current.expectedPaymentIfWin === null ?
@@ -1795,18 +1670,6 @@
       formatMoney(truthful.bid, span) + ".";
   }
 
-  function formatMoney(value, span) {
-    if (!Number.isFinite(value)) {
-      return "—";
-    }
-    var cleaned = Math.abs(value) < 1e-10 ? 0 : value;
-    var digits = span <= 2 ? 3 : (span <= 20 ? 2 : 1);
-    return new Intl.NumberFormat(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: digits
-    }).format(cleaned);
-  }
-
   function distributionSummary() {
     return "The value distribution is transformed Beta with alpha " +
       formatChoiceNumber(state.alpha) + ", beta " +
@@ -1819,28 +1682,4 @@
     return formatMoney(value, state.b - state.a);
   }
 
-  function formatDensityAxis(value) {
-    var absolute = Math.abs(value);
-    if (absolute > 0 && (absolute < 0.001 || absolute >= 10000)) {
-      return value.toExponential(1);
-    }
-    return new Intl.NumberFormat(undefined, {
-      maximumSignificantDigits: 3
-    }).format(value);
-  }
-
-  function formatProbabilityAxis(value) {
-    return new Intl.NumberFormat(undefined, {
-      style: "percent",
-      maximumFractionDigits: 0
-    }).format(value);
-  }
-
-  function formatPercent(value) {
-    return new Intl.NumberFormat(undefined, {
-      style: "percent",
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1
-    }).format(value);
-  }
 }());

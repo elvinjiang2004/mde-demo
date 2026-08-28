@@ -80,7 +80,7 @@
 
   test("chatterjeeSamuelsonGrid represents v-c=1/4 exactly via the diagonal split", function () {
     var grid = model.chatterjeeSamuelsonGrid();
-    var OFFSET = 5; // 0.25 / 0.05
+    var OFFSET = 5;
     var i;
     var j;
     for (i = 0; i < R; i += 1) {
@@ -117,7 +117,6 @@
   });
 
   test("postedPriceGrid rounds an off-grid price to its nearest cell boundary", function () {
-    // 0.37 is closer to 0.35 (k=7) than to 0.40 (k=8).
     var grid = model.postedPriceGrid(0.37);
     var expectedGrid = model.postedPriceGrid(0.35);
     var i;
@@ -140,8 +139,6 @@
   });
 
   test("interimBuyerProbability and interimSellerProbability are exact cell averages", function () {
-    // A constant grid q=0.7: every row and column should average to exactly
-    // 0.7, since the average of a constant is that constant.
     var grid = model.constantCellGrid(0.7);
     var Q_B = model.interimBuyerProbability(grid);
     var Q_S = model.interimSellerProbability(grid);
@@ -192,9 +189,6 @@
 
   test("The always-trade rule q=1 has an exact, constant deficit of 1", function () {
     var grid = model.constantCellGrid(1);
-    // Pointwise: U_B(v,c)=v and U_S(v,c)=1-c exactly, so p_B=0, p_S=1, R=-1
-    // everywhere -- check this directly via the closed-form point evaluator
-    // at a handful of triangle centroids, not just the aggregate verdicts.
     [[0.1, 0.9], [0.4166666666666667, 0.5833333333333334], [0.99, 0.01]]
       .forEach(function (point) {
         var v = point[0];
@@ -218,11 +212,6 @@
   });
 
   test("The efficient benchmark's welfare and revenue match the continuous closed forms exactly", function () {
-    // Triangle-centroid integration of an affine integrand is exact, and
-    // v=c runs exactly along the grid's diagonal split (see the dedicated
-    // structural test above), so this is not an approximation: it agrees
-    // with the textbook Uniform[0,1] values to floating-point precision,
-    // not merely within a quadrature tolerance.
     var grid = model.efficientGrid();
     assertClose(model.welfare(grid), 1 / 6, "W(q*) for Uniform[0,1]", 1e-9);
     assertClose(model.expectedBuyerUtility(grid), 1 / 6,
@@ -258,12 +247,6 @@
   });
 
   test("The posted-price mechanism is exactly ex-post budget balanced at every price", function () {
-    // Unlike the old point-sampled grid, this holds at every price,
-    // including the grid-aligned ones and the p=0/p=1 boundaries -- no
-    // nudge or special-casing is needed, because whole cells (never sampled
-    // points) are classified against the price and a cell boundary is
-    // never inside a cell's own interior. Verified pointwise via the exact
-    // closed-form cumulative-utility evaluator, not just in expectation.
     [0, 0.05, 0.25, 0.5, 0.75, 0.95, 1].forEach(function (price) {
       var grid = model.postedPriceGrid(price);
       var summary = model.summarize(grid);
@@ -294,23 +277,11 @@
   });
 
   test("The Chatterjee-Samuelson double auction matches its closed-form welfare and exact budget balance", function () {
-    // Trade iff v - c >= 1/4, the threshold induced by the linear
-    // Bayes-Nash equilibrium b(v)=2/3 v+1/12, a(c)=2/3 c+1/4 of the k=1/2
-    // double auction (Chatterjee and Samuelson 1983) under Uniform[0,1].
-    // 1/4 = 5*CELL_SIZE runs exactly along the grid's own diagonal split,
-    // so -- like the efficient benchmark -- this is exact, not merely
-    // convergent: both W(q)=9/64 and E[R]=0 hold to floating-point
-    // precision, not just within a loose quadrature tolerance.
     var grid = model.chatterjeeSamuelsonGrid();
     assertClose(model.welfare(grid), 9 / 64,
       "W(q) = E[(V-C) 1{V-C>=1/4}] = 9/64 under Uniform[0,1]", 1e-9);
 
     var summary = model.summarize(grid);
-    // By revenue equivalence, this module's minimal-rent transfers for this
-    // allocation must have the same expected value as the actual double
-    // auction's own (a+b)/2 pricing, which is budget balanced by
-    // construction (no intermediary): E[R] = 0 exactly, even though the
-    // pointwise transfers differ from the real double-auction price.
     assertClose(summary.verdicts.expectedRevenue, 0,
       "E[R] should be exactly zero by revenue equivalence", 1e-9);
     assert(summary.verdicts.icImplementable,
@@ -326,7 +297,6 @@
       function (i, j) { return j < 10 ? i / (R - 1) : (R - 1 - i) / (R - 1); }
     );
 
-    // Pointwise (ex-post/dominant-strategy) monotonicity fails on both sides.
     var buyerViolations = model.checkBuyerMonotonicity(grid);
     var sellerViolations = model.checkSellerMonotonicity(grid);
     assert(model.countTrue(buyerViolations) > 0,
@@ -336,11 +306,6 @@
     assert(!model.isDsicImplementable(buyerViolations, sellerViolations),
       "A pointwise violation on either side should break DSIC-implementability.");
 
-    // But by construction every row and every column is an equal mix of
-    // the increasing half (i/(R-1)) and the decreasing half
-    // ((R-1-i)/(R-1)), so both interim probabilities are exactly the
-    // constant 0.5 -- trivially monotonic (both nondecreasing and
-    // nonincreasing) despite the pointwise failures above.
     var Q_B = model.interimBuyerProbability(grid);
     var Q_S = model.interimSellerProbability(grid);
     Q_B.forEach(function (value) {
@@ -382,16 +347,12 @@
           });
         }
       }
-      // The true boundary condition, checked directly (not sampled from a
-      // centroid-based heatmap, which never touches v=0 or c=1 exactly).
       assertClose(model.cumulativeBuyerUtilityAt(grid, 0, 0.37), 0,
         "U_B(0,c) should vanish exactly", 1e-12);
       assertClose(model.cumulativeSellerUtilityAt(grid, 0.62, 1), 0,
         "U_S(v,1) should vanish exactly", 1e-12);
     });
 
-    // Expected rent is the quantity that actually distinguishes these
-    // allocation rules from one another.
     var neverTradeRent = model.expectedBuyerUtility(model.constantCellGrid(0));
     var alwaysTradeRent = model.expectedBuyerUtility(model.constantCellGrid(1));
     assert(alwaysTradeRent - neverTradeRent > 0.1,

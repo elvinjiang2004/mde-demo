@@ -1,11 +1,5 @@
 "use strict";
 
-// Shared value/bid and shape-parameter control logic for first-price and
-// second-price, the two modules with a single focal bidder's value and bid
-// plus a Beta(alpha, beta) type distribution. Pure helpers are exported
-// directly; setBid/setValue/setShapeParameter/commitShapeParameter close
-// over a module's own state/elements/render, so those come from factory
-// functions instead of being shared as bare functions.
 (function () {
   function rangeStep(span) {
     return Math.max(span / 500, Number.EPSILON);
