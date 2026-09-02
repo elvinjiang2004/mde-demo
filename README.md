@@ -15,6 +15,7 @@ The available modules are located at:
 
     auctions/first-price/index.html
     auctions/second-price/index.html
+    bilateral-trade/bargaining-mechanism-sandbox/index.html
     bilateral-trade/myerson-satterthwaite-theorem/index.html
     general-topics/envelope-theorem/index.html
     general-topics/payments-from-allocation-rule/index.html
@@ -30,6 +31,7 @@ The menu contains three categories:
   - Second-Price Auction Equilibrium
 - **Bilateral Trade**
   - Myerson-Satterthwaite Theorem
+  - Bargaining Mechanism Sandbox
 - **General Topics**
   - The Envelope Theorem
   - Payments from an Allocation Rule (draft)
@@ -52,6 +54,8 @@ Open these files in a browser to run the test suites:
 - `tests/second-price-ui-tests.html` — second-price interface and SVG checks.
 - `tests/bilateral-trade-model-tests.html` — bilateral-trade model checks.
 - `tests/bilateral-trade-ui-tests.html` — bilateral-trade interface and SVG checks.
+- `tests/bargaining-sandbox-model-tests.html` — bargaining-sandbox model checks.
+- `tests/bargaining-sandbox-ui-tests.html` — bargaining-sandbox interface and SVG checks.
 - `tests/envelope-theorem-model-tests.html` — envelope-theorem model checks.
 - `tests/envelope-theorem-ui-tests.html` — envelope-theorem interface and responsive-layout checks.
 - `tests/payments-from-allocation-rule-model-tests.html` — allocation-rule and
@@ -69,16 +73,22 @@ affect ordinary use of the menu or module pages.
 - `auctions/first-price/` — first-price module page, model, and controls.
 - `auctions/second-price/` — second-price module page, model, and controls.
 - `bilateral-trade/myerson-satterthwaite-theorem/` — bilateral-trade module.
+- `bilateral-trade/bargaining-mechanism-sandbox/` — direct bargaining-mechanism editor.
 - `general-topics/envelope-theorem/` — envelope-theorem module.
 - `general-topics/payments-from-allocation-rule/` — allocation-rule and payment
   module.
-- `styles.css` — shared module and menu styles.
+- `styles.css` — shared module and menu styles, including automatic light and
+  dark palettes that follow the operating-system preference.
 - `assets/mathjax/` — vendored MathJax 4 TeX-to-SVG build and offline assets.
 - `js/mathjax-config.js` — shared local MathJax configuration.
 - `js/mathjax-runtime.js` — shared initial and dynamic MathJax lifecycle.
 - `js/distributions.js` — shared auction distribution functions.
 - `js/math-utils.js` — shared pure-number helpers for every model layer.
 - `js/svg-utils.js` — shared SVG chart-drawing helpers for every app layer.
+- `js/bilateral-trade-envelope.js` — shared exact split-triangle allocation,
+  transfer, interim, and diagnostic calculations for the two bilateral-trade modules.
+- `js/bilateral-trade-visuals.js` — shared chart frames, colors, and probe
+  interactions for the two bilateral-trade modules.
 - `js/auction-controls.js` — shared value/bid and shape-parameter control
   logic for first-price and second-price.
 - `js/auction-chart.js` — shared panel scaffolding, SVG primitives, and result

@@ -1041,7 +1041,7 @@
               Number(probabilityLabel.getAttribute("y"))) >= 20,
             "The lower-end truthful and probability labels should not overlap.");
             assert(appDocument.querySelector(".coincident-choice-point"),
-              "Coincident selected and truthful bids should retain a focal marker.");
+              "Coincident selected and truthful bids should retain bidder 1's marker.");
             assert(chart.getAttribute("aria-keyshortcuts").includes("ArrowUp") &&
               chart.getAttribute("aria-keyshortcuts").includes("ArrowDown"),
             "Declared keyboard shortcuts should match the implemented arrows.");

@@ -10,8 +10,10 @@
   var SLOPE_LAYOUT = MAIN_LAYOUT;
 
   var LINE_COLORS = {
-    A: "#1b6fa8", B: "#a85416", C: "#237451", D: "#963c3c",
-    E: "#7a4fa3", F: "#b8860b", G: "#0f8a8a", H: "#5f6872"
+    A: "var(--envelope-line-a)", B: "var(--envelope-line-b)",
+    C: "var(--envelope-line-c)", D: "var(--envelope-line-d)",
+    E: "var(--envelope-line-e)", F: "var(--envelope-line-f)",
+    G: "var(--envelope-line-g)", H: "var(--envelope-line-h)"
   };
 
   var POINT_RADIUS = 9;
@@ -56,7 +58,7 @@
   }
 
   function colorForId(id) {
-    return LINE_COLORS[id] || "#5f6872";
+    return LINE_COLORS[id] || "var(--envelope-line-h)";
   }
 
   function pointList(lines) {

@@ -223,7 +223,9 @@
           await nextFrames(appWindow, 2);
 
           var selected = main.querySelector(".line-endpoint-selected");
-          var lineA = main.querySelector('.family-line[stroke="#1b6fa8"]');
+          var lineA = main.querySelector(
+            '.family-line[stroke="var(--envelope-line-a)"]'
+          );
           assertClose(Number(selected.getAttribute("cx")), 231,
             "The selected endpoint should move to t = 0.30.");
           assertClose(Number(selected.getAttribute("cy")), 32,

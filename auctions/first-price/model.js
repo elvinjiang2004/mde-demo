@@ -83,11 +83,11 @@
     var errors = result.errors.slice();
 
     if (!isFiniteNumber(value) || value < a - EPSILON || value > b + EPSILON) {
-      errors.push("The focal bidder's value must lie in [a, b].");
+      errors.push("Bidder 1's value must lie in [a, b].");
     }
 
     if (!isFiniteNumber(bid) || bid < a - EPSILON || bid > b + EPSILON) {
-      errors.push("The focal bidder's bid must lie in [a, b].");
+      errors.push("Bidder 1's bid must lie in [a, b].");
     }
 
     return {

@@ -6,73 +6,39 @@
 
   var CELL_RESOLUTION = 20;
   var CELL_SIZE = 1 / CELL_RESOLUTION;
-  var TRIANGLE_AREA = (CELL_SIZE * CELL_SIZE) / 2;
 
   var clamp = global.NumberUtils.clamp;
+  var sharedEnvelope = global.BilateralTradeEnvelope;
+  var countTrue = sharedEnvelope.countTrueGrid;
+  var zeroBoundaryPayments = sharedEnvelope.zeroBoundaryPayments;
+  var buyerInterimDeviationUtility = sharedEnvelope.buyerInterimDeviationUtility;
+  var sellerInterimDeviationUtility = sharedEnvelope.sellerInterimDeviationUtility;
+  var allocationErrorAt = sharedEnvelope.allocationErrorAt;
 
   function clampIndex(index) {
     return Math.max(0, Math.min(CELL_RESOLUTION - 1, index));
   }
 
   function createCellGrid(fillLower, fillUpper) {
-    var lower = new Array(CELL_RESOLUTION);
-    var upper = new Array(CELL_RESOLUTION);
-    var i;
-    var j;
-    for (i = 0; i < CELL_RESOLUTION; i += 1) {
-      lower[i] = new Array(CELL_RESOLUTION);
-      upper[i] = new Array(CELL_RESOLUTION);
-      for (j = 0; j < CELL_RESOLUTION; j += 1) {
-        lower[i][j] = fillLower(i, j);
-        upper[i][j] = fillUpper(i, j);
-      }
-    }
-    return { lower: lower, upper: upper };
+    return sharedEnvelope.createGrid(
+      CELL_RESOLUTION, fillLower, fillUpper
+    );
   }
 
   function constantCellGrid(value) {
-    return createCellGrid(
-      function () { return value; },
-      function () { return value; }
-    );
+    return sharedEnvelope.constantGrid(CELL_RESOLUTION, value);
   }
 
   function efficientGrid() {
-    return createCellGrid(
-      function (i, j) { return i >= j ? 1 : 0; },
-      function (i, j) { return i > j ? 1 : 0; }
-    );
+    return sharedEnvelope.efficientGrid(CELL_RESOLUTION);
   }
 
   function postedPriceGrid(price) {
-    var p = clamp(price, 0, 1);
-    var k = Math.round(p / CELL_SIZE);
-    return createCellGrid(
-      function (i, j) { return (i >= k && j < k) ? 1 : 0; },
-      function (i, j) { return (i >= k && j < k) ? 1 : 0; }
-    );
+    return sharedEnvelope.postedPriceGrid(CELL_RESOLUTION, price);
   }
 
   function chatterjeeSamuelsonGrid() {
-    var OFFSET = Math.round(0.25 / CELL_SIZE);
-    return createCellGrid(
-      function (i, j) { return (i - j) >= OFFSET ? 1 : 0; },
-      function (i, j) { return (i - j) > OFFSET ? 1 : 0; }
-    );
-  }
-
-  function countTrue(cellGrid) {
-    var count = 0;
-    function scan(rows) {
-      rows.forEach(function (row) {
-        row.forEach(function (value) {
-          if (value) { count += 1; }
-        });
-      });
-    }
-    scan(cellGrid.lower);
-    scan(cellGrid.upper);
-    return count;
+    return sharedEnvelope.chatterjeeSamuelsonGrid(CELL_RESOLUTION);
   }
 
   function countTrue1D(boolArray) {
@@ -85,46 +51,12 @@
 
   function checkBuyerMonotonicity(grid, tolerance) {
     var tol = tolerance === undefined ? MONOTONICITY_TOLERANCE : tolerance;
-    var violations = createCellGrid(
-      function () { return false; },
-      function () { return false; }
-    );
-    var i;
-    var j;
-    for (j = 0; j < CELL_RESOLUTION; j += 1) {
-      for (i = 0; i < CELL_RESOLUTION - 1; i += 1) {
-        if (grid.lower[i + 1][j] < grid.lower[i][j] - tol ||
-            grid.upper[i + 1][j] < grid.upper[i][j] - tol) {
-          violations.lower[i][j] = true;
-          violations.lower[i + 1][j] = true;
-          violations.upper[i][j] = true;
-          violations.upper[i + 1][j] = true;
-        }
-      }
-    }
-    return violations;
+    return sharedEnvelope.checkDsicAllocation(grid, tol).buyer.violations;
   }
 
   function checkSellerMonotonicity(grid, tolerance) {
     var tol = tolerance === undefined ? MONOTONICITY_TOLERANCE : tolerance;
-    var violations = createCellGrid(
-      function () { return false; },
-      function () { return false; }
-    );
-    var i;
-    var j;
-    for (i = 0; i < CELL_RESOLUTION; i += 1) {
-      for (j = 0; j < CELL_RESOLUTION - 1; j += 1) {
-        if (grid.lower[i][j + 1] > grid.lower[i][j] + tol ||
-            grid.upper[i][j + 1] > grid.upper[i][j] + tol) {
-          violations.lower[i][j] = true;
-          violations.lower[i][j + 1] = true;
-          violations.upper[i][j] = true;
-          violations.upper[i][j + 1] = true;
-        }
-      }
-    }
-    return violations;
+    return sharedEnvelope.checkDsicAllocation(grid, tol).seller.violations;
   }
 
   function isDsicImplementable(buyerViolations, sellerViolations) {
@@ -186,19 +118,12 @@
   }
 
   function triangleCentroid(i, j, isLower) {
-    if (isLower) {
-      return {
-        v: i * CELL_SIZE + (2 / 3) * CELL_SIZE,
-        c: j * CELL_SIZE + (1 / 3) * CELL_SIZE
-      };
-    }
-    return {
-      v: i * CELL_SIZE + (1 / 3) * CELL_SIZE,
-      c: j * CELL_SIZE + (2 / 3) * CELL_SIZE
-    };
+    return sharedEnvelope.triangleCentroid(
+      i, j, isLower, CELL_RESOLUTION
+    );
   }
 
-  function cumulativeBuyerUtilityAt(grid, v, c) {
+  function cumulativeBuyerPayoffAt(grid, v, c) {
     var h = CELL_SIZE;
     var i = clampIndex(Math.floor(v / h));
     var delta = v - i * h;
@@ -214,7 +139,7 @@
     return total;
   }
 
-  function cumulativeSellerUtilityAt(grid, v, c) {
+  function cumulativeSellerPayoffAt(grid, v, c) {
     var h = CELL_SIZE;
     var i = clampIndex(Math.floor(v / h));
     var delta = v - i * h;
@@ -230,166 +155,78 @@
     return total;
   }
 
-  function pointwiseTriangleGrid(grid, fn) {
-    var lower = new Array(CELL_RESOLUTION);
-    var upper = new Array(CELL_RESOLUTION);
-    var i;
-    var j;
-    for (i = 0; i < CELL_RESOLUTION; i += 1) {
-      lower[i] = new Array(CELL_RESOLUTION);
-      upper[i] = new Array(CELL_RESOLUTION);
-      for (j = 0; j < CELL_RESOLUTION; j += 1) {
-        var lc = triangleCentroid(i, j, true);
-        var uc = triangleCentroid(i, j, false);
-        lower[i][j] = fn(lc.v, lc.c, grid.lower[i][j], i, j, true);
-        upper[i][j] = fn(uc.v, uc.c, grid.upper[i][j], i, j, false);
-      }
-    }
-    return { lower: lower, upper: upper };
-  }
-
-  function buyerUtilityGrid(grid) {
-    return pointwiseTriangleGrid(grid, function (v, c) {
-      return cumulativeBuyerUtilityAt(grid, v, c);
-    });
-  }
-
-  function sellerUtilityGrid(grid) {
-    return pointwiseTriangleGrid(grid, function (v, c) {
-      return cumulativeSellerUtilityAt(grid, v, c);
-    });
-  }
-
-  function revenueGrid(grid, buyerUtility, sellerUtility) {
-    return pointwiseTriangleGrid(grid, function (v, c, q, i, j, isLower) {
-      var uB = isLower ? buyerUtility.lower[i][j] : buyerUtility.upper[i][j];
-      var uS = isLower ? sellerUtility.lower[i][j] : sellerUtility.upper[i][j];
-      return (v * q - uB) - (c * q + uS);
-    });
-  }
-
-  function overTradeGrid(grid) {
-    return pointwiseTriangleGrid(grid, function (v, c, q) {
-      return v < c ? q : 0;
-    });
-  }
-
-  function underTradeGrid(grid) {
-    return pointwiseTriangleGrid(grid, function (v, c, q) {
-      return v > c ? 1 - q : 0;
-    });
-  }
-
-  function sumOverTriangles(grid, weightFn) {
-    var total = 0;
-    var i;
-    var j;
-    for (i = 0; i < CELL_RESOLUTION; i += 1) {
-      for (j = 0; j < CELL_RESOLUTION; j += 1) {
-        var lc = triangleCentroid(i, j, true);
-        var uc = triangleCentroid(i, j, false);
-        total += grid.lower[i][j] * weightFn(lc.v, lc.c);
-        total += grid.upper[i][j] * weightFn(uc.v, uc.c);
-      }
-    }
-    return total * TRIANGLE_AREA;
+  function exactRuleSurfaces(grid) {
+    var payments = zeroBoundaryPayments(grid);
+    var rule = { q: grid, pB: payments.pB, pS: payments.pS };
+    var payoff = sharedEnvelope.truthfulPayoffPatches(rule);
+    return {
+      rule: rule,
+      buyerPayoff: payoff.buyer,
+      sellerPayoff: payoff.seller,
+      revenue: sharedEnvelope.revenuePatches(rule)
+    };
   }
 
   function welfare(grid) {
-    return sumOverTriangles(grid, function (v, c) { return v - c; });
+    return sharedEnvelope.welfare(grid);
   }
 
-  function expectedBuyerUtility(grid) {
-    return sumOverTriangles(grid, function (v) { return 1 - v; });
+  function expectedBuyerPayoff(grid) {
+    return sharedEnvelope.weightedScalarGridIntegral(
+      grid, function (v) { return 1 - v; }
+    );
   }
 
-  function expectedSellerUtility(grid) {
-    return sumOverTriangles(grid, function (v, c) { return c; });
-  }
-
-  function minValue(cellGrid) {
-    var minimum = Infinity;
-    function scan(rows) {
-      rows.forEach(function (row) {
-        row.forEach(function (value) {
-          if (value < minimum) { minimum = value; }
-        });
-      });
-    }
-    scan(cellGrid.lower);
-    scan(cellGrid.upper);
-    return minimum;
-  }
-
-  function maxValue(cellGrid) {
-    var maximum = -Infinity;
-    function scan(rows) {
-      rows.forEach(function (row) {
-        row.forEach(function (value) {
-          if (value > maximum) { maximum = value; }
-        });
-      });
-    }
-    scan(cellGrid.lower);
-    scan(cellGrid.upper);
-    return maximum;
-  }
-
-  var cachedEfficientWelfare = null;
-
-  function efficientWelfare() {
-    if (cachedEfficientWelfare === null) {
-      cachedEfficientWelfare = welfare(efficientGrid());
-    }
-    return cachedEfficientWelfare;
+  function expectedSellerPayoff(grid) {
+    return sharedEnvelope.weightedScalarGridIntegral(
+      grid, function (v, c) { return c; }
+    );
   }
 
   function summarize(grid) {
-    var interimBuyerProbabilityArray = interimBuyerProbability(grid);
-    var interimSellerProbabilityArray = interimSellerProbability(grid);
-    var buyerIcViolations = checkInterimBuyerMonotonicity(interimBuyerProbabilityArray);
-    var sellerIcViolations = checkInterimSellerMonotonicity(interimSellerProbabilityArray);
-    var icImplementable = countTrue1D(buyerIcViolations) === 0 &&
-      countTrue1D(sellerIcViolations) === 0;
+    var exact = exactRuleSurfaces(grid);
+    var interim = sharedEnvelope.interimRulePolynomials(exact.rule);
+    var buyerMonotonicity = sharedEnvelope.checkPiecewiseMonotonicity(
+      interim.buyerAllocation, true, MONOTONICITY_TOLERANCE
+    );
+    var sellerMonotonicity = sharedEnvelope.checkPiecewiseMonotonicity(
+      interim.sellerAllocation, false, MONOTONICITY_TOLERANCE
+    );
+    var icImplementable = buyerMonotonicity.holds && sellerMonotonicity.holds;
+    var deviation = sharedEnvelope.interimDeviationDiagnostics(interim, {
+      traceSamples: 61,
+      algebraTolerance: 1e-12,
+      verdictTolerance: MONOTONICITY_TOLERANCE
+    });
+    var revenueRange = sharedEnvelope.affinePatchGridRange(exact.revenue);
 
-    var buyerUtility = buyerUtilityGrid(grid);
-    var sellerUtility = sellerUtilityGrid(grid);
-    var revenue = revenueGrid(grid, buyerUtility, sellerUtility);
+    var minRevenue = revenueRange.min;
+    var maxRevenue = revenueRange.max;
 
-    var minBuyerUtility = 0;
-    var minSellerUtility = 0;
-    var minRevenue = minValue(revenue);
-    var maxRevenue = maxValue(revenue);
-
-    var eBuyerUtility = expectedBuyerUtility(grid);
-    var eSellerUtility = expectedSellerUtility(grid);
+    var eBuyerPayoff = expectedBuyerPayoff(grid);
+    var eSellerPayoff = expectedSellerPayoff(grid);
 
     var w = welfare(grid);
-    var eRevenue = w - eBuyerUtility - eSellerUtility;
-    var firstBestWelfare = efficientWelfare();
-
-    var overTrade = overTradeGrid(grid);
-    var underTrade = underTradeGrid(grid);
+    var eRevenue = w - eBuyerPayoff - eSellerPayoff;
+    var firstBestWelfare = sharedEnvelope.efficientWelfare(CELL_RESOLUTION);
 
     return {
       grid: grid,
-      interimBuyerProbability: interimBuyerProbabilityArray,
-      interimSellerProbability: interimSellerProbabilityArray,
-      buyerIcViolations: buyerIcViolations,
-      sellerIcViolations: sellerIcViolations,
-      buyerUtility: buyerUtility,
-      sellerUtility: sellerUtility,
-      revenue: revenue,
-      overTrade: overTrade,
-      underTrade: underTrade,
+      interim: interim,
+      deviation: deviation,
+      patches: {
+        buyerPayoff: exact.buyerPayoff,
+        sellerPayoff: exact.sellerPayoff,
+        revenue: exact.revenue
+      },
       verdicts: {
         icImplementable: icImplementable,
-        buyerIcViolationCount: countTrue1D(buyerIcViolations),
-        sellerIcViolationCount: countTrue1D(sellerIcViolations),
-        minBuyerUtility: minBuyerUtility,
-        minSellerUtility: minSellerUtility,
-        expectedBuyerUtility: eBuyerUtility,
-        expectedSellerUtility: eSellerUtility,
+        buyerIcViolationCount: buyerMonotonicity.violationCount,
+        sellerIcViolationCount: sellerMonotonicity.violationCount,
+        minBuyerPayoff: 0,
+        minSellerPayoff: 0,
+        expectedBuyerPayoff: eBuyerPayoff,
+        expectedSellerPayoff: eSellerPayoff,
         exPostBudgetBalanced: Math.abs(minRevenue) <= BALANCE_TOLERANCE &&
           Math.abs(maxRevenue) <= BALANCE_TOLERANCE,
         exPostNoDeficit: minRevenue >= -BALANCE_TOLERANCE,
@@ -425,11 +262,16 @@
     interimSellerProbability: interimSellerProbability,
     checkInterimBuyerMonotonicity: checkInterimBuyerMonotonicity,
     checkInterimSellerMonotonicity: checkInterimSellerMonotonicity,
-    cumulativeBuyerUtilityAt: cumulativeBuyerUtilityAt,
-    cumulativeSellerUtilityAt: cumulativeSellerUtilityAt,
+    cumulativeBuyerPayoffAt: cumulativeBuyerPayoffAt,
+    cumulativeSellerPayoffAt: cumulativeSellerPayoffAt,
+    patchGridValueAt: sharedEnvelope.patchGridValueAt,
+    buyerInterimDeviationUtility: buyerInterimDeviationUtility,
+    sellerInterimDeviationUtility: sellerInterimDeviationUtility,
+    allocationErrorAt: allocationErrorAt,
+    zeroBoundaryPayments: zeroBoundaryPayments,
     welfare: welfare,
-    expectedBuyerUtility: expectedBuyerUtility,
-    expectedSellerUtility: expectedSellerUtility,
+    expectedBuyerPayoff: expectedBuyerPayoff,
+    expectedSellerPayoff: expectedSellerPayoff,
     summarize: summarize
   });
 })(window);

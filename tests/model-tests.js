@@ -289,7 +289,7 @@
     assert(!model.validateAuction(2, -0.01, 1).valid, "Negative a should be invalid.");
   });
 
-  test("Focal bids remain restricted to [a,b]", function () {
+  test("Bidder 1's bid remains restricted to [a,b]", function () {
     assert(model.validateChoice(2, 0, 1, 0.5, 1).valid, "A bid of b is valid.");
     assert(!model.validateChoice(2, 0, 1, 0.5, 1.01).valid, "A bid above b is invalid.");
     assert(!model.validateChoice(2, 10, 20, 15, 9.9).valid, "A bid below a is invalid.");

@@ -12,6 +12,8 @@
   <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
+  <script defer src="../../js/bilateral-trade-envelope.js"></script>
+  <script defer src="../../js/bilateral-trade-visuals.js"></script>
   <script defer src="../../js/equation-chain.js"></script>
   <script defer src="model.js"></script>
   <script defer src="app.js"></script>
@@ -82,7 +84,8 @@
                   role="img"
                   tabindex="0"
                   aria-labelledby="paint-chart-title paint-chart-description"
-                  aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r"
+                  aria-describedby="diagnostic-probe-help"
+                  aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r Enter Space Escape"
                 >
                   <title id="paint-chart-title">Allocation rule, q(v,c)</title>
                   <desc id="paint-chart-description">A paintable grid of the probability of trade for every buyer-value, seller-cost pair, each cell split into an independently paintable left (L) and right (R) triangle.</desc>
@@ -96,9 +99,9 @@
           <aside class="choice-controls" aria-label="Painting controls">
             <div class="range-group">
               <div class="range-label-row">
-                <label id="cell-value-control-label" for="cell-value-slider">Allocation probability, \(q(v,c)\), on selected triangle</label>
+                <label id="brush-value-control-label" for="brush-value-slider">Allocation brush, \(q\)</label>
                 <input
-                  id="cell-value-number"
+                  id="brush-value-number"
                   class="range-number-input"
                   type="number"
                   min="0"
@@ -106,14 +109,17 @@
                   step="0.01"
                   value="0"
                   inputmode="decimal"
-                  aria-labelledby="cell-value-control-label"
+                  aria-labelledby="brush-value-control-label"
                 >
               </div>
-              <input id="cell-value-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0">
+              <input id="brush-value-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0">
               <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
             </div>
           </aside>
         </div>
+
+        <p id="diagnostic-probe-help" class="sr-only">Hover or focus a plot to inspect its exact output. Arrow keys move the probe or selected allocation triangle without skipping either triangle half. L and R select either triangle in a cell. Enter or Space applies the brush; hold either key while navigating to paint continuously.</p>
+        <p id="diagnostic-probe-status" class="sr-only" role="status" aria-live="polite"></p>
 
         <div class="diagnostic-panel-grid">
           <div class="diagnostic-panel">
@@ -125,13 +131,16 @@
                   class="diagnostic-chart"
                   viewBox="0 0 220 240"
                   role="img"
+                  tabindex="0"
                   aria-labelledby="buyer-ic-chart-title buyer-ic-chart-description"
+                  aria-describedby="diagnostic-probe-help"
+                  aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
                 >
-                  <title id="buyer-ic-chart-title">Interim buyer probability</title>
-                  <desc id="buyer-ic-chart-description">The buyer's interim probability of trade, averaged over the seller's cost, as a function of buyer value.</desc>
+                  <title id="buyer-ic-chart-title">Buyer IC</title>
+                  <desc id="buyer-ic-chart-description">Exact buyer interim payoff by true value and alternate report, with truthful and exact best reports overlaid.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">\(v\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">\(Q_B(v)\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Alternate buyer report, \(v'\)</p>
               </div>
             </figure>
             <div id="buyer-ic-text" class="diagnostic-text"></div>
@@ -146,13 +155,16 @@
                   class="diagnostic-chart"
                   viewBox="0 0 220 240"
                   role="img"
+                  tabindex="0"
                   aria-labelledby="seller-ic-chart-title seller-ic-chart-description"
+                  aria-describedby="diagnostic-probe-help"
+                  aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
                 >
-                  <title id="seller-ic-chart-title">Interim seller probability</title>
-                  <desc id="seller-ic-chart-description">The seller's interim probability of trade, averaged over the buyer's value, as a function of seller cost.</desc>
+                  <title id="seller-ic-chart-title">Seller IC</title>
+                  <desc id="seller-ic-chart-description">Exact seller interim payoff by true value and alternate report, with truthful and exact best reports overlaid.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">\(c\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">\(Q_S(c)\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Seller value, \(c\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Alternate seller report, \(c'\)</p>
               </div>
             </figure>
             <div id="seller-ic-text" class="diagnostic-text"></div>
@@ -160,65 +172,74 @@
 
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure">
-              <figcaption>Buyer utility, \(U_B\)</figcaption>
+              <figcaption>Net revenue</figcaption>
               <div class="math-chart-frame">
                 <svg
-                  id="buyer-utility-chart"
+                  id="revenue-chart"
                   class="diagnostic-chart"
                   viewBox="0 0 220 240"
                   role="img"
-                  aria-labelledby="buyer-utility-chart-title buyer-utility-chart-description"
+                  tabindex="0"
+                  aria-labelledby="revenue-chart-title revenue-chart-description"
+                  aria-describedby="diagnostic-probe-help"
+                  aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
                 >
-                  <title id="buyer-utility-chart-title">Buyer utility</title>
-                  <desc id="buyer-utility-chart-description">Buyer utility U sub B at every buyer-value, seller-cost pair.</desc>
+                  <title id="revenue-chart-title">Net revenue</title>
+                  <desc id="revenue-chart-description">Intermediary net revenue at every buyer-value, seller-cost pair; green is a surplus, red is a deficit.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">\(v\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">\(c\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Seller value, \(c\)</p>
               </div>
             </figure>
-            <div id="buyer-utility-text" class="diagnostic-text"></div>
+            <div id="revenue-text" class="diagnostic-text"></div>
           </div>
 
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure">
-              <figcaption>Seller utility, \(U_S\)</figcaption>
+              <figcaption>Buyer IR</figcaption>
               <div class="math-chart-frame">
                 <svg
-                  id="seller-utility-chart"
+                  id="buyer-payoff-chart"
                   class="diagnostic-chart"
                   viewBox="0 0 220 240"
                   role="img"
-                  aria-labelledby="seller-utility-chart-title seller-utility-chart-description"
+                  tabindex="0"
+                  aria-labelledby="buyer-payoff-chart-title buyer-payoff-chart-description"
+                  aria-describedby="diagnostic-probe-help"
+                  aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
                 >
-                  <title id="seller-utility-chart-title">Seller utility</title>
-                  <desc id="seller-utility-chart-description">Seller utility U sub S at every buyer-value, seller-cost pair.</desc>
+                  <title id="buyer-payoff-chart-title">Buyer IR</title>
+                  <desc id="buyer-payoff-chart-description">Buyer payoff u sub B at every buyer-value, seller-value pair.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">\(v\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">\(c\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Seller value, \(c\)</p>
               </div>
             </figure>
-            <div id="seller-utility-text" class="diagnostic-text"></div>
+            <div id="buyer-payoff-text" class="diagnostic-text"></div>
           </div>
 
           <div class="diagnostic-panel">
             <figure class="diagnostic-figure">
-              <figcaption>Net revenue, \(R\)</figcaption>
+              <figcaption>Seller IR</figcaption>
               <div class="math-chart-frame">
                 <svg
-                  id="budget-chart"
+                  id="seller-payoff-chart"
                   class="diagnostic-chart"
                   viewBox="0 0 220 240"
                   role="img"
-                  aria-labelledby="budget-chart-title budget-chart-description"
+                  tabindex="0"
+                  aria-labelledby="seller-payoff-chart-title seller-payoff-chart-description"
+                  aria-describedby="diagnostic-probe-help"
+                  aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
                 >
-                  <title id="budget-chart-title">Net revenue</title>
-                  <desc id="budget-chart-description">Intermediary net revenue R at every buyer-value, seller-cost pair; green is a surplus, red is a deficit.</desc>
+                  <title id="seller-payoff-chart-title">Seller IR</title>
+                  <desc id="seller-payoff-chart-description">Seller payoff u sub S at every buyer-value, seller-value pair.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">\(v\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">\(c\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Seller value, \(c\)</p>
               </div>
             </figure>
-            <div id="budget-text" class="diagnostic-text"></div>
+            <div id="seller-payoff-text" class="diagnostic-text"></div>
           </div>
 
           <div class="diagnostic-panel">
@@ -230,13 +251,16 @@
                   class="diagnostic-chart"
                   viewBox="0 0 220 240"
                   role="img"
+                  tabindex="0"
                   aria-labelledby="efficiency-chart-title efficiency-chart-description"
+                  aria-describedby="diagnostic-probe-help"
+                  aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
                 >
                   <title id="efficiency-chart-title">Efficiency comparison</title>
                   <desc id="efficiency-chart-description">Orange marks trade where v is less than c; blue marks missing trade where v is greater than c.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">\(v\)</p>
-                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">\(c\)</p>
+                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
+                <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Seller value, \(c\)</p>
               </div>
             </figure>
             <div id="efficiency-text" class="diagnostic-text"></div>
@@ -256,31 +280,31 @@
         You may wonder why you do not need to specify the payment rules in
         addition to your allocation rule, even though a direct bargaining
         mechanism consists of all three. Before we can answer this fully, let's
-        specify the following quantities:
+        specify the following quantities.
       </p>
       <p>
-        For a buyer with value \(v\), given the seller reports truthfully:
+        For a buyer with value \(v\) who reports \(v'\), given the seller reports truthfully:
       </p>
       <ul>
-        <li>\(\displaystyle Q_B(v)=\int_{\underline{c}}^{\overline{c}} q(v,c)\,f_S(c)\,dc\), his interim probability of trade;</li>
-        <li>\(\displaystyle P_B(v)=\int_{\underline{c}}^{\overline{c}} p_B(v,c)\,f_S(c)\,dc\), his interim expected payment from the buyer;</li>
-        <li>\(\displaystyle U_B(v)=v\,Q_B(v)-P_B(v)\), his interim expected payoff;</li>
+        <li>\(\displaystyle Q_B(v')=\int_{\underline{c}}^{\overline{c}} q(v',c)\,f_S(c)\,dc\), his interim probability of trade;</li>
+        <li>\(\displaystyle P_B(v')=\int_{\underline{c}}^{\overline{c}} p_B(v',c)\,f_S(c)\,dc\), his interim expected payment to;</li>
+        <li>\(\displaystyle U_B(v,v')=v\,Q_B(v')-P_B(v')\), his interim expected payoff;</li>
         <li>\(\displaystyle \phi_B(v)=v-\frac{1-F_B(v)}{f_B(v)}\), his virtual value.</li>
       </ul>
       <p>
-        For a seller with value \(c\), given the buyer reports truthfully:
+        For a seller with value \(c\) who reports \(c'\), given the buyer reports truthfully:
       </p>
       <ul>
-        <li>\(\displaystyle Q_S(c)=\int_{\underline{v}}^{\overline{v}} q(v,c)\,f_B(v)\,dv\), her interim probability of trade;</li>
-        <li>\(\displaystyle P_S(c)=\int_{\underline{v}}^{\overline{v}} p_S(c,v)\,f_B(v)\,dv\), her interim expected payment to the seller;</li>
-        <li>\(\displaystyle U_S(c)=P_S(c)-c\,Q_S(c)\), her interim expected payoff;</li>
+        <li>\(\displaystyle Q_S(c')=\int_{\underline{v}}^{\overline{v}} q(v,c')\,f_B(v)\,dv\), her interim probability of trade;</li>
+        <li>\(\displaystyle P_S(c')=\int_{\underline{v}}^{\overline{v}} p_S(c',v)\,f_B(v)\,dv\), her interim expected payment from;</li>
+        <li>\(\displaystyle U_S(c,c')=P_S(c')-c\,Q_S(c')\), her interim expected payoff;</li>
         <li>\(\displaystyle \phi_S(c)=c+\frac{F_S(c)}{f_S(c)}\), her virtual value.</li>
       </ul>
       <p>
-        Now, we can rewrite the IC, IR conditions as
+        For compactness, we'll write \(U_B(v,v)\) as \(U_B(v)\) and \(U_S(c,c)\) as \(U_S(c)\). Now, we can rewrite the IC, IR conditions as
       </p>
       <ul>
-        <li>IC: \(\displaystyle U_B(v)\geq \underbrace{vQ_B(v')-P_B(v')}_{\text{Payoff from misreporting } v'}\), for all \(v'\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\geq \underbrace{P_S(c')-cQ_S(c')}_{\text{Payoff from misreporting } c'}\), for all \(c'\in[\underline{c},\overline{c}]\);</li>
+        <li>IC: \(\displaystyle U_B(v)\geq U_B(v,v')\), for all \(v'\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\geq U_S(c,c')\), for all \(c'\in[\underline{c},\overline{c}]\);</li>
         <li>IR: \(\displaystyle U_B(v)\geq 0\), for all \(v\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\geq 0\), for all \(c\in[\underline{c},\overline{c}]\).</li>
       </ul>
       <p>
@@ -300,14 +324,14 @@
       </div>
       <p>
         <em>Proof:</em> Start with the forward implication.
-        For the buyer, for all \(v, v'\), by IC
+        For the buyer, for all \(v, v'\in[\underline{v},\overline{v}]\), by IC
       </p>
 
       <div id="buyer-monotonicity-envelope-proof" class="equation-chain-steps">
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle U_B(v) \)</span>
         <span class="equation-step-relation">\(\displaystyle \geq\)</span>
-        <span class="equation-step-rhs">\(\displaystyle vQ_B(v')-P_B(v') \)</span>
+        <span class="equation-step-rhs">\(\displaystyle U_B(v,v') = vQ_B(v')-P_B(v') \)</span>
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
 
         <span class="equation-step-connector">\(\displaystyle \iff \)</span>
@@ -365,7 +389,7 @@
 
       <div id="buyer-ic-verification" class="equation-chain-steps equation-chain-wide-rhs">
         <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle U_B(v) - \left[vQ_B(v')-P_B(v')\right] \)</span>
+        <span class="equation-step-lhs">\(\displaystyle U_B(v) - U_B(v,v') \)</span>
         <span class="equation-step-relation">\(\displaystyle =  \)</span>
         <span class="equation-step-rhs">\(\displaystyle \left[vQ_B(v)-P_B(v)\right] - \left[vQ_B(v')-P_B(v')\right] \)</span>
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
@@ -591,7 +615,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} F_S(v)\,v\,f_B(v)\,dv-\int_{\underline{c}}^{\overline{c}} \left(1-F_B(c)\right)c\,f_S(c)\,dc-\int_{\underline{v}}^{\overline{v}} F_S(v)\left(1-F_B(v)\right)dv-\int_{\underline{c}}^{\overline{c}} \left(1-F_B(c)\right)F_S(c)\,dc.\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} F_S(v)\,v\,f_B(v)\,dv-\int_{\underline{c}}^{\overline{c}} \left(1-F_B(c)\right)c\,f_S(c)\,dc-\int_{\underline{v}}^{\overline{v}} F_S(v)\left(1-F_B(v)\right)dv-\int_{\underline{c}}^{\overline{c}} F_S(c)\left(1-F_B(c)\right)\,dc.\)</span>
       </div>
 
       <p>
@@ -666,7 +690,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[p_B(v,c)\right]-\mathbb{E}\!\left[p_S(v,c)\right]\)</span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty} F_S(x)\left(1-F_B(x)\right)dx - \int_{\underline{v}}^{\overline{v}} F_S(v)\left(1-F_B(v)\right)dv-\int_{\underline{c}}^{\overline{c}} \left(1-F_B(c)\right)F_S(c)\,dc.\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty} F_S(x)\left(1-F_B(x)\right)dx - \int_{\underline{v}}^{\overline{v}} F_S(v)\left(1-F_B(v)\right)dv-\int_{\underline{c}}^{\overline{c}} F_S(c)\left(1-F_B(c)\right)\,dc.\)</span>
 
       <p>
         First, notice the integrands for the three terms are the same.
@@ -687,13 +711,6 @@
             Most of the times, the Myerson-Satterthwaite theorem is stated for ex-post BB.
             Börgers and Norman (2009) show that the two problems are equivalent, that is,
             if a mechanism is ex-ante BB, then it can be modified to be ex-post BB while preserving IC and IR.
-          </li>
-          <li>
-            Relaxing any condition fully usually makes the problem rather trivial. Some partial relaxations
-            admit interesting solutions. For example, if we relax PE and instead search for a
-            second-best mechanism that maximizes expected welfare subject to IC, IR, and BB we
-            get the Chatterjee-Samuelson double auction. If we relax interim IR to ex-ante IR,
-            the AGV mechanism is satisfactory under certain conditions.
           </li>
 
       </ul>

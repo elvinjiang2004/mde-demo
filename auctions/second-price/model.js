@@ -70,11 +70,11 @@
     var errors = result.errors.slice();
 
     if (!isFiniteNumber(value) || value < a - EPSILON || value > b + EPSILON) {
-      errors.push("The focal bidder's value must lie in [a, b].");
+      errors.push("Bidder 1's value must lie in [a, b].");
     }
 
     if (!isFiniteNumber(bid) || bid < a - EPSILON || bid > b + EPSILON) {
-      errors.push("The focal bidder's bid must lie in [a, b].");
+      errors.push("Bidder 1's bid must lie in [a, b].");
     }
 
     return {
@@ -158,7 +158,7 @@
     a,
     b,
     normalized,
-    focalCdf,
+    bidderOneBidCdf,
     probability
   ) {
     if (probability === 0) {
@@ -169,7 +169,7 @@
     }
 
     return distributions.integrate(function (rank) {
-      var opponentRank = focalCdf * Math.pow(rank, 1 / (n - 1));
+      var opponentRank = bidderOneBidCdf * Math.pow(rank, 1 / (n - 1));
       return distributions.quantile(opponentRank, a, b, normalized);
     }, 0, 1);
   }
@@ -181,15 +181,15 @@
     }
 
     var boundedBid = clamp(bid, a, b);
-    var focalCdf = distributions.cdf(boundedBid, a, b, normalized);
+    var bidderOneBidCdf = distributions.cdf(boundedBid, a, b, normalized);
     return conditionalExpectedPayment(
       boundedBid,
       n,
       a,
       b,
       normalized,
-      focalCdf,
-      Math.pow(focalCdf, n - 1)
+      bidderOneBidCdf,
+      Math.pow(bidderOneBidCdf, n - 1)
     );
   }
 
@@ -217,8 +217,8 @@
     var normalized = requireValidChoice(n, a, b, value, bid, spec);
     var boundedValue = clamp(value, a, b);
     var boundedBid = clamp(bid, a, b);
-    var focalCdf = distributions.cdf(boundedBid, a, b, normalized);
-    var probability = Math.pow(focalCdf, n - 1);
+    var bidderOneBidCdf = distributions.cdf(boundedBid, a, b, normalized);
+    var probability = Math.pow(bidderOneBidCdf, n - 1);
     var bidIntegral = cdfIntegral(boundedBid, n, a, b, normalized);
     var payment = boundedBid * probability - bidIntegral;
     var conditionalPayment = conditionalExpectedPayment(
@@ -227,7 +227,7 @@
       a,
       b,
       normalized,
-      focalCdf,
+      bidderOneBidCdf,
       probability
     );
     var payoff = (boundedValue - boundedBid) * probability + bidIntegral;

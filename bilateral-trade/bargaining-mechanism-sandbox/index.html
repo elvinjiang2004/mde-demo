@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Edit a direct bilateral-trade allocation rule and its buyer and seller payment rules, then inspect incentive, participation, budget, and efficiency diagnostics.">
+  <title>Bargaining Mechanism Sandbox | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/math-utils.js"></script>
+  <script defer src="../../js/svg-utils.js"></script>
+  <script defer src="../../js/bilateral-trade-envelope.js"></script>
+  <script defer src="../../js/bilateral-trade-visuals.js"></script>
+  <script defer src="model.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to the main content</a>
+
+  <header class="site-header">
+    <page-header category="Bilateral Trade" home="../../index.html"></page-header>
+  </header>
+
+  <main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">Bargaining Mechanism Sandbox</h1>
+    </section>
+
+    <section class="explorable explorable-divider" aria-label="Direct bargaining mechanism sandbox">
+      <aside class="sandbox-toolbar" aria-label="Mechanism controls">
+        <div class="preset-buttons" role="group" aria-labelledby="preset-buttons-label">
+          <span id="preset-buttons-label" class="preset-buttons-label">Presets:</span>
+          <button id="preset-vcg" class="text-button preset-button" type="button" aria-pressed="true">VCG</button>
+          <button id="preset-posted-price" class="text-button preset-button" type="button" aria-pressed="false">Posted price</button>
+          <button id="preset-agv" class="text-button preset-button" type="button" aria-pressed="false">Balanced AGV</button>
+          <button id="preset-split-difference" class="text-button preset-button" type="button" aria-pressed="false">Split-the-difference</button>
+          <button id="preset-chatterjee-samuelson" class="text-button preset-button" type="button" aria-pressed="false">Chatterjee&ndash;Samuelson</button>
+          <button id="preset-revenue-threshold" class="text-button preset-button" type="button" aria-pressed="false">Revenue threshold</button>
+          <button id="preset-custom" class="text-button preset-button" type="button" aria-pressed="false">Custom</button>
+        </div>
+
+        <div class="sandbox-action-row">
+          <div id="posted-price-control" class="range-group sandbox-parameter-control" hidden>
+            <div class="range-label-row">
+              <label id="posted-buyer-price-control-label" for="posted-buyer-price-slider">Buyer price, \(z_B\)</label>
+              <input
+                id="posted-buyer-price-number"
+                class="range-number-input"
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.5"
+                inputmode="decimal"
+                aria-labelledby="posted-buyer-price-control-label"
+              >
+            </div>
+            <input id="posted-buyer-price-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5">
+            <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
+          </div>
+
+          <div id="posted-seller-receipt-control" class="range-group sandbox-parameter-control" hidden>
+            <div class="range-label-row">
+              <label id="posted-seller-receipt-control-label" for="posted-seller-receipt-slider">Seller receipt, \(z_S\)</label>
+              <input
+                id="posted-seller-receipt-number"
+                class="range-number-input"
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.5"
+                inputmode="decimal"
+                aria-labelledby="posted-seller-receipt-control-label"
+              >
+            </div>
+            <input id="posted-seller-receipt-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5">
+            <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
+          </div>
+
+          <div id="agv-k-control" class="range-group sandbox-parameter-control" hidden>
+            <div class="range-label-row">
+              <label id="agv-k-control-label" for="agv-k-slider">AGV constant, \(K\)</label>
+              <input
+                id="agv-k-number"
+                class="range-number-input"
+                type="number"
+                step="0.01"
+                value="0.25"
+                inputmode="decimal"
+                aria-labelledby="agv-k-control-label"
+                aria-describedby="sandbox-validation-status"
+              >
+            </div>
+            <input id="agv-k-slider" class="slider-220" type="range" min="-0.5" max="0.5" step="0.01" value="0.25">
+            <div id="agv-k-endpoints" class="range-endpoints slider-220" aria-hidden="true"><span>-0.5</span><span>0.5</span></div>
+          </div>
+
+          <div id="split-threshold-control" class="range-group sandbox-parameter-control" hidden>
+            <div class="range-label-row">
+              <label id="split-threshold-control-label" for="split-threshold-slider">Trading threshold, \(t\)</label>
+              <input
+                id="split-threshold-number"
+                class="range-number-input"
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0"
+                inputmode="decimal"
+                aria-labelledby="split-threshold-control-label"
+              >
+            </div>
+            <input id="split-threshold-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0">
+            <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
+          </div>
+
+          <div id="split-seller-share-control" class="range-group sandbox-parameter-control" hidden>
+            <div class="range-label-row">
+              <label id="split-seller-share-control-label" for="split-seller-share-slider">Seller share of gains, \(s\)</label>
+              <input
+                id="split-seller-share-number"
+                class="range-number-input"
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.5"
+                inputmode="decimal"
+                aria-labelledby="split-seller-share-control-label"
+              >
+            </div>
+            <input id="split-seller-share-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5">
+            <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
+          </div>
+
+          <div id="revenue-threshold-control" class="range-group sandbox-parameter-control" hidden>
+            <div class="range-label-row">
+              <label id="revenue-threshold-control-label" for="revenue-threshold-slider">Trading threshold, \(t\)</label>
+              <input
+                id="revenue-threshold-number"
+                class="range-number-input"
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.5"
+                inputmode="decimal"
+                aria-labelledby="revenue-threshold-control-label"
+              >
+            </div>
+            <input id="revenue-threshold-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5">
+            <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
+          </div>
+
+          <div id="revenue-buyer-markup-control" class="range-group sandbox-parameter-control" hidden>
+            <div class="range-label-row">
+              <label id="revenue-buyer-markup-control-label" for="revenue-buyer-markup-slider">Buyer markup, \(\alpha\)</label>
+              <input
+                id="revenue-buyer-markup-number"
+                class="range-number-input"
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.5"
+                inputmode="decimal"
+                aria-labelledby="revenue-buyer-markup-control-label"
+              >
+            </div>
+            <input id="revenue-buyer-markup-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5">
+            <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
+          </div>
+
+          <div id="revenue-seller-discount-control" class="range-group sandbox-parameter-control" hidden>
+            <div class="range-label-row">
+              <label id="revenue-seller-discount-control-label" for="revenue-seller-discount-slider">Seller discount, \(\beta\)</label>
+              <input
+                id="revenue-seller-discount-number"
+                class="range-number-input"
+                type="number"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.5"
+                inputmode="decimal"
+                aria-labelledby="revenue-seller-discount-control-label"
+              >
+            </div>
+            <input id="revenue-seller-discount-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5">
+            <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
+          </div>
+
+          <div id="fix-ic-ir-control" class="fix-ic-ir-control" hidden>
+            <input id="fix-ic-ir-checkbox" type="checkbox">
+            <label for="fix-ic-ir-checkbox">Fix IC/IR</label>
+          </div>
+        </div>
+        <p id="sandbox-validation-status" class="control-status" role="status" aria-live="polite"></p>
+      </aside>
+
+      <p id="surface-edit-help" class="sr-only">Hover or focus a chart to inspect exact values. Arrow keys move the keyboard probe. In Custom mode, the same keys select triangles without skipping either half; L and R select either triangle in a cell. Enter or Space applies the brush, and holding either key while navigating paints continuously. Clicking or dragging also paints with the chosen brush intensity.</p>
+      <p id="surface-probe-status" class="sr-only" role="status" aria-live="polite"></p>
+
+      <div class="surface-editor-grid">
+        <div class="surface-editor">
+          <figure class="diagnostic-figure math-chart-figure">
+            <figcaption>Allocation rule, \(q(v,c)\)</figcaption>
+            <div class="math-chart-frame">
+              <svg
+                id="allocation-chart"
+                class="tradeoff-chart chart-480x520"
+                viewBox="0 0 480 520"
+                role="img"
+                tabindex="0"
+                aria-labelledby="allocation-chart-title allocation-chart-description"
+                aria-describedby="surface-edit-help"
+                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r Enter Space"
+              >
+                <title id="allocation-chart-title">Allocation rule, q(v,c)</title>
+                <desc id="allocation-chart-description">A paintable triangular mesh of the probability of trade for each buyer-value and seller-value report.</desc>
+              </svg>
+              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
+            </div>
+          </figure>
+          <aside id="allocation-edit-controls" class="surface-choice-controls" aria-label="Allocation painting controls" hidden>
+            <div class="range-group">
+              <div class="range-label-row">
+                <label id="allocation-value-control-label" for="allocation-value-slider">Allocation brush, \(q\)</label>
+                <input
+                  id="allocation-value-number"
+                  class="range-number-input"
+                  type="number"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value="0"
+                  inputmode="decimal"
+                  aria-labelledby="allocation-value-control-label"
+                >
+              </div>
+              <input id="allocation-value-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0">
+              <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="surface-editor">
+          <figure class="diagnostic-figure math-chart-figure">
+            <figcaption>Buyer payment, \(p_B(v,c)\)</figcaption>
+            <div class="math-chart-frame">
+              <svg
+                id="buyer-payment-chart"
+                class="tradeoff-chart chart-480x520"
+                viewBox="0 0 480 520"
+                role="img"
+                tabindex="0"
+                aria-labelledby="buyer-payment-chart-title buyer-payment-chart-description"
+                aria-describedby="surface-edit-help"
+                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r Enter Space"
+              >
+                <title id="buyer-payment-chart-title">Buyer payment, p B(v,c)</title>
+                <desc id="buyer-payment-chart-description">A paintable heatmap of the buyer payment for each buyer-value and seller-value report.</desc>
+              </svg>
+              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
+            </div>
+          </figure>
+          <aside id="buyer-payment-edit-controls" class="surface-choice-controls" aria-label="Buyer-payment painting controls" hidden>
+            <div class="range-group">
+              <div class="range-label-row">
+                <label id="buyer-payment-value-control-label" for="buyer-payment-value-slider">Buyer payment brush, \(p_B\)</label>
+                <input
+                  id="buyer-payment-value-number"
+                  class="range-number-input"
+                  type="number"
+                  step="0.01"
+                  value="0"
+                  inputmode="decimal"
+                  aria-labelledby="buyer-payment-value-control-label"
+                >
+              </div>
+              <input id="buyer-payment-value-slider" class="slider-220" type="range" min="-1" max="1" step="0.01" value="0">
+              <div id="buyer-payment-range-endpoints" class="range-endpoints slider-220" aria-hidden="true"><span>-1</span><span>1</span></div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="surface-editor">
+          <figure class="diagnostic-figure math-chart-figure">
+            <figcaption>Seller payment, \(p_S(v,c)\)</figcaption>
+            <div class="math-chart-frame">
+              <svg
+                id="seller-payment-chart"
+                class="tradeoff-chart chart-480x520"
+                viewBox="0 0 480 520"
+                role="img"
+                tabindex="0"
+                aria-labelledby="seller-payment-chart-title seller-payment-chart-description"
+                aria-describedby="surface-edit-help"
+                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r Enter Space"
+              >
+                <title id="seller-payment-chart-title">Seller payment, p S(v,c)</title>
+                <desc id="seller-payment-chart-description">A paintable heatmap of the seller payment for each buyer-value and seller-value report.</desc>
+              </svg>
+              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
+            </div>
+          </figure>
+          <aside id="seller-payment-edit-controls" class="surface-choice-controls" aria-label="Seller-payment painting controls" hidden>
+            <div class="range-group">
+              <div class="range-label-row">
+                <label id="seller-payment-value-control-label" for="seller-payment-value-slider">Seller payment brush, \(p_S\)</label>
+                <input
+                  id="seller-payment-value-number"
+                  class="range-number-input"
+                  type="number"
+                  step="0.01"
+                  value="0"
+                  inputmode="decimal"
+                  aria-labelledby="seller-payment-value-control-label"
+                >
+              </div>
+              <input id="seller-payment-value-slider" class="slider-220" type="range" min="-1" max="1" step="0.01" value="0">
+              <div id="seller-payment-range-endpoints" class="range-endpoints slider-220" aria-hidden="true"><span>-1</span><span>1</span></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+
+      <p id="ic-probe-help" class="sr-only">Hover or focus a diagnostic chart to inspect its exact value. Arrow keys move the probe. On the first two payoff charts, the axes are true type and alternate report.</p>
+      <p id="ic-probe-status" class="sr-only" role="status" aria-live="polite"></p>
+
+      <div class="diagnostic-panel-grid sandbox-diagnostic-grid">
+        <div class="diagnostic-panel">
+          <figure class="diagnostic-figure">
+            <figcaption>Buyer payoff, \(u_B\)</figcaption>
+            <div class="math-chart-frame">
+              <svg id="buyer-ic-chart" class="diagnostic-chart" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="buyer-ic-chart-title buyer-ic-chart-description" aria-describedby="ic-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End">
+                <title id="buyer-ic-chart-title">Buyer payoff, U B</title>
+                <desc id="buyer-ic-chart-description">Buyer interim utility by true value and alternate report, with truthful reports on the diagonal and the best-report trace overlaid.</desc>
+              </svg>
+              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Alternate buyer report, \(v'\)</p>
+            </div>
+          </figure>
+          <div id="buyer-ic-text" class="diagnostic-text"></div>
+        </div>
+
+        <div class="diagnostic-panel">
+          <figure class="diagnostic-figure">
+            <figcaption>Seller payoff, \(U_S\)</figcaption>
+            <div class="math-chart-frame">
+              <svg id="seller-ic-chart" class="diagnostic-chart" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="seller-ic-chart-title seller-ic-chart-description" aria-describedby="ic-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End">
+                <title id="seller-ic-chart-title">Seller payoff, U S</title>
+                <desc id="seller-ic-chart-description">Seller interim utility by true seller value and alternate report, with truthful reports on the diagonal and the best-report trace overlaid.</desc>
+              </svg>
+              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Seller value, \(c\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Alternate seller report, \(c'\)</p>
+            </div>
+          </figure>
+          <div id="seller-ic-text" class="diagnostic-text"></div>
+        </div>
+
+        <div class="diagnostic-panel">
+          <figure class="diagnostic-figure">
+            <figcaption>Net revenue</figcaption>
+            <div class="math-chart-frame">
+              <svg id="revenue-chart" class="diagnostic-chart" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="revenue-chart-title revenue-chart-description" aria-describedby="ic-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End">
+                <title id="revenue-chart-title">Net revenue</title>
+                <desc id="revenue-chart-description">Intermediary net revenue at each buyer-value and seller-value report pair.</desc>
+              </svg>
+              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
+            </div>
+          </figure>
+          <div id="revenue-text" class="diagnostic-text"></div>
+        </div>
+
+        <div class="diagnostic-panel">
+          <figure class="diagnostic-figure">
+            <figcaption>Buyer payoff, \(U_B\)</figcaption>
+            <div class="math-chart-frame">
+              <svg id="buyer-payoff-chart" class="diagnostic-chart" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="buyer-payoff-chart-title buyer-payoff-chart-description" aria-describedby="ic-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End">
+                <title id="buyer-payoff-chart-title">Buyer payoff, u B</title>
+                <desc id="buyer-payoff-chart-description">Buyer payoff at each buyer-value and seller-value report pair.</desc>
+              </svg>
+              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
+            </div>
+          </figure>
+          <div id="buyer-payoff-text" class="diagnostic-text"></div>
+        </div>
+
+        <div class="diagnostic-panel">
+          <figure class="diagnostic-figure">
+            <figcaption>Seller payoff, \(u_S\)</figcaption>
+            <div class="math-chart-frame">
+              <svg id="seller-payoff-chart" class="diagnostic-chart" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="seller-payoff-chart-title seller-payoff-chart-description" aria-describedby="ic-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End">
+                <title id="seller-payoff-chart-title">Seller payoff, u S</title>
+                <desc id="seller-payoff-chart-description">Seller payoff at each buyer-value and seller-value report pair.</desc>
+              </svg>
+              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
+            </div>
+          </figure>
+          <div id="seller-payoff-text" class="diagnostic-text"></div>
+        </div>
+
+        <div class="diagnostic-panel">
+          <figure class="diagnostic-figure">
+            <figcaption>Efficiency</figcaption>
+            <div class="math-chart-frame">
+              <svg id="efficiency-chart" class="diagnostic-chart" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="efficiency-chart-title efficiency-chart-description" aria-describedby="ic-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End">
+                <title id="efficiency-chart-title">Efficiency comparison</title>
+                <desc id="efficiency-chart-description">Over-trade and missing-trade deviations from the efficient allocation.</desc>
+              </svg>
+              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
+            </div>
+          </figure>
+          <div id="efficiency-text" class="diagnostic-text"></div>
+        </div>
+      </div>
+
+      <p id="live-summary" class="sr-only" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <page-footer></page-footer>
+  </footer>
+</body>
+</html>

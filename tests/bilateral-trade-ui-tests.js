@@ -4,17 +4,24 @@
   var frame = document.getElementById("app-frame");
   var testKeepAlive = window.setInterval(function () {}, 50);
   frame.addEventListener("load", function () {
-    Promise.resolve(frame.contentWindow.mechanismMathReady).then(runTests).catch(
-      function (error) {
-        addResult("MathJax initializes before the interface tests", error);
-        var summary = document.getElementById("summary");
-        summary.textContent = "The interface tests could not start.";
-        summary.className = "fail";
-        document.body.dataset.status = "failed";
-        document.title = "FAIL — Bilateral-trade interface tests";
-        window.clearInterval(testKeepAlive);
-      }
-    );
+    waitFor(function () {
+      var appDocument = frame.contentDocument;
+      return appDocument && appDocument.querySelector(
+        "#buyer-ic-chart image[data-renderer='payoff-raster']"
+      ) && appDocument.querySelector(
+        "#efficiency-chart image[data-renderer='diagnostic-raster']"
+      ) && appDocument.querySelector(
+        ".diagnostic-panel-grid .math-chart-axis-label mjx-container"
+      );
+    }, 10000).then(runTests).catch(function (error) {
+      addResult("The bilateral-trade interface initializes before its tests", error);
+      var summary = document.getElementById("summary");
+      summary.textContent = "The interface tests could not start.";
+      summary.className = "fail";
+      document.body.dataset.status = "failed";
+      document.title = "FAIL — Bilateral-trade interface tests";
+      window.clearInterval(testKeepAlive);
+    });
   });
 
   function assert(condition, message) {
@@ -31,6 +38,22 @@
         " Expected " + expected + ", received " + actual + "."
       );
     }
+  }
+
+  function waitFor(predicate, timeout) {
+    var started = Date.now();
+    return new Promise(function (resolve, reject) {
+      function check() {
+        if (predicate()) {
+          resolve();
+        } else if (Date.now() - started >= timeout) {
+          reject(new Error("Timed out waiting for the bilateral-trade interface."));
+        } else {
+          window.setTimeout(check, 25);
+        }
+      }
+      check();
+    });
   }
 
   function dispatchChange(element, appWindow) {
@@ -68,7 +91,7 @@
 
   function paintEntireGrid(value) {
       var chart = appDocument.getElementById("paint-chart");
-      var slider = appDocument.getElementById("cell-value-slider");
+      var slider = appDocument.getElementById("brush-value-slider");
       var rect = chart.getBoundingClientRect();
       var viewWidth = chart.viewBox.baseVal.width;
       var viewHeight = chart.viewBox.baseVal.height;
@@ -136,6 +159,8 @@
             "../../js/mathjax-runtime.js",
             "../../js/math-utils.js",
             "../../js/svg-utils.js",
+            "../../js/bilateral-trade-envelope.js",
+            "../../js/bilateral-trade-visuals.js",
             "../../js/equation-chain.js",
             "model.js",
             "app.js"
@@ -153,6 +178,10 @@
             appWindow.mechanismMathReady &&
             typeof appWindow.mechanismMathReady.then === "function",
           "The shared MathJax lifecycle and readiness promise should be available.");
+          assert(appWindow.BilateralTradeVisuals &&
+            typeof appWindow.BilateralTradeVisuals.bindProbeChart === "function" &&
+            typeof appWindow.BilateralTradeVisuals.drawProbeScaffold === "function",
+          "The shared bilateral-trade visual pipeline should be available.");
           assert(model && typeof model.summarize === "function",
             "BilateralTradeModel should be available to the page.");
           assert(appWindow.FPAModel === undefined && appWindow.SPAModel === undefined,
@@ -163,6 +192,81 @@
           assert(appDocument.querySelector('link[rel="stylesheet"]')
             .getAttribute("href") === "../../styles.css",
           "The module should use the shared root stylesheet.");
+        }
+      },
+      {
+        name: "The shared triangle mesh preserves geometry, orientation, and pointer clamping",
+        run: function () {
+          var mesh = appWindow.SvgUtils.createTriangleMesh(model.CELL_RESOLUTION);
+          var layout = {
+            viewWidth: 480,
+            viewHeight: 520,
+            left: 50,
+            right: 450,
+            top: 40,
+            bottom: 440
+          };
+          var svgStub = {
+            getBoundingClientRect: function () {
+              return { left: 0, top: 0, width: 480, height: 520 };
+            }
+          };
+
+          function eventAt(v, c) {
+            return {
+              clientX: layout.left + v * (layout.right - layout.left),
+              clientY: layout.bottom - c * (layout.bottom - layout.top)
+            };
+          }
+
+          var lower = mesh.pointerToTriangle(
+            svgStub, eventAt((6 + 2 / 3) / 20, (5 + 1 / 3) / 20), layout
+          );
+          var upper = mesh.pointerToTriangle(
+            svgStub, eventAt((6 + 1 / 3) / 20, (5 + 2 / 3) / 20), layout
+          );
+          var diagonal = mesh.pointerToTriangle(
+            svgStub, eventAt(0.025, 0.025), layout
+          );
+          var outside = mesh.pointerToTriangle(
+            svgStub, { clientX: 580, clientY: 240 }, layout
+          );
+
+          assert(Object.isFrozen(mesh), "The configured mesh API should be immutable.");
+          assert(lower.i === 6 && lower.j === 5 && lower.isLower && lower.insidePlot,
+            "A lower-right centroid should select its R triangle.");
+          assert(upper.i === 6 && upper.j === 5 && !upper.isLower && upper.insidePlot,
+            "An upper-left centroid should select its L triangle.");
+          assert(diagonal.i === 0 && diagonal.j === 0 && diagonal.isLower,
+            "An exact diagonal tie should select the lower-right triangle.");
+          assert(outside.i === 19 && !outside.insidePlot,
+            "An off-plot pointer should clamp to the boundary while reporting outside.");
+
+          var single = appWindow.SvgUtils.createTriangleMesh(1);
+          var svg = appDocument.createElementNS("http://www.w3.org/2000/svg", "svg");
+          var seen = [];
+          single.drawTriangleMesh(svg, {
+            lower: [[0.25]],
+            upper: [[0.75]]
+          }, {
+            viewWidth: 100,
+            viewHeight: 100,
+            left: 0,
+            right: 100,
+            top: 0,
+            bottom: 100
+          }, function (value, i, j, isLower) {
+            seen.push([value, i, j, isLower].join(":"));
+            return isLower ? "red" : "blue";
+          });
+
+          var polygons = svg.querySelectorAll("polygon");
+          assert(polygons.length === 2 &&
+            polygons[0].getAttribute("points") === "0,100 100,100 100,0" &&
+            polygons[1].getAttribute("points") === "0,100 0,0 100,0",
+          "The renderer should preserve lower-right then upper-left geometry.");
+          assert(seen.join("|") === "0.25:0:0:true|0.75:0:0:false",
+            "The renderer should pass each triangle's value, indices, and side.");
         }
       },
       {
@@ -231,13 +335,7 @@
             appDocument.getElementById("paint-chart")
               .closest("figure").querySelector("figcaption"),
             appDocument.querySelector(".chart-480x520-x-axis-label"),
-            appDocument.querySelector(".chart-480x520-y-axis-label"),
-            appDocument.getElementById("buyer-utility-chart")
-              .closest("figure").querySelector("figcaption"),
-            appDocument.getElementById("seller-utility-chart")
-              .closest("figure").querySelector("figcaption"),
-            appDocument.getElementById("budget-chart")
-              .closest("figure").querySelector("figcaption")
+            appDocument.querySelector(".chart-480x520-y-axis-label")
           ];
           mixedPlotLabels.forEach(function (label) {
             assert(label && label.firstChild &&
@@ -250,7 +348,11 @@
           });
           var plainTextCaptions = [
             { id: "buyer-ic-chart", text: "Buyer IC" },
-            { id: "seller-ic-chart", text: "Seller IC" }
+            { id: "seller-ic-chart", text: "Seller IC" },
+            { id: "revenue-chart", text: "Net revenue" },
+            { id: "buyer-payoff-chart", text: "Buyer IR" },
+            { id: "seller-payoff-chart", text: "Seller IR" },
+            { id: "efficiency-chart", text: "Efficiency" }
           ];
           plainTextCaptions.forEach(function (entry) {
             var label = appDocument.getElementById(entry.id)
@@ -260,30 +362,24 @@
             assert(!label.querySelector('mjx-container[jax="SVG"]'),
               "The " + entry.id + " figcaption should not render any MathJax notation.");
           });
-          var mathOnlyAxes = Array.from(appDocument.querySelectorAll(
+          var labeledAxes = Array.from(appDocument.querySelectorAll(
             ".chart-220x240-x-axis-label, " +
             ".chart-220x240-y-axis-label"
           ));
-          assert(mathOnlyAxes.length === 12,
-            "Each of the six diagnostic plots should keep both existing math-only axes.");
-          mathOnlyAxes.forEach(function (label) {
+          assert(labeledAxes.length === 12,
+            "Each of the six diagnostic plots should have both labeled axes.");
+          labeledAxes.forEach(function (label) {
             assert(label.querySelectorAll('mjx-container[jax="SVG"]').length === 1,
-              "Each math-only diagnostic axis should have one MathJax rendering.");
-            assert(!label.firstChild ||
-              label.firstChild.nodeType !== 3 ||
-              label.firstChild.nodeValue.trim() === "",
-            "Math-only diagnostic axes should not gain a plain-text prefix.");
+              "Each diagnostic axis should have one MathJax rendering.");
+            assert(label.firstChild && label.firstChild.nodeType === 3 &&
+              /, $/.test(label.firstChild.nodeValue),
+            "Each diagnostic axis should separate its full text label and notation " +
+              "with a comma and a space.");
           });
-          var budgetCaption = appDocument.querySelector(
-            "#budget-chart"
-          ).closest("figure").querySelector("figcaption");
-          assert(budgetCaption.querySelector('mjx-container[jax="SVG"]') &&
-            !/\\\(/.test(budgetCaption.textContent),
-          "The net-revenue figcaption should render as MathJax, not raw TeX.");
           var cellControlLabel = appDocument
-            .getElementById("cell-value-control-label");
+            .getElementById("brush-value-control-label");
           assert(cellControlLabel.querySelector('mjx-container[jax="SVG"]'),
-            "The static control label's q(v,c) should render as MathJax.");
+            "The static control label's q should render as MathJax.");
           assert(!/\\\(/.test(cellControlLabel.textContent),
             "The control label should retain no raw TeX delimiter.");
           assert(cellControlLabel.firstChild &&
@@ -291,11 +387,10 @@
             /, $/.test(cellControlLabel.firstChild.nodeValue),
           "The control label should follow the site's comma-space " +
             "convention before its notation.");
-          assert(appDocument.getElementById("cell-value-slider")
-            .getAttribute("aria-valuetext").indexOf("∈") >= 0,
-          "The slider's accessible value text, which names the selected " +
-            "triangle, should use a real Unicode ∈ character rather than " +
-            "MathJax, since it updates on every paint stroke.");
+          assert(appDocument.getElementById("brush-value-slider")
+            .getAttribute("aria-valuetext").startsWith("Brush q = "),
+          "The slider's accessible value text should identify the brush rather " +
+            "than the selected triangle's current value.");
           assert(!appDocument.querySelector("#paint-chart .panel-caption") &&
             !appDocument.querySelector("#paint-chart .axis-title"),
           "The main plot's mixed title and axes should live outside its SVG.");
@@ -308,18 +403,20 @@
             .getBoundingClientRect();
           var yAxisRect = appDocument.querySelector(".chart-480x520-y-axis-label")
             .getBoundingClientRect();
-          assertClose(xAxisRect.left, paintRect.left,
-            "The HTML buyer-value axis label should begin at the main plot edge.", 1);
-          assertClose(xAxisRect.width, paintRect.width,
-            "The HTML buyer-value axis label should span only the main plot.", 1);
+          var mainLabelLeft = paintRect.left + 40 / 480 * paintRect.width;
+          var mainLabelWidth = 440 / 480 * paintRect.width;
+          assertClose(xAxisRect.left, mainLabelLeft,
+            "The HTML buyer-value axis label should keep its established inset.", 1);
+          assertClose(xAxisRect.width, mainLabelWidth,
+            "The HTML buyer-value axis label should keep its established span.", 1);
           assert(yAxisRect.left >= paintRect.left &&
             yAxisRect.right <= paintRect.right &&
             yAxisRect.top >= paintRect.top &&
             yAxisRect.bottom <= paintRect.bottom,
           "The rotated seller-cost axis label should remain inside the main plot.");
           [
-            "buyer-ic-chart", "seller-ic-chart", "buyer-utility-chart",
-            "seller-utility-chart", "budget-chart", "efficiency-chart"
+            "buyer-ic-chart", "seller-ic-chart", "buyer-payoff-chart",
+            "seller-payoff-chart", "revenue-chart", "efficiency-chart"
           ].forEach(function (id) {
             var chart = appDocument.getElementById(id);
             var chartRect = chart.getBoundingClientRect();
@@ -329,12 +426,12 @@
             var yRect = frame.querySelector(".chart-220x240-y-axis-label")
               .getBoundingClientRect();
             assertClose(xRect.left, chartRect.left,
-              "Chart " + id + "'s math-only x label should begin at its plot edge.", 1);
+              "Chart " + id + "'s x label should keep its full-width span.", 1);
             assertClose(xRect.width, chartRect.width,
-              "Chart " + id + "'s math-only x label should span only its plot.", 1);
+              "Chart " + id + "'s x label should span the chart.", 1);
             assert(yRect.left >= chartRect.left && yRect.right <= chartRect.right &&
               yRect.top >= chartRect.top && yRect.bottom <= chartRect.bottom,
-            "Chart " + id + "'s math-only y label should stay inside its plot.");
+            "Chart " + id + "'s y label should stay inside its plot.");
           });
           assert(appDocument.querySelectorAll(".explorable svg .axis-title").length === 0,
             "No static bilateral axis title should remain inside an SVG.");
@@ -357,6 +454,126 @@
         }
       },
       {
+        name: "All six diagnostics render exact model-evaluated fields through compact rasters",
+        run: function () {
+          assert(typeof appWindow.SvgUtils.createFieldRaster === "function",
+            "The exact field-raster helper should be shared through SvgUtils.");
+          ["buyer-ic-chart", "seller-ic-chart"].forEach(function (id) {
+            var chart = appDocument.getElementById(id);
+            var image = chart.querySelector("image[data-renderer='payoff-raster']");
+            assert(image && image.dataset.rasterSize === "330" &&
+              image.getAttribute("href").indexOf("data:image/png") === 0,
+            id + " should render exact interim deviation payoffs.");
+            assert(chart.querySelector(".truthful-report-line") &&
+              chart.querySelector(".best-report-line"),
+            id + " should overlay truthful and exact best-report traces.");
+          });
+          ["buyer-payoff-chart", "seller-payoff-chart", "revenue-chart",
+            "efficiency-chart"]
+            .forEach(function (id) {
+              var chart = appDocument.getElementById(id);
+              var image = chart.querySelector("image[data-renderer='diagnostic-raster']");
+              assert(image && image.dataset.rasterSize === "330" &&
+                image.getAttribute("href").indexOf("data:image/png") === 0,
+              id + " should render one exact model-evaluated field raster.");
+              assert(chart.querySelectorAll("polygon[fill]").length === 0,
+                id + " should not flatten its field to one value per triangle.");
+            });
+          ["buyer-ic-chart", "seller-ic-chart", "buyer-payoff-chart",
+            "seller-payoff-chart"].forEach(function (id) {
+              var chart = appDocument.getElementById(id);
+              assert(chart.dataset.colorLow === "blue" &&
+                chart.dataset.colorZero === "clear" &&
+                chart.dataset.colorHigh === "yellow",
+              id + " should use the sandbox blue-clear-yellow utility scale.");
+            });
+          var revenue = appDocument.getElementById("revenue-chart");
+          assert(revenue.dataset.colorLow === "red" &&
+            revenue.dataset.colorZero === "clear" &&
+            revenue.dataset.colorHigh === "green" &&
+            revenue.querySelector("desc").textContent.includes("clear at zero"),
+          "M-S revenue should use the sandbox red-clear-green scale.");
+        }
+      },
+      {
+        name: "The allocation and all six diagnostics expose exact compact probes",
+        run: function () {
+          var paintChart = appDocument.getElementById("paint-chart");
+          var paintRect = paintChart.getBoundingClientRect();
+          var paintX = paintRect.left + (50 + 0.25 * 400) / 480 * paintRect.width;
+          var paintY = paintRect.top + (440 - 0.75 * 400) / 520 * paintRect.height;
+          firePointer(paintChart, "pointermove", paintX, paintY, 119);
+          var allocationProbe = paintChart.querySelector(".allocation-probe");
+          assert(allocationProbe && allocationProbe.querySelector(
+            ".plot-probe-text"
+          ).textContent === "q=0.000",
+          "The allocation hover box should contain only its exact three-decimal q value.");
+          assert(Array.from(allocationProbe.querySelectorAll(
+            ".plot-probe-coordinate"
+          )).map(function (node) { return node.textContent; }).join(",") ===
+            "0.250,0.750",
+          "The allocation probe should put its three-decimal coordinates by the axes.");
+          assert(paintChart.getAttribute("aria-describedby") ===
+            "diagnostic-probe-help" &&
+            paintChart.getAttribute("aria-keyshortcuts").indexOf("Escape") >= 0,
+          "The allocation probe should share the page's accessible probe instructions.");
+
+          var entries = [
+            { id: "buyer-ic-chart", symbol: "U", subscript: "B" },
+            { id: "seller-ic-chart", symbol: "U", subscript: "S" },
+            { id: "revenue-chart", symbol: "Rev" },
+            { id: "buyer-payoff-chart", symbol: "u", subscript: "B" },
+            { id: "seller-payoff-chart", symbol: "u", subscript: "S" },
+            { id: "efficiency-chart", symbol: "Loss" }
+          ];
+          entries.forEach(function (entry, index) {
+            var chart = appDocument.getElementById(entry.id);
+            var rect = chart.getBoundingClientRect();
+            var clientX = rect.left + (35 + 0.25 * 165) / 220 * rect.width;
+            var clientY = rect.top + (180 - 0.75 * 165) / 240 * rect.height;
+            firePointer(chart, "pointermove", clientX, clientY, 120 + index);
+            var probe = chart.querySelector(".diagnostic-probe");
+            var output = probe && probe.querySelector(".plot-probe-text");
+            var coordinates = probe && probe.querySelectorAll(
+              ".plot-probe-coordinate"
+            );
+            assert(probe && output,
+              entry.id + " should reveal one compact output probe on pointer movement.");
+            assert(output.firstChild.textContent === entry.symbol,
+              entry.id + " should use the requested output symbol in its hover box.");
+            if (entry.subscript) {
+              assert(output.querySelector(".plot-probe-subscript").textContent ===
+                entry.subscript,
+              entry.id + " should render the payoff agent as a native SVG subscript.");
+            }
+            assert(/^[-A-Za-z]+[BS]?=-?\d+\.\d{3}$/.test(output.textContent),
+              entry.id + " should show only its output, rounded to three decimals.");
+            assert(coordinates.length === 2 &&
+              coordinates[0].textContent === "0.250" &&
+              coordinates[1].textContent === "0.750",
+            entry.id + " should put its three-decimal coordinates beside the axes.");
+            assert(chart.getAttribute("tabindex") === "0" &&
+              chart.getAttribute("aria-describedby") === "diagnostic-probe-help",
+            entry.id + " should expose the same probe through keyboard focus.");
+          });
+
+          var buyerChart = appDocument.getElementById("buyer-ic-chart");
+          var expected = model.buyerInterimDeviationUtility(
+            model.summarize(model.efficientGrid()).interim, 0.25, 0.75
+          );
+          assert(buyerChart.querySelector(".plot-probe-text").textContent ===
+            "UB=" + (Math.abs(expected) < 1e-9 ? 0 : expected).toFixed(3),
+          "The buyer IC probe should evaluate the exact interim payoff at the cursor.");
+          buyerChart.focus();
+          buyerChart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
+            key: "ArrowRight", bubbles: true, cancelable: true
+          }));
+          assert(buyerChart.querySelectorAll(".plot-probe-coordinate")[0]
+            .textContent === "0.260",
+          "ArrowRight should move the focused probe by one hundredth.");
+        }
+      },
+      {
         name: "The default view paints the efficient benchmark",
         run: function () {
           var expected = model.summarize(model.efficientGrid());
@@ -374,10 +591,10 @@
           assertClose(Number(efficiency.dataset.welfare),
             expected.verdicts.welfare,
             "Displayed welfare should match the model.", 1e-6);
-          var budget = appDocument.getElementById("budget-text");
-          assert(budget.dataset.exPostBudgetBalanced === "false",
+          var revenue = appDocument.getElementById("revenue-text");
+          assert(revenue.dataset.exPostBudgetBalanced === "false",
             "The efficient benchmark should not be ex-post budget balanced.");
-          assertClose(Number(budget.dataset.expectedRevenue),
+          assertClose(Number(revenue.dataset.expectedRevenue),
             expected.verdicts.expectedRevenue,
             "Displayed expected revenue should match the model.", 1e-6);
           assert(expected.verdicts.expectedRevenue < -0.05,
@@ -403,7 +620,7 @@
           "The posted-price control belonged to a preset and should be gone.");
           var controls = appDocument.querySelector(".choice-controls");
           assert(controls.querySelectorAll(".range-group").length === 1,
-            "Only the selected-triangle allocation control should remain.");
+            "Only the allocation-brush control should remain.");
           assert(controls.querySelectorAll("button").length === 0,
             "The painting controls should offer no buttons at all.");
         }
@@ -417,7 +634,7 @@
             assert(mainColumn && mainColumn.contains(
               appDocument.getElementById("paint-chart")
             ) && mainColumn.contains(
-              appDocument.getElementById("cell-value-slider")
+              appDocument.getElementById("brush-value-slider")
             ), "The main column should hold both the paint chart and its controls.");
             assert(grid && appWindow.getComputedStyle(grid).display === "grid",
               "The six diagnostic panels should be arranged in a grid.");
@@ -428,7 +645,7 @@
                 appWindow.Node.DOCUMENT_POSITION_FOLLOWING,
             "The diagnostic grid should follow the main column (to its right on wide screens).");
 
-            var slider = appDocument.getElementById("cell-value-slider");
+            var slider = appDocument.getElementById("brush-value-slider");
             var sliderMaxWidth = parseFloat(
               appWindow.getComputedStyle(slider).maxWidth
             );
@@ -450,11 +667,15 @@
               ".diagnostic-panel-grid > .diagnostic-panel"
             ));
             assert(panels.length === 6, "There should be six diagnostic panels.");
-            var lastTwoIds = panels.slice(-2).map(function (panel) {
+            var panelIds = panels.map(function (panel) {
               return panel.querySelector(".diagnostic-chart").id;
             });
-            assert(lastTwoIds[0] === "budget-chart" && lastTwoIds[1] === "efficiency-chart",
-              "Budget balance and efficiency should be the last two (rightmost) panels.");
+            assert(JSON.stringify(panelIds) === JSON.stringify([
+              "buyer-ic-chart", "seller-ic-chart", "revenue-chart",
+              "buyer-payoff-chart", "seller-payoff-chart", "efficiency-chart"
+            ]),
+            "The diagnostics should run left-to-right, top-to-bottom as Buyer IC, " +
+              "Seller IC, Net revenue, Buyer IR, Seller IR, and Efficiency.");
 
             var grid = appDocument.querySelector(".diagnostic-panel-grid");
             var columns = appWindow.getComputedStyle(grid)
@@ -473,42 +694,40 @@
         }
       },
       {
-        name: "IR utility text reports expected rent, always green since IR cannot fail",
+        name: "Payoff text reports expected payoff, always green since IR cannot fail",
         run: function () {
           (function () {
-            var buyerUtility = appDocument.getElementById("buyer-utility-text");
-            var sellerUtility = appDocument.getElementById("seller-utility-text");
-            assert(buyerUtility.textContent.includes("Expected buyer rent") &&
-              sellerUtility.textContent.includes("Expected seller rent"),
-            "The utility panels should report expected rent, since the " +
+            var buyerPayoff = appDocument.getElementById("buyer-payoff-text");
+            var sellerPayoff = appDocument.getElementById("seller-payoff-text");
+            assert(buyerPayoff.textContent.includes("Expected buyer payoff") &&
+              sellerPayoff.textContent.includes("Expected seller payoff"),
+            "The payoff panels should report expected payoff, since the " +
               "minimum is always exactly zero and never fails.");
-            assert(!buyerUtility.textContent.includes("Never negative") &&
-              !buyerUtility.textContent.includes("Negative somewhere"),
+            assert(!buyerPayoff.textContent.includes("Never negative") &&
+              !buyerPayoff.textContent.includes("Negative somewhere"),
             "The dead never-negative wording should be gone.");
-            assert(buyerUtility.querySelector("p").className === "verdict-pass" &&
-              sellerUtility.querySelector("p").className === "verdict-pass",
-            "Expected-rent lines are always the pass color, since ex-post " +
+            assert(buyerPayoff.querySelector("p").className === "verdict-pass" &&
+              sellerPayoff.querySelector("p").className === "verdict-pass",
+            "Expected-payoff lines are always the pass color, since ex-post " +
               "IR holds automatically for any q in [0,1].");
           }());
         }
       },
       {
-        name: "The selected-cell slider and number input stay synchronized under a static label",
+        name: "The brush slider and number input stay synchronized without editing a triangle",
         run: function () {
           (function () {
-            var slider = appDocument.getElementById("cell-value-slider");
-            var number = appDocument.getElementById("cell-value-number");
-            var label = appDocument.getElementById("cell-value-control-label");
+            var slider = appDocument.getElementById("brush-value-slider");
+            var number = appDocument.getElementById("brush-value-number");
+            var label = appDocument.getElementById("brush-value-control-label");
+            var beforeFills = Array.from(appDocument.querySelectorAll(
+              "#paint-chart polygon[fill]"
+            )).map(function (polygon) { return polygon.getAttribute("fill"); }).join("|");
 
-            assert(/^Allocation probability,\s*$/.test(label.firstChild.nodeValue) &&
-              /on selected triangle\s*$/.test(label.lastChild.nodeValue),
-            "The control label should keep its short static wording around " +
-              "the rendered q(v,c).");
-            assert(!/∈|\[0\./.test(label.textContent),
-              "The label should no longer embed live cell coordinates.");
-            assert(/, [LR]$/.test(slider.getAttribute("aria-valuetext")),
-              "The slider's accessible value text should still end with the " +
-              "selected triangle's L/R side.");
+            assert(/^Allocation brush,\s*$/.test(label.firstChild.nodeValue),
+              "The static control label should identify the allocation brush.");
+            assert(slider.getAttribute("aria-valuetext").startsWith("Brush q = "),
+              "The slider should announce the brush rather than a selected value.");
 
             slider.value = "0.73";
             dispatchInput(slider, appWindow);
@@ -519,6 +738,11 @@
             dispatchChange(number, appWindow);
             assert(slider.value === "0.2",
               "Changing the number field should update the slider.");
+            assert(Array.from(appDocument.querySelectorAll(
+              "#paint-chart polygon[fill]"
+            )).map(function (polygon) { return polygon.getAttribute("fill"); }).join("|") ===
+              beforeFills,
+            "Changing the allocation brush alone should not edit any triangle.");
 
             number.value = "not-a-number";
             dispatchChange(number, appWindow);
@@ -528,37 +752,35 @@
         }
       },
       {
-        name: "The selected cell's range in the in-graph marker and value text updates dynamically",
+        name: "Keyboard selection moves independently of the allocation brush",
         run: function () {
           (function () {
             var chart = appDocument.getElementById("paint-chart");
-            var slider = appDocument.getElementById("cell-value-slider");
-            var staticLabel = appDocument.getElementById("cell-value-control-label")
+            var slider = appDocument.getElementById("brush-value-slider");
+            var staticLabel = appDocument.getElementById("brush-value-control-label")
               .textContent;
             var before = slider.getAttribute("aria-valuetext");
 
             chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
               key: "ArrowRight", bubbles: true, cancelable: true
             }));
-            assert(slider.getAttribute("aria-valuetext") !== before,
-              "ArrowRight should move the selected cell and update the value text.");
+            assert(slider.getAttribute("aria-valuetext") === before,
+              "ArrowRight should move the selected cell without changing the brush.");
             assert(chart.querySelector(".cell-label"),
               "An in-graph label should identify the selected cell.");
 
             chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
               key: "Home", bubbles: true, cancelable: true
             }));
-            assert(slider.getAttribute("aria-valuetext").includes("v ∈ [0.00, 0.05)"),
-              "Home should move the selection to the leftmost cell, v in [0, 0.05).");
             assert(chart.querySelector(".cell-label").textContent.startsWith("[0.00, 0.05)"),
               "The in-graph label should also reflect the leftmost cell.");
 
             chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
               key: "End", bubbles: true, cancelable: true
             }));
-            assert(slider.getAttribute("aria-valuetext").includes("v ∈ [0.95, 1.00)"),
-              "End should move the selection to the rightmost cell, v in [0.95, 1).");
-            assert(appDocument.getElementById("cell-value-control-label")
+            assert(chart.querySelector(".cell-label").textContent.startsWith("[0.95, 1.00)"),
+              "End should move the selection to the rightmost cell.");
+            assert(appDocument.getElementById("brush-value-control-label")
               .textContent === staticLabel,
             "The visible control label should stay static while the " +
               "selection moves.");
@@ -566,47 +788,190 @@
             assert(chart.getAttribute("aria-keyshortcuts").includes("ArrowUp") &&
               chart.getAttribute("aria-keyshortcuts").includes("Home") &&
               chart.getAttribute("aria-keyshortcuts").includes("l") &&
-              chart.getAttribute("aria-keyshortcuts").includes("r"),
+              chart.getAttribute("aria-keyshortcuts").includes("r") &&
+              chart.getAttribute("aria-keyshortcuts").includes("Enter") &&
+              chart.getAttribute("aria-keyshortcuts").includes("Space"),
             "Declared keyboard shortcuts should match the implemented keys.");
           }());
         }
       },
       {
-        name: "L and R keys select the two triangles of the current cell independently",
+        name: "The allocation surface updates during a stroke and exact diagnostics wait for release",
+        run: function () {
+          return (async function () {
+            paintEntireGrid(0);
+            var slider = appDocument.getElementById("brush-value-slider");
+            var chart = appDocument.getElementById("paint-chart");
+            var rect = chart.getBoundingClientRect();
+            var beforeFills = Array.from(chart.querySelectorAll("polygon[fill]"))
+              .map(function (polygon) { return polygon.getAttribute("fill"); })
+              .join("|");
+            var beforeEfficiency = appDocument.querySelector(
+              "#efficiency-chart image"
+            ).getAttribute("href");
+            slider.value = "1";
+            dispatchInput(slider, appWindow);
+            assert(Array.from(chart.querySelectorAll("polygon[fill]"))
+              .map(function (polygon) { return polygon.getAttribute("fill"); })
+              .join("|") === beforeFills,
+            "Changing the brush should not repaint a triangle.");
+            firePointer(
+              chart,
+              "pointerdown",
+              rect.left + 250 / 480 * rect.width,
+              rect.top + 240 / 520 * rect.height,
+              50
+            );
+            await new Promise(function (resolve) {
+              appWindow.requestAnimationFrame(resolve);
+            });
+            assert(Array.from(chart.querySelectorAll("polygon[fill]"))
+              .map(function (polygon) { return polygon.getAttribute("fill"); })
+              .join("|") !== beforeFills,
+            "The touched allocation triangle should repaint during the stroke.");
+            assert(appDocument.querySelector("#efficiency-chart image")
+              .getAttribute("href") === beforeEfficiency,
+            "Dependent diagnostic rasters should remain unchanged during the stroke.");
+            await new Promise(function (resolve) {
+              appWindow.setTimeout(resolve, 150);
+            });
+            assert(appDocument.querySelector("#efficiency-chart image")
+              .getAttribute("href") === beforeEfficiency,
+            "A pause while the pointer is held should not trigger exact diagnostics.");
+            firePointer(
+              chart,
+              "pointerup",
+              rect.left + 250 / 480 * rect.width,
+              rect.top + 240 / 520 * rect.height,
+              50
+            );
+            assert(appDocument.querySelector("#efficiency-chart image")
+              .getAttribute("href") !== beforeEfficiency,
+            "The exact diagnostics should refresh when the stroke is released.");
+          }());
+        }
+      },
+      {
+        name: "Horizontal keyboard movement visits L and R without skipping either triangle",
         run: function () {
           (function () {
             paintEntireGrid(0);
             var chart = appDocument.getElementById("paint-chart");
-            var slider = appDocument.getElementById("cell-value-slider");
+            var slider = appDocument.getElementById("brush-value-slider");
 
             function press(key) {
               chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
                 key: key, bubbles: true, cancelable: true
               }));
             }
-            function valueText() {
-              return slider.getAttribute("aria-valuetext");
+            function release(key) {
+              chart.dispatchEvent(new appWindow.KeyboardEvent("keyup", {
+                key: key, bubbles: true, cancelable: true
+              }));
+            }
+            function selectedOutput() {
+              return chart.querySelector(".allocation-probe .plot-probe-text")
+                .textContent;
             }
 
             press("Home");
+            assert(chart.querySelector(".cell-label").textContent
+              .startsWith("[0.00, 0.05)") &&
+              chart.querySelector(".cell-label").textContent.endsWith(" L"),
+            "Home should start on the leftmost cell's L triangle.");
+            press("ArrowRight");
+            assert(chart.querySelector(".cell-label").textContent
+              .startsWith("[0.00, 0.05)") &&
+              chart.querySelector(".cell-label").textContent.endsWith(" R"),
+            "The first ArrowRight should visit R in the same cell.");
+            press("ArrowRight");
+            assert(chart.querySelector(".cell-label").textContent
+              .startsWith("[0.05, 0.10)") &&
+              chart.querySelector(".cell-label").textContent.endsWith(" L"),
+            "The next ArrowRight should move to L in the next cell.");
+            var down;
+            for (down = 0; down < 2 * model.CELL_RESOLUTION; down += 1) {
+              press("ArrowDown");
+            }
+            assert(chart.querySelector(".cell-label").textContent
+              .includes("× [0.00, 0.05) R"),
+            "Repeated ArrowDown should reach the bottom row's R triangle.");
+            press("ArrowUp");
+            assert(chart.querySelector(".cell-label").textContent
+              .includes("× [0.00, 0.05) L"),
+            "The first ArrowUp should visit L in the same row.");
+            press("ArrowUp");
+            assert(chart.querySelector(".cell-label").textContent
+              .includes("× [0.05, 0.10) R"),
+            "The next ArrowUp should move to R in the next row.");
+
+            press("Home");
             press("r");
-            assert(valueText().endsWith(", R"),
+            assert(chart.querySelector(".cell-label").textContent.endsWith(" R"),
               "Pressing r should select the right (lower) triangle.");
             slider.value = "0.8";
             dispatchInput(slider, appWindow);
+            press("Enter");
+            release("Enter");
 
             press("l");
-            assert(valueText().endsWith(", L"),
+            assert(chart.querySelector(".cell-label").textContent.endsWith(" L"),
               "Pressing l should select the left (upper) triangle of the same cell.");
-            assertClose(Number(slider.value), 0,
-              "The L triangle should still read its own (untouched, 0) " +
-              "value, not the R triangle's freshly painted 0.8.", 1e-9);
+            assert(selectedOutput() === "q=0.000" && slider.value === "0.8",
+              "The L triangle should remain untouched while the brush stays at 0.8.");
 
             press("r");
-            assertClose(Number(slider.value), 0.8,
-              "Reselecting R should show the 0.8 it was painted with, " +
-              "confirming the two triangles hold independent values.", 1e-9);
+            assert(selectedOutput() === "q=0.800" && slider.value === "0.8",
+              "Reselecting R should recover its painted value without changing the brush.");
           }());
+        }
+      },
+      {
+        name: "Holding Enter paints every triangle reached by keyboard navigation",
+        run: function () {
+          paintEntireGrid(0);
+          var chart = appDocument.getElementById("paint-chart");
+          var slider = appDocument.getElementById("brush-value-slider");
+          var beforeEfficiency = appDocument.querySelector(
+            "#efficiency-chart image"
+          ).getAttribute("href");
+
+          function key(type, value) {
+            chart.dispatchEvent(new appWindow.KeyboardEvent(type, {
+              key: value, bubbles: true, cancelable: true
+            }));
+          }
+
+          slider.value = "0.6";
+          dispatchInput(slider, appWindow);
+          key("keydown", "Home");
+          key("keydown", "Enter");
+          key("keydown", "ArrowRight");
+          key("keydown", "ArrowRight");
+          assert(appDocument.querySelector("#efficiency-chart image")
+            .getAttribute("href") === beforeEfficiency,
+          "Exact diagnostics should remain unchanged while Enter is held.");
+          key("keyup", "Enter");
+          assert(appDocument.querySelector("#efficiency-chart image")
+            .getAttribute("href") !== beforeEfficiency,
+          "Releasing Enter should commit one exact diagnostic refresh.");
+
+          key("keydown", "Home");
+          assert(chart.querySelector(".allocation-probe .plot-probe-text")
+            .textContent === "q=0.600",
+          "The starting L triangle should receive the held-key brush.");
+          key("keydown", "ArrowRight");
+          assert(chart.querySelector(".allocation-probe .plot-probe-text")
+            .textContent === "q=0.600",
+          "The same cell's R triangle should receive the held-key brush.");
+          key("keydown", "ArrowRight");
+          assert(chart.querySelector(".allocation-probe .plot-probe-text")
+            .textContent === "q=0.600",
+          "The next cell's L triangle should receive the held-key brush.");
+          key("keydown", "ArrowRight");
+          assert(chart.querySelector(".allocation-probe .plot-probe-text")
+            .textContent === "q=0.000",
+          "Navigation after release should not keep painting.");
         }
       },
       {
@@ -615,7 +980,7 @@
           return (async function () {
             paintEntireGrid(0);
             var chart = appDocument.getElementById("paint-chart");
-            var slider = appDocument.getElementById("cell-value-slider");
+            var slider = appDocument.getElementById("brush-value-slider");
             var buyerIc = appDocument.getElementById("buyer-ic-text");
             var sellerIc = appDocument.getElementById("seller-ic-text");
             var rect = chart.getBoundingClientRect();
@@ -636,7 +1001,7 @@
             }
 
             var k;
-            for (k = 0; k < model.CELL_RESOLUTION; k += 1) {
+            for (k = 0; k < 2 * model.CELL_RESOLUTION; k += 1) {
               press("ArrowDown");
             }
             press("End");
@@ -661,9 +1026,24 @@
             assert(Number(sellerIc.dataset.sellerIcViolationCount) > 0,
               "The seller interim-violation count should be positive.");
 
-            var budget = appDocument.getElementById("budget-text");
-            assert(!/formal value only|not IC-implementable/.test(budget.textContent),
-              "The budget text no longer carries a not-IC-implementable caveat.");
+            ["buyer-ic-chart", "seller-ic-chart"].forEach(function (id) {
+              var icChart = appDocument.getElementById(id);
+              assert(icChart.querySelector(
+                "image[data-renderer='payoff-raster']"
+              ), id + " should retain its exact payoff field after painting.");
+              assert(Number(icChart.dataset.maxDeviationGain) > 0,
+                id + " should report a positive exact deviation gain.");
+              var truthful = icChart.querySelector(".truthful-report-line");
+              var best = icChart.querySelector(".best-report-line");
+              assert(truthful && best &&
+                appWindow.getComputedStyle(truthful).stroke !== "none" &&
+                appWindow.getComputedStyle(best).stroke !== "none",
+              id + " should display truthful and best-report traces.");
+            });
+
+            var revenue = appDocument.getElementById("revenue-text");
+            assert(!/formal value only|not IC-implementable/.test(revenue.textContent),
+              "The revenue text no longer carries a not-IC-implementable caveat.");
           }());
         }
       },
@@ -673,7 +1053,7 @@
           (function () {
             paintEntireGrid(0);
             var chart = appDocument.getElementById("paint-chart");
-            var slider = appDocument.getElementById("cell-value-slider");
+            var slider = appDocument.getElementById("brush-value-slider");
             var rect = chart.getBoundingClientRect();
 
             chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
@@ -692,8 +1072,8 @@
             firePointer(chart, "pointerup",
               rect.right + 200, rect.top + rect.height * 0.5, 61);
 
-            assert(slider.getAttribute("aria-valuetext")
-              .includes("v ∈ [0.95, 1.00)"),
+            assert(chart.querySelector(".cell-label").textContent
+              .startsWith("[0.95, 1.00)"),
             "Dragging past the right edge should clamp to the rightmost cell.");
 
             chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
@@ -702,9 +1082,9 @@
             chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
               key: "End", bubbles: true, cancelable: true
             }));
-            assertClose(Number(slider.value), 1,
-              "Returning to the boundary triangle should recover the value painted by the drag.",
-              1e-9);
+            assert(chart.querySelector(".allocation-probe .plot-probe-text")
+              .textContent === "q=1.000" && slider.value === "1",
+              "Returning to the boundary triangle should show the painted value while preserving the brush.");
           }());
         }
       },
@@ -714,7 +1094,7 @@
           (function () {
             [
               "paint-chart", "buyer-ic-chart", "seller-ic-chart",
-              "buyer-utility-chart", "seller-utility-chart", "budget-chart",
+              "buyer-payoff-chart", "seller-payoff-chart", "revenue-chart",
               "efficiency-chart"
             ].forEach(function (id) {
               var chart = appDocument.getElementById(id);
@@ -736,12 +1116,83 @@
             assert(summary.getAttribute("aria-live") === "polite",
               "The live summary should be politely announced.");
             assert(summary.textContent.includes("IC-implementable") ||
-              summary.textContent.includes("Expected buyer rent"),
+              summary.textContent.includes("Expected buyer payoff"),
             "The live summary should describe the IC and IR state.");
-            assert(summary.textContent.includes("Expected budget balance") ||
-              summary.textContent.includes("budget"),
-            "The live summary should describe the budget-balance state.");
+            assert(summary.textContent.includes("Expected revenue"),
+              "The live summary should describe expected revenue.");
           }());
+        }
+      },
+      {
+        name: "Generated heatmaps use the active CSS RGB palette",
+        run: function () {
+          var root = appDocument.documentElement;
+          var properties = [
+            "--heatmap-neutral-rgb",
+            "--heatmap-blue-rgb",
+            "--heatmap-green-rgb",
+            "--heatmap-yellow-rgb",
+            "--heatmap-orange-rgb",
+            "--heatmap-red-rgb"
+          ];
+          var previous = properties.map(function (propertyName) {
+            return root.style.getPropertyValue(propertyName);
+          });
+          var slider = appDocument.getElementById("brush-value-slider");
+
+          try {
+            root.style.setProperty("--heatmap-neutral-rgb", "1, 2, 3");
+            root.style.setProperty("--heatmap-blue-rgb", "101, 2, 3");
+            root.style.setProperty("--heatmap-green-rgb", "1, 102, 3");
+            root.style.setProperty("--heatmap-yellow-rgb", "103, 102, 3");
+            root.style.setProperty("--heatmap-orange-rgb", "1, 2, 103");
+            root.style.setProperty("--heatmap-red-rgb", "101, 102, 3");
+
+            paintEntireGrid(0);
+            slider.value = "1";
+            dispatchInput(slider, appWindow);
+            appDocument.getElementById("paint-chart").dispatchEvent(
+              new appWindow.KeyboardEvent("keydown", {
+                key: "Enter", bubbles: true, cancelable: true
+              })
+            );
+            appDocument.getElementById("paint-chart").dispatchEvent(
+              new appWindow.KeyboardEvent("keyup", {
+                key: "Enter", bubbles: true, cancelable: true
+              })
+            );
+
+            var paintFills = Array.from(appDocument.querySelectorAll(
+              "#paint-chart polygon[fill]"
+            )).map(function (polygon) { return polygon.getAttribute("fill"); });
+            assert(paintFills.includes("rgb(1,2,3)") &&
+              paintFills.includes("rgb(101,2,3)"),
+            "The allocation heatmap should mix from the active neutral color " +
+              "to the active blue color.");
+
+            ["buyer-ic-chart", "seller-ic-chart", "buyer-payoff-chart",
+              "seller-payoff-chart", "revenue-chart", "efficiency-chart"]
+              .forEach(function (id) {
+                var image = appDocument.querySelector(
+                  "#" + id + " image"
+                );
+                assert(image && image.getAttribute("href").indexOf("data:image/png") === 0,
+                  id + " should retain its generated raster under a palette change.");
+              });
+            assert(appDocument.getElementById("buyer-ic-chart")
+              .dataset.colorHigh === "yellow",
+            "The exact deviation fields should retain the yellow high endpoint.");
+          } finally {
+            properties.forEach(function (propertyName, index) {
+              if (previous[index]) {
+                root.style.setProperty(propertyName, previous[index]);
+              } else {
+                root.style.removeProperty(propertyName);
+              }
+            });
+            slider.value = "0";
+            dispatchInput(slider, appWindow);
+          }
         }
       }
     ];

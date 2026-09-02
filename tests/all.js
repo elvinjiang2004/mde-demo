@@ -6,6 +6,7 @@
     { file: "model-tests.html", name: "First-price model", kind: "model" },
     { file: "second-price-model-tests.html", name: "Second-price model", kind: "model" },
     { file: "bilateral-trade-model-tests.html", name: "Myerson-Satterthwaite model", kind: "model" },
+    { file: "bargaining-sandbox-model-tests.html", name: "Bargaining sandbox model", kind: "model" },
     { file: "envelope-theorem-model-tests.html", name: "Envelope theorem model", kind: "model" },
     { file: "payments-from-allocation-rule-model-tests.html", name: "Payments model", kind: "model" },
     { file: "components-tests.html", name: "Shared components", kind: "interface" },
@@ -13,6 +14,7 @@
     { file: "ui-tests.html", name: "First-price interface", kind: "interface" },
     { file: "second-price-ui-tests.html", name: "Second-price interface", kind: "interface" },
     { file: "bilateral-trade-ui-tests.html", name: "Myerson-Satterthwaite interface", kind: "interface" },
+    { file: "bargaining-sandbox-ui-tests.html", name: "Bargaining sandbox interface", kind: "interface" },
     { file: "envelope-theorem-ui-tests.html", name: "Envelope theorem interface", kind: "interface" },
     { file: "payments-from-allocation-rule-ui-tests.html", name: "Payments interface", kind: "interface" }
   ];
@@ -186,7 +188,7 @@
       "test failure. Serve the repository root and reload from there:" +
       "<pre>py -m http.server 8000</pre>" +
       "then open <code>http://localhost:8000/tests/all.html</code>. " +
-      "The six model suites and <code>components-tests.html</code> also run " +
+      "The seven model suites and <code>components-tests.html</code> also run " +
       "correctly opened directly as files, since they load no iframe.";
     document.body.dataset.status = "blocked";
     document.title = "Needs a server — All suites";

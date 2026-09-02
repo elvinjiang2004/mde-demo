@@ -254,8 +254,9 @@
             appDocument.getElementById("bid-min-label"),
             appDocument.getElementById("bid-max-label")
           ].forEach(function (element) {
-            assert(appWindow.getComputedStyle(element).color === "rgb(0, 0, 0)",
-              "Slider numbers should be black.");
+            assert(appWindow.getComputedStyle(element).color ===
+              appWindow.getComputedStyle(appDocument.body).color,
+            "Slider numbers should use the active theme's text color.");
           });
         }
       },
@@ -537,7 +538,7 @@
           assert(!appDocument.querySelector(".figure-key"),
             "The chart legend should be removed.");
           assert(!appDocument.getElementById("choices-title"),
-            "The visible Focal Bidder heading should be removed.");
+            "The visible Bidder 1 heading should be removed.");
           assert(appDocument.querySelectorAll(".equilibrium-marker").length === 2,
             "Expected the equilibrium bid to be marked in both panels.");
           assert(appDocument.querySelectorAll(".density-equilibrium-marker")

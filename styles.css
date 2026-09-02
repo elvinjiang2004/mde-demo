@@ -1,4 +1,9 @@
 :root {
+  color-scheme: light;
+  --page-background: #fff;
+  --surface-background: #fff;
+  --control-background: #fff;
+  --control-border: #999;
   --ink: #1d2732;
   --muted: #5f6872;
   --line: #cfcfc9;
@@ -8,7 +13,84 @@
   --orange: #a85416;
   --red: #963c3c;
   --focus: #086fb8;
+  --error-text: #7d2626;
+  --axis: #777;
+  --zero-line: #aaa;
+  --guide: #918b82;
+  --guide-muted: #7a756f;
+  --guide-label: #6f6963;
+  --guide-light: #b7b2a9;
+  --marker-fill: #fff;
+  --annotation-halo: #fff;
+  --blue-fill: rgba(23, 107, 156, 0.2);
+  --blue-fill-subtle: rgba(23, 107, 156, 0.16);
+  --green-fill: rgba(35, 116, 81, 0.2);
+  --green-fill-subtle: rgba(35, 116, 81, 0.14);
+  --red-fill: rgba(150, 60, 60, 0.18);
+  --red-fill-subtle: rgba(150, 60, 60, 0.16);
+  --heatmap-neutral-rgb: 255, 255, 255;
+  --heatmap-blue-rgb: 23, 107, 156;
+  --heatmap-green-rgb: 35, 116, 81;
+  --heatmap-yellow-rgb: 214, 171, 0;
+  --heatmap-orange-rgb: 168, 84, 22;
+  --heatmap-red-rgb: 150, 60, 60;
+  --envelope-line-a: #1b6fa8;
+  --envelope-line-b: #a85416;
+  --envelope-line-c: #237451;
+  --envelope-line-d: #963c3c;
+  --envelope-line-e: #7a4fa3;
+  --envelope-line-f: #b8860b;
+  --envelope-line-g: #0f8a8a;
+  --envelope-line-h: #5f6872;
   --text-font: "Times New Roman", Times, serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page-background: #171a1f;
+    --surface-background: #1f242a;
+    --control-background: #20262d;
+    --control-border: #7d8792;
+    --ink: #edf1f5;
+    --muted: #b5bdc6;
+    --line: #626c77;
+    --line-light: #39414a;
+    --blue: #65b8e8;
+    --green: #6aca9a;
+    --orange: #eba562;
+    --red: #eb8989;
+    --focus: #73c9ff;
+    --error-text: #f0a0a0;
+    --axis: #b6bec7;
+    --zero-line: #858f9a;
+    --guide: #9ca6b0;
+    --guide-muted: #a5aeb8;
+    --guide-label: #bec5cd;
+    --guide-light: #68727d;
+    --marker-fill: #1f242a;
+    --annotation-halo: #1f242a;
+    --blue-fill: rgba(101, 184, 232, 0.28);
+    --blue-fill-subtle: rgba(101, 184, 232, 0.22);
+    --green-fill: rgba(106, 202, 154, 0.28);
+    --green-fill-subtle: rgba(106, 202, 154, 0.2);
+    --red-fill: rgba(235, 137, 137, 0.26);
+    --red-fill-subtle: rgba(235, 137, 137, 0.2);
+    --heatmap-neutral-rgb: 31, 36, 42;
+    --heatmap-blue-rgb: 101, 184, 232;
+    --heatmap-green-rgb: 106, 202, 154;
+    --heatmap-yellow-rgb: 244, 211, 94;
+    --heatmap-orange-rgb: 235, 165, 98;
+    --heatmap-red-rgb: 235, 137, 137;
+    --envelope-line-a: #67b9ed;
+    --envelope-line-b: #f0a261;
+    --envelope-line-c: #6fd09d;
+    --envelope-line-d: #ee8585;
+    --envelope-line-e: #c59ae8;
+    --envelope-line-f: #e5c65b;
+    --envelope-line-g: #57cccc;
+    --envelope-line-h: #b5bdc6;
+  }
 }
 
 * {
@@ -22,7 +104,7 @@ html {
 body {
   margin: 0;
   color: var(--ink);
-  background: #fff;
+  background: var(--page-background);
   font-family: var(--text-font);
   font-size: 17px;
   line-height: 1.62;
@@ -71,7 +153,7 @@ a:focus-visible {
   top: 0.75rem;
   left: 0.75rem;
   padding: 0.55rem 0.75rem;
-  color: #fff;
+  color: var(--page-background);
   background: var(--ink);
   font-family: var(--text-font);
   font-size: 0.85rem;
@@ -235,8 +317,8 @@ input[type="number"] {
   margin-top: 0.32rem;
   padding: 0.45rem 0.55rem;
   color: var(--ink);
-  background: #fff;
-  border: 1px solid #999;
+  background: var(--control-background);
+  border: 1px solid var(--control-border);
   border-radius: 0;
   font-family: var(--text-font);
   font-size: 0.92rem;
@@ -267,7 +349,7 @@ input[type="number"] {
   min-height: 32px;
   margin: 0;
   padding: 0.2rem 0.35rem;
-  color: #000;
+  color: var(--ink);
   font-size: 0.9rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -302,7 +384,7 @@ input[type="number"] {
 }
 
 .value-pdf-area {
-  fill: rgba(23, 107, 156, 0.16);
+  fill: var(--blue-fill-subtle);
 }
 
 .value-pdf-curve {
@@ -321,7 +403,7 @@ input[type="number"] {
 .input-error {
   margin-top: 0.9rem;
   padding-left: 0.75rem;
-  color: #7d2626;
+  color: var(--error-text);
   border-left: 3px solid var(--red);
   font-family: var(--text-font);
   font-size: 0.86rem;
@@ -383,7 +465,7 @@ input[type="number"] {
   min-height: 32px;
   margin: 0;
   padding: 0.2rem 0.35rem;
-  color: #000;
+  color: var(--ink);
   font-size: 0.9rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -402,7 +484,7 @@ input[type="range"] {
   display: flex;
   justify-content: space-between;
   margin-top: -0.25rem;
-  color: #000;
+  color: var(--ink);
   font-family: var(--text-font);
   font-size: 0.7rem;
   font-variant-numeric: tabular-nums;
@@ -603,7 +685,7 @@ input[type="range"] {
   align-items: flex-start;
   justify-content: center;
   color: var(--ink);
-  background: #fff;
+  background: var(--surface-background);
   border: 1px solid var(--line);
 }
 
@@ -630,7 +712,7 @@ input[type="range"] {
 }
 
 .panel-background {
-  fill: #fff;
+  fill: var(--surface-background);
 }
 
 .grid-line {
@@ -639,13 +721,20 @@ input[type="range"] {
 }
 
 .zero-line {
-  stroke: #aaa;
+  stroke: var(--zero-line);
   stroke-width: 1.2;
 }
 
 .axis-line {
-  stroke: #777;
+  stroke: var(--axis);
   stroke-width: 1.1;
+}
+
+.violation-point {
+  fill: var(--marker-fill);
+  stroke: var(--red);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 
 .axis-text,
@@ -689,7 +778,7 @@ input[type="range"] {
 }
 
 .winning-area {
-  fill: rgba(23, 107, 156, 0.2);
+  fill: var(--blue-fill);
   stroke: none;
 }
 
@@ -704,25 +793,25 @@ input[type="range"] {
 }
 
 .spa-payoff-area-positive {
-  fill: rgba(35, 116, 81, 0.2);
+  fill: var(--green-fill);
   stroke: none;
 }
 
 .spa-payoff-area-negative {
-  fill: rgba(150, 60, 60, 0.18);
+  fill: var(--red-fill);
   stroke: var(--red);
   stroke-width: 1.2;
   stroke-dasharray: none;
 }
 
 .expected-payoff-rectangle {
-  fill: rgba(35, 116, 81, 0.2);
+  fill: var(--green-fill);
   stroke: var(--green);
   stroke-width: 1.5;
 }
 
 .expected-payoff-negative {
-  fill: rgba(150, 60, 60, 0.16);
+  fill: var(--red-fill-subtle);
   stroke: var(--red);
   stroke-dasharray: none;
 }
@@ -733,7 +822,7 @@ input[type="range"] {
 }
 
 .zero-expected-payoff {
-  fill: #fff;
+  fill: var(--marker-fill);
   stroke: var(--ink);
   stroke-width: 2.5;
   stroke-dasharray: 3 3;
@@ -750,7 +839,7 @@ input[type="range"] {
 }
 
 .cdf-value-guide {
-  stroke: #918b82;
+  stroke: var(--guide);
   stroke-width: 1.2;
   stroke-dasharray: 3 5;
 }
@@ -773,13 +862,13 @@ input[type="range"] {
 }
 
 .chosen-point {
-  fill: #fff;
+  fill: var(--marker-fill);
   stroke: var(--ink);
   stroke-width: 3;
 }
 
 .equilibrium-point {
-  fill: #fff;
+  fill: var(--marker-fill);
   stroke: var(--orange);
   stroke-width: 2.4;
 }
@@ -807,7 +896,7 @@ input[type="range"] {
 }
 
 .axis-value-marker {
-  stroke: #7a756f;
+  stroke: var(--guide-muted);
   stroke-width: 1.8;
   stroke-dasharray: 3 3;
 }
@@ -835,7 +924,7 @@ input[type="range"] {
 }
 
 .axis-value-label {
-  fill: #6f6963;
+  fill: var(--guide-label);
 }
 
 .axis-payment-label.axis-value-label {
@@ -880,7 +969,7 @@ input[type="range"] {
 }
 
 .payoff-bracket-zero-mark {
-  fill: #fff;
+  fill: var(--marker-fill);
   stroke: currentColor;
   stroke-width: 2.2;
 }
@@ -898,7 +987,7 @@ input[type="range"] {
 
 .annotation-halo {
   paint-order: stroke fill;
-  stroke: #fff;
+  stroke: var(--annotation-halo);
   stroke-width: 4px;
   stroke-linejoin: round;
 }
@@ -952,7 +1041,7 @@ input[type="range"] {
 
 .diagnostic-figure figcaption {
   margin: 0 0 0.3rem;
-  color: #000;
+  color: var(--ink);
   font-family: var(--text-font);
   font-size: 0.82rem;
   font-weight: 700;
@@ -983,9 +1072,89 @@ input[type="range"] {
 }
 
 .diagonal-guide {
-  stroke: #7a756f;
+  stroke: var(--guide-muted);
   stroke-width: 1.3;
   stroke-dasharray: 5 4;
+}
+
+.preset-boundary {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.35;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.truthful-report-line {
+  fill: none;
+  stroke: var(--guide-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.best-report-line {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.plot-probe-line {
+  stroke: var(--ink);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.plot-probe-point {
+  fill: var(--marker-fill);
+  stroke: var(--ink);
+  stroke-width: 1.8;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.plot-probe-box {
+  fill: var(--surface-background);
+  stroke: var(--ink);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.plot-probe-text {
+  fill: var(--ink);
+  font-family: var(--text-font);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.plot-probe-coordinate {
+  fill: var(--ink);
+  stroke: var(--surface-background);
+  stroke-width: 3px;
+  paint-order: stroke fill;
+  font-family: var(--text-font);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.plot-probe-symbol {
+  font-style: italic;
+}
+
+.plot-probe-subscript {
+  font-size: 75%;
 }
 
 .cell-cursor {
@@ -1000,34 +1169,6 @@ input[type="range"] {
   font-size: 12px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-}
-
-.interim-curve {
-  fill: none;
-  stroke: var(--blue);
-  stroke-width: 2.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.interim-curve-violation {
-  stroke: var(--red);
-}
-
-.violation-point {
-  fill: var(--red);
-  stroke: #fff;
-  stroke-width: 1;
-}
-
-.overtrade-mark {
-  stroke: var(--orange);
-  stroke-width: 1.6;
-}
-
-.undertrade-mark {
-  stroke: var(--blue);
-  stroke-width: 1.6;
 }
 
 .chart-660x450 {
@@ -1133,7 +1274,7 @@ input[type="range"] {
 .math-chart-axis-label {
   position: absolute;
   margin: 0;
-  color: #000;
+  color: var(--ink);
   font-family: var(--text-font);
   font-size: clamp(9px, 1.82vw, 12px);
   font-weight: 700;
@@ -1157,10 +1298,11 @@ input[type="range"] {
 
 .chart-480x520-x-axis-label {
   bottom: 7%;
+  left: 8.333%;
 }
 
 .chart-480x520-y-axis-label {
-  top: 46.154%;
+  top: 44.231%;
   left: 3.333%;
 }
 
@@ -1198,7 +1340,7 @@ input[type="range"] {
 }
 
 .control-point {
-  fill: #fff;
+  fill: var(--marker-fill);
   stroke: var(--blue);
   stroke-width: 2.2;
   cursor: ns-resize;
@@ -1224,12 +1366,12 @@ input[type="range"] {
 }
 
 .rent-area {
-  fill: rgba(35, 116, 81, 0.14);
+  fill: var(--green-fill-subtle);
   stroke: none;
 }
 
 .deviation-line {
-  stroke: #b7b2a9;
+  stroke: var(--guide-light);
   stroke-width: 1.1;
 }
 
@@ -1244,8 +1386,8 @@ input[type="range"] {
 }
 
 .tangency-point {
-  fill: #fff;
-  stroke: #918b82;
+  fill: var(--marker-fill);
+  stroke: var(--guide);
   stroke-width: 1.2;
 }
 
@@ -1270,12 +1412,12 @@ input[type="range"] {
 
 .kink-marker {
   fill: var(--ink);
-  stroke: #fff;
+  stroke: var(--surface-background);
   stroke-width: 1;
 }
 
 .line-endpoint {
-  fill: #fff;
+  fill: var(--marker-fill);
   stroke-width: 2.2;
   cursor: move;
 }
@@ -1316,7 +1458,7 @@ input[type="range"] {
 }
 
 .slope-jump-guide {
-  stroke: #b7b2a9;
+  stroke: var(--guide-light);
   stroke-width: 1;
   stroke-dasharray: 3 3;
 }
@@ -1446,6 +1588,52 @@ input[type="range"] {
 }
 
 @media print {
+  :root {
+    color-scheme: light;
+    --page-background: #fff;
+    --surface-background: #fff;
+    --control-background: #fff;
+    --control-border: #999;
+    --ink: #1d2732;
+    --muted: #5f6872;
+    --line: #cfcfc9;
+    --line-light: #e5e5e0;
+    --blue: #176b9c;
+    --green: #237451;
+    --orange: #a85416;
+    --red: #963c3c;
+    --focus: #086fb8;
+    --error-text: #7d2626;
+    --axis: #777;
+    --zero-line: #aaa;
+    --guide: #918b82;
+    --guide-muted: #7a756f;
+    --guide-label: #6f6963;
+    --guide-light: #b7b2a9;
+    --marker-fill: #fff;
+    --annotation-halo: #fff;
+    --blue-fill: rgba(23, 107, 156, 0.2);
+    --blue-fill-subtle: rgba(23, 107, 156, 0.16);
+    --green-fill: rgba(35, 116, 81, 0.2);
+    --green-fill-subtle: rgba(35, 116, 81, 0.14);
+    --red-fill: rgba(150, 60, 60, 0.18);
+    --red-fill-subtle: rgba(150, 60, 60, 0.16);
+    --heatmap-neutral-rgb: 255, 255, 255;
+    --heatmap-blue-rgb: 23, 107, 156;
+    --heatmap-green-rgb: 35, 116, 81;
+    --heatmap-yellow-rgb: 214, 171, 0;
+    --heatmap-orange-rgb: 168, 84, 22;
+    --heatmap-red-rgb: 150, 60, 60;
+    --envelope-line-a: #1b6fa8;
+    --envelope-line-b: #a85416;
+    --envelope-line-c: #237451;
+    --envelope-line-d: #963c3c;
+    --envelope-line-e: #7a4fa3;
+    --envelope-line-f: #b8860b;
+    --envelope-line-g: #0f8a8a;
+    --envelope-line-h: #5f6872;
+  }
+
   .site-header,
   .model-specifications,
   .choice-controls,
@@ -1455,5 +1643,129 @@ input[type="range"] {
 
   .page-width {
     width: 100%;
+  }
+}
+
+.sandbox-toolbar {
+  margin-bottom: 2.2rem;
+  padding-bottom: 1.4rem;
+  border-bottom: 1px solid var(--line-light);
+}
+
+.preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1rem;
+}
+
+.preset-buttons-label {
+  color: var(--ink);
+  font-family: var(--text-font);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.preset-buttons .text-button {
+  min-height: 42px;
+  margin-top: 0;
+}
+
+.preset-button[aria-pressed="true"] {
+  color: var(--ink);
+  border-bottom-width: 2px;
+  font-weight: 700;
+}
+
+.sandbox-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 1.4rem 2rem;
+  margin-top: 1rem;
+}
+
+.sandbox-parameter-control {
+  flex: 0 1 320px;
+}
+
+.fix-ic-ir-control {
+  flex: 1 1 260px;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 44px;
+}
+
+.fix-ic-ir-control input {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin: 0;
+}
+
+.fix-ic-ir-control label {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.control-status {
+  color: var(--muted);
+  font-family: var(--text-font);
+  font-size: 0.8rem;
+}
+
+.control-status {
+  min-height: 1.2em;
+  margin: 0.35rem 0 0;
+}
+
+.surface-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2.2rem 1.6rem;
+  align-items: start;
+}
+
+.surface-editor {
+  width: 100%;
+  min-width: 0;
+  max-width: 480px;
+  margin-inline: auto;
+}
+
+.surface-choice-controls {
+  min-width: 0;
+  padding-top: 0.9rem;
+}
+
+.sandbox-diagnostic-grid {
+  margin-top: 3rem;
+}
+
+@media (max-width: 1050px) {
+  .surface-editor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .surface-editor-grid {
+    grid-template-columns: minmax(0, 480px);
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .sandbox-action-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media print {
+  .sandbox-toolbar,
+  .surface-choice-controls {
+    display: none;
   }
 }
