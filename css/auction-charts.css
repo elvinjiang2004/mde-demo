@@ -1,0 +1,298 @@
+.panel-background {
+  fill: var(--surface-background);
+}
+
+.grid-line {
+  stroke: var(--line-light);
+  stroke-width: 1;
+}
+
+.zero-line {
+  stroke: var(--zero-line);
+  stroke-width: 1.2;
+}
+
+.axis-line {
+  stroke: var(--axis);
+  stroke-width: 1.1;
+}
+
+.violation-point {
+  fill: var(--marker-fill);
+  stroke: var(--red);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.axis-text,
+.panel-caption,
+.area-label,
+.support-label,
+.expected-payoff-label,
+.maximum-label,
+.axis-payment-label,
+.axis-value-label,
+.payoff-if-win-axis-label,
+.winning-probability-guide-label {
+  fill: var(--muted);
+  font-family: var(--text-font);
+}
+
+.axis-text {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.panel-caption {
+  fill: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.negative-metric {
+  fill: var(--red);
+}
+
+.curve {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.highest-bid-density-curve {
+  stroke: var(--blue);
+}
+
+.winning-area {
+  fill: var(--blue-fill);
+  stroke: none;
+}
+
+.area-label {
+  fill: var(--blue);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.highest-bid-cdf-curve {
+  stroke: var(--blue);
+}
+
+.spa-payoff-area-positive {
+  fill: var(--green-fill);
+  stroke: none;
+}
+
+.spa-payoff-area-negative {
+  fill: var(--red-fill);
+  stroke: var(--red);
+  stroke-width: 1.2;
+  stroke-dasharray: none;
+}
+
+.expected-payoff-rectangle {
+  fill: var(--green-fill);
+  stroke: var(--green);
+  stroke-width: 1.5;
+}
+
+.expected-payoff-negative {
+  fill: var(--red-fill-subtle);
+  stroke: var(--red);
+  stroke-dasharray: none;
+}
+
+.expected-payoff-zero {
+  fill: none;
+  stroke: none;
+}
+
+.zero-expected-payoff {
+  fill: var(--marker-fill);
+  stroke: var(--ink);
+  stroke-width: 2.5;
+  stroke-dasharray: 3 3;
+}
+
+.expected-payoff-label {
+  fill: var(--green);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.expected-payoff-label.negative-metric {
+  fill: var(--red);
+}
+
+.cdf-value-guide {
+  stroke: var(--guide);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 5;
+}
+
+.maximum-label {
+  fill: var(--orange);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.chosen-marker {
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.equilibrium-marker {
+  stroke: var(--orange);
+  stroke-width: 2;
+  stroke-dasharray: 8 6;
+}
+
+.chosen-point {
+  fill: var(--marker-fill);
+  stroke: var(--ink);
+  stroke-width: 3;
+}
+
+.equilibrium-point {
+  fill: var(--marker-fill);
+  stroke: var(--orange);
+  stroke-width: 2.4;
+}
+
+.support-guide {
+  stroke: var(--blue);
+  stroke-width: 1.1;
+  stroke-dasharray: 3 5;
+  opacity: 0.65;
+}
+
+.support-label {
+  fill: var(--blue);
+  font-size: 11px;
+}
+
+.axis-payment-marker {
+  stroke: var(--ink);
+  stroke-width: 2.4;
+}
+
+.axis-bid-marker {
+  stroke: var(--ink);
+  stroke-width: 1.7;
+}
+
+.axis-value-marker {
+  stroke: var(--guide-muted);
+  stroke-width: 1.8;
+  stroke-dasharray: 3 3;
+}
+
+.axis-payment-marker.axis-value-marker {
+  stroke: var(--ink);
+  stroke-width: 2.4;
+  stroke-dasharray: none;
+}
+
+.axis-payment-label,
+.axis-value-label {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.axis-payment-label {
+  fill: var(--ink);
+}
+
+.axis-bid-label {
+  fill: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.axis-value-label {
+  fill: var(--guide-label);
+}
+
+.axis-payment-label.axis-value-label {
+  fill: var(--ink);
+}
+
+.payoff-if-win-bracket {
+  color: var(--green);
+}
+
+.payoff-bracket-negative {
+  color: var(--red);
+}
+
+.payoff-bracket-zero {
+  color: var(--ink);
+}
+
+.payoff-bracket-line,
+.payoff-bracket-cap {
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
+.payoff-bracket-negative .payoff-bracket-line {
+  stroke-dasharray: none;
+}
+
+.winning-probability-guide-line {
+  pointer-events: none;
+  stroke: var(--blue);
+  stroke-width: 1.2;
+  stroke-dasharray: 5 4;
+}
+
+.winning-probability-guide-label {
+  pointer-events: none;
+  fill: var(--blue);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.payoff-bracket-zero-mark {
+  fill: var(--marker-fill);
+  stroke: currentColor;
+  stroke-width: 2.2;
+}
+
+.payoff-if-win-axis-label {
+  fill: currentColor;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.cdf-zero-axis {
+  stroke: var(--ink);
+  stroke-width: 1.6;
+}
+
+.annotation-halo {
+  paint-order: stroke fill;
+  stroke: var(--annotation-halo);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+.drag-overlay {
+  fill: transparent;
+  cursor: ew-resize;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+

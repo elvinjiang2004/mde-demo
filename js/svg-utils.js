@@ -15,11 +15,13 @@ window.SvgUtils = Object.freeze({
   formatTick: function (value) {
     return value.toFixed(value === 0 || value === 1 ? 0 : 2);
   },
-  createFieldRaster: function (size, valueAt, colorFn) {
-    var canvas = document.createElement("canvas");
+  paintFieldRaster: function (canvas, size, valueAt, colorFn) {
     canvas.width = size;
     canvas.height = size;
     var context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("A two-dimensional canvas context is required.");
+    }
     var image = context.createImageData(size, size);
     var data = image.data;
     var pixelX;
@@ -37,6 +39,11 @@ window.SvgUtils = Object.freeze({
       }
     }
     context.putImageData(image, 0, 0);
+    return canvas;
+  },
+  createFieldRaster: function (size, valueAt, colorFn) {
+    var canvas = document.createElement("canvas");
+    window.SvgUtils.paintFieldRaster(canvas, size, valueAt, colorFn);
     return canvas.toDataURL("image/png");
   },
   createTriangleMesh: function (resolution) {

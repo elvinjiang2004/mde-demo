@@ -18,6 +18,26 @@
     return points.slice().sort(function (a, b) { return a.v - b.v; });
   }
 
+  function pointsWithTangents(points, tangents) {
+    return points.map(function (point, index) {
+      return { v: point.v, q: point.q, tangent: tangents[index] };
+    });
+  }
+
+  function pointsWithoutTangents(points) {
+    return points.map(function (point) {
+      return { v: point.v, q: point.q };
+    });
+  }
+
+  function storedTangents(points) {
+    var tangents = points.map(function (point) { return point.tangent; });
+    return tangents.every(function (tangent) {
+      return Number.isFinite(tangent);
+    }) ? tangents : null;
+  }
+
+
   function defaultPoints() {
     return [0, 0.25, 0.5, 0.75, 1].map(function (v) {
       return { v: v, q: v };
@@ -49,9 +69,15 @@
       }
     }
     var newV = (sorted[bestIndex].v + sorted[bestIndex + 1].v) / 2;
-    var newQ = curve.Q(newV);
-    var next = sorted.slice();
-    next.splice(bestIndex + 1, 0, { v: newV, q: newQ });
+    // A Hermite cubic is fully determined by its endpoint heights and
+    // derivatives. Retaining those derivatives and adding the derivative at
+    // the split keeps both resulting cubics identical to the old segment.
+    var next = pointsWithTangents(sorted, curve.tangents);
+    next.splice(bestIndex + 1, 0, {
+      v: newV,
+      q: curve.Q(newV),
+      tangent: curve.derivative(newV)
+    });
     return { points: next, insertedIndex: bestIndex + 1 };
   }
 
@@ -59,13 +85,17 @@
     if (!canRemovePoint(points, index)) {
       return points;
     }
-    var next = points.slice();
+    // Removing a knot joins two formerly distinct pieces, so no stored
+    // derivative can describe the new segment safely.
+    var next = pointsWithoutTangents(points);
     next.splice(index, 1);
     return next;
   }
 
   function setPointHeight(points, index, value) {
-    var next = points.slice();
+    // A height edit changes the shape constraint; recalculate tangents from
+    // the edited control points instead of reusing insertion metadata.
+    var next = pointsWithoutTangents(points);
     next[index] = { v: next[index].v, q: clampHeight(value) };
     return next;
   }
@@ -125,13 +155,18 @@
   function h01(t) { var t2 = t * t; return -2 * t2 * t + 3 * t2; }
   function h11(t) { var t2 = t * t; return t2 * t - t2; }
 
+  function h00Derivative(t) { return 6 * t * t - 6 * t; }
+  function h10Derivative(t) { return 3 * t * t - 4 * t + 1; }
+  function h01Derivative(t) { return -6 * t * t + 6 * t; }
+  function h11Derivative(t) { return 3 * t * t - 2 * t; }
+
   function H00(t) { var t2 = t * t; return t2 * t2 / 2 - t2 * t + t; }
   function H10(t) { var t2 = t * t; return t2 * t2 / 4 - (2 / 3) * t2 * t + t2 / 2; }
   function H01(t) { var t2 = t * t; return -t2 * t2 / 2 + t2 * t; }
   function H11(t) { var t2 = t * t; return t2 * t2 / 4 - t2 * t / 3; }
 
   function buildCurve(points) {
-    var tangents = monotoneTangents(points);
+    var tangents = storedTangents(points) || monotoneTangents(points);
     var last = points.length - 1;
 
     function segmentAt(v) {
@@ -152,6 +187,19 @@
         s.p0.q * h00(s.t) + s.h * m0 * h10(s.t) +
         s.p1.q * h01(s.t) + s.h * m1 * h11(s.t)
       );
+    }
+
+    function derivative(v) {
+      var s = segmentAt(v);
+      if (!(s.h > EPSILON)) {
+        return 0;
+      }
+      var m0 = tangents[s.seg];
+      var m1 = tangents[s.seg + 1];
+      return (
+        s.p0.q * h00Derivative(s.t) + s.h * m0 * h10Derivative(s.t) +
+        s.p1.q * h01Derivative(s.t) + s.h * m1 * h11Derivative(s.t)
+      ) / s.h;
     }
 
     function segmentIntegral(seg, t) {
@@ -187,6 +235,7 @@
       points: points,
       tangents: tangents,
       Q: Q,
+      derivative: derivative,
       U: U,
       P: P
     };

@@ -18,15 +18,25 @@
     document.getElementById("results").appendChild(item);
   }
 
+  function importedRules(rules) {
+    return Array.from(rules).reduce(function (result, rule) {
+      if (rule.type === CSSRule.IMPORT_RULE) {
+        return result.concat(importedRules(rule.styleSheet.cssRules));
+      }
+      result.push(rule);
+      return result;
+    }, []);
+  }
+
   function mediaRule(rules, query) {
-    return Array.from(rules).find(function (rule) {
+    return importedRules(rules).find(function (rule) {
       return rule.type === CSSRule.MEDIA_RULE &&
         rule.conditionText.indexOf(query) !== -1;
     });
   }
 
   function rootRule(rules) {
-    return Array.from(rules).find(function (rule) {
+    return importedRules(rules).find(function (rule) {
       return rule.selectorText === ":root";
     });
   }
@@ -75,6 +85,13 @@
             "Mechanism Design Explorer" &&
             menuDocument.title === "Modules | Mechanism Design Explorer",
           "The menu should use the Mechanism Design Explorer brand.");
+          var about = menuDocument.querySelector(".header-navigation .header-link");
+          assert(about && about.getAttribute("href") === "about.html" &&
+            about.previousElementSibling.classList.contains("wordmark") &&
+            !about.classList.contains("module-tile"),
+          "About should be a small link beneath the site name.");
+          assert(menuDocument.querySelector(".header-content > span").textContent === "Modules",
+            "The top-right Modules text should be restored.");
           assert(menuDocument.querySelectorAll("script").length === 0,
             "The menu should not load an auction module script.");
         }

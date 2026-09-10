@@ -14,7 +14,14 @@
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/bilateral-trade-envelope.js"></script>
   <script defer src="../../js/bilateral-trade-visuals.js"></script>
+  <script defer src="formula-diagonal.js"></script>
+  <script defer src="formula-posted-price.js"></script>
+  <script defer src="formula-balanced-agv.js"></script>
+  <script defer src="custom-grid.js"></script>
+  <script defer src="formula-model.js"></script>
   <script defer src="model.js"></script>
+  <script defer src="charts.js"></script>
+  <script defer src="editor.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -27,23 +34,79 @@
   <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">Bargaining Mechanism Sandbox</h1>
+      <p>
+        A seller has an object that she may sell to a buyer. The seller has
+        value \(C \sim F_S(c)\) and the buyer has value \(V \sim F_B(v)\). We
+        assume \(F_S\) has continuous, strictly positive density \(f_S\) on its
+        support \([\underline{c},\overline{c}]\), and, likewise, \(F_B\) has
+        continuous, strictly positive density \(f_B\) on its support
+        \([\underline{v},\overline{v}]\). We also assume the intersection of the
+        supports is also an interval, that is, it is not empty and not a single
+        point. The buyer and seller observe their respective values, \(v\) and
+        \(c\), but not the other's.
+      </p>
+      <p>
+        A <em>direct bargaining mechanism</em> consists of an allocation rule
+        and two payment rules. Given that the buyer reports value \(v\) and the
+        seller reports value \(c\), the allocation rule \(q(v,c)\) specifies the
+        probability of trade; the buyer's payment rule \(p_B(v,c)\) specifies
+        the amount the buyer must pay; and the seller's payment rule
+        \(p_S(v,c)\) specifies the amount the seller must receive. Notice that
+        we do not impose \(p_B(v,c)=p_S(v,c)\), so the payment need not be
+        directly from the buyer to the seller.
+      </p>
+      <p>We evaluate this mechanism according to the following criteria:</p>
+      <ol>
+        <li>
+          Incentive Compatibility (IC): In equilibrium, the buyer and seller
+          report truthfully. This has two forms: Bayesian IC (BIC), where
+          truthful reporting is a Bayes&ndash;Nash equilibrium, and Dominant
+          Strategy IC (DSIC), where truthful reporting is a dominant-strategy
+          equilibrium.
+        </li>
+        <li>
+          Individual Rationality (IR): Both the buyer and seller want to
+          participate. This is evaluated at three stages: ex ante, interim, and
+          ex post.
+        </li>
+        <li>
+          (Weak) Budget Balance (BB): Trade does not need to be subsidized. This is evaluated at two stages: ex ante and ex
+          post.
+        </li>
+        <li>
+          Efficiency: The mechanism maximizes welfare. This is evaluated at
+          two stages: ex ante and ex post.
+        </li>
+      </ol>
+      <p>
+        In the interactive demo, browse through a set of common mechanisms and
+        observe their strengths and weaknesses. Here,
+        \(V,C \mathrel{\overset{\mathrm{i.i.d.}}{\sim}}
+        \operatorname{Uniform}[0,1]\).
+      </p>
     </section>
 
-    <section class="explorable explorable-divider" aria-label="Direct bargaining mechanism sandbox">
-      <aside class="sandbox-toolbar" aria-label="Mechanism controls">
+    <section
+      id="bargaining-sandbox-explorable"
+      class="explorable explorable-divider"
+      aria-label="Direct bargaining mechanism sandbox"
+      data-live-render-count="0"
+      data-quality-status="idle"
+    >
+      <aside class="sandbox-toolbar" aria-label="Bargaining rule controls">
         <div class="preset-buttons" role="group" aria-labelledby="preset-buttons-label">
           <span id="preset-buttons-label" class="preset-buttons-label">Presets:</span>
           <button id="preset-vcg" class="text-button preset-button" type="button" aria-pressed="true">VCG</button>
           <button id="preset-posted-price" class="text-button preset-button" type="button" aria-pressed="false">Posted price</button>
-          <button id="preset-agv" class="text-button preset-button" type="button" aria-pressed="false">Balanced AGV</button>
-          <button id="preset-split-difference" class="text-button preset-button" type="button" aria-pressed="false">Split-the-difference</button>
+          <button id="preset-agv" class="text-button preset-button" type="button" aria-pressed="false">AGV</button>
+          <button id="preset-split-the-difference" class="text-button preset-button" type="button" aria-pressed="false">Split-the-difference</button>
           <button id="preset-chatterjee-samuelson" class="text-button preset-button" type="button" aria-pressed="false">Chatterjee&ndash;Samuelson</button>
           <button id="preset-revenue-threshold" class="text-button preset-button" type="button" aria-pressed="false">Revenue threshold</button>
           <button id="preset-custom" class="text-button preset-button" type="button" aria-pressed="false">Custom</button>
         </div>
 
         <div class="sandbox-action-row">
-          <div id="posted-price-control" class="range-group sandbox-parameter-control" hidden>
+          <div id="posted-buyer-price-control" class="range-group sandbox-parameter-control" hidden>
             <div class="range-label-row">
               <label id="posted-buyer-price-control-label" for="posted-buyer-price-slider">Buyer price, \(z_B\)</label>
               <input
@@ -56,17 +119,18 @@
                 value="0.5"
                 inputmode="decimal"
                 aria-labelledby="posted-buyer-price-control-label"
+                aria-describedby="formula-validation-status"
               >
             </div>
-            <input id="posted-buyer-price-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5">
+            <input id="posted-buyer-price-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5" aria-labelledby="posted-buyer-price-control-label">
             <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
           </div>
 
-          <div id="posted-seller-receipt-control" class="range-group sandbox-parameter-control" hidden>
+          <div id="posted-seller-price-control" class="range-group sandbox-parameter-control" hidden>
             <div class="range-label-row">
-              <label id="posted-seller-receipt-control-label" for="posted-seller-receipt-slider">Seller receipt, \(z_S\)</label>
+              <label id="posted-seller-price-control-label" for="posted-seller-price-slider">Seller price, \(z_S\)</label>
               <input
-                id="posted-seller-receipt-number"
+                id="posted-seller-price-number"
                 class="range-number-input"
                 type="number"
                 min="0"
@@ -74,29 +138,30 @@
                 step="0.01"
                 value="0.5"
                 inputmode="decimal"
-                aria-labelledby="posted-seller-receipt-control-label"
+                aria-labelledby="posted-seller-price-control-label"
+                aria-describedby="formula-validation-status"
               >
             </div>
-            <input id="posted-seller-receipt-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5">
+            <input id="posted-seller-price-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5" aria-labelledby="posted-seller-price-control-label">
             <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
           </div>
 
-          <div id="agv-k-control" class="range-group sandbox-parameter-control" hidden>
+          <div id="agv-constant-control" class="range-group sandbox-parameter-control" hidden>
             <div class="range-label-row">
-              <label id="agv-k-control-label" for="agv-k-slider">AGV constant, \(K\)</label>
+              <label id="agv-constant-control-label" for="agv-constant-slider">AGV constant, \(K\)</label>
               <input
-                id="agv-k-number"
+                id="agv-constant-number"
                 class="range-number-input"
                 type="number"
                 step="0.01"
                 value="0.25"
                 inputmode="decimal"
-                aria-labelledby="agv-k-control-label"
-                aria-describedby="sandbox-validation-status"
+                aria-labelledby="agv-constant-control-label"
+                aria-describedby="formula-validation-status"
               >
             </div>
-            <input id="agv-k-slider" class="slider-220" type="range" min="-0.5" max="0.5" step="0.01" value="0.25">
-            <div id="agv-k-endpoints" class="range-endpoints slider-220" aria-hidden="true"><span>-0.5</span><span>0.5</span></div>
+            <input id="agv-constant-slider" class="slider-220" type="range" min="-0.5" max="0.5" step="0.01" value="0.25" aria-labelledby="agv-constant-control-label">
+            <div id="agv-constant-endpoints" class="range-endpoints slider-220" aria-hidden="true"><span>-0.5</span><span>0.5</span></div>
           </div>
 
           <div id="split-threshold-control" class="range-group sandbox-parameter-control" hidden>
@@ -112,9 +177,10 @@
                 value="0"
                 inputmode="decimal"
                 aria-labelledby="split-threshold-control-label"
+                aria-describedby="formula-validation-status"
               >
             </div>
-            <input id="split-threshold-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0">
+            <input id="split-threshold-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0" aria-labelledby="split-threshold-control-label">
             <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
           </div>
 
@@ -131,17 +197,18 @@
                 value="0.5"
                 inputmode="decimal"
                 aria-labelledby="split-seller-share-control-label"
+                aria-describedby="formula-validation-status"
               >
             </div>
-            <input id="split-seller-share-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5">
+            <input id="split-seller-share-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5" aria-labelledby="split-seller-share-control-label">
             <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
           </div>
 
-          <div id="revenue-threshold-control" class="range-group sandbox-parameter-control" hidden>
+          <div id="threshold-control" class="range-group sandbox-parameter-control" hidden>
             <div class="range-label-row">
-              <label id="revenue-threshold-control-label" for="revenue-threshold-slider">Trading threshold, \(t\)</label>
+              <label id="threshold-control-label" for="threshold-slider">Trading threshold, \(t\)</label>
               <input
-                id="revenue-threshold-number"
+                id="threshold-number"
                 class="range-number-input"
                 type="number"
                 min="0"
@@ -149,18 +216,19 @@
                 step="0.01"
                 value="0.5"
                 inputmode="decimal"
-                aria-labelledby="revenue-threshold-control-label"
+                aria-labelledby="threshold-control-label"
+                aria-describedby="formula-validation-status"
               >
             </div>
-            <input id="revenue-threshold-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5">
+            <input id="threshold-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5" aria-labelledby="threshold-control-label">
             <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
           </div>
 
-          <div id="revenue-buyer-markup-control" class="range-group sandbox-parameter-control" hidden>
+          <div id="buyer-markup-control" class="range-group sandbox-parameter-control" hidden>
             <div class="range-label-row">
-              <label id="revenue-buyer-markup-control-label" for="revenue-buyer-markup-slider">Buyer markup, \(\alpha\)</label>
+              <label id="buyer-markup-control-label" for="buyer-markup-slider">Buyer markup, \(\alpha\)</label>
               <input
-                id="revenue-buyer-markup-number"
+                id="buyer-markup-number"
                 class="range-number-input"
                 type="number"
                 min="0"
@@ -168,18 +236,19 @@
                 step="0.01"
                 value="0.5"
                 inputmode="decimal"
-                aria-labelledby="revenue-buyer-markup-control-label"
+                aria-labelledby="buyer-markup-control-label"
+                aria-describedby="formula-validation-status"
               >
             </div>
-            <input id="revenue-buyer-markup-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5">
+            <input id="buyer-markup-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5" aria-labelledby="buyer-markup-control-label">
             <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
           </div>
 
-          <div id="revenue-seller-discount-control" class="range-group sandbox-parameter-control" hidden>
+          <div id="seller-discount-control" class="range-group sandbox-parameter-control" hidden>
             <div class="range-label-row">
-              <label id="revenue-seller-discount-control-label" for="revenue-seller-discount-slider">Seller discount, \(\beta\)</label>
+              <label id="seller-discount-control-label" for="seller-discount-slider">Seller discount, \(\beta\)</label>
               <input
-                id="revenue-seller-discount-number"
+                id="seller-discount-number"
                 class="range-number-input"
                 type="number"
                 min="0"
@@ -187,10 +256,11 @@
                 step="0.01"
                 value="0.5"
                 inputmode="decimal"
-                aria-labelledby="revenue-seller-discount-control-label"
+                aria-labelledby="seller-discount-control-label"
+                aria-describedby="formula-validation-status"
               >
             </div>
-            <input id="revenue-seller-discount-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5">
+            <input id="seller-discount-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5" aria-labelledby="seller-discount-control-label">
             <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
           </div>
 
@@ -199,29 +269,20 @@
             <label for="fix-ic-ir-checkbox">Fix IC/IR</label>
           </div>
         </div>
-        <p id="sandbox-validation-status" class="control-status" role="status" aria-live="polite"></p>
+        <p id="formula-validation-status" class="control-status" role="status" aria-live="polite"></p>
       </aside>
 
-      <p id="surface-edit-help" class="sr-only">Hover or focus a chart to inspect exact values. Arrow keys move the keyboard probe. In Custom mode, the same keys select triangles without skipping either half; L and R select either triangle in a cell. Enter or Space applies the brush, and holding either key while navigating paints continuously. Clicking or dragging also paints with the chosen brush intensity.</p>
-      <p id="surface-probe-status" class="sr-only" role="status" aria-live="polite"></p>
+      <p id="formula-probe-help" class="sr-only">Hover or focus a chart to inspect its exact value. Arrow keys move the keyboard probe. In Custom mode they select triangles without skipping either half; L and R select a triangle side, Enter or Space applies the brush, and holding either key while navigating paints continuously.</p>
+      <p id="formula-probe-status" class="sr-only" role="status" aria-live="polite"></p>
 
       <div class="surface-editor-grid">
         <div class="surface-editor">
           <figure class="diagnostic-figure math-chart-figure">
             <figcaption>Allocation rule, \(q(v,c)\)</figcaption>
             <div class="math-chart-frame">
-              <svg
-                id="allocation-chart"
-                class="tradeoff-chart chart-480x520"
-                viewBox="0 0 480 520"
-                role="img"
-                tabindex="0"
-                aria-labelledby="allocation-chart-title allocation-chart-description"
-                aria-describedby="surface-edit-help"
-                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r Enter Space"
-              >
+              <svg id="allocation-chart" class="tradeoff-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="allocation-chart-title allocation-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="allocation-chart-title">Allocation rule, q(v,c)</title>
-                <desc id="allocation-chart-description">A paintable triangular mesh of the probability of trade for each buyer-value and seller-value report.</desc>
+                <desc id="allocation-chart-description">Formula-backed allocation probability by buyer-value and seller-value report.</desc>
               </svg>
               <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
@@ -231,19 +292,9 @@
             <div class="range-group">
               <div class="range-label-row">
                 <label id="allocation-value-control-label" for="allocation-value-slider">Allocation brush, \(q\)</label>
-                <input
-                  id="allocation-value-number"
-                  class="range-number-input"
-                  type="number"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value="0"
-                  inputmode="decimal"
-                  aria-labelledby="allocation-value-control-label"
-                >
+                <input id="allocation-value-number" class="range-number-input" type="number" min="0" max="1" step="0.01" value="0" inputmode="decimal" aria-labelledby="allocation-value-control-label" aria-describedby="formula-validation-status">
               </div>
-              <input id="allocation-value-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0">
+              <input id="allocation-value-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0" aria-labelledby="allocation-value-control-label">
               <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
             </div>
           </aside>
@@ -253,18 +304,9 @@
           <figure class="diagnostic-figure math-chart-figure">
             <figcaption>Buyer payment, \(p_B(v,c)\)</figcaption>
             <div class="math-chart-frame">
-              <svg
-                id="buyer-payment-chart"
-                class="tradeoff-chart chart-480x520"
-                viewBox="0 0 480 520"
-                role="img"
-                tabindex="0"
-                aria-labelledby="buyer-payment-chart-title buyer-payment-chart-description"
-                aria-describedby="surface-edit-help"
-                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r Enter Space"
-              >
+              <svg id="buyer-payment-chart" class="tradeoff-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="buyer-payment-chart-title buyer-payment-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="buyer-payment-chart-title">Buyer payment, p B(v,c)</title>
-                <desc id="buyer-payment-chart-description">A paintable heatmap of the buyer payment for each buyer-value and seller-value report.</desc>
+                <desc id="buyer-payment-chart-description">Formula-backed buyer payment by buyer-value and seller-value report.</desc>
               </svg>
               <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
@@ -274,17 +316,9 @@
             <div class="range-group">
               <div class="range-label-row">
                 <label id="buyer-payment-value-control-label" for="buyer-payment-value-slider">Buyer payment brush, \(p_B\)</label>
-                <input
-                  id="buyer-payment-value-number"
-                  class="range-number-input"
-                  type="number"
-                  step="0.01"
-                  value="0"
-                  inputmode="decimal"
-                  aria-labelledby="buyer-payment-value-control-label"
-                >
+                <input id="buyer-payment-value-number" class="range-number-input" type="number" step="0.01" value="0" inputmode="decimal" aria-labelledby="buyer-payment-value-control-label" aria-describedby="formula-validation-status">
               </div>
-              <input id="buyer-payment-value-slider" class="slider-220" type="range" min="-1" max="1" step="0.01" value="0">
+              <input id="buyer-payment-value-slider" class="slider-220" type="range" min="-1" max="1" step="0.01" value="0" aria-labelledby="buyer-payment-value-control-label">
               <div id="buyer-payment-range-endpoints" class="range-endpoints slider-220" aria-hidden="true"><span>-1</span><span>1</span></div>
             </div>
           </aside>
@@ -294,18 +328,9 @@
           <figure class="diagnostic-figure math-chart-figure">
             <figcaption>Seller payment, \(p_S(v,c)\)</figcaption>
             <div class="math-chart-frame">
-              <svg
-                id="seller-payment-chart"
-                class="tradeoff-chart chart-480x520"
-                viewBox="0 0 480 520"
-                role="img"
-                tabindex="0"
-                aria-labelledby="seller-payment-chart-title seller-payment-chart-description"
-                aria-describedby="surface-edit-help"
-                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r Enter Space"
-              >
+              <svg id="seller-payment-chart" class="tradeoff-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="seller-payment-chart-title seller-payment-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="seller-payment-chart-title">Seller payment, p S(v,c)</title>
-                <desc id="seller-payment-chart-description">A paintable heatmap of the seller payment for each buyer-value and seller-value report.</desc>
+                <desc id="seller-payment-chart-description">Formula-backed seller payment by buyer-value and seller-value report.</desc>
               </svg>
               <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
@@ -315,64 +340,53 @@
             <div class="range-group">
               <div class="range-label-row">
                 <label id="seller-payment-value-control-label" for="seller-payment-value-slider">Seller payment brush, \(p_S\)</label>
-                <input
-                  id="seller-payment-value-number"
-                  class="range-number-input"
-                  type="number"
-                  step="0.01"
-                  value="0"
-                  inputmode="decimal"
-                  aria-labelledby="seller-payment-value-control-label"
-                >
+                <input id="seller-payment-value-number" class="range-number-input" type="number" step="0.01" value="0" inputmode="decimal" aria-labelledby="seller-payment-value-control-label" aria-describedby="formula-validation-status">
               </div>
-              <input id="seller-payment-value-slider" class="slider-220" type="range" min="-1" max="1" step="0.01" value="0">
+              <input id="seller-payment-value-slider" class="slider-220" type="range" min="-1" max="1" step="0.01" value="0" aria-labelledby="seller-payment-value-control-label">
               <div id="seller-payment-range-endpoints" class="range-endpoints slider-220" aria-hidden="true"><span>-1</span><span>1</span></div>
             </div>
           </aside>
         </div>
       </div>
 
-      <p id="ic-probe-help" class="sr-only">Hover or focus a diagnostic chart to inspect its exact value. Arrow keys move the probe. On the first two payoff charts, the axes are true type and alternate report.</p>
-      <p id="ic-probe-status" class="sr-only" role="status" aria-live="polite"></p>
-
       <div class="diagnostic-panel-grid sandbox-diagnostic-grid">
         <div class="diagnostic-panel">
-          <figure class="diagnostic-figure">
-            <figcaption>Buyer payoff, \(u_B\)</figcaption>
+          <figure class="diagnostic-figure math-chart-figure">
+            <figcaption>Buyer interim-deviation payoff, \(U_B(v,r)\)</figcaption>
             <div class="math-chart-frame">
-              <svg id="buyer-ic-chart" class="diagnostic-chart" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="buyer-ic-chart-title buyer-ic-chart-description" aria-describedby="ic-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End">
-                <title id="buyer-ic-chart-title">Buyer payoff, U B</title>
-                <desc id="buyer-ic-chart-description">Buyer interim utility by true value and alternate report, with truthful reports on the diagonal and the best-report trace overlaid.</desc>
+              <svg id="buyer-ic-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="buyer-ic-chart-title buyer-ic-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
+                <title id="buyer-ic-chart-title">Buyer interim-deviation payoff, U B(v,r)</title>
+                <desc id="buyer-ic-chart-description">Buyer interim utility by true value and alternate report, with truthful and best-report traces.</desc>
               </svg>
-              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
-              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Alternate buyer report, \(v'\)</p>
+              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">True buyer value, \(v\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Alternate buyer report, \(r\)</p>
             </div>
           </figure>
           <div id="buyer-ic-text" class="diagnostic-text"></div>
         </div>
 
         <div class="diagnostic-panel">
-          <figure class="diagnostic-figure">
-            <figcaption>Seller payoff, \(U_S\)</figcaption>
+          <figure class="diagnostic-figure math-chart-figure">
+            <figcaption>Seller interim-deviation payoff, \(U_S(c,s)\)</figcaption>
             <div class="math-chart-frame">
-              <svg id="seller-ic-chart" class="diagnostic-chart" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="seller-ic-chart-title seller-ic-chart-description" aria-describedby="ic-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End">
-                <title id="seller-ic-chart-title">Seller payoff, U S</title>
-                <desc id="seller-ic-chart-description">Seller interim utility by true seller value and alternate report, with truthful reports on the diagonal and the best-report trace overlaid.</desc>
+              <svg id="seller-ic-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="seller-ic-chart-title seller-ic-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
+                <title id="seller-ic-chart-title">Seller interim-deviation payoff, U S(c,s)</title>
+                <desc id="seller-ic-chart-description">Seller interim utility by true cost and alternate report, with truthful and best-report traces.</desc>
               </svg>
-              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Seller value, \(c\)</p>
-              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Alternate seller report, \(c'\)</p>
+              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">True seller value, \(c\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Alternate seller report, \(s\)</p>
             </div>
           </figure>
           <div id="seller-ic-text" class="diagnostic-text"></div>
         </div>
 
         <div class="diagnostic-panel">
-          <figure class="diagnostic-figure">
-            <figcaption>Net revenue</figcaption>
+          <figure class="diagnostic-figure math-chart-figure">
+            <figcaption>Net revenue, \(R(v,c)\)</figcaption>
             <div class="math-chart-frame">
-              <svg id="revenue-chart" class="diagnostic-chart" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="revenue-chart-title revenue-chart-description" aria-describedby="ic-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End">
-                <title id="revenue-chart-title">Net revenue</title>
-                <desc id="revenue-chart-description">Intermediary net revenue at each buyer-value and seller-value report pair.</desc>
+              <svg id="revenue-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="revenue-chart-title revenue-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
+                <title id="revenue-chart-title">Net revenue, R(v,c)</title>
+                <desc id="revenue-chart-description">Intermediary net revenue by buyer-value and seller-value report.</desc>
               </svg>
               <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
@@ -382,12 +396,12 @@
         </div>
 
         <div class="diagnostic-panel">
-          <figure class="diagnostic-figure">
-            <figcaption>Buyer payoff, \(U_B\)</figcaption>
+          <figure class="diagnostic-figure math-chart-figure">
+            <figcaption>Buyer truthful payoff, \(u_B(v,c)\)</figcaption>
             <div class="math-chart-frame">
-              <svg id="buyer-payoff-chart" class="diagnostic-chart" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="buyer-payoff-chart-title buyer-payoff-chart-description" aria-describedby="ic-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End">
-                <title id="buyer-payoff-chart-title">Buyer payoff, u B</title>
-                <desc id="buyer-payoff-chart-description">Buyer payoff at each buyer-value and seller-value report pair.</desc>
+              <svg id="buyer-payoff-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="buyer-payoff-chart-title buyer-payoff-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
+                <title id="buyer-payoff-chart-title">Buyer truthful payoff, u B(v,c)</title>
+                <desc id="buyer-payoff-chart-description">Buyer truthful payoff by buyer value and seller value.</desc>
               </svg>
               <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
@@ -397,12 +411,12 @@
         </div>
 
         <div class="diagnostic-panel">
-          <figure class="diagnostic-figure">
-            <figcaption>Seller payoff, \(u_S\)</figcaption>
+          <figure class="diagnostic-figure math-chart-figure">
+            <figcaption>Seller truthful payoff, \(u_S(v,c)\)</figcaption>
             <div class="math-chart-frame">
-              <svg id="seller-payoff-chart" class="diagnostic-chart" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="seller-payoff-chart-title seller-payoff-chart-description" aria-describedby="ic-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End">
-                <title id="seller-payoff-chart-title">Seller payoff, u S</title>
-                <desc id="seller-payoff-chart-description">Seller payoff at each buyer-value and seller-value report pair.</desc>
+              <svg id="seller-payoff-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="seller-payoff-chart-title seller-payoff-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
+                <title id="seller-payoff-chart-title">Seller truthful payoff, u S(v,c)</title>
+                <desc id="seller-payoff-chart-description">Seller truthful payoff by buyer value and seller value.</desc>
               </svg>
               <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
@@ -412,12 +426,12 @@
         </div>
 
         <div class="diagnostic-panel">
-          <figure class="diagnostic-figure">
+          <figure class="diagnostic-figure math-chart-figure">
             <figcaption>Efficiency</figcaption>
             <div class="math-chart-frame">
-              <svg id="efficiency-chart" class="diagnostic-chart" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="efficiency-chart-title efficiency-chart-description" aria-describedby="ic-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End">
+              <svg id="efficiency-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="efficiency-chart-title efficiency-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="efficiency-chart-title">Efficiency comparison</title>
-                <desc id="efficiency-chart-description">Over-trade and missing-trade deviations from the efficient allocation.</desc>
+                <desc id="efficiency-chart-description">Over-trade and missing-trade deviations from efficient allocation.</desc>
               </svg>
               <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
@@ -427,7 +441,78 @@
         </div>
       </div>
 
-      <p id="live-summary" class="sr-only" aria-live="polite"></p>
+      <p id="diagnostic-live-status" class="sr-only" aria-live="polite"></p>
+    </section>
+
+    <section class="derivation mechanism-details" aria-labelledby="mechanism-details-title">
+      <h2 id="mechanism-details-title">Mechanism Details</h2>
+      <div
+        class="mechanism-details-table-region"
+        role="region"
+        aria-labelledby="mechanism-details-title"
+        tabindex="0"
+      >
+        <table class="mechanism-details-table">
+          <thead>
+            <tr>
+              <th scope="col">Mechanism</th>
+              <th scope="col">Allocation rule</th>
+              <th scope="col">Buyer's payment rule</th>
+              <th scope="col">Seller's payment rule</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">VCG</th>
+              <td>\(\mathbb{1}(v\geq c)\)</td>
+              <td>\(c q(v,c)\)</td>
+              <td>\(v q(v,c)\)</td>
+            </tr>
+            <tr>
+              <th scope="row">Posted Price</th>
+              <td>\(\mathbb{1}(v\geq z_B,\ c\leq z_S)\)</td>
+              <td>\(z_B q(v,c)\)</td>
+              <td>\(z_S q(v,c)\)</td>
+            </tr>
+            <tr>
+              <th scope="row">AGV</th>
+              <td>\(\mathbb{1}(v\geq c)\)</td>
+              <td>\(\frac{1}{2}(v^2-c^2)+K\)</td>
+              <td>\(\frac{1}{2}(v^2-c^2)+K\)</td>
+            </tr>
+            <tr>
+              <th scope="row">Split-the-Difference</th>
+              <td>\(\mathbb{1}(v-c\geq t)\)</td>
+              <td>\([c+s(v-c)]q(v,c)\)</td>
+              <td>\([c+s(v-c)]q(v,c)\)</td>
+            </tr>
+            <tr>
+              <th scope="row">Chatterjee&ndash;Samuelson</th>
+              <td>\(\mathbb{1}(v-c\geq \frac{1}{4})\)</td>
+              <td>\(\left(\frac{v+c}{3}+\frac{1}{6}\right)q(v,c)\)</td>
+              <td>\(\left(\frac{v+c}{3}+\frac{1}{6}\right)q(v,c)\)</td>
+            </tr>
+            <tr>
+              <th scope="row">Revenue Threshold</th>
+              <td>\(\mathbb{1}(v-c\geq t)\)</td>
+              <td>\((c+\alpha)q(v,c)\)</td>
+              <td>\((v-\beta)q(v,c)\)</td>
+            </tr>
+            <tr>
+              <th scope="row">Custom with Fixed IC/IR</th>
+              <td>Custom</td>
+              <td>\(v q(v,c)-\int_{0}^{v}q(t,c)\,dt\)</td>
+              <td>\(c q(v,c)+\int_{c}^{1}q(v,t)\,dt\)</td>
+            </tr>
+            <tr>
+              <th scope="row">Custom without Fixed IC/IR</th>
+              <td>Custom</td>
+              <td>Custom</td>
+              <td>Custom</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </main>
 

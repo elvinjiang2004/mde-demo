@@ -17,36 +17,21 @@
     );
   });
 
-  function assert(condition, message) {
-    if (!condition) {
-      throw new Error(message || "Assertion failed.");
-    }
-  }
+  var assert = window.MechanismTest.assert;
+  var addResult = window.MechanismTest.addResult;
 
   function assertClose(actual, expected, message, tolerance) {
-    var allowed = tolerance === undefined ? 1e-9 : tolerance;
-    if (!Number.isFinite(actual) || Math.abs(actual - expected) > allowed) {
-      throw new Error(
-        (message || "Values differ.") +
-        " Expected " + expected + ", received " + actual + "."
-      );
-    }
+    window.MechanismTest.assertClose(
+      actual, expected, tolerance === undefined ? 1e-9 : tolerance, message
+    );
   }
 
   function dispatchChange(element, appWindow) {
-    element.dispatchEvent(new appWindow.Event("change", { bubbles: true }));
+    window.MechanismTest.dispatch(element, "change", appWindow);
   }
 
   function dispatchInput(element, appWindow) {
-    element.dispatchEvent(new appWindow.Event("input", { bubbles: true }));
-  }
-
-  function addResult(name, error) {
-    var item = document.createElement("li");
-    item.className = error ? "fail" : "pass";
-    item.textContent = (error ? "FAIL — " : "PASS — ") + name +
-      (error ? ": " + error.message : "");
-    document.getElementById("results").appendChild(item);
+    window.MechanismTest.dispatch(element, "input", appWindow);
   }
 
   async function runTests() {
@@ -93,9 +78,7 @@
       {
         name: "The second-price route loads the shared distribution kernel first",
         run: function () {
-          var sources = Array.from(appDocument.querySelectorAll("head > script[defer]"))
-            .map(function (script) { return script.getAttribute("src"); });
-          assert(JSON.stringify(sources) === JSON.stringify([
+          window.MechanismTest.assertScriptOrder(appDocument, [
             "../../js/components.js",
             "../../js/mathjax-config.js",
             "../../assets/mathjax/tex-svg.js",
@@ -106,12 +89,10 @@
             "../../js/auction-controls.js",
             "../../js/auction-chart.js",
             "model.js",
+            "charts.js",
+            "controls.js",
             "app.js"
-          ]), "Shared components, local MathJax, and the shared kernel should " +
-            "load before module scripts.");
-          assert(sources.every(function (source) {
-            return source && !/^https?:/i.test(source);
-          }), "Every script should remain local for offline file use.");
+          ]);
           assert(appWindow.MathJax && /^4\./.test(appWindow.MathJax.version) &&
             typeof appWindow.MathJax.typesetPromise === "function",
           "The local MathJax 4 SVG renderer should be available.");
@@ -290,18 +271,18 @@
             var captionRect = previewCaption.getBoundingClientRect();
             assert(Math.abs(captionRect.left -
               (previewRect.left + previewRect.width * 14 / 320)) < 1.5,
-            "The PDF of Value caption should align with the plotted PDF area.");
+            "The value-PDF caption should align with the plotted PDF area.");
             assert(preview.querySelector("#value-pdf-preview-title")
-              .textContent === "PDF of Value" &&
+              .textContent === "PDF of value, V subscript i" &&
               preview.querySelector("#value-pdf-preview-description")
                 .textContent.includes("alpha 2") &&
               preview.getAttribute("aria-labelledby") ===
                 "value-pdf-preview-title value-pdf-preview-description",
             "The preview should identify the plotted value density accessibly.");
-            assert(appDocument.querySelector(
-              ".value-pdf-preview-figure figcaption"
-            ).textContent.replace(/\s+/g, " ").trim() === "PDF of Value",
-            "The visible preview caption should say PDF of Value.");
+            assert(/^PDF of value,\s*$/.test(previewCaption.firstChild.nodeValue) &&
+              previewCaption.querySelector(
+                'mjx-container[jax="SVG"] [data-mml-node="math"][data-latex="V_i"]'
+              ), "The caption should retain its current wording and typeset bidder-value symbol.");
             assert(preview.querySelectorAll(".value-pdf-area").length === 1 &&
               preview.querySelectorAll(".value-pdf-curve").length === 1 &&
               preview.querySelectorAll(".value-pdf-endpoint-label").length === 2,
@@ -1125,26 +1106,10 @@
       }
     ];
 
-    var failures = 0;
-    for (var testIndex = 0; testIndex < tests.length; testIndex += 1) {
-      var test = tests[testIndex];
-      try {
-        await test.run();
-        addResult(test.name, null);
-      } catch (error) {
-        failures += 1;
-        addResult(test.name, error);
-      }
-    }
-
-    var summary = document.getElementById("summary");
-    var passed = tests.length - failures;
-    summary.textContent = passed + " of " + tests.length +
-      " second-price interface tests passed.";
-    summary.className = failures ? "fail" : "pass";
-    document.body.dataset.status = failures ? "failed" : "passed";
-    document.title = (failures ? "FAIL" : "PASS") +
-      " — SPA interface tests";
-    window.clearInterval(testKeepAlive);
+    await window.MechanismTest.run(tests, {
+      label: "second-price interface tests",
+      title: "SPA interface tests",
+      cleanup: function () { window.clearInterval(testKeepAlive); }
+    });
   }
 }());

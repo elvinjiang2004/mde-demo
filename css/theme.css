@@ -1,0 +1,95 @@
+:root {
+  color-scheme: light;
+  --page-background: #fff;
+  --surface-background: #fff;
+  --control-background: #fff;
+  --control-border: #999;
+  --ink: #1d2732;
+  --muted: #5f6872;
+  --line: #cfcfc9;
+  --line-light: #e5e5e0;
+  --blue: #176b9c;
+  --green: #237451;
+  --orange: #a85416;
+  --red: #963c3c;
+  --focus: #086fb8;
+  --error-text: #7d2626;
+  --axis: #777;
+  --zero-line: #aaa;
+  --guide: #918b82;
+  --guide-muted: #7a756f;
+  --guide-label: #6f6963;
+  --guide-light: #b7b2a9;
+  --marker-fill: #fff;
+  --annotation-halo: #fff;
+  --blue-fill: rgba(23, 107, 156, 0.2);
+  --blue-fill-subtle: rgba(23, 107, 156, 0.16);
+  --green-fill: rgba(35, 116, 81, 0.2);
+  --green-fill-subtle: rgba(35, 116, 81, 0.14);
+  --red-fill: rgba(150, 60, 60, 0.18);
+  --red-fill-subtle: rgba(150, 60, 60, 0.16);
+  --heatmap-neutral-rgb: 255, 255, 255;
+  --heatmap-blue-rgb: 23, 107, 156;
+  --heatmap-green-rgb: 35, 116, 81;
+  --heatmap-yellow-rgb: 214, 171, 0;
+  --heatmap-orange-rgb: 168, 84, 22;
+  --heatmap-red-rgb: 150, 60, 60;
+  --envelope-line-a: #1b6fa8;
+  --envelope-line-b: #a85416;
+  --envelope-line-c: #237451;
+  --envelope-line-d: #963c3c;
+  --envelope-line-e: #7a4fa3;
+  --envelope-line-f: #b8860b;
+  --envelope-line-g: #0f8a8a;
+  --envelope-line-h: #5f6872;
+  --text-font: "Times New Roman", Times, serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page-background: #171a1f;
+    --surface-background: #1f242a;
+    --control-background: #20262d;
+    --control-border: #7d8792;
+    --ink: #edf1f5;
+    --muted: #b5bdc6;
+    --line: #626c77;
+    --line-light: #39414a;
+    --blue: #65b8e8;
+    --green: #6aca9a;
+    --orange: #eba562;
+    --red: #eb8989;
+    --focus: #73c9ff;
+    --error-text: #f0a0a0;
+    --axis: #b6bec7;
+    --zero-line: #858f9a;
+    --guide: #9ca6b0;
+    --guide-muted: #a5aeb8;
+    --guide-label: #bec5cd;
+    --guide-light: #68727d;
+    --marker-fill: #1f242a;
+    --annotation-halo: #1f242a;
+    --blue-fill: rgba(101, 184, 232, 0.28);
+    --blue-fill-subtle: rgba(101, 184, 232, 0.22);
+    --green-fill: rgba(106, 202, 154, 0.28);
+    --green-fill-subtle: rgba(106, 202, 154, 0.2);
+    --red-fill: rgba(235, 137, 137, 0.26);
+    --red-fill-subtle: rgba(235, 137, 137, 0.2);
+    --heatmap-neutral-rgb: 31, 36, 42;
+    --heatmap-blue-rgb: 101, 184, 232;
+    --heatmap-green-rgb: 106, 202, 154;
+    --heatmap-yellow-rgb: 244, 211, 94;
+    --heatmap-orange-rgb: 235, 165, 98;
+    --heatmap-red-rgb: 235, 137, 137;
+    --envelope-line-a: #67b9ed;
+    --envelope-line-b: #f0a261;
+    --envelope-line-c: #6fd09d;
+    --envelope-line-d: #ee8585;
+    --envelope-line-e: #c59ae8;
+    --envelope-line-f: #e5c65b;
+    --envelope-line-g: #57cccc;
+    --envelope-line-h: #b5bdc6;
+  }
+}
+

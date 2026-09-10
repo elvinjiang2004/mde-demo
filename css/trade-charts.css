@@ -1,0 +1,162 @@
+.explorable-divider {
+  margin-top: 3.2rem;
+  padding-top: 1.45rem;
+  border-top: 1px solid var(--line);
+}
+
+.chart-480x520 {
+  max-width: 480px;
+}
+
+.slider-220 {
+  max-width: 220px;
+}
+
+.diagnostic-panel-grid {
+  min-width: min(600px, 100%);
+  flex: 1 1 600px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1.4rem 1.6rem;
+}
+
+.diagnostic-panel {
+  min-width: 0;
+}
+
+.diagnostic-figure {
+  margin: 0;
+}
+
+.diagnostic-figure figcaption {
+  margin: 0 0 0.3rem;
+  color: var(--ink);
+  font-family: var(--text-font);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.diagnostic-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.diagnostic-text {
+  margin-top: 0.5rem;
+  font-family: var(--text-font);
+  font-size: 0.86rem;
+}
+
+.diagnostic-text p {
+  margin: 0 0 0.3rem;
+}
+
+.verdict-pass {
+  color: var(--green);
+}
+
+.verdict-fail {
+  color: var(--red);
+}
+
+.diagonal-guide {
+  stroke: var(--guide-muted);
+  stroke-width: 1.3;
+  stroke-dasharray: 5 4;
+}
+
+.preset-boundary {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.35;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.truthful-report-line {
+  fill: none;
+  stroke: var(--guide-muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.best-report-line {
+  fill: none;
+  stroke: var(--blue);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.plot-probe-line {
+  stroke: var(--ink);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.plot-probe-point {
+  fill: var(--marker-fill);
+  stroke: var(--ink);
+  stroke-width: 1.8;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.plot-probe-box {
+  fill: var(--surface-background);
+  stroke: var(--ink);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.plot-probe-text {
+  fill: var(--ink);
+  font-family: var(--text-font);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.plot-probe-coordinate {
+  fill: var(--ink);
+  stroke: var(--surface-background);
+  stroke-width: 3px;
+  paint-order: stroke fill;
+  font-family: var(--text-font);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.plot-probe-symbol {
+  font-style: italic;
+}
+
+.plot-probe-subscript {
+  font-size: 75%;
+}
+
+.cell-cursor {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.4;
+}
+
+.cell-label {
+  fill: var(--ink);
+  font-family: var(--text-font);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+

@@ -1,0 +1,204 @@
+.derivation {
+  padding-top: 1.8rem;
+  border-top: 1px solid var(--line);
+}
+
+.has-qed {
+  display: flow-root;
+}
+
+.qed {
+  float: right;
+  margin-left: 0.75rem;
+}
+
+.notes {
+  margin-top: 2.4rem;
+  padding-top: 1.6rem;
+  border-top: 1px solid var(--line-light);
+}
+
+.references {
+  margin-top: 2rem;
+}
+
+.notes-list,
+.reference-list {
+  margin: 0;
+  padding-left: 1.35rem;
+}
+
+.notes-list li,
+.reference-list li {
+  margin-bottom: 0.45rem;
+}
+
+.derivation h3 {
+  margin-top: 2.2rem;
+}
+
+/* Equal expression columns keep the relation stationary when extra steps open. */
+.equation-chain-steps {
+  display: grid;
+  grid-template-columns:
+    max-content minmax(0, 1fr) max-content minmax(0, 1fr);
+  column-gap: 0.6rem;
+  row-gap: 0.5rem;
+  align-items: baseline;
+  margin: 1.35rem 0 1.5rem 1.5rem;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  font-size: 1.12rem;
+}
+
+.equation-step-connector,
+.equation-step-lhs,
+.equation-step-relation,
+.equation-step-rhs {
+  white-space: nowrap;
+}
+
+.equation-step-lhs {
+  text-align: right;
+}
+
+.equation-step-connector,
+.equation-step-relation,
+.equation-step-rhs {
+  text-align: left;
+}
+
+.equation-chain-content-widths {
+  grid-template-columns: repeat(4, max-content);
+}
+
+.equation-chain-wide-rhs {
+  grid-template-columns: max-content max-content max-content minmax(0, 1fr);
+}
+
+.equation-chain-divider-rule {
+  grid-column: 1 / -1;
+  height: 1px;
+  margin: 0.3rem 0;
+  background: var(--line-light);
+}
+
+.equation-chain-divider-toggle {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 20px;
+  margin: 0.1rem 0;
+  padding: 0;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.equation-chain-divider-toggle::before,
+.equation-chain-divider-toggle::after {
+  content: "";
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--line);
+}
+
+.equation-chain-divider-toggle:hover::before,
+.equation-chain-divider-toggle:hover::after {
+  background: var(--blue);
+}
+
+.equation-chain-divider-toggle-glyph {
+  flex: 0 0 auto;
+  margin: 0 0.6rem;
+  font-family: var(--text-font);
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.equation-chain-divider-toggle:hover .equation-chain-divider-toggle-glyph {
+  color: var(--blue);
+}
+
+.site-footer {
+  padding: 1.2rem 0 2rem;
+  color: var(--muted);
+  font-family: var(--text-font);
+  font-size: 0.76rem;
+}
+
+.catalog-main {
+  min-height: calc(100vh - 120px);
+}
+
+.catalog-heading {
+  max-width: 850px;
+  margin-bottom: 3.5rem;
+}
+
+.catalog-heading h1 {
+  margin-bottom: 0;
+}
+
+.module-category {
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+  border-top: 1px solid var(--line);
+}
+
+.module-category h2 {
+  margin-bottom: 1.2rem;
+  font-size: 1.35rem;
+}
+
+.module-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.module-row > li {
+  flex: 0 1 190px;
+  min-width: 0;
+}
+
+.module-tile {
+  min-height: 72px;
+  padding: 0.7rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  color: var(--ink);
+  background: var(--surface-background);
+  border: 1px solid var(--line);
+}
+
+.module-link {
+  text-decoration: none;
+}
+
+.module-link:hover {
+  border-color: var(--blue);
+}
+
+.module-link:hover .module-title {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+
+.module-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+

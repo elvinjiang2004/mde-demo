@@ -94,6 +94,75 @@
     };
   }
 
+  function bindCommonAuctionEvents(options) {
+    var state = options.state;
+    var elements = options.elements;
+    elements.bidderCount.addEventListener("change", function () {
+      state.n = Number.parseInt(elements.bidderCount.value, 10);
+      options.render();
+    });
+
+    elements.alphaSlider.addEventListener("input", function () {
+      options.setShapeParameter(
+        "alpha", Number.parseFloat(elements.alphaSlider.value)
+      );
+    });
+    elements.betaSlider.addEventListener("input", function () {
+      options.setShapeParameter(
+        "beta", Number.parseFloat(elements.betaSlider.value)
+      );
+    });
+    elements.alphaNumber.addEventListener("change", function () {
+      options.commitShapeParameter("alpha", elements.alphaNumber);
+    });
+    elements.betaNumber.addEventListener("change", function () {
+      options.commitShapeParameter("beta", elements.betaNumber);
+    });
+
+    elements.lowerBound.addEventListener("change", options.updateBounds);
+    elements.upperBound.addEventListener("change", options.updateBounds);
+
+    elements.valueSlider.addEventListener("input", function () {
+      options.setValue(Number.parseFloat(elements.valueSlider.value));
+    });
+    elements.bidSlider.addEventListener("input", function () {
+      options.setBid(Number.parseFloat(elements.bidSlider.value));
+    });
+    elements.valueNumber.addEventListener("change", function () {
+      commitTypedChoice(
+        elements.valueNumber, state.value, options.setValue, formatChoiceNumber
+      );
+    });
+    elements.bidNumber.addEventListener("change", function () {
+      commitTypedChoice(
+        elements.bidNumber, state.bid, options.setBid, formatChoiceNumber
+      );
+    });
+
+    elements.randomValueButton.addEventListener("click", options.randomValue);
+    elements.resetButton.addEventListener("click", options.reset);
+
+    elements.chart.addEventListener("keydown", function (event) {
+      var step = rangeStep(state.b - state.a);
+      var nextBid = null;
+      if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+        nextBid = state.bid - step;
+      } else if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+        nextBid = state.bid + step;
+      } else if (event.key === "Home") {
+        nextBid = state.a;
+      } else if (event.key === "End") {
+        nextBid = state.b;
+      }
+      if (nextBid !== null) {
+        event.preventDefault();
+        options.setBid(nextBid);
+      }
+    });
+
+    window.addEventListener("resize", options.resize);
+  }
+
   window.AuctionControls = Object.freeze({
     rangeStep: rangeStep,
     formatEditableNumber: formatEditableNumber,
@@ -102,6 +171,7 @@
     configureNumberInput: configureNumberInput,
     commitTypedChoice: commitTypedChoice,
     createValueBidControls: createValueBidControls,
-    createShapeParameterControls: createShapeParameterControls
+    createShapeParameterControls: createShapeParameterControls,
+    bindCommonAuctionEvents: bindCommonAuctionEvents
   });
 })();

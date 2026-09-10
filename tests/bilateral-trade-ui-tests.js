@@ -148,11 +148,26 @@
 
     var tests = [
       {
+        name: "The derivation contains long mathematics at narrow and zoom-equivalent widths",
+        run: async function () {
+          var priorWidth = frame.style.width;
+          try {
+            for (var width of [320, 375, 640, 768, 1280]) {
+              frame.style.width = width + "px";
+              await window.MechanismTest.nextAnimationFrames(appWindow, 2);
+              assert(appDocument.documentElement.scrollWidth <= appWindow.innerWidth + 1,
+                "The document must not overflow at " + width + " CSS pixels.");
+            }
+          } finally {
+            frame.style.width = priorWidth;
+            await window.MechanismTest.nextAnimationFrames(appWindow, 2);
+          }
+        }
+      },
+      {
         name: "The bilateral-trade route loads local MathJax before the module scripts",
         run: function () {
-          var sources = Array.from(appDocument.querySelectorAll("head > script[defer]"))
-            .map(function (script) { return script.getAttribute("src"); });
-          assert(JSON.stringify(sources) === JSON.stringify([
+          window.MechanismTest.assertScriptOrder(appDocument, [
             "../../js/components.js",
             "../../js/mathjax-config.js",
             "../../assets/mathjax/tex-svg.js",
@@ -164,11 +179,7 @@
             "../../js/equation-chain.js",
             "model.js",
             "app.js"
-          ]), "Shared components and local MathJax should load before the " +
-            "module-specific scripts.");
-          assert(sources.every(function (source) {
-            return source && !/^https?:/i.test(source);
-          }), "Every script should remain local for offline file use.");
+          ]);
           assert(appWindow.MathJax && /^4\./.test(appWindow.MathJax.version) &&
             typeof appWindow.MathJax.typesetPromise === "function",
           "The local MathJax 4 SVG renderer should be available.");
@@ -282,6 +293,16 @@
           "The supplied introduction should retain its three prose blocks and four conditions.");
           assert(introduction.querySelectorAll('mjx-container[jax="SVG"]').length > 0,
             "The introduction's mathematical notation should render with MathJax.");
+          var paymentRuleMath = appDocument.getElementById("interim-payment-rules")
+            .querySelector('[data-mml-node="math"]');
+          var paymentRuleTex = paymentRuleMath.getAttribute("data-latex");
+          assert(paymentRuleTex.includes("P_B(v)=") &&
+            paymentRuleTex.includes("-U_B(\\underline{v})") &&
+            paymentRuleTex.includes("P_S(c)=U_S(\\overline{c})") &&
+            paymentRuleTex.includes("+cQ_S(c)") &&
+            !paymentRuleTex.includes("P_B(v,c)") &&
+            !paymentRuleTex.includes("P_S(v,c)"),
+          "The theorem should state the corrected interim expected payment rules.");
           var notes = Array.from(appDocument.querySelectorAll(".notes-list li"));
           assert(notes.length > 0, "The Notes list should carry its authored bullets.");
           assert(notes.every(function (note) {
@@ -465,8 +486,9 @@
               image.getAttribute("href").indexOf("data:image/png") === 0,
             id + " should render exact interim deviation payoffs.");
             assert(chart.querySelector(".truthful-report-line") &&
-              chart.querySelector(".best-report-line"),
-            id + " should overlay truthful and exact best-report traces.");
+              chart.querySelectorAll("circle[data-best-report-point]").length === 61 &&
+              !chart.querySelector(".best-report-line"),
+            id + " must show unjoined optimized reports without interpolating between them.");
           });
           ["buyer-payoff-chart", "seller-payoff-chart", "revenue-chart",
             "efficiency-chart"]
@@ -579,7 +601,7 @@
           var expected = model.summarize(model.efficientGrid());
           var buyerIc = appDocument.getElementById("buyer-ic-text");
           var sellerIc = appDocument.getElementById("seller-ic-text");
-          var efficiency = appDocument.getElementById("efficiency-text");
+          var efficiency = appDocument.getElementById("efficiency-chart");
           assert(buyerIc.dataset.icImplementable === "true" &&
             sellerIc.dataset.icImplementable === "true",
           "The efficient benchmark is IC-implementable.");
@@ -592,8 +614,20 @@
             expected.verdicts.welfare,
             "Displayed welfare should match the model.", 1e-6);
           var revenue = appDocument.getElementById("revenue-text");
-          assert(revenue.dataset.exPostBudgetBalanced === "false",
-            "The efficient benchmark should not be ex-post budget balanced.");
+          assert(revenue.dataset.expectedNoDeficit === "false",
+            "The efficient benchmark should not be ex-ante budget balanced.");
+          assert(buyerIc.textContent === "BIC: passes" &&
+            sellerIc.textContent === "BIC: passes",
+          "IC panels should contain only the BIC verdict.");
+          assert(revenue.children.length === 1 &&
+            revenue.textContent === "Ex-ante BB: fails (expected revenue = -0.167)",
+          "The BB panel should contain only the expected-balance verdict and revenue.");
+          var efficiencyText = appDocument.getElementById("efficiency-text");
+          assert(efficiencyText.children.length === 1 &&
+            efficiencyText.textContent === "Ex-post efficiency: passes (largest loss = 0.000 at (v, c) = (0.000, 0.000))" &&
+            efficiencyText.querySelector("p").className === "verdict-pass" &&
+            appDocument.querySelectorAll(".diagnostic-text").length === 6,
+          "The efficient benchmark should show a passing efficiency label with zero loss.");
           assertClose(Number(revenue.dataset.expectedRevenue),
             expected.verdicts.expectedRevenue,
             "Displayed expected revenue should match the model.", 1e-6);
@@ -694,23 +728,16 @@
         }
       },
       {
-        name: "Payoff text reports expected payoff, always green since IR cannot fail",
+        name: "Payoff panels report only interim IR",
         run: function () {
-          (function () {
-            var buyerPayoff = appDocument.getElementById("buyer-payoff-text");
-            var sellerPayoff = appDocument.getElementById("seller-payoff-text");
-            assert(buyerPayoff.textContent.includes("Expected buyer payoff") &&
-              sellerPayoff.textContent.includes("Expected seller payoff"),
-            "The payoff panels should report expected payoff, since the " +
-              "minimum is always exactly zero and never fails.");
-            assert(!buyerPayoff.textContent.includes("Never negative") &&
-              !buyerPayoff.textContent.includes("Negative somewhere"),
-            "The dead never-negative wording should be gone.");
-            assert(buyerPayoff.querySelector("p").className === "verdict-pass" &&
-              sellerPayoff.querySelector("p").className === "verdict-pass",
-            "Expected-payoff lines are always the pass color, since ex-post " +
-              "IR holds automatically for any q in [0,1].");
-          }());
+          ["buyer-payoff-text", "seller-payoff-text"].forEach(function (id) {
+            var payoff = appDocument.getElementById(id);
+            assert(payoff.children.length === 1 &&
+              payoff.textContent === "Interim IR: passes (minimum = 0.000)",
+            "The interim IR verdict should include the exact minimum in parentheses.");
+            assert(payoff.querySelector("p").className === "verdict-pass",
+              "Zero-boundary envelope payoffs satisfy interim IR for every allocation.");
+          });
         }
       },
       {
@@ -979,6 +1006,10 @@
         run: function () {
           return (async function () {
             paintEntireGrid(0);
+            await new Promise(function (resolve) { appWindow.requestAnimationFrame(resolve); });
+            assert(appDocument.getElementById("revenue-text").textContent ===
+              "Ex-ante BB: passes (expected revenue = 0.000)",
+            "Zero expected revenue should pass ex-ante BB.");
             var chart = appDocument.getElementById("paint-chart");
             var slider = appDocument.getElementById("brush-value-slider");
             var buyerIc = appDocument.getElementById("buyer-ic-text");
@@ -1021,6 +1052,15 @@
             assert(buyerIc.dataset.icImplementable === "false" &&
               sellerIc.dataset.icImplementable === "false",
             "An isolated spike should violate Bayesian IC on both sides.");
+            assert(buyerIc.textContent === "BIC: fails" &&
+              sellerIc.textContent === "BIC: fails",
+            "Failed IC should use the requested BIC wording without monotonicity labels.");
+            var efficiencyText = appDocument.getElementById("efficiency-text");
+            var loss = Number(appDocument.getElementById("efficiency-chart").dataset.efficiencyLoss);
+            assert(loss > 0.1 && efficiencyText.textContent ===
+              "Ex-post efficiency: fails (largest loss = 1.000 at (v, c) = (1.000, 0.000))" &&
+              efficiencyText.querySelector("p").className === "verdict-fail",
+            "Painting an inefficient allocation should update the efficiency verdict and loss.");
             assert(Number(buyerIc.dataset.buyerIcViolationCount) > 0,
               "The buyer interim-violation count should be positive.");
             assert(Number(sellerIc.dataset.sellerIcViolationCount) > 0,
@@ -1034,11 +1074,11 @@
               assert(Number(icChart.dataset.maxDeviationGain) > 0,
                 id + " should report a positive exact deviation gain.");
               var truthful = icChart.querySelector(".truthful-report-line");
-              var best = icChart.querySelector(".best-report-line");
+              var best = icChart.querySelector("circle[data-best-report-point]");
               assert(truthful && best &&
                 appWindow.getComputedStyle(truthful).stroke !== "none" &&
                 appWindow.getComputedStyle(best).stroke !== "none",
-              id + " should display truthful and best-report traces.");
+              id + " should display the truthful diagonal and individually optimized report marks.");
             });
 
             var revenue = appDocument.getElementById("revenue-text");
@@ -1115,11 +1155,18 @@
             var summary = appDocument.getElementById("live-summary");
             assert(summary.getAttribute("aria-live") === "polite",
               "The live summary should be politely announced.");
-            assert(summary.textContent.includes("IC-implementable") ||
-              summary.textContent.includes("Expected buyer payoff"),
-            "The live summary should describe the IC and IR state.");
-            assert(summary.textContent.includes("Expected revenue"),
-              "The live summary should describe expected revenue.");
+            assert(summary.textContent.includes("Buyer BIC") &&
+              summary.textContent.includes("Seller BIC") &&
+              summary.textContent.includes("interim IR"),
+            "The live summary should describe both agents' BIC and interim IR state.");
+            assert(summary.textContent.includes("Ex-ante BB") &&
+              summary.textContent.includes("expected revenue"),
+            "The live summary should describe expected balance and revenue.");
+            assert(summary.textContent.includes("minimum = 0.000") &&
+              /Ex-post efficiency (passes|fails) \(largest loss = /.test(summary.textContent),
+            "The live summary should include the IR minimum and efficiency loss.");
+            assert(!/monotonic|IC-implementable|Ex-post BB|Ex-ante efficiency|Expected buyer payoff/.test(summary.textContent),
+              "Retired verdict wording should not remain in the live summary.");
           }());
         }
       },
@@ -1196,6 +1243,37 @@
         }
       }
     ];
+
+    tests.push({
+      name: "Positive expected revenue passes ex-ante BB",
+      run: async function () {
+        paintEntireGrid(0);
+        await new Promise(function (resolve) { appWindow.requestAnimationFrame(resolve); });
+        var slider = appDocument.getElementById("brush-value-slider");
+        slider.value = "1";
+        dispatchInput(slider, appWindow);
+        var chart = appDocument.getElementById("paint-chart");
+        var rect = chart.getBoundingClientRect();
+        var point = model.triangleCentroid(18, 1, true);
+        var x = rect.left + (50 + 400 * point.v) / chart.viewBox.baseVal.width * rect.width;
+        var y = rect.top + (440 - 400 * point.c) / chart.viewBox.baseVal.height * rect.height;
+        firePointer(chart, "pointerdown", x, y, 97);
+        firePointer(chart, "pointerup", x, y, 97);
+        await new Promise(function (resolve) { appWindow.requestAnimationFrame(resolve); });
+        var grid = model.constantCellGrid(0);
+        grid.lower[18][1] = 1;
+        var expected = model.summarize(grid).verdicts.expectedRevenue;
+        var revenue = appDocument.getElementById("revenue-text");
+        assert(expected > model.BALANCE_TOLERANCE &&
+          revenue.dataset.expectedNoDeficit === "true" &&
+          revenue.textContent === "Ex-ante BB: passes (expected revenue = " + expected.toFixed(3) + ")" &&
+          revenue.firstElementChild.className === "verdict-pass",
+        "An allocation producing a positive surplus must pass the displayed BB condition.");
+        assert(appDocument.getElementById("live-summary").textContent.includes(
+          "Ex-ante BB: passes (expected revenue = " + expected.toFixed(3) + ")"),
+        "The live summary should announce the same passing surplus verdict.");
+      }
+    });
 
     var failures = 0;
     for (var testIndex = 0; testIndex < tests.length; testIndex += 1) {

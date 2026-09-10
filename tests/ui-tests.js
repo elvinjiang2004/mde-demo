@@ -18,32 +18,16 @@
     );
   });
 
-  function assert(condition, message) {
-    if (!condition) {
-      throw new Error(message);
-    }
-  }
-
-  function assertClose(actual, expected, tolerance, message) {
-    if (Math.abs(actual - expected) > tolerance) {
-      throw new Error(message + " Expected " + expected + ", received " + actual + ".");
-    }
-  }
+  var assert = window.MechanismTest.assert;
+  var assertClose = window.MechanismTest.assertClose;
+  var addResult = window.MechanismTest.addResult;
 
   function change(element) {
-    element.dispatchEvent(new frame.contentWindow.Event("change", { bubbles: true }));
+    window.MechanismTest.dispatch(element, "change", frame.contentWindow);
   }
 
   function input(element) {
-    element.dispatchEvent(new frame.contentWindow.Event("input", { bubbles: true }));
-  }
-
-  function addResult(name, error) {
-    var item = document.createElement("li");
-    item.className = error ? "fail" : "pass";
-    item.textContent = (error ? "FAIL — " : "PASS — ") + name +
-      (error ? ": " + error.message : "");
-    document.getElementById("results").appendChild(item);
+    window.MechanismTest.dispatch(element, "input", frame.contentWindow);
   }
 
   async function runTests() {
@@ -88,11 +72,46 @@
 
     var tests = [
       {
+        name: "The opposing-bid PDF drops vertically at its support endpoint",
+        run: function () {
+          withReset(function () {
+            [[1, 1], [2, 3], [0.2, 0.2]].forEach(function (shape) {
+              chooseBeta(shape[0], shape[1]);
+              var endpoint = model.maximumEquilibriumBid(2, 0, 100,
+                { type: "beta", alpha: shape[0], beta: shape[1] });
+              [0, endpoint, 100].forEach(function (bid) {
+                var field = appDocument.getElementById("bid-number");
+                field.value = String(bid);
+                change(field);
+                var path = appDocument.querySelector(".highest-bid-density-curve");
+                var coordinates = path.getAttribute("d").match(/-?\d+(?:\.\d+)?/g)
+                  .map(Number);
+                var tail = coordinates.slice(-6);
+                var supportX = Number(appDocument.querySelector(".support-guide")
+                  .getAttribute("x1"));
+                var panel = appDocument.querySelector(".panel-background");
+                var baseline = Number(panel.getAttribute("y")) +
+                  Number(panel.getAttribute("height"));
+                assertClose(tail[0], supportX, 0.001,
+                  "The positive density endpoint must lie at the support boundary.");
+                assertClose(tail[2], supportX, 0.001,
+                  "The drop to zero must use the same boundary coordinate.");
+                assert(tail[1] < baseline,
+                  "The density must remain positive just before the cutoff.");
+                assertClose(tail[3], baseline, 0.001,
+                  "The density must drop all the way to zero at the boundary.");
+                assert(tail[4] > tail[2], "The zero tail must extend beyond the support.");
+                assertClose(tail[5], baseline, 0.001,
+                  "The density beyond the support must stay zero.");
+              });
+            });
+          });
+        }
+      },
+      {
         name: "The first-price route loads the shared distribution kernel first",
         run: function () {
-          var sources = Array.from(appDocument.querySelectorAll("head > script[defer]"))
-            .map(function (script) { return script.getAttribute("src"); });
-          assert(JSON.stringify(sources) === JSON.stringify([
+          window.MechanismTest.assertScriptOrder(appDocument, [
             "../../js/components.js",
             "../../js/mathjax-config.js",
             "../../assets/mathjax/tex-svg.js",
@@ -104,12 +123,10 @@
             "../../js/auction-controls.js",
             "../../js/auction-chart.js",
             "model.js",
+            "charts.js",
+            "controls.js",
             "app.js"
-          ]), "The shared page-scaffolding components must load before MathJax, " +
-            "the shared kernel, model, and app.");
-          assert(sources.every(function (source) {
-            return source && !/^https?:/i.test(source);
-          }), "Every script should remain local for offline file use.");
+          ]);
           assert(appWindow.MathJax && /^4\./.test(appWindow.MathJax.version) &&
             typeof appWindow.MathJax.typesetPromise === "function",
           "The local MathJax 4 SVG renderer should be available.");
@@ -324,14 +341,14 @@
               derivation.querySelector("h2").textContent ===
                 "Optimal bid for bidder 1" &&
               derivation.querySelectorAll(
-                "#expected-utility-proof .equation-step-rhs:not(.equation-step-extra)"
+                "#expected-payoff-proof .equation-step-rhs:not(.equation-step-extra)"
               ).length === 6 &&
               derivation.querySelectorAll(
                 "#optimality-gap-proof .equation-step-rhs:not(.equation-step-extra)"
               ).length === 2,
             "The general optimal-bid proof should be visible for Beta(1,1).");
             var expectedUtilitySource = Array.from(derivation.querySelectorAll(
-              '#expected-utility-proof [data-mml-node="math"]'
+              '#expected-payoff-proof [data-mml-node="math"]'
             )).map(function (node) { return node.dataset.latex; }).join(" ");
             var optimalityGapSource = Array.from(derivation.querySelectorAll(
               '#optimality-gap-proof [data-mml-node="math"]'
@@ -355,9 +372,11 @@
               "The general optimal-bid proof should remain visible for other Beta shapes.");
             assert(controls.contains(appDocument.getElementById("value-pdf-preview")),
               "The Beta value-PDF preview should be part of the shape controls.");
-            assert(appDocument.querySelector(".value-pdf-preview-figure figcaption")
-              .textContent.replace(/\s+/g, " ").trim() === "PDF of Value",
-            "The small distribution figure should be labeled PDF of Value.");
+            var previewCaption = appDocument.querySelector(".value-pdf-preview-figure figcaption");
+            assert(/^PDF of value,\s*$/.test(previewCaption.firstChild.nodeValue) &&
+              previewCaption.querySelector(
+                'mjx-container[jax="SVG"] [data-mml-node="math"][data-latex="V_i"]'
+              ), "The caption should retain its current wording and typeset bidder-value symbol.");
 
             chooseBeta(1, 1);
             assert(!controls.hidden && !derivation.hidden,
@@ -372,7 +391,7 @@
             ".equation-chain-divider-toggle"
           ));
           assert(toggles.length === 6,
-            "The expected-utility chain's 5 internal gaps and the " +
+            "The expected-payoff chain's 5 internal gaps and the " +
               "optimality-gap chain's 1 internal gap should each expose " +
               "their own divider.");
           var activeToggles = toggles.filter(function (toggle) {
@@ -401,7 +420,7 @@
             node = node.nextElementSibling;
           }
           var ordinaryRhs = appDocument.querySelector(
-            "#expected-utility-proof .equation-step-rhs:not(.equation-step-extra)"
+            "#expected-payoff-proof .equation-step-rhs:not(.equation-step-extra)"
           );
           var extraRhs = rows.filter(function (row) {
             return row.classList.contains("equation-step-rhs");
@@ -472,9 +491,9 @@
             var captionRect = previewCaption.getBoundingClientRect();
             assert(Math.abs(captionRect.left -
               (previewRect.left + previewRect.width * 14 / 320)) < 1.5,
-            "The PDF of Value caption should align with the plotted PDF area.");
+            "The value-PDF caption should align with the plotted PDF area.");
 
-            assert(preview.querySelector("title").textContent === "PDF of Value",
+            assert(preview.querySelector("title").textContent === "PDF of value, V subscript i",
               "The preview should have the requested accessible title.");
             assert(preview.querySelector("desc").textContent.includes("alpha 2") &&
               preview.querySelector("desc").textContent.includes("beta 2"),
@@ -784,6 +803,30 @@
         }
       },
       {
+        name: "Bid and value changes reuse the cached underlying curves",
+        run: function () {
+          withReset(function () {
+            var chart = appDocument.getElementById("tradeoff-chart");
+            var bid = appDocument.getElementById("bid-slider");
+            var value = appDocument.getElementById("value-slider");
+            var alpha = appDocument.getElementById("alpha-slider");
+            var cacheKey = chart.dataset.curveCacheKey;
+            var buildCount = Number(chart.dataset.curveCacheBuildCount);
+            bid.value = "45";
+            input(bid);
+            value.value = "65";
+            input(value);
+            assert(chart.dataset.curveCacheKey === cacheKey &&
+              Number(chart.dataset.curveCacheBuildCount) === buildCount,
+            "Changing only the learner's value or bid should reuse probability and density samples.");
+            alpha.value = "2";
+            input(alpha);
+            assert(chart.dataset.curveCacheKey !== cacheKey &&
+              Number(chart.dataset.curveCacheBuildCount) === buildCount + 1,
+            "Changing a distribution parameter should rebuild the underlying curves once.");
+          });
+        }
+      },      {
         name: "The payoff rectangle handles zero and negative bids correctly",
         run: function () {
           var value = appDocument.getElementById("value-slider");
@@ -1258,8 +1301,9 @@
       },
       {
         name: "Active graph drags clamp exactly to either support endpoint",
-        run: function () {
-          withReset(function () {
+        run: async function () {
+          reset();
+          try {
             var chart = appDocument.getElementById("tradeoff-chart");
             var bid = appDocument.getElementById("bid-slider");
             var panel = appDocument.querySelector(".panel-background");
@@ -1300,12 +1344,14 @@
               chart.dispatchEvent(makePointer(
                 "pointermove", clientX(plotRight) + 25, 1
               ));
+              await window.MechanismTest.nextAnimationFrames(appWindow, 1);
               assertClose(Number(bid.value), 100, 1e-9,
                 "An active drag past the right edge should end exactly at b.");
 
               chart.dispatchEvent(makePointer(
                 "pointermove", clientX(plotLeft) - 25, 1
               ));
+              await window.MechanismTest.nextAnimationFrames(appWindow, 1);
               assertClose(Number(bid.value), 0, 1e-9,
                 "An active drag past the left edge should end exactly at a.");
               chart.dispatchEvent(makePointer(
@@ -1314,7 +1360,9 @@
             } finally {
               chart.setPointerCapture = originalCapture;
             }
-          });
+          } finally {
+            reset();
+          }
         }
       },
       {
@@ -1366,24 +1414,10 @@
       }
     ];
 
-    var failures = 0;
-    for (var testIndex = 0; testIndex < tests.length; testIndex += 1) {
-      var test = tests[testIndex];
-      try {
-        await test.run();
-        addResult(test.name, null);
-      } catch (error) {
-        failures += 1;
-        addResult(test.name, error);
-      }
-    }
-
-    var summary = document.getElementById("summary");
-    var passed = tests.length - failures;
-    summary.textContent = passed + " of " + tests.length + " interface tests passed.";
-    summary.className = failures ? "fail" : "pass";
-    document.body.dataset.status = failures ? "failed" : "passed";
-    document.title = (failures ? "FAIL" : "PASS") + " — FPA interface tests";
-    window.clearInterval(testKeepAlive);
+    await window.MechanismTest.run(tests, {
+      label: "interface tests",
+      title: "FPA interface tests",
+      cleanup: function () { window.clearInterval(testKeepAlive); }
+    });
   }
 }());

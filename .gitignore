@@ -6,3 +6,7 @@ Thumbs.db
 
 # Reference PDFs (copyrighted texts) are kept locally, never committed.
 *.pdf
+
+build/
+__pycache__/
+*.pyc

@@ -17,6 +17,8 @@
   <script defer src="../../js/auction-controls.js"></script>
   <script defer src="../../js/auction-chart.js"></script>
   <script defer src="model.js"></script>
+  <script defer src="charts.js"></script>
+  <script defer src="controls.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -168,10 +170,10 @@
         remaining bid can be written as \(\beta^{\mathrm{I}}(z)\) for some
         \(z\in[a,b]\). Then, let's compare bidding
         \(\beta^{\mathrm{I}}(v_1)\) with bidding
-        \(\beta^{\mathrm{I}}(z)\). Denote bidder 1's expected utility from bidding some amount
+        \(\beta^{\mathrm{I}}(z)\). Denote bidder 1's expected payoff from bidding some amount
         \(x_1\in[a,\beta^{\mathrm{I}}(b)]\) by \(U_1(v_1,x_1)\). We have
       </p>
-      <div id="expected-utility-proof" class="equation-chain-steps equation-chain-content-widths">
+      <div id="expected-payoff-proof" class="equation-chain-steps equation-chain-content-widths">
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle U_1 \!\left(v_1,\beta^{\mathrm{I}}(z)\right) \)</span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
@@ -233,7 +235,7 @@
         <span class="equation-step-rhs">\(\displaystyle G(z)(v_1-z)+\int_a^z G(y)\,dy. \)</span>
       </div>
       <p>
-        Therefore, the difference in expected utility between bidding \(\beta^{\mathrm{I}}(v_1)\) and bidding \(\beta^{\mathrm{I}}(z)\) for bidder 1 is
+        Therefore, the difference in expected payoff between bidding \(\beta^{\mathrm{I}}(v_1)\) and bidding \(\beta^{\mathrm{I}}(z)\) for bidder 1 is
       </p>
       <div id="optimality-gap-proof" class="equation-chain-steps equation-chain-content-widths">
         <span class="equation-step-connector"></span>
@@ -262,7 +264,7 @@
       <ul class="notes-list">
           <li>
             A more descriptive name for this setting may be "independent, private values first-price auction with risk-neutral, symmetric bidders,
-            no reserve price, and no budget-constraints," but IPV is a common abbreviation for this setting in the auction-theory literature.
+            no reserve price, and no budget-constraints," but IPV is a common abbreviation.
           </li>
           <li>
             We have not shown this equilibrium is unique, but a little more work shows that it is the unique symmetric, increasing equilibrium.

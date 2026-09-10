@@ -214,6 +214,7 @@
       grid: grid,
       interim: interim,
       deviation: deviation,
+      exPostEfficiency: sharedEnvelope.maximumEfficiencyLoss(grid),
       patches: {
         buyerPayoff: exact.buyerPayoff,
         sellerPayoff: exact.sellerPayoff,
@@ -221,6 +222,10 @@
       },
       verdicts: {
         icImplementable: icImplementable,
+        buyerBic: buyerMonotonicity.holds,
+        sellerBic: sellerMonotonicity.holds,
+        interimBuyerIr: true,
+        interimSellerIr: true,
         buyerIcViolationCount: buyerMonotonicity.violationCount,
         sellerIcViolationCount: sellerMonotonicity.violationCount,
         minBuyerPayoff: 0,
@@ -233,6 +238,7 @@
         minRevenue: minRevenue,
         maxRevenue: maxRevenue,
         expectedRevenue: eRevenue,
+        expectedBudgetBalanced: Math.abs(eRevenue) <= BALANCE_TOLERANCE,
         expectedNoDeficit: eRevenue >= -BALANCE_TOLERANCE,
         welfare: w,
         firstBestWelfare: firstBestWelfare,

@@ -3,6 +3,24 @@
 (function () {
   var appendSvg = window.SvgUtils.appendSvg;
   var EPSILON = 1e-12;
+  var moneyFormats = [1, 2, 3].map(function (digits) {
+    return new Intl.NumberFormat(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: digits
+    });
+  });
+  var densityFormat = new Intl.NumberFormat(undefined, {
+    maximumSignificantDigits: 3
+  });
+  var probabilityFormat = new Intl.NumberFormat(undefined, {
+    style: "percent",
+    maximumFractionDigits: 0
+  });
+  var percentFormat = new Intl.NumberFormat(undefined, {
+    style: "percent",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  });
 
   function clamp(value, lower, upper) {
     return window.NumberUtils.clamp(value, lower, upper);
@@ -14,10 +32,7 @@
     }
     var cleaned = Math.abs(value) < 1e-10 ? 0 : value;
     var digits = span <= 2 ? 3 : (span <= 20 ? 2 : 1);
-    return new Intl.NumberFormat(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: digits
-    }).format(cleaned);
+    return moneyFormats[digits - 1].format(cleaned);
   }
 
   function formatDensityAxis(value) {
@@ -25,24 +40,15 @@
     if (absolute > 0 && (absolute < 0.001 || absolute >= 10000)) {
       return value.toExponential(1);
     }
-    return new Intl.NumberFormat(undefined, {
-      maximumSignificantDigits: 3
-    }).format(value);
+    return densityFormat.format(value);
   }
 
   function formatProbabilityAxis(value) {
-    return new Intl.NumberFormat(undefined, {
-      style: "percent",
-      maximumFractionDigits: 0
-    }).format(value);
+    return probabilityFormat.format(value);
   }
 
   function formatPercent(value) {
-    return new Intl.NumberFormat(undefined, {
-      style: "percent",
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1
-    }).format(value);
+    return percentFormat.format(value);
   }
 
   function roundCoordinate(value) {
@@ -139,6 +145,7 @@
     appendSvg(svg, "path", { d: path, class: className });
   }
 
+  // Keep these coordinates identical to the unrounded probability guide endpoints.
   function drawCircle(svg, x, y, className) {
     appendSvg(svg, "circle", {
       cx: x,
@@ -161,6 +168,109 @@
       }).join(" "),
       class: className
     });
+  }
+
+  function drawValueDensityPreview(svg, options) {
+    var width = 320;
+    var height = 120;
+    var left = 14;
+    var right = 306;
+    var top = 9;
+    var baseY = 91;
+    var plotHeight = baseY - top;
+    var sampleCount = 161;
+    var endpointInset = 1 / (sampleCount * 3);
+    var span = options.upper - options.lower;
+    var points = [];
+    var peak = 0;
+    var i;
+
+    svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+    svg.setAttribute("role", "img");
+    svg.setAttribute(
+      "aria-labelledby",
+      "value-pdf-preview-title value-pdf-preview-description"
+    );
+    svg.setAttribute("data-alpha", options.alpha);
+    svg.setAttribute("data-beta", options.beta);
+    svg.setAttribute("data-lower-bound", options.lower);
+    svg.setAttribute("data-upper-bound", options.upper);
+    svg.replaceChildren();
+    appendSvg(svg, "title", { id: "value-pdf-preview-title" }, "PDF of value, V subscript i");
+    appendSvg(svg, "desc", { id: "value-pdf-preview-description" },
+      "Beta value density on [" + options.formatEditableNumber(options.lower) +
+      ", " + options.formatEditableNumber(options.upper) + "] with alpha " +
+      options.formatChoiceNumber(options.alpha) + " and beta " +
+      options.formatChoiceNumber(options.beta) + ".");
+
+    for (i = 0; i < sampleCount; i += 1) {
+      var ratio = i / (sampleCount - 1);
+      var evaluationRatio = clamp(ratio, endpointInset, 1 - endpointInset);
+      var density = options.pdf(
+        options.lower + evaluationRatio * span,
+        options.lower,
+        options.upper,
+        options.distribution
+      );
+      if (!Number.isFinite(density) || density < 0) {
+        density = 0;
+      }
+      peak = Math.max(peak, density);
+      points.push({ ratio: ratio, density: density });
+    }
+    peak = peak > 0 ? peak : 1;
+
+    function previewX(ratio) {
+      return left + ratio * (right - left);
+    }
+
+    function previewY(density) {
+      return baseY - (clamp(density, 0, peak) / peak) * plotHeight;
+    }
+
+    var curvePath = points.map(function (point, index) {
+      return (index === 0 ? "M " : "L ") +
+        roundCoordinate(previewX(point.ratio)) + " " +
+        roundCoordinate(previewY(point.density));
+    }).join(" ");
+    var areaPath = "M " + left + " " + baseY + " " +
+      curvePath.replace(/^M /, "L ") + " L " + right + " " + baseY + " Z";
+
+    appendSvg(svg, "path", {
+      d: areaPath,
+      class: "value-pdf-area",
+      "data-alpha": options.alpha,
+      "data-beta": options.beta,
+      "data-lower-bound": options.lower,
+      "data-upper-bound": options.upper
+    });
+    appendSvg(svg, "line", {
+      x1: left, y1: baseY, x2: right, y2: baseY, class: "value-pdf-axis"
+    });
+    appendSvg(svg, "path", {
+      d: curvePath,
+      class: "value-pdf-curve",
+      "data-alpha": options.alpha,
+      "data-beta": options.beta,
+      "data-lower-bound": options.lower,
+      "data-upper-bound": options.upper
+    });
+    appendSvg(svg, "line", {
+      x1: left, y1: baseY - 4, x2: left, y2: baseY + 4,
+      class: "value-pdf-axis"
+    });
+    appendSvg(svg, "line", {
+      x1: right, y1: baseY - 4, x2: right, y2: baseY + 4,
+      class: "value-pdf-axis"
+    });
+    appendSvg(svg, "text", {
+      x: left, y: 108, class: "value-pdf-endpoint-label",
+      "text-anchor": "start", "data-endpoint": "a"
+    }, "a = " + formatMoney(options.lower, span));
+    appendSvg(svg, "text", {
+      x: right, y: 108, class: "value-pdf-endpoint-label",
+      "text-anchor": "end", "data-endpoint": "b"
+    }, "b = " + formatMoney(options.upper, span));
   }
 
   function extend(base, extras) {
@@ -213,6 +323,7 @@
     drawCurve: drawCurve,
     drawCircle: drawCircle,
     drawDiamond: drawDiamond,
+    drawValueDensityPreview: drawValueDensityPreview,
     chartLayout: chartLayout
   });
 })();

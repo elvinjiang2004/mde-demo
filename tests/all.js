@@ -7,6 +7,7 @@
     { file: "second-price-model-tests.html", name: "Second-price model", kind: "model" },
     { file: "bilateral-trade-model-tests.html", name: "Myerson-Satterthwaite model", kind: "model" },
     { file: "bargaining-sandbox-model-tests.html", name: "Bargaining sandbox model", kind: "model" },
+    { file: "bargaining-sandbox-parity-tests.html", name: "Bargaining sandbox representation parity", kind: "model" },
     { file: "envelope-theorem-model-tests.html", name: "Envelope theorem model", kind: "model" },
     { file: "payments-from-allocation-rule-model-tests.html", name: "Payments model", kind: "model" },
     { file: "components-tests.html", name: "Shared components", kind: "interface" },
@@ -61,7 +62,9 @@
       return {
         state: status,
         passed: doc.querySelectorAll("#results li.pass").length,
-        failed: doc.querySelectorAll("#results li.fail").length
+        failed: doc.querySelectorAll("#results li.fail").length,
+        failureDetails: Array.from(doc.querySelectorAll("#results li.fail"))
+          .map(function (item) { return item.textContent; })
       };
     }
     return { state: "pending" };
@@ -98,7 +101,8 @@
           suite: suite,
           state: reading.state,
           passed: reading.passed || 0,
-          failed: reading.failed || 0
+          failed: reading.failed || 0,
+          failureDetails: reading.failureDetails || []
         };
         if (reading.state === "passed") {
           statusCell.className = "status pass";
@@ -188,12 +192,24 @@
       "test failure. Serve the repository root and reload from there:" +
       "<pre>py -m http.server 8000</pre>" +
       "then open <code>http://localhost:8000/tests/all.html</code>. " +
-      "The seven model suites and <code>components-tests.html</code> also run " +
+      "The model suites and <code>components-tests.html</code> also run " +
       "correctly opened directly as files, since they load no iframe.";
     document.body.dataset.status = "blocked";
     document.title = "Needs a server — All suites";
   }
 
+  function reportRunnerDom() {
+    if (new URLSearchParams(window.location.search).get("report") !== "1") {
+      return;
+    }
+    window.fetch(window.location.origin + "/__mde-test-result", {
+      method: "POST",
+      headers: { "Content-Type": "text/html;charset=utf-8" },
+      body: document.documentElement.outerHTML
+    }).catch(function () {
+      /* The visible aggregate status remains the source of truth for people. */
+    });
+  }
   if (window.location.protocol === "file:") {
     announceFileProtocol();
     return;
@@ -225,7 +241,24 @@
 
     summary.textContent = text;
     summary.className = clean ? "pass" : "fail";
+    var details = results.reduce(function (lines, result) {
+      return lines.concat(result.failureDetails.map(function (detail) {
+        return result.suite.name + ": " + detail;
+      }));
+    }, []);
+    if (details.length > 0) {
+      var detailList = document.createElement("ul");
+      detailList.id = "failure-details";
+      details.forEach(function (detail) {
+        var item = document.createElement("li");
+        item.className = "fail";
+        item.textContent = detail;
+        detailList.appendChild(item);
+      });
+      document.body.appendChild(detailList);
+    }
     document.body.dataset.status = clean ? "passed" : "failed";
     document.title = (clean ? "PASS" : "FAIL") + " — All suites";
+    reportRunnerDom();
   });
 })();

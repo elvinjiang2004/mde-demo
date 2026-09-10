@@ -1,0 +1,11 @@
+/* Keep the full equation reachable without expanding the lesson viewport. */
+.equation-display {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+
+.equation-display > mjx-container[jax="SVG"][display="true"] {
+  flex: 0 0 auto;
+  margin-inline: auto;
+}

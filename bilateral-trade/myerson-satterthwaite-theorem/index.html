@@ -6,6 +6,7 @@
   <meta name="description" content="Paint a bilateral-trade allocation rule q(v,c) and see its Bayesian IC, ex-post IR, budget-balance, and efficiency properties update live.">
   <title>The Myerson-Satterthwaite Theorem | Mechanism Design Explorer</title>
   <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="module.css">
   <script defer src="../../js/components.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
@@ -40,7 +41,7 @@
         \(c\), but not the other's.
       </p>
       <p>
-        We want to find a <em>direct</em> bargaining mechanism consisting of an allocation rule and two payment rules
+        We want to find a <em>direct bargaining mechanism</em> consisting of an allocation rule and two payment rules
         \((q(v,c),p_B(v,c),p_S(v,c))\) in this environment that satisfies:
       </p>
       <ol>
@@ -53,11 +54,10 @@
           positive expected payoff after observing their values.
         </li>
         <li>
-          (Weak, ex-ante) Budget Balance (BB): The trade does not need to be subsidized by
-          an outside party in expectation.
+          (Weak, ex-ante) Budget Balance (BB): Trade does not need to be subsidized in expectation.
         </li>
         <li>
-          (Ex-post) Pareto Efficiency (PE): The mechanism maximizes welfare at
+          (Ex-post) Efficiency: The mechanism maximizes welfare at
           every realized value profile. In other words, the person who values
           the object most always ends up with it.
         </li>
@@ -316,10 +316,10 @@
         if and only if \(Q_B\) is weakly increasing and \(Q_S\) is weakly decreasing. Furthermore, the payment
         rules must set interim expected payments as
       </p>
-            <div class="equation-display" aria-label="IC implementable payment rules for the buyer and seller">
+      <div id="interim-payment-rules" class="equation-display" aria-label="IC implementable interim expected payment rules for the buyer and seller">
         \[
-          P_B(v,c)=P_B(\underline{v})+vQ_B(v)-\int_{\underline{v}}^v Q_B(t)\,dt,\text{ and }
-          P_S(v,c)=P_S(\overline{c})+\int_c^{\overline{c}} Q_S(t)\,dt-cQ_S(c).
+          P_B(v)=vQ_B(v)-U_B(\underline{v})-\int_{\underline{v}}^v Q_B(t)\,dt,\text{ and }
+          P_S(c)=U_S(\overline{c})+\int_c^{\overline{c}} Q_S(t)\,dt+cQ_S(c).
         \]
       </div>
       <p>
@@ -563,7 +563,7 @@
       <h2 id="efficiency-title">Efficiency</h2>
       <p>
         The efficient allocation rule specifies trade when \(v>c\) and no trade
-        when \(v&lt;c\). That is, \(q(v,c)=\mathbb{1}(v>c)\) is the efficient
+        when \(v&lt;c\). That is, \(q^*(v,c)=\mathbb{1}(v>c)\) is the efficient
         allocation rule. This has interim allocation probabilities
       </p>
 

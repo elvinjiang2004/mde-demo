@@ -9,20 +9,14 @@
     tests.push({ name: name, callback: callback });
   }
 
-  function assert(condition, message) {
-    if (!condition) {
-      throw new Error(message || "Assertion failed.");
-    }
-  }
+  var assert = window.MechanismTest.assert;
 
   function assertClose(actual, expected, message, customTolerance) {
-    var allowed = customTolerance === undefined ? tolerance : customTolerance;
-    if (!Number.isFinite(actual) || Math.abs(actual - expected) > allowed) {
-      throw new Error(
-        (message || "Values differ.") +
-        " Expected " + expected + ", received " + actual + "."
-      );
-    }
+    window.MechanismTest.assertClose(
+      actual, expected,
+      customTolerance === undefined ? tolerance : customTolerance,
+      message
+    );
   }
 
   function evenPoints(qs) {
@@ -162,7 +156,13 @@
   });
 
   test("addPoint inserts into the largest gap without changing the curve's shape", function () {
-    var points = model.defaultPoints();
+    var points = [
+      { v: 0, q: 0.1 },
+      { v: 0.25, q: 0.7 },
+      { v: 0.5, q: 0.45 },
+      { v: 0.75, q: 0.8 },
+      { v: 1, q: 0.2 }
+    ];
     var before = model.buildCurve(points);
     var result = model.addPoint(points);
     assert(result.points.length === points.length + 1,
@@ -174,6 +174,13 @@
     assertClose(inserted.q, before.Q(0.125),
       "The new point's height matches the curve's own prior value there, so " +
       "adding a point never visibly changes Q at the instant it is added.");
+    var after = model.buildCurve(result.points);
+    [0, 0.05, 0.125, 0.2, 0.375, 0.49, 0.61, 0.88, 1].forEach(function (v) {
+      assertClose(after.Q(v), before.Q(v),
+        "Splitting a segment must preserve Q at v=" + v + ".", 1e-12);
+      assertClose(after.U(v), before.U(v),
+        "Splitting a segment must preserve its exact integral at v=" + v + ".", 1e-12);
+    });
   });
 
   test("Repeated adds from the five default points land on an even 0.125 grid at the nine-point ceiling", function () {
@@ -252,30 +259,11 @@
   run();
 
   function run() {
-    var results = document.getElementById("results");
-    var passed = 0;
-
-    tests.forEach(function (item) {
-      var row = document.createElement("li");
-      try {
-        item.callback();
-        row.className = "pass";
-        row.textContent = "PASS — " + item.name;
-        passed += 1;
-      } catch (error) {
-        row.className = "fail";
-        row.textContent = "FAIL — " + item.name + ": " + error.message;
-      }
-      results.appendChild(row);
+    window.MechanismTest.run(tests.map(function (item) {
+      return { name: item.name, run: item.callback };
+    }), {
+      label: "payments-from-allocation-rule model tests",
+      title: "Payments-from-allocation-rule model tests"
     });
-
-    var allPassed = passed === tests.length;
-    var summary = document.getElementById("summary");
-    summary.className = allPassed ? "pass" : "fail";
-    summary.textContent = passed + " of " + tests.length +
-      " payments-from-allocation-rule model tests passed.";
-    document.body.dataset.status = allPassed ? "passed" : "failed";
-    document.title = (allPassed ? "PASS" : "FAIL") +
-      " — Payments-from-allocation-rule model tests";
   }
 }());

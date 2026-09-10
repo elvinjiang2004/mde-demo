@@ -20,10 +20,20 @@
       wordmark.setAttribute("href", home);
       wordmark.textContent = "Mechanism Design Explorer";
 
+      var about = document.createElement("a");
+      about.className = "header-link";
+      about.setAttribute("href", home.replace(/[^/]*$/, "about.html"));
+      about.textContent = "About";
+
+      var navigation = document.createElement("div");
+      navigation.className = "header-navigation";
+      navigation.appendChild(wordmark);
+      navigation.appendChild(about);
+
       var span = document.createElement("span");
       span.textContent = category;
 
-      wrapper.appendChild(wordmark);
+      wrapper.appendChild(navigation);
       wrapper.appendChild(span);
       this.replaceChildren(wrapper);
     }
@@ -106,14 +116,14 @@
     '    <div class="range-endpoints" aria-hidden="true"><span>0.2</span><span>10</span></div>',
     '  </div>',
     '  <figure class="value-pdf-preview-figure">',
-    '    <figcaption>PDF of Value</figcaption>',
+    '    <figcaption>PDF of value, \\(V_i\\)</figcaption>',
     '    <svg',
     '      id="value-pdf-preview"',
     '      viewBox="0 0 320 120"',
     '      role="img"',
     '      aria-labelledby="value-pdf-preview-title value-pdf-preview-description"',
     '    >',
-    '      <title id="value-pdf-preview-title">PDF of Value</title>',
+    '      <title id="value-pdf-preview-title">PDF of value, V subscript i</title>',
     '      <desc id="value-pdf-preview-description">The selected Beta value density.</desc>',
     '    </svg>',
     '  </figure>',

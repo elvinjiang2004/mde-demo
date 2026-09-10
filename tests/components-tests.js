@@ -41,6 +41,10 @@
     "The wordmark should link home with the shared brand text.");
     assert(header.querySelector(".header-content > span").textContent === "Auctions",
       "The category span should read the category attribute.");
+    var about = header.querySelector(".header-navigation .header-link");
+    assert(about && about.getAttribute("href") === "../../about.html" &&
+      about.textContent === "About" && wordmark.nextElementSibling === about,
+    "The About link should follow the site name and resolve from nested module pages.");
     assert(header.querySelector(".page-width.header-content"),
       "The rendered row should keep the page-width and header-content classes.");
   });
@@ -49,6 +53,8 @@
     var header = render("page-header", { category: "Modules" });
     assert(header.querySelector(".wordmark").getAttribute("href") === "index.html",
       "With no home attribute, the wordmark should default to index.html.");
+    assert(header.querySelector(".header-link").getAttribute("href") === "about.html",
+      "The default header should link to About beside its default home page.");
   });
 
   test("page-footer renders the shared footer content", function () {
@@ -78,6 +84,10 @@
   test("model-parameter-controls keeps the MathJax inline-math delimiters", function () {
     var controls = render("model-parameter-controls", {});
     var html = controls.innerHTML;
+    assert(controls.querySelector(".value-pdf-preview-figure figcaption").textContent ===
+      "PDF of value, \\(V_i\\)", "The HTML caption should retain its MathJax source.");
+    assert(controls.querySelector("#value-pdf-preview-title").textContent ===
+      "PDF of value, V subscript i", "The initial SVG title should use readable plain text.");
     ["\\(n\\)", "\\(a\\)", "\\(b\\)", "\\(\\alpha\\)", "\\(\\beta\\)"].forEach(function (delimiter) {
       assert(html.indexOf(delimiter) >= 0,
         "The rendered controls should still contain " + delimiter + " for MathJax.");

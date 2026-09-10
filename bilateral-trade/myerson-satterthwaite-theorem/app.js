@@ -665,12 +665,19 @@
       y2: DIAG_LAYOUT.top,
       class: "truthful-report-line"
     });
-    appendSvg(svg, "polyline", {
-      points: diagnostic.bestResponses.map(function (response) {
-        return svgXOf(response.trueType, DIAG_LAYOUT) + "," +
-          svgYOf(response.report, DIAG_LAYOUT);
-      }).join(" "),
-      class: "best-report-line"
+    // Each report is optimized exactly; joining samples can invent nonoptimal reports.
+    diagnostic.bestResponses.forEach(function (response, index) {
+      appendSvg(svg, "circle", {
+        cx: svgXOf(response.trueType, DIAG_LAYOUT),
+        cy: svgYOf(response.report, DIAG_LAYOUT),
+        r: 1.2,
+        fill: "var(--blue)",
+        stroke: "var(--annotation-halo)",
+        "stroke-width": 0.5,
+        "vector-effect": "non-scaling-stroke",
+        "pointer-events": "none",
+        "data-best-report-point": index
+      });
     });
     svg.dataset.maxDeviationGain = String(
       diagnostic.bestResponses.reduce(function (maximum, response) {
@@ -954,31 +961,20 @@
     elements.diagnosticProbeStatus.textContent = coordinates + ", " + result + ".";
   }
 
-  function appendFormattedText(container, segments) {
-    segments.forEach(function (segment) {
-      if (typeof segment === "string") {
-        container.appendChild(document.createTextNode(segment));
-      } else {
-        container.appendChild(document.createTextNode(segment[0]));
-        var sub = document.createElement("sub");
-        sub.textContent = segment[1];
-        container.appendChild(sub);
-      }
-    });
+  function renderDiagnosticLine(container, label, holds, detail) {
+    var paragraph = document.createElement("p");
+    var status = holds ? "passes" : "fails";
+    paragraph.textContent = label + ": " + status +
+      (detail ? " (" + detail + ")" : "");
+    paragraph.className = holds ? "verdict-pass" : "verdict-fail";
+    container.replaceChildren(paragraph);
   }
 
-  function renderDiagnosticLines(container, lines) {
-    container.replaceChildren();
-    lines.forEach(function (line) {
-      var p = document.createElement("p");
-      if (line.segments) {
-        appendFormattedText(p, line.segments);
-      } else {
-        p.textContent = line.text;
-      }
-      p.className = "verdict-" + line.state;
-      container.appendChild(p);
-    });
+  function exPostEfficiencyDetail(summary) {
+    var maximum = summary.exPostEfficiency;
+    return "largest loss = " + formatSigned(maximum.loss) +
+      (maximum.attained ? " at" : " approaching") + " (v, c) = (" +
+      formatSigned(maximum.v) + ", " + formatSigned(maximum.c) + ")";
   }
 
   function updateDiagnosticText(summary) {
@@ -990,72 +986,37 @@
     elements.sellerIcText.dataset.icImplementable = String(v.icImplementable);
     elements.sellerIcText.dataset.sellerIcViolationCount =
       String(v.sellerIcViolationCount);
-
-    elements.revenueText.dataset.exPostBudgetBalanced = String(v.exPostBudgetBalanced);
-    elements.revenueText.dataset.exPostNoDeficit = String(v.exPostNoDeficit);
     elements.revenueText.dataset.expectedRevenue = String(v.expectedRevenue);
     elements.revenueText.dataset.expectedNoDeficit = String(v.expectedNoDeficit);
+    elements.efficiencyChart.dataset.welfare = String(v.welfare);
+    elements.efficiencyChart.dataset.efficiencyLoss = String(v.efficiencyLoss);
 
-    elements.efficiencyText.dataset.welfare = String(v.welfare);
-    elements.efficiencyText.dataset.efficiencyLoss = String(v.efficiencyLoss);
-
-    renderDiagnosticLines(elements.buyerIcText, [{
-      segments: v.buyerIcViolationCount > 0 ?
-        [["Q", "B"], " nonmonotonic on " + v.buyerIcViolationCount + " intervals."] :
-        [["Q", "B"], " weakly increasing."],
-      state: v.buyerIcViolationCount > 0 ? "fail" : "pass"
-    }]);
-
-    renderDiagnosticLines(elements.sellerIcText, [{
-      segments: v.sellerIcViolationCount > 0 ?
-        [["Q", "S"], " nonmonotonic on " + v.sellerIcViolationCount + " intervals."] :
-        [["Q", "S"], " weakly decreasing."],
-      state: v.sellerIcViolationCount > 0 ? "fail" : "pass"
-    }]);
-
-    var buyerPayoffLines = [{
-      text: "Expected buyer payoff: " + formatSigned(v.expectedBuyerPayoff) + ".",
-      state: "pass"
-    }];
-    var sellerPayoffLines = [{
-      text: "Expected seller payoff: " + formatSigned(v.expectedSellerPayoff) + ".",
-      state: "pass"
-    }];
-    var revenueLines = [
-      {
-        text: "Expected revenue: " + formatSigned(v.expectedRevenue) + ".",
-        state: v.expectedNoDeficit ? "pass" : "fail"
-      }
-    ];
-    renderDiagnosticLines(elements.buyerPayoffText, buyerPayoffLines);
-    renderDiagnosticLines(elements.sellerPayoffText, sellerPayoffLines);
-    renderDiagnosticLines(elements.revenueText, revenueLines);
-
-    var efficient = Math.abs(v.efficiencyLoss) <= model.BALANCE_TOLERANCE;
-    renderDiagnosticLines(elements.efficiencyText, [{
-      text: efficient ?
-        "Efficient (loss = " + formatSigned(v.efficiencyLoss) + ")." :
-        "Inefficient (loss = " + formatSigned(v.efficiencyLoss) + ").",
-      state: efficient ? "pass" : "fail"
-    }]);
+    renderDiagnosticLine(elements.buyerIcText, "BIC", v.buyerBic);
+    renderDiagnosticLine(elements.sellerIcText, "BIC", v.sellerBic);
+    renderDiagnosticLine(elements.buyerPayoffText, "Interim IR", v.interimBuyerIr,
+      "minimum = " + formatSigned(v.minBuyerPayoff));
+    renderDiagnosticLine(elements.sellerPayoffText, "Interim IR", v.interimSellerIr,
+      "minimum = " + formatSigned(v.minSellerPayoff));
+    renderDiagnosticLine(elements.efficiencyText, "Ex-post efficiency",
+      Math.abs(v.efficiencyLoss) <= model.BALANCE_TOLERANCE,
+      exPostEfficiencyDetail(summary));
+    renderDiagnosticLine(elements.revenueText, "Ex-ante BB", v.expectedNoDeficit,
+      "expected revenue = " + formatSigned(v.expectedRevenue));
   }
 
   function updateLiveSummary(summary) {
     var v = summary.verdicts;
     elements.liveSummary.textContent =
-      (v.icImplementable ?
-        "The allocation rule is IC-implementable. " :
-        "The allocation rule is not IC-implementable, with " +
-        v.buyerIcViolationCount + " buyer and " +
-        v.sellerIcViolationCount + " seller interim-monotonicity violations. ") +
-      "Expected buyer payoff " + formatSigned(v.expectedBuyerPayoff) +
-      ", expected seller payoff " + formatSigned(v.expectedSellerPayoff) + ". " +
-      "Expected revenue " + formatSigned(v.expectedRevenue) +
-      (v.exPostBudgetBalanced ? ", exactly balanced ex-post. " :
-        (v.exPostNoDeficit ? ", ex-post no-deficit. " : ". ")) +
-      "Gains from trade " + formatSigned(v.welfare) + " versus a first-best " +
-      "of " + formatSigned(v.firstBestWelfare) + ", an efficiency loss of " +
-      formatSigned(v.efficiencyLoss) + ".";
+      "Buyer BIC " + (v.buyerBic ? "passes" : "fails") +
+      ". Seller BIC " + (v.sellerBic ? "passes" : "fails") +
+      ". Buyer interim IR " + (v.interimBuyerIr ? "passes" : "fails") +
+      " (minimum = " + formatSigned(v.minBuyerPayoff) + ")" +
+      ". Seller interim IR " + (v.interimSellerIr ? "passes" : "fails") +
+      " (minimum = " + formatSigned(v.minSellerPayoff) + ")" +
+      ". Ex-ante BB: " + (v.expectedNoDeficit ? "passes" : "fails") +
+      " (expected revenue = " + formatSigned(v.expectedRevenue) + "). " +
+      "Ex-post efficiency " + (Math.abs(v.efficiencyLoss) <= model.BALANCE_TOLERANCE ?
+        "passes" : "fails") + " (" + exPostEfficiencyDetail(summary) + ").";
   }
 
   function paintChartDescription() {
@@ -1072,16 +1033,14 @@
 
   function buyerIcChartDescription(summary) {
     return "Exact buyer interim payoff by true value and alternate report. " +
-      "The exact best-report trace " +
-      (summary.verdicts.buyerIcViolationCount > 0 ?
-        "leaves the truthful diagonal." : "stays on the truthful diagonal.");
+      "Unjoined marks show optimized reports for 61 sampled true values. " +
+      "Buyer BIC " + (summary.verdicts.buyerBic ? "passes." : "fails.");
   }
 
   function sellerIcChartDescription(summary) {
     return "Exact seller interim payoff by true value and alternate report. " +
-      "The exact best-report trace " +
-      (summary.verdicts.sellerIcViolationCount > 0 ?
-        "leaves the truthful diagonal." : "stays on the truthful diagonal.");
+      "Unjoined marks show optimized reports for 61 sampled true values. " +
+      "Seller BIC " + (summary.verdicts.sellerBic ? "passes." : "fails.");
   }
 
   function revenueChartDescription(summary) {
@@ -1092,7 +1051,7 @@
   function efficiencyChartDescription(summary) {
     return "The allocation rule with orange marking trade where v is less " +
       "than c and blue marking missing trade where v is greater than c. " +
-      "Efficiency loss is " + formatSigned(summary.verdicts.efficiencyLoss) + ".";
+      "Ex-post efficiency: " + exPostEfficiencyDetail(summary) + ".";
   }
 
   function formatQ(value) {

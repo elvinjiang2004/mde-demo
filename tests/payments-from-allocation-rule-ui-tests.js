@@ -109,9 +109,7 @@
       {
         name: "Local MathJax renders the three plot titles and three x-axis labels in HTML",
         run: function () {
-          var sources = Array.from(appDocument.querySelectorAll("head > script[defer]"))
-            .map(function (script) { return script.getAttribute("src"); });
-          assert(JSON.stringify(sources) === JSON.stringify([
+          window.MechanismTest.assertScriptOrder(appDocument, [
             "../../js/components.js",
             "../../js/mathjax-config.js",
             "../../assets/mathjax/tex-svg.js",
@@ -120,7 +118,7 @@
             "../../js/svg-utils.js",
             "model.js",
             "app.js"
-          ]), "The page should keep the established local script order.");
+          ]);
           assert(appWindow.MechanismMath &&
             typeof appWindow.MechanismMath.typesetInitial === "function" &&
             typeof appWindow.MechanismMath.setText === "function" &&

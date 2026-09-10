@@ -3,7 +3,7 @@
 
   var model = window.BargainingSandboxModel;
   var tests = [];
-  var tolerance = 1e-8;
+  var tolerance = 1e-10;
 
   function test(name, callback) {
     tests.push({ name: name, callback: callback });
@@ -25,922 +25,999 @@
     }
   }
 
-  function assertPatchClose(actual, expected, message) {
-    var k;
-    for (k = 0; k < 6; k += 1) {
-      assertClose(actual[k], expected[k], message + " coefficient " + k, 1e-10);
+  function assertFiniteNumbers(value, path) {
+    if (typeof value === "number") {
+      assert(Number.isFinite(value), path + " should be finite.");
+      return;
     }
-  }
-
-  function valueAt(patchGrid, v, c) {
-    var i = Math.min(model.CELL_RESOLUTION - 1,
-      Math.floor(v / model.CELL_SIZE));
-    var j = Math.min(model.CELL_RESOLUTION - 1,
-      Math.floor(c / model.CELL_SIZE));
-    var localV = v - i * model.CELL_SIZE;
-    var localC = c - j * model.CELL_SIZE;
-    var patch = localV >= localC ? patchGrid.lower[i][j] : patchGrid.upper[i][j];
-    return model.evaluatePatch(patch, v, c);
-  }
-
-  function integratePatchOverCost(patch, v, lower, upper) {
-    var constant = patch[0] + patch[1] * v + patch[3] * v * v;
-    var linear = patch[2] + patch[4] * v;
-    return constant * (upper - lower) +
-      linear * (upper * upper - lower * lower) / 2 +
-      patch[5] * (upper * upper * upper - lower * lower * lower) / 3;
-  }
-
-  function integratePatchOverValue(patch, c, lower, upper) {
-    var constant = patch[0] + patch[2] * c + patch[5] * c * c;
-    var linear = patch[1] + patch[4] * c;
-    return constant * (upper - lower) +
-      linear * (upper * upper - lower * lower) / 2 +
-      patch[3] * (upper * upper * upper - lower * lower * lower) / 3;
-  }
-
-  function buyerInterimFromRow(grid, row, v) {
-    var total = 0;
-    var j;
-    for (j = 0; j < model.CELL_RESOLUTION; j += 1) {
-      var lower = j * model.CELL_SIZE;
-      var upper = (j + 1) * model.CELL_SIZE;
-      var diagonal = Math.min(upper, Math.max(
-        lower, v + (j - row) * model.CELL_SIZE
-      ));
-      total += integratePatchOverCost(grid.lower[row][j], v, lower, diagonal);
-      total += integratePatchOverCost(grid.upper[row][j], v, diagonal, upper);
+    if (!value || typeof value !== "object") {
+      return;
     }
-    return total;
-  }
-
-  function sellerInterimFromColumn(grid, column, c) {
-    var total = 0;
-    var i;
-    for (i = 0; i < model.CELL_RESOLUTION; i += 1) {
-      var lower = i * model.CELL_SIZE;
-      var upper = (i + 1) * model.CELL_SIZE;
-      var diagonal = Math.min(upper, Math.max(
-        lower, c + (i - column) * model.CELL_SIZE
-      ));
-      total += integratePatchOverValue(grid.upper[i][column], c, lower, diagonal);
-      total += integratePatchOverValue(grid.lower[i][column], c, diagonal, upper);
-    }
-    return total;
-  }
-
-  function allFiniteScalarGrid(grid) {
-    return [grid.lower, grid.upper].every(function (rows) {
-      return rows.every(function (row) {
-        return row.every(Number.isFinite);
-      });
+    Object.keys(value).forEach(function (key) {
+      assertFiniteNumbers(value[key], path + "." + key);
     });
   }
 
-  function allFinitePatchGrid(grid) {
-    return [grid.lower, grid.upper].every(function (rows) {
-      return rows.every(function (row) {
-        return row.every(function (patch) {
-          return patch.length === 6 && patch.every(Number.isFinite);
+  test("The preset exposes two formula regions and no triangle-grid arrays", function () {
+    var rule = model.createRevenueThresholdRule();
+    assert(model && typeof model.summarize === "function",
+      "BargainingSandboxModel should load.");
+    assert(rule.representation === "formula-regions",
+      "The preset should identify its formula-region representation.");
+    assert(rule.family === "revenue-threshold",
+      "The preset should identify its analytic family.");
+    assert(rule.regions.length === 2,
+      "The rule should contain one trade and one no-trade region.");
+    assert(rule.q === undefined && rule.pB === undefined && rule.pS === undefined,
+      "The formula preset should not expose production-style field grids.");
+    assert(!rule.regions.some(function (region) {
+      return region.fields.q && region.fields.q.lower ||
+        region.fields.pB && region.fields.pB.lower ||
+        region.fields.pS && region.fields.pS.lower;
+    }), "No formula field should contain lower/upper triangle arrays.");
+    assert(Object.isFrozen(rule) && Object.isFrozen(rule.regions) &&
+      Object.isFrozen(rule.regions[1].fields.pB),
+    "The formula rule and polynomial data should be immutable.");
+  });
+
+  test("Point evaluators return exact trade and no-trade values", function () {
+    var rule = model.createRevenueThresholdRule(0.4, 0.3, 0.2);
+    var trade = model.ruleValuesAt(rule, 0.9, 0.2);
+    var noTrade = model.ruleValuesAt(rule, 0.5, 0.2);
+    assert(trade.region === "trade" && trade.q === 1,
+      "A report pair above the threshold should trade.");
+    assertClose(trade.pB, 0.5, "Buyer payment on trade");
+    assertClose(trade.pS, 0.7, "Seller payment on trade");
+    assert(noTrade.region === "no-trade" && noTrade.q === 0,
+      "A report pair below the threshold should not trade.");
+    assertClose(noTrade.pB, 0, "Buyer payment without trade");
+    assertClose(noTrade.pS, 0, "Seller payment without trade");
+  });
+
+  test("Literal weak threshold equality trades at an interior parameter value", function () {
+    var rule = model.createRevenueThresholdRule(0.4, 0.3, 0.2);
+    var equality = model.ruleValuesAt(rule, 0.65, 0.25);
+    assert(equality.region === "trade" && equality.q === 1,
+      "The equality boundary should belong to the trade region.");
+    assertClose(equality.pB, 0.55, "Boundary buyer payment");
+    assertClose(equality.pS, 0.45, "Boundary seller payment");
+    var decimalComplement = model.ruleValuesAt(
+      model.createRevenueThresholdRule(0.08, 0.3, 0.2),
+      1,
+      1 - 0.08
+    );
+    assert(decimalComplement.q === 1,
+      "Algebra-scale floating residue should preserve weak equality.");
+    assert(model.ruleValuesAt(
+      model.createRevenueThresholdRule(0.08, 0.3, 0.2),
+      1,
+      1 - 0.08 + 5e-13
+    ).q === 0, "The equality normalization must not absorb a strict gap.");
+  });
+
+  test("Buyer interim allocation and payment use the stated formulas", function () {
+    var rule = model.createRevenueThresholdRule(0.4, 0.3, 0.2);
+    assertClose(model.buyerInterimAllocation(rule, 0.2), 0,
+      "Allocation below the threshold");
+    assertClose(model.buyerInterimPayment(rule, 0.2), 0,
+      "Payment below the threshold");
+    assertClose(model.buyerInterimAllocation(rule, 0.4), 0,
+      "Allocation at the threshold");
+    assertClose(model.buyerInterimPayment(rule, 0.4), 0,
+      "Payment at the threshold");
+    assertClose(model.buyerInterimAllocation(rule, 0.8), 0.4,
+      "Allocation above the threshold");
+    assertClose(model.buyerInterimPayment(rule, 0.8), 0.2,
+      "Payment above the threshold");
+    var interim = model.buyerInterimRule(rule);
+    assertClose(interim.trade.allocation[0], -0.4,
+      "Trade-segment allocation constant");
+    assertClose(interim.trade.allocation[1], 1,
+      "Trade-segment allocation slope");
+    assertClose(interim.trade.payment[0], -0.04,
+      "Trade-segment payment constant");
+    assertClose(interim.trade.payment[1], -0.1,
+      "Trade-segment payment slope");
+    assertClose(interim.trade.payment[2], 0.5,
+      "Trade-segment payment quadratic coefficient");
+  });
+
+  test("Buyer envelope residual detects only the nonconstant payment component", function () {
+    var truthful = model.buyerIcDiagnostics(
+      model.createRevenueThresholdRule(0.4, 0.4, 0.2)
+    );
+    assert(truthful.envelopeResidual.holds,
+      "The truthful payment should satisfy the envelope identity.");
+    assertClose(truthful.envelopeResidual.referenceResidual, 0,
+      "Truthful envelope residual constant");
+    assertClose(truthful.envelopeResidual.maxViolation, 0,
+      "Truthful envelope residual violation");
+
+    var offFamily = model.buyerIcDiagnostics(
+      model.createRevenueThresholdRule(0.4, 0.3, 0.2)
+    );
+    var tradeResidual = offFamily.envelopeResidual.residualPieces[1].coefficients;
+    assert(!offFamily.envelopeResidual.holds,
+      "An off-family payment should fail the envelope identity.");
+    assertClose(tradeResidual[0], 0.04,
+      "Off-family residual constant coefficient");
+    assertClose(tradeResidual[1], -0.1,
+      "Off-family residual slope");
+    assertClose(offFamily.envelopeResidual.bounds.infimum, -0.06,
+      "Off-family residual infimum");
+    assertClose(offFamily.envelopeResidual.bounds.supremum, 0,
+      "Off-family residual supremum");
+    assertClose(offFamily.envelopeResidual.maxViolation, 0.06,
+      "Off-family maximum nonconstant residual");
+
+    var toleranceTie = model.buyerIcDiagnostics(
+      model.createRevenueThresholdRule(0.5, 0.5002, 0.5)
+    );
+    assert(toleranceTie.holds && !toleranceTie.envelopeResidual.holds,
+      "The internal residual must not replace the utility-gain verdict.");
+  });
+
+  test("Buyer envelope residual permits a payment constant and a singleton piece", function () {
+    function shiftedPieces(rule, constant) {
+      var interim = model.buyerInterimRule(rule);
+      return [interim.noTrade, interim.trade].map(function (piece) {
+        var payment = piece.payment.slice();
+        payment[0] += constant;
+        return {
+          lower: piece.lower,
+          upper: piece.upper,
+          lowerClosed: piece.lowerClosed !== false,
+          upperClosed: piece.upperClosed !== false,
+          allocation: piece.allocation.slice(),
+          payment: payment
+        };
+      });
+    }
+
+    var constant = 0.37;
+    var truthful = model.checkBuyerEnvelopeResidual(
+      shiftedPieces(
+        model.createRevenueThresholdRule(0.4, 0.4, 0.2),
+        constant
+      )
+    );
+    assert(truthful.holds,
+      "A type-independent payment constant should remain envelope-compatible.");
+    assertClose(truthful.referenceResidual, constant,
+      "Permitted envelope residual constant");
+    assertClose(truthful.maxViolation, 0,
+      "Constant-shift residual violation");
+
+    var offFamily = model.checkBuyerEnvelopeResidual(
+      shiftedPieces(
+        model.createRevenueThresholdRule(0.4, 0.3, 0.2),
+        constant
+      )
+    );
+    assert(!offFamily.holds,
+      "A common constant must not conceal a varying envelope residual.");
+    assertClose(offFamily.referenceResidual, constant,
+      "Shifted off-family residual constant");
+    assertClose(offFamily.bounds.infimum, constant - 0.06,
+      "Shifted off-family residual infimum");
+    assertClose(offFamily.bounds.supremum, constant,
+      "Shifted off-family residual supremum");
+    assertClose(offFamily.maxViolation, 0.06,
+      "Shifted off-family maximum violation");
+
+    var endpoint = model.buyerIcDiagnostics(
+      model.createRevenueThresholdRule(1, 0.3, 0.2)
+    ).envelopeResidual;
+    assert(endpoint.holds,
+      "The t=1 singleton should satisfy the interim envelope identity.");
+    assertClose(endpoint.maxViolation, 0,
+      "The singleton residual violation");
+    assert(Math.abs(endpoint.residualPieces[1].coefficients[1]) > 0,
+      "The singleton characterization should not discard its symbolic slope.");
+
+    var tinyInteriorDeviation = model.checkBuyerEnvelopeResidual([{
+      lower: 0,
+      upper: 1,
+      lowerClosed: true,
+      upperClosed: true,
+      allocation: [0],
+      payment: [0, 5e-13, -5e-13]
+    }], 0);
+    assert(!tinyInteriorDeviation.holds,
+      "A zero-tolerance check should retain a tiny interior residual.");
+    assertClose(tinyInteriorDeviation.maxViolation, 1.25e-13,
+      "Tiny interior residual maximum", 1e-20);
+  });
+
+  test("Buyer envelope residual requires exact and unique piece ownership", function () {
+    function piece(lower, upper, lowerClosed, upperClosed) {
+      return {
+        lower: lower,
+        upper: upper,
+        lowerClosed: lowerClosed,
+        upperClosed: upperClosed,
+        allocation: [0],
+        payment: [0]
+      };
+    }
+
+    function rejects(pieces) {
+      try {
+        model.checkBuyerEnvelopeResidual(pieces);
+      } catch (error) {
+        return error instanceof RangeError;
+      }
+      return false;
+    }
+
+    assert(rejects([piece(0, 1, false, true)]),
+      "The first report cannot be left unowned.");
+    assert(rejects([piece(0, 1, true, false)]),
+      "The last report cannot be left unowned.");
+    assert(rejects([
+      piece(0, 0.5, true, false),
+      piece(0.5, 1, false, true)
+    ]), "Adjacent open pieces cannot leave a breakpoint unowned.");
+    assert(rejects([
+      piece(0, 0.5, true, true),
+      piece(0.5, 1, true, true)
+    ]), "Adjacent closed pieces cannot own one breakpoint twice.");
+    assert(rejects([
+      piece(0, 0.5, true, false),
+      piece(0.5 + 5e-13, 1, true, true)
+    ]), "An algebra-scale gap cannot be silently accepted.");
+    assert(rejects([
+      piece(0, 0.5, true, false),
+      piece(0.5 - 5e-13, 1, true, true)
+    ]), "An algebra-scale overlap cannot be silently accepted.");
+  });
+
+  test("Buyer deviation utility is exact below, at, and above the threshold", function () {
+    var rule = model.createRevenueThresholdRule(0.4, 0.3, 0.2);
+    assertClose(model.buyerInterimDeviationUtility(rule, 0.7, 0.2), 0,
+      "Utility below threshold");
+    assertClose(model.buyerInterimDeviationUtility(rule, 0.7, 0.4), 0,
+      "Utility at threshold");
+    assertClose(model.buyerInterimDeviationUtility(rule, 0.7, 0.8), 0.08,
+      "Utility above threshold");
+  });
+
+  test("Seller interim allocation, receipt, and deviation utility use the mirrored formulas", function () {
+    var rule = model.createRevenueThresholdRule(0.4, 0.3, 0.2);
+    var interim = model.sellerInterimRule(rule);
+    assertClose(model.sellerInterimAllocation(rule, 0.8), 0,
+      "Seller allocation above the active report interval");
+    assertClose(model.sellerInterimAllocation(rule, 0.6), 0,
+      "Seller allocation at the active-interval endpoint");
+    assertClose(model.sellerInterimAllocation(rule, 0.2), 0.4,
+      "Seller allocation inside the active report interval");
+    assertClose(model.sellerInterimPayment(rule, 0.2), 0.24,
+      "Seller interim receipt");
+    assertClose(model.sellerInterimDeviationUtility(rule, 0.3, 0.2), 0.12,
+      "Seller interim deviation utility");
+    assertClose(
+      model.sellerInterimAllocation(rule, 0.2),
+      interim.trade.allocation[0] + interim.trade.allocation[1] * 0.2,
+      "Seller interim allocation polynomial"
+    );
+    assertClose(
+      model.sellerInterimPayment(rule, 0.2),
+      interim.trade.payment[0] + interim.trade.payment[1] * 0.2 +
+        interim.trade.payment[2] * 0.2 * 0.2,
+      "Seller interim payment polynomial"
+    );
+  });
+
+  test("Buyer best reports are truthful throughout the alpha equals t family", function () {
+    var rule = model.createRevenueThresholdRule(0.5, 0.5, 0.1);
+    [0, 0.2, 0.5, 0.8, 1].forEach(function (trueValue) {
+      var response = model.buyerBestReport(rule, trueValue);
+      assertClose(response.report, trueValue,
+        "Truthful best report at value " + trueValue);
+      assertClose(response.maximumGain, 0,
+        "Truthful maximum gain at value " + trueValue);
+    });
+    assert(model.buyerIcDiagnostics(rule).holds,
+      "The exact buyer-BIC verdict should pass when alpha equals t.");
+  });
+
+  test("Buyer best reports use analytic stationary points off the IC family", function () {
+    var lowMarkup = model.createRevenueThresholdRule(0.5, 0.25, 0.5);
+    var highMarkup = model.createRevenueThresholdRule(0.5, 0.75, 0.5);
+    var upward = model.buyerBestReport(lowMarkup, 0.6);
+    var downward = model.buyerBestReport(highMarkup, 0.8);
+    assertClose(upward.report, 0.85, "Low-markup best report");
+    assertClose(upward.maximumGain, 0.03125, "Low-markup deviation gain");
+    assertClose(downward.report, 0.55, "High-markup best report");
+    assertClose(downward.maximumGain, 0.03125, "High-markup deviation gain");
+    assert(!model.buyerIcDiagnostics(lowMarkup).holds &&
+      !model.buyerIcDiagnostics(highMarkup).holds,
+    "Both deliberately off-family rules should fail buyer BIC.");
+  });
+
+  test("Best-report traces use exact analytic segments and separate jumps", function () {
+    var lowMarkup = model.createRevenueThresholdRule(0.5, 0.25, 0.5);
+    var lowTrace = model.buyerBestReportTrace(lowMarkup);
+    assert(lowTrace.map(function (segment) {
+      return segment.kind;
+    }).join(" ") === "truthful stationary cap truthful",
+    "The low-markup trace should expose all four analytic pieces.");
+    var lowerSwitch = 0.25 + Math.sqrt(2 * model.VERDICT_TOLERANCE);
+    var upperSwitch = 0.75 + Math.sqrt(
+      0.25 * 0.25 - 2 * model.VERDICT_TOLERANCE
+    );
+    assertClose(lowTrace[0].points[1].trueValue, lowerSwitch,
+      "Low-markup lower tie boundary");
+    assertClose(lowTrace[1].points[0].trueValue, lowerSwitch,
+      "Low-markup stationary right limit");
+    assertClose(lowTrace[0].points[1].report, lowerSwitch,
+      "Truthful report at the lower tie boundary");
+    assertClose(lowTrace[1].points[0].report, 0.5 + lowerSwitch - 0.25,
+      "Stationary report at the lower right limit");
+    assert(!lowTrace[1].startClosed && !lowTrace[2].endClosed,
+      "Discontinuous nontruthful pieces should expose their open limits.");
+    assertClose(lowTrace[2].points[1].trueValue, upperSwitch,
+      "Low-markup upper tie boundary");
+
+    var highMarkup = model.createRevenueThresholdRule(0.5, 0.75, 0.5);
+    var highTrace = model.buyerBestReportTrace(highMarkup);
+    assert(highTrace.map(function (segment) {
+      return segment.kind;
+    }).join(" ") === "truthful no-trade stationary",
+    "The high-markup trace should expose its three analytic pieces.");
+    assert(!highTrace[1].startClosed && highTrace[1].endClosed,
+      "The no-trade segment should begin after the tolerance tie and meet the stationary piece.");
+    assertClose(highTrace[2].points[0].report, 0.5,
+      "The high-markup stationary piece should meet the no-trade report.");
+    assert(Object.isFrozen(lowTrace) && Object.isFrozen(lowTrace[0]) &&
+      Object.isFrozen(lowTrace[0].points),
+    "Exact trace geometry should be immutable formula data.");
+
+    var tinyGainRule = model.createRevenueThresholdRule(0.5, 0.4999999, 0.5);
+    var tinyGainResponse = model.buyerBestReport(tinyGainRule, 0.5, 0);
+    var zeroToleranceTrace = model.buyerBestReportTrace(tinyGainRule, 0);
+    assert(tinyGainResponse.maximumGain > 0 &&
+      tinyGainResponse.report > 0.5 &&
+      zeroToleranceTrace.length > 1,
+    "Algebra tolerance should not erase a positive gain under a zero verdict tolerance.");
+    var exactIcRule = model.createRevenueThresholdRule(0.06, 0.06, 0.5);
+    var exactIcResponse = model.buyerBestReport(exactIcRule, 0.85, 0);
+    assertClose(exactIcResponse.report, 0.85,
+      "Exact alpha equals t report under zero tolerance");
+    assert(exactIcResponse.maximumGain === 0 && exactIcResponse.truthfulTie,
+      "Exact IC identity should not acquire a floating-point deviation gain.");
+  });
+
+  test("Seller best reports and traces mirror the buyer optimization exactly", function () {
+    var truthful = model.createRevenueThresholdRule(0.5, 0.1, 0.5);
+    [0, 0.2, 0.5, 0.8, 1].forEach(function (trueCost) {
+      var response = model.sellerBestReport(truthful, trueCost);
+      assertClose(response.report, trueCost,
+        "Truthful seller report at cost " + trueCost);
+      assertClose(response.maximumGain, 0,
+        "Truthful seller gain at cost " + trueCost);
+    });
+    var lowDiscount = model.createRevenueThresholdRule(0.5, 0.5, 0.25);
+    var highDiscount = model.createRevenueThresholdRule(0.5, 0.5, 0.75);
+    var upwardQuantity = model.sellerBestReport(lowDiscount, 0.4);
+    var downwardQuantity = model.sellerBestReport(highDiscount, 0.2);
+    assertClose(upwardQuantity.report, 0.15, "Low-discount best seller report");
+    assertClose(upwardQuantity.maximumGain, 0.03125,
+      "Low-discount seller gain");
+    assertClose(downwardQuantity.report, 0.45,
+      "High-discount best seller report");
+    assertClose(downwardQuantity.maximumGain, 0.03125,
+      "High-discount seller gain");
+    assert(model.sellerBestReportTrace(lowDiscount).map(function (segment) {
+      return segment.kind;
+    }).join(" ") === "truthful cap stationary truthful",
+    "The low-discount seller trace should reverse the buyer-like pieces.");
+    assert(model.sellerBestReportTrace(highDiscount).map(function (segment) {
+      return segment.kind;
+    }).join(" ") === "stationary no-trade truthful",
+    "The high-discount seller trace should reverse the buyer-like pieces.");
+    assert(model.sellerIcDiagnostics(truthful).envelopeResidual.holds &&
+      !model.sellerIcDiagnostics(lowDiscount).envelopeResidual.holds,
+    "The internal seller envelope residual should detect the mirrored payment identity.");
+  });
+
+  test("Truthful reporting wins displayed ties inside the verdict tolerance", function () {
+    var rule = model.createRevenueThresholdRule(0.5, 0.5002, 0.5);
+    var response = model.buyerBestReport(rule, 0.8);
+    assert(response.maximumGain > 0 &&
+      response.maximumGain < model.VERDICT_TOLERANCE,
+    "The fixture should have a positive gain inside the verdict tolerance.");
+    assert(response.truthfulTie,
+      "The response should record the verdict-tolerance tie.");
+    assertClose(response.report, 0.8,
+      "The displayed report should remain on the truthful diagonal.");
+    assert(model.buyerIcDiagnostics(rule).holds,
+      "The exact verdict should apply the economic acceptance band.");
+  });
+
+  test("Exact ex-ante integrals and dependency keys follow formula parameters", function () {
+    var baseline = model.createRevenueThresholdRule(0.5, 0.5, 0.5);
+    var betaChange = model.createRevenueThresholdRule(0.5, 0.5, 0.2);
+    var alphaChange = model.createRevenueThresholdRule(0.5, 0.2, 0.5);
+    var totals = model.exAnteIntegrals(baseline);
+    assertClose(totals.tradeProbability, 1 / 8, "Trade probability");
+    assertClose(totals.welfare, 1 / 12, "Expected welfare");
+    assertClose(totals.buyerPayment, 1 / 12, "Expected buyer payment");
+    assertClose(totals.sellerPayment, 1 / 24, "Expected seller payment");
+    assertClose(totals.revenue, 1 / 24, "Expected revenue");
+    assert(model.dependencyKey(baseline, "q") ===
+      model.dependencyKey(betaChange, "q"),
+    "Beta should not enter the allocation dependency key.");
+    assert(model.dependencyKey(baseline, "pB") ===
+      model.dependencyKey(betaChange, "pB"),
+    "Beta should not enter the buyer-payment dependency key.");
+    assert(model.dependencyKey(baseline, "buyerIc") ===
+      model.dependencyKey(betaChange, "buyerIc"),
+    "Beta should not enter the buyer-IC dependency key.");
+    assert(model.dependencyKey(baseline, "pS") !==
+      model.dependencyKey(betaChange, "pS"),
+    "Beta should enter the seller-payment dependency key.");
+    assert(model.dependencyKey(baseline, "sellerIc") !==
+      model.dependencyKey(betaChange, "sellerIc") &&
+      model.dependencyKey(baseline, "sellerPayoff") !==
+      model.dependencyKey(betaChange, "sellerPayoff"),
+    "Beta should enter both seller diagnostic keys.");
+    assert(model.dependencyKey(baseline, "buyerPayoff") ===
+      model.dependencyKey(betaChange, "buyerPayoff") &&
+      model.dependencyKey(baseline, "efficiency") ===
+      model.dependencyKey(betaChange, "efficiency"),
+    "Beta should not enter buyer-payoff or efficiency keys.");
+    assert(model.dependencyKey(baseline, "revenue") !==
+      model.dependencyKey(betaChange, "revenue") &&
+      model.dependencyKey(baseline, "revenue") !==
+      model.dependencyKey(alphaChange, "revenue"),
+    "Both transfer parameters should enter the revenue key.");
+  });
+
+  test("Truthful payoff, revenue, and efficiency diagnostics use exact formula fields", function () {
+    var rule = model.createRevenueThresholdRule(0.4, 0.3, 0.2);
+    var payoffs = model.truthfulPayoffValuesAt(rule, 0.8, 0.2);
+    var missingTrade = model.allocationErrorAt(rule, 0.3, 0.2);
+    assertClose(payoffs.buyerPayoff, 0.3, "Buyer truthful payoff");
+    assertClose(payoffs.sellerPayoff, 0.4, "Seller truthful payoff");
+    assertClose(payoffs.revenue, -0.1, "Pointwise revenue");
+    assert(missingTrade.q === 0 && missingTrade.efficient === 1 &&
+      missingTrade.over === 0 && missingTrade.under === 1,
+    "Efficiency should identify missing trade between the two boundaries.");
+    assertClose(model.diagnosticValueAt(rule, "buyerPayoff", 0.8, 0.2), 0.3,
+      "Buyer-payoff diagnostic evaluator");
+    assertClose(model.diagnosticValueAt(rule, "sellerPayoff", 0.8, 0.2), 0.4,
+      "Seller-payoff diagnostic evaluator");
+    assertClose(model.diagnosticValueAt(rule, "revenue", 0.8, 0.2), -0.1,
+      "Revenue diagnostic evaluator");
+    assertClose(model.truthfulPayoffRange(rule, "buyer").min, 0,
+      "Buyer payoff minimum");
+    assertClose(model.truthfulPayoffRange(rule, "buyer").max, 0.7,
+      "Buyer payoff maximum");
+    assertClose(model.truthfulPayoffRange(rule, "seller").max, 0.8,
+      "Seller payoff maximum");
+    assertClose(model.revenueRange(rule).min, -0.5, "Revenue minimum");
+    assertClose(model.revenueRange(rule).max, 0.1, "Revenue maximum");
+    assertClose(model.interimTruthfulPayoffRange(rule, "buyer").max, 0.24,
+      "Buyer interim payoff maximum");
+    assertClose(model.interimTruthfulPayoffRange(rule, "seller").max, 0.3,
+      "Seller interim payoff maximum");
+  });
+
+  test("The six-diagnostic summary reports exact IC, IR, budget, and efficiency verdicts", function () {
+    var rule = model.createRevenueThresholdRule(0.4, 0.3, 0.2);
+    var summary = model.summarize(rule);
+    assert(!summary.verdicts.buyerBic && !summary.verdicts.sellerBic &&
+      !summary.verdicts.buyerDsic && !summary.verdicts.sellerDsic,
+    "Both off-family transfer parameters should fail BIC and DSIC.");
+    assert(summary.verdicts.exAnteBuyerIr && summary.verdicts.interimBuyerIr &&
+      summary.verdicts.exPostBuyerIr && summary.verdicts.exAnteSellerIr &&
+      summary.verdicts.interimSellerIr && summary.verdicts.exPostSellerIr,
+    "Both agents should satisfy all three IR notions in the positive-surplus fixture.");
+    assert(!summary.verdicts.exPostBudgetBalanced &&
+      !summary.verdicts.exPostNoDeficit &&
+      !summary.verdicts.expectedBudgetBalanced &&
+      !summary.verdicts.expectedNoDeficit,
+    "The fixture should fail both ex-post and expected budget conditions.");
+    assertClose(summary.verdicts.efficiencyLoss,
+      0.5 * 0.4 * 0.4 - 0.4 * 0.4 * 0.4 / 3,
+      "Threshold efficiency loss");
+    var highBuyerCharge = model.summarize(
+      model.createRevenueThresholdRule(0.4, 0.8, 0.2)
+    );
+    assert(!highBuyerCharge.verdicts.exAnteBuyerIr &&
+      !highBuyerCharge.verdicts.interimBuyerIr &&
+      !highBuyerCharge.verdicts.exPostBuyerIr,
+    "A sufficiently high buyer charge should fail every buyer IR notion.");
+  });
+
+  test("All control endpoints produce finite formula and diagnostic results", function () {
+    [0, 1].forEach(function (threshold) {
+      [0, 1].forEach(function (buyerMarkup) {
+        [0, 1].forEach(function (sellerDiscount) {
+          var rule = model.createRevenueThresholdRule(
+            threshold, buyerMarkup, sellerDiscount
+          );
+          [0, 1].forEach(function (trueValue) {
+            [0, 1].forEach(function (report) {
+              assertFiniteNumbers(
+                model.ruleValuesAt(rule, trueValue, report),
+                "ruleValuesAt"
+              );
+              assertFiniteNumbers(
+                model.buyerBestReport(rule, trueValue),
+                "buyerBestReport"
+              );
+              assertClose(
+                model.buyerInterimDeviationUtility(rule, trueValue, report),
+                model.buyerInterimDeviationUtility(rule, trueValue, report),
+                "Finite deviation utility"
+              );
+              assertClose(
+                model.sellerInterimDeviationUtility(rule, trueValue, report),
+                model.sellerInterimDeviationUtility(rule, trueValue, report),
+                "Finite seller deviation utility"
+              );
+              ["buyerIc", "sellerIc", "buyerPayoff", "sellerPayoff",
+                "revenue", "efficiency"].forEach(function (field) {
+                assertFiniteNumbers(
+                  model.diagnosticValueAt(rule, field, trueValue, report),
+                  "diagnosticValueAt." + field
+                );
+              });
+            });
+          });
+          assertFiniteNumbers(model.summarize(rule), "summary");
         });
       });
     });
+  });
+
+  test("t equals one has literal point trade but zero interim and ex-ante trade", function () {
+    var rule = model.createRevenueThresholdRule(1, 0.3, 0.2);
+    var endpoint = model.ruleValuesAt(rule, 1, 0);
+    assert(endpoint.q === 1 && endpoint.region === "trade",
+      "The literal weak inequality should trade at (1,0).");
+    assertClose(endpoint.pB, 0.3, "Endpoint buyer payment");
+    assertClose(endpoint.pS, 0.8, "Endpoint seller payment");
+    assert(model.ruleValuesAt(rule, 0.999, 0).q === 0 &&
+      model.ruleValuesAt(rule, 1, 0.001).q === 0,
+    "Every neighboring report pair should be outside the t=1 trade set.");
+    assert(model.ruleValuesAt(rule, 1, Number.MIN_VALUE).q === 0,
+      "No positive seller value may be rounded into the t=1 trade point.");
+    assertClose(model.buyerInterimAllocation(rule, 1), 0,
+      "The measure-zero trade point should not change interim allocation.");
+    assertClose(model.exAnteIntegrals(rule).tradeProbability, 0,
+      "The measure-zero trade point should not change trade probability.");
+    assertClose(model.buyerMaximumDeviationGain(rule), 0,
+      "The t=1 rule should have no buyer interim deviation gain.");
+    assert(model.fieldRange(rule, "q").max === 1,
+      "The ex-post allocation range should retain the literal endpoint value.");
+    var summary = model.summarize(rule);
+    assert(summary.verdicts.buyerBic && summary.verdicts.sellerBic,
+      "Zero interim trade should satisfy both BIC verdicts.");
+    assert(!summary.verdicts.buyerDsic && !summary.verdicts.sellerDsic,
+      "The literal trade point should retain both off-family DSIC failures.");
+    assert(summary.verdicts.exPostBuyerIr &&
+      summary.verdicts.exPostSellerIr,
+    "Both endpoint payoffs should be nonnegative.");
+    assert(!summary.verdicts.exPostBudgetBalanced &&
+      !summary.verdicts.exPostNoDeficit,
+    "The endpoint transfer wedge should remain an ex-post deficit.");
+    assert(summary.verdicts.expectedBudgetBalanced &&
+      summary.verdicts.expectedNoDeficit,
+    "A measure-zero deficit should not change expected budget verdicts.");
+    assertClose(summary.ranges.buyerPayoff.max, 0.7,
+      "Endpoint buyer-payoff maximum");
+    assertClose(summary.ranges.sellerPayoff.max, 0.8,
+      "Endpoint seller-payoff maximum");
+    assertClose(summary.ranges.revenue.min, -0.5,
+      "Endpoint revenue minimum");
+  });
+
+  test("All six preset constructors expose their exact point formulas without grids", function () {
+    var vcg = model.createVcgRule();
+    var posted = model.createPostedPriceRule(0.6, 0.4);
+    var agv = model.createAgvRule(0.25);
+    var split = model.createSplitDifferenceRule(0.25, 0.2);
+    var chatterjee = model.createChatterjeeSamuelsonRule();
+    var revenue = model.createRevenueThresholdRule(0.2, 0.3, 0.1);
+    [vcg, posted, agv, split, chatterjee, revenue].forEach(function (rule) {
+      assert(rule.representation === "formula-regions" &&
+        !rule.q && !rule.pB && !rule.pS,
+      rule.preset + " should retain a formula-only rule representation.");
+    });
+    var vcgTrade = model.ruleValuesAt(vcg, 0.8, 0.2);
+    assertClose(vcgTrade.q, 1, "VCG allocation");
+    assertClose(vcgTrade.pB, 0.2, "VCG buyer payment");
+    assertClose(vcgTrade.pS, 0.8, "VCG seller payment");
+    var postedTrade = model.ruleValuesAt(posted, 0.7, 0.3);
+    assertClose(postedTrade.q, 1, "Posted-price allocation");
+    assertClose(postedTrade.pB, 0.6, "Posted buyer payment");
+    assertClose(postedTrade.pS, 0.4, "Posted seller receipt");
+    assert(model.ruleValuesAt(posted, 0.59, 0.3).q === 0 &&
+      model.ruleValuesAt(posted, 0.7, 0.41).q === 0,
+    "Posted-price reports outside either cutoff should not trade.");
+    var agvTrade = model.ruleValuesAt(agv, 0.8, 0.2);
+    var agvNoTrade = model.ruleValuesAt(agv, 0.2, 0.8);
+    assertClose(agvTrade.pB, 0.55, "AGV trade payment");
+    assertClose(agvNoTrade.pB, -0.05, "AGV no-trade payment");
+    assertClose(agvNoTrade.pS, -0.05, "AGV no-trade receipt");
+    var splitTrade = model.ruleValuesAt(split, 0.8, 0.2);
+    assertClose(splitTrade.q, 1, "Split allocation");
+    assertClose(splitTrade.pB, 0.35, "Split buyer payment");
+    assertClose(splitTrade.pS, 0.35, "Split seller receipt");
+    var chatterjeeTrade = model.ruleValuesAt(chatterjee, 0.8, 0.2);
+    assertClose(chatterjeeTrade.pB, 0.5,
+      "Chatterjee-Samuelson midpoint payment");
+    assertClose(chatterjeeTrade.pS, 0.5,
+      "Chatterjee-Samuelson midpoint receipt");
+  });
+
+  test("Posted-price and AGV interim rules use exact closed-form polynomials", function () {
+    var posted = model.createPostedPriceRule(0.6, 0.4);
+    assertClose(model.buyerInterimAllocation(posted, 0.7), 0.4,
+      "Posted buyer interim allocation");
+    assertClose(model.buyerInterimPayment(posted, 0.7), 0.24,
+      "Posted buyer interim payment");
+    assertClose(model.sellerInterimAllocation(posted, 0.3), 0.4,
+      "Posted seller interim allocation");
+    assertClose(model.sellerInterimPayment(posted, 0.3), 0.16,
+      "Posted seller interim receipt");
+    var agv = model.createAgvRule(0.25);
+    assertClose(model.buyerInterimAllocation(agv, 0.8), 0.8,
+      "AGV buyer interim allocation");
+    assertClose(model.buyerInterimPayment(agv, 0.8),
+      0.25 - 1 / 6 + 0.5 * 0.8 * 0.8,
+      "AGV buyer interim payment");
+    assertClose(model.sellerInterimAllocation(agv, 0.2), 0.8,
+      "AGV seller interim allocation");
+    assertClose(model.sellerInterimPayment(agv, 0.2),
+      0.25 + 1 / 6 - 0.5 * 0.2 * 0.2,
+      "AGV seller interim receipt");
+    assert(model.buyerIcDiagnostics(posted).envelopeResidual.holds &&
+      model.sellerIcDiagnostics(posted).envelopeResidual.holds &&
+      model.buyerIcDiagnostics(agv).envelopeResidual.holds &&
+      model.sellerIcDiagnostics(agv).envelopeResidual.holds,
+    "Both exact posted-price and AGV interim transfers should satisfy their envelope identities.");
+  });
+
+  test("Preset diagnostics distinguish BIC, DSIC, IR, and budget properties", function () {
+    var vcg = model.summarize(model.createVcgRule());
+    var posted = model.summarize(model.createPostedPriceRule(0.6, 0.4));
+    var agv = model.summarize(model.createAgvRule(0.25));
+    var split = model.summarize(
+      model.createSplitDifferenceRule(0.5, 0)
+    );
+    var chatterjee = model.summarize(
+      model.createChatterjeeSamuelsonRule()
+    );
+    assert(vcg.verdicts.buyerBic && vcg.verdicts.sellerBic &&
+      vcg.verdicts.buyerDsic && vcg.verdicts.sellerDsic,
+    "VCG should satisfy both incentive notions for both agents.");
+    assert(!vcg.verdicts.exPostBudgetBalanced &&
+      !vcg.verdicts.expectedNoDeficit && vcg.verdicts.efficiencyLoss === 0,
+    "VCG should be efficient but run a deficit.");
+    assert(posted.verdicts.buyerBic && posted.verdicts.sellerBic &&
+      posted.verdicts.buyerDsic && posted.verdicts.sellerDsic &&
+      posted.verdicts.exPostNoDeficit,
+    "The positive-spread posted price should be IC, IR, and no-deficit.");
+    assert(agv.verdicts.buyerBic && agv.verdicts.sellerBic &&
+      !agv.verdicts.buyerDsic && !agv.verdicts.sellerDsic &&
+      agv.verdicts.exPostBudgetBalanced &&
+      agv.verdicts.exAnteBuyerIr && agv.verdicts.exAnteSellerIr &&
+      !agv.verdicts.interimBuyerIr && !agv.verdicts.interimSellerIr,
+    "AGV should be BIC and ex-ante IR but not DSIC or interim IR at K=1/4.");
+    assert(!split.verdicts.buyerBic && !split.verdicts.sellerBic &&
+      !split.verdicts.buyerDsic && !split.verdicts.sellerDsic &&
+      split.verdicts.exPostBudgetBalanced && split.verdicts.efficiencyLoss === 0,
+    "The default split rule should be balanced and efficient but not truthful.");
+    assert(chatterjee.verdicts.buyerBic && chatterjee.verdicts.sellerBic &&
+      !chatterjee.verdicts.buyerDsic && !chatterjee.verdicts.sellerDsic &&
+      chatterjee.verdicts.exPostBudgetBalanced,
+    "The Chatterjee-Samuelson direct rule should be BIC and balanced but not DSIC.");
+    assertClose(split.buyerIc.maximumGain, 1 / 12,
+      "Split buyer maximum interim gain");
+    assertClose(split.sellerIc.maximumGain, 1 / 12,
+      "Split seller maximum interim gain");
+    assertClose(chatterjee.buyerIc.maximumGain, 0,
+      "Chatterjee-Samuelson buyer interim gain");
+    assertClose(chatterjee.sellerIc.maximumGain, 0,
+      "Chatterjee-Samuelson seller interim gain");
+    assertClose(chatterjee.buyerIc.maximumExPostGain, 0.25,
+      "Chatterjee-Samuelson buyer ex-post gain");
+    assertClose(chatterjee.sellerIc.maximumExPostGain, 0.25,
+      "Chatterjee-Samuelson seller ex-post gain");
+  });
+
+  test("All-preset totals, ranges, and dependency maps are exact", function () {
+    var posted = model.createPostedPriceRule(0.6, 0.4);
+    var postedTotals = model.exAnteIntegrals(posted);
+    assertClose(postedTotals.tradeProbability, 0.16,
+      "Posted trade probability");
+    assertClose(postedTotals.welfare, 0.096, "Posted welfare");
+    assertClose(postedTotals.buyerPayment, 0.096,
+      "Posted buyer payment");
+    assertClose(postedTotals.sellerPayment, 0.064,
+      "Posted seller receipt");
+    assertClose(postedTotals.revenue, 0.032, "Posted revenue");
+    var agv = model.createAgvRule(0.25);
+    var agvSummary = model.summarize(agv);
+    assertClose(agvSummary.exAnte.buyerPayment, 0.25,
+      "AGV expected buyer payment");
+    assertClose(agvSummary.exAnte.sellerPayment, 0.25,
+      "AGV expected seller receipt");
+    assertClose(agvSummary.ranges.pB.min, -0.25,
+      "AGV payment minimum");
+    assertClose(agvSummary.ranges.pB.max, 0.75,
+      "AGV payment maximum");
+    assertClose(agvSummary.ranges.buyerPayoff.min, -0.25,
+      "AGV buyer-payoff minimum");
+    assertClose(agvSummary.ranges.sellerPayoff.min, -0.75,
+      "AGV seller-payoff minimum");
+    assert(model.fieldDependencies(agv, "revenue").length === 0 &&
+      model.fieldDependencies(agv, "buyerPayoff")[0] === "constant",
+    "AGV constant changes payoff fields but not its identically zero revenue.");
+    var split = model.createSplitDifferenceRule(0.25, 0.4);
+    assert(model.fieldDependencies(split, "q").join(" ") === "threshold" &&
+      model.fieldDependencies(split, "pB").join(" ") ===
+        "threshold sellerShare" &&
+      model.fieldDependencies(split, "revenue").length === 0,
+    "Split dependencies should retain only parameters that enter each field.");
+    assert(model.fieldDependencies(posted, "efficiency").length === 2,
+      "Both posted-price cutoffs should affect allocation efficiency.");
+  });
+
+  test("Analytic families load through separate private registries", function () {
+    var groups = window.BargainingSandboxAnalyticGroups;
+    assert(groups && groups.diagonalAffine && groups.postedPrice &&
+      groups.balancedAgv,
+    "Each analytic family file should register its own constructor group.");
+    assert(model.createVcgRule().family === "diagonal-affine" &&
+      model.createPostedPriceRule().family === "posted-price" &&
+      model.createAgvRule().family === "balanced-agv",
+    "The public model facade should retain one API across the split files.");
+  });
+
+  test("Custom rules contain exactly two 20 by 20 triangle grids", function () {
+    var q = model.createEfficientCustomAllocation();
+    var payments = model.zeroBoundaryPayments(q);
+    var rule = model.createCustomRule(q, payments.pB, payments.pS, {
+      q: 2,
+      paymentMode: "fixed"
+    });
+    assert(model.CUSTOM_RESOLUTION === 20 && q.lower.length === 20 &&
+      q.upper.length === 20 && q.lower.every(function (column) {
+        return column.length === 20;
+      }) && q.upper.every(function (column) {
+        return column.length === 20;
+      }), "Custom allocation should have exactly 800 split-triangle values.");
+    assert(rule.representation === "triangle-grid" &&
+      rule.family === "custom-grid",
+    "Custom rules should identify the triangle-grid representation.");
+    var lower = model.customTriangleCentroid(7, 3, true);
+    var upper = model.customTriangleCentroid(7, 3, false);
+    assert(lower.v > lower.c && upper.v > upper.c &&
+      lower.v > upper.v && lower.c < upper.c,
+    "Both triangle centroids should lie in their requested halves of the cell.");
+  });
+
+  test("Fix IC/IR produces the zero-boundary VCG payments on efficient trade", function () {
+    var q = model.createEfficientCustomAllocation();
+    var payments = model.zeroBoundaryPayments(q);
+    var rule = model.createCustomRule(q, payments.pB, payments.pS, {
+      q: 1,
+      paymentMode: "fixed"
+    });
+    var trade = model.ruleValuesAt(rule, 0.8, 0.2);
+    var noTrade = model.ruleValuesAt(rule, 0.2, 0.8);
+    var payoffs = model.truthfulPayoffValuesAt(rule, 0.8, 0.2);
+    var summary = model.summarize(rule);
+    assertClose(trade.q, 1, "Custom efficient allocation on trade");
+    assertClose(trade.pB, 0.2, "Custom zero-boundary buyer payment");
+    assertClose(trade.pS, 0.8, "Custom zero-boundary seller receipt");
+    assertClose(noTrade.q, 0, "Custom efficient allocation without trade");
+    assertClose(noTrade.pB, 0, "Custom no-trade buyer payment");
+    assertClose(noTrade.pS, 0, "Custom no-trade seller receipt");
+    assertClose(payoffs.buyerPayoff, 0.6,
+      "Custom buyer truthful payoff");
+    assertClose(payoffs.sellerPayoff, 0.6,
+      "Custom seller truthful payoff");
+    assertClose(payoffs.revenue, -0.6, "Custom pointwise revenue");
+    assert(!Object.prototype.hasOwnProperty.call(payoffs, "buyer") &&
+      !Object.prototype.hasOwnProperty.call(payoffs, "seller"),
+    "Custom truthful payoff results should use the formula API names.");
+    assert(summary.verdicts.buyerBic && summary.verdicts.sellerBic &&
+      summary.verdicts.buyerDsic && summary.verdicts.sellerDsic &&
+      summary.verdicts.exPostBuyerIr && summary.verdicts.exPostSellerIr,
+    "Efficient trade with zero-boundary payments should be IC and ex-post IR.");
+    assertClose(summary.verdicts.expectedRevenue, -1 / 6,
+      "Custom VCG expected revenue", 1e-9);
+    assertClose(summary.buyerIc.maximumExPostGain, 0, "Custom VCG buyer DSIC gain");
+    assertClose(summary.sellerIc.maximumExPostGain, 0, "Custom VCG seller DSIC gain");
+    assert(summary.buyerIc.maximumGain === null &&
+      summary.buyerIc.bestReportPoints.length === 61,
+    "Custom IC should expose exact verdicts and discrete optimized display marks.");
+  });
+
+  test("Fix IC/IR preserves IR but does not repair nonmonotone allocation", function () {
+    var q = model.createCustomAllocationGrid(0);
+    var j;
+    for (j = 0; j < model.CUSTOM_RESOLUTION; j += 1) {
+      q.lower[0][j] = 1;
+      q.upper[0][j] = 1;
+    }
+    var payments = model.zeroBoundaryPayments(q);
+    var rule = model.createCustomRule(q, payments.pB, payments.pS, {
+      q: 1,
+      paymentMode: "fixed"
+    });
+    var summary = model.summarize(rule);
+    assert(!summary.verdicts.buyerBic && !summary.verdicts.buyerDsic,
+      "A buyer-nonmonotone allocation should still fail buyer IC.");
+    assertClose(summary.buyerIc.maximumExPostGain, 0.95,
+      "A high buyer type gains 1 minus the truthful envelope payoff of 0.05");
+    assertClose(summary.sellerIc.maximumExPostGain, 0,
+      "Allocation independent of seller report remains seller DSIC");
+    assert(summary.verdicts.exPostBuyerIr && summary.verdicts.exPostSellerIr,
+      "Zero-boundary payments should still make both truthful payoffs nonnegative.");
+  });
+
+  test("Unchecked Custom payments remain independent editable constants", function () {
+    var q = model.createCustomAllocationGrid(0);
+    var pB = model.createCustomPaymentGrid(0.2);
+    var pS = model.createCustomPaymentGrid(-0.1);
+    var rule = model.createCustomRule(q, pB, pS, {
+      pB: 1,
+      pS: 1,
+      paymentMode: "manual"
+    });
+    var summary = model.summarize(rule);
+    assertClose(model.fieldValueAt(rule, "pB", 0.37, 0.61), 0.2,
+      "Manual buyer payment");
+    assertClose(model.fieldValueAt(rule, "pS", 0.37, 0.61), -0.1,
+      "Manual seller payment");
+    assertClose(summary.verdicts.expectedRevenue, 0.3,
+      "Manual Custom expected revenue", 1e-9);
+    assert(!summary.verdicts.exPostBuyerIr &&
+      !summary.verdicts.exPostSellerIr,
+    "Independent manual transfers can violate both ex-post IR constraints.");
+    assert(model.dependencyKey(rule, "buyerIc").includes("manual:1") &&
+      model.dependencyKey(rule, "efficiency") === "efficiency:custom:q:0",
+    "Custom dependency keys should separate manual transfers from allocation.");
+  });
+
+  test("Custom DSIC gains optimize affine payments at a fixed other-agent report", function () {
+    [false, true].forEach(function (ownTypePayments) {
+      var q = model.createCustomAllocationGrid(0);
+      var pB = model.createCustomPaymentGrid(0);
+      var pS = model.createCustomPaymentGrid(0);
+      ["lower", "upper"].forEach(function (side) {
+        for (var i = 0; i < model.CUSTOM_RESOLUTION; i += 1) {
+          for (var j = 0; j < model.CUSTOM_RESOLUTION; j += 1) {
+            // Jumps in the OTHER agent's report must not create an own-report gain.
+            pB[side][i][j] = [j % 2, ownTypePayments ? 1 : 0, 2, 0, 0, 0];
+            pS[side][i][j] = [i % 2, 2, ownTypePayments ? 1 : 0, 0, 0, 0];
+          }
+        }
+      });
+      var summary = model.summarize(model.createCustomRule(q, pB, pS));
+      var expected = ownTypePayments ? 1 : 0;
+      assertClose(summary.buyerIc.maximumExPostGain, expected, "Buyer affine deviation gain");
+      assertClose(summary.sellerIc.maximumExPostGain, expected, "Seller affine deviation gain");
+    });
+  });
+
+  test("Custom DSIC gains retain both sides of triangle jumps and cancel common transfers", function () {
+    var q = model.createCustomAllocationGrid(0);
+    var pB = model.createCustomPaymentGrid(0);
+    var pS = model.createCustomPaymentGrid(0);
+    pB.lower[7][3][0] = 1;
+    pS.lower[7][3][0] = -1;
+    var spike = model.summarize(model.createCustomRule(q, pB, pS));
+    assertClose(spike.buyerIc.maximumExPostGain, 1, "Buyer can avoid the payment spike");
+    assertClose(spike.sellerIc.maximumExPostGain, 1, "Seller can avoid the negative receipt");
+
+    var efficient = model.createEfficientCustomAllocation();
+    var common = model.createCustomPaymentGrid(1e100);
+    var transfer = model.summarize(model.createCustomRule(efficient, common, common));
+    assertClose(transfer.buyerIc.maximumExPostGain, 1,
+      "A constant transfer cancels before computing the buyer's allocation gain");
+    assertClose(transfer.sellerIc.maximumExPostGain, 1,
+      "A constant transfer cancels before computing the seller's allocation gain");
+  });
+
+  test("Invalid formula parameters and reports are rejected", function () {
+    var threwNonfinite = false;
+    var threwRange = false;
+    var threwReport = false;
+    try {
+      model.createRevenueThresholdRule(NaN, 0.5, 0.5);
+    } catch (error) {
+      threwNonfinite = error instanceof TypeError;
+    }
+    try {
+      model.createRevenueThresholdRule(0.5, 1.01, 0.5);
+    } catch (error) {
+      threwRange = error instanceof RangeError;
+    }
+    try {
+      model.buyerInterimAllocation(
+        model.createRevenueThresholdRule(), -0.01
+      );
+    } catch (error) {
+      threwReport = error instanceof RangeError;
+    }
+    assert(threwNonfinite, "Nonfinite parameters should throw TypeError.");
+    assert(threwRange, "Out-of-domain parameters should throw RangeError.");
+    assert(threwReport, "Out-of-domain reports should throw RangeError.");
+  });
+
+  function verifyWorstLoss(rule, expected, attained) {
+    var maximum = model.summarize(rule).exPostEfficiency;
+    assertClose(maximum.loss, expected, "Exact largest loss");
+    assert(maximum.attained === attained, "Attainment must respect boundary ownership.");
+    function lossAt(v, c) {
+      return Math.max(v - c, 0) - (v - c) * model.fieldValueAt(rule, "q", v, c);
+    }
+    if (attained) {
+      assertClose(lossAt(maximum.v, maximum.c), expected, "Loss at the reported point");
+    } else {
+      var weight = 1e-6;
+      var v = maximum.v + weight * (maximum.approachFrom.v - maximum.v);
+      var c = maximum.c + weight * (maximum.approachFrom.c - maximum.c);
+      assertClose(lossAt(v, c), expected, "Loss approaching the reported boundary", 1e-6);
+      assert(lossAt(maximum.v, maximum.c) < expected,
+        "A limit must not be claimed as an attained pointwise maximum.");
+    }
+    for (var i = 0; i <= 20; i += 1) {
+      for (var j = 0; j <= 20; j += 1) {
+        assert(lossAt(i / 20, j / 20) <= expected + 1e-12,
+          "An independent point probe must not exceed the analytic bound.");
+      }
+    }
+    return maximum;
   }
 
-  test("The model exposes the exact triangular-patch API", function () {
-    assert(model && typeof model.summarize === "function",
-      "BargainingSandboxModel should load.");
-    assert(window.BilateralTradeEnvelope &&
-      typeof window.BilateralTradeEnvelope.zeroBoundaryPayments === "function",
-    "The shared bilateral-trade envelope pipeline should load before the sandbox model.");
-    assert(model.CELL_RESOLUTION === 100, "The grid should have 100 cells per side.");
-    assertClose(model.CELL_SIZE, 0.01, "Cell width", 1e-12);
-    assert(typeof model.presetRevenueThreshold === "function",
-      "The broker-revenue threshold preset should be public.");
-    assert(model.PATCH_LENGTH === 6, "Quadratic patches should have six coefficients.");
-    assertPatchClose(model.constantPatch(-0.3), [-0.3, 0, 0, 0, 0, 0],
-      "A constant patch");
-    assertClose(model.evaluatePatch([1, 2, 3, 4, 5, 6], 0.2, 0.4),
-      1 + 2 * 0.2 + 3 * 0.4 + 4 * 0.04 + 5 * 0.08 + 6 * 0.16,
-      "Patch evaluation", 1e-12);
-  });
-
-  test("Quadratic patch integration is exact over the full square", function () {
-    var vSquared = model.createPatchGrid(
-      function () { return [0, 0, 0, 1, 0, 0]; },
-      function () { return [0, 0, 0, 1, 0, 0]; }
-    );
-    var crossTerm = model.createPatchGrid(
-      function () { return [0, 0, 0, 0, 1, 0]; },
-      function () { return [0, 0, 0, 0, 1, 0]; }
-    );
-    assertClose(model.integratePatchGrid(vSquared), 1 / 3,
-      "Integral of v squared", 1e-10);
-    assertClose(model.integratePatchGrid(crossTerm), 1 / 4,
-      "Integral of vc", 1e-10);
-  });
-
-  test("Efficient interim allocation polynomials are Q_B(v)=v and Q_S(c)=1-c", function () {
-    var q = model.efficientGrid();
-    var buyer = model.interimBuyerAllocationPolynomials(q);
-    var seller = model.interimSellerAllocationPolynomials(q);
-    [0.013, 0.24, 0.501, 0.87, 0.999].forEach(function (type) {
-      var index = Math.min(
-        model.CELL_RESOLUTION - 1, Math.floor(type / model.CELL_SIZE)
-      );
-      assertClose(model.evaluatePolynomial(buyer[index], type), type,
-        "Efficient buyer interim probability", 1e-10);
-      assertClose(model.evaluatePolynomial(seller[index], type), 1 - type,
-        "Efficient seller interim probability", 1e-10);
-    });
-  });
-
-  test("Interim payment polynomials integrate every quadratic basis term on both boundary sides", function () {
-    var grid = model.createPatchGrid(
-      function (i, j) {
-        return [
-          0.07 + i / 100 + j / 200,
-          -0.31 + i / 90,
-          0.23 - j / 80,
-          0.41 - (i + j) / 150,
-          -0.52 + (i - j) / 100,
-          0.37 + j / 110
-        ];
-      },
-      function (i, j) {
-        return [
-          -0.11 + i / 120 - j / 170,
-          0.29 - j / 95,
-          -0.33 + i / 105,
-          -0.47 + i / 160,
-          0.61 - (i + j) / 130,
-          -0.25 + j / 140
-        ];
-      }
-    );
-    var buyer = model.interimBuyerPaymentPolynomials(grid);
-    var seller = model.interimSellerPaymentPolynomials(grid);
-    var buyerBoundary = 0.45;
-    var sellerBoundary = 0.6;
-    var cases = [
-      {
-        actual: model.evaluatePolynomial(buyer[43], 0.437),
-        expected: buyerInterimFromRow(grid, 43, 0.437),
-        name: "buyer interior"
-      },
-      {
-        actual: model.evaluatePolynomial(buyer[44], buyerBoundary),
-        expected: buyerInterimFromRow(grid, 44, buyerBoundary),
-        name: "buyer left boundary value"
-      },
-      {
-        actual: model.evaluatePolynomial(buyer[45], buyerBoundary),
-        expected: buyerInterimFromRow(grid, 45, buyerBoundary),
-        name: "buyer right boundary value"
-      },
-      {
-        actual: model.evaluatePolynomial(seller[61], 0.613),
-        expected: sellerInterimFromColumn(grid, 61, 0.613),
-        name: "seller interior"
-      },
-      {
-        actual: model.evaluatePolynomial(seller[59], sellerBoundary),
-        expected: sellerInterimFromColumn(grid, 59, sellerBoundary),
-        name: "seller left boundary value"
-      },
-      {
-        actual: model.evaluatePolynomial(seller[60], sellerBoundary),
-        expected: sellerInterimFromColumn(grid, 60, sellerBoundary),
-        name: "seller right boundary value"
-      }
-    ];
-    cases.forEach(function (item) {
-      assertClose(item.actual, item.expected, item.name, 1e-10);
-    });
-    assert(Math.abs(
-      model.evaluatePolynomial(buyer[44], buyerBoundary) -
-      model.evaluatePolynomial(buyer[45], buyerBoundary)
-    ) > 1e-6, "The buyer boundary fixture should have distinct one-sided values.");
-    assert(Math.abs(
-      model.evaluatePolynomial(seller[59], sellerBoundary) -
-      model.evaluatePolynomial(seller[60], sellerBoundary)
-    ) > 1e-6, "The seller boundary fixture should have distinct one-sided values.");
-  });
-
-  test("VCG is represented exactly and has its continuous benchmark diagnostics", function () {
-    var rule = model.presetVcg();
-    var summary = model.summarize(rule);
-    var v = summary.verdicts;
-    assertPatchClose(rule.pB.lower[10][10], [0, 0, 1, 0, 0, 0],
-      "VCG buyer payment on a trade triangle");
-    assertPatchClose(rule.pS.lower[10][10], [0, 1, 0, 0, 0, 0],
-      "VCG seller receipt on a trade triangle");
-    assertPatchClose(rule.pB.upper[10][10], [0, 0, 0, 0, 0, 0],
-      "VCG no-trade payment");
-    assert(v.bic && v.dsic, "VCG should be BIC and DSIC.");
-    assert(v.exAnteIr && v.interimIr && v.exPostIr,
-      "VCG should pass all three IR notions.");
-    assert(!v.exPostBudgetBalanced && !v.expectedBudgetBalanced,
-      "VCG should not be budget balanced.");
-    assertClose(v.expectedBuyerPayoff, 1 / 6, "VCG buyer payoff", 1e-9);
-    assertClose(v.expectedSellerPayoff, 1 / 6, "VCG seller payoff", 1e-9);
-    assertClose(v.expectedRevenue, -1 / 6, "VCG revenue", 1e-9);
-    assertClose(v.welfare, 1 / 6, "VCG welfare", 1e-9);
-    assertClose(v.efficiencyLoss, 0, "VCG efficiency loss", 1e-9);
-    assertClose(v.maxAbsImbalance, 1, "VCG maximum pointwise deficit", 1e-9);
-    var tradeValues = model.ruleValuesAt(rule, 0.8, 0.3);
-    var noTradeValues = model.ruleValuesAt(rule, 0.2, 0.7);
-    assertClose(tradeValues.q, 1, "VCG probed trade allocation", 1e-12);
-    assertClose(tradeValues.pB, 0.3, "VCG probed buyer payment", 1e-12);
-    assertClose(tradeValues.pS, 0.8, "VCG probed seller payment", 1e-12);
-    assertClose(noTradeValues.q, 0, "VCG probed no-trade allocation", 1e-12);
-    assertClose(noTradeValues.pB, 0, "VCG probed no-trade buyer payment", 1e-12);
-    assertClose(noTradeValues.pS, 0, "VCG probed no-trade seller payment", 1e-12);
-    assertClose(model.scalarGridValueAt(rule.q, 0.8, 0.3), 1,
-      "Exact scalar-grid point evaluation", 1e-12);
-    assertClose(model.patchGridValueAt(rule.pB, 0.8, 0.3), 0.3,
-      "Exact payment-grid point evaluation", 1e-12);
-  });
-
-  test("Interim deviation utilities and best-report traces use exact payments", function () {
-    var vcg = model.summarize(model.presetVcg());
-    assertClose(
-      model.buyerInterimDeviationUtility(vcg.interim, 0.6, 0.2),
-      0.1,
-      "Buyer utility from reporting 0.2 at true value 0.6",
-      1e-10
-    );
-    assertClose(
-      model.sellerInterimDeviationUtility(vcg.interim, 0.3, 0.7),
-      0.165,
-      "Seller utility from reporting 0.7 at true cost 0.3",
-      1e-10
-    );
-    [0, 0.17, 0.6, 0.93, 1].forEach(function (type) {
-      assertClose(model.buyerBestInterimReport(vcg.interim, type).report, type,
-        "VCG buyer best report", 1e-9);
-      assertClose(model.sellerBestInterimReport(vcg.interim, type).report, type,
-        "VCG seller best report", 1e-9);
-    });
-    assert(vcg.deviation.buyer.bestResponses.length ===
-      model.DEVIATION_TRACE_SAMPLES && vcg.deviation.seller.bestResponses.length ===
-      model.DEVIATION_TRACE_SAMPLES,
-    "Each exact best-response trace should use the declared display sample count.");
-    assert(vcg.deviation.buyer.range.min <= 0.1 &&
-      vcg.deviation.buyer.range.max >= 0.1,
-    "The exact buyer utility range should contain the tested deviation utility.");
-
-    var agv = model.summarize(model.presetAgv(0.25));
-    var chatterjeeSamuelson = model.summarize(
-      model.presetChatterjeeSamuelson()
-    );
-    [agv, chatterjeeSamuelson].forEach(function (summary) {
-      [0.13, 0.51, 0.86].forEach(function (type) {
-        assertClose(model.buyerBestInterimReport(summary.interim, type).report, type,
-          "BIC buyer best report", 1e-7);
-        assertClose(model.sellerBestInterimReport(summary.interim, type).report, type,
-          "BIC seller best report", 1e-7);
-      });
-    });
-
-    var split = model.summarize(model.presetSplitDifference());
-    var splitGain = split.deviation.buyer.bestResponses.reduce(function (maximum, item) {
-      return Math.max(maximum, item.gain);
-    }, 0);
-    assert(splitGain > model.VERDICT_TOLERANCE,
-      "The non-IC midpoint direct rule should have a profitable buyer deviation.");
-  });
-
-  test("Two-sided posted prices can collect a spread or require a subsidy", function () {
-    var rule = model.presetPostedPrice(0.674, 0.334);
-    var onePriceRule = model.presetPostedPrice(0.374);
-    var subsidyRule = model.presetPostedPrice(0.25, 0.75);
-    var summary = model.summarize(rule);
-    var subsidySummary = model.summarize(subsidyRule);
-    var v = summary.verdicts;
-    var subsidyVerdicts = subsidySummary.verdicts;
-    assertClose(rule.parameters.buyerPrice, 0.67,
-      "Resolved posted buyer price", 1e-12);
-    assertClose(rule.parameters.sellerReceipt, 0.33,
-      "Resolved posted seller receipt", 1e-12);
-    assertClose(onePriceRule.parameters.buyerPrice, 0.37,
-      "One-price buyer cutoff", 1e-12);
-    assertClose(onePriceRule.parameters.sellerReceipt, 0.37,
-      "One-price seller cutoff", 1e-12);
-    assertClose(subsidyRule.parameters.buyerPrice, 0.25,
-      "Subsidized posted buyer price", 1e-12);
-    assertClose(subsidyRule.parameters.sellerReceipt, 0.75,
-      "Subsidized posted seller receipt", 1e-12);
-    assert(rule.q.lower[67][32] === 1 && rule.q.upper[67][32] === 1,
-      "Reports satisfying both posted cutoffs should trade.");
-    assert(rule.q.lower[66][32] === 0 && rule.q.lower[67][33] === 0,
-      "Failing either posted cutoff should prevent trade.");
-    assertPatchClose(rule.pB.lower[67][32], [0.67, 0, 0, 0, 0, 0],
-      "Posted buyer payment patch");
-    assertPatchClose(rule.pS.lower[67][32], [0.33, 0, 0, 0, 0, 0],
-      "Posted seller receipt patch");
-    assert(v.bic && v.dsic, "Two posted cutoffs should be BIC and DSIC.");
-    assert(v.exAnteIr && v.interimIr && v.exPostIr,
-      "Two posted cutoffs should pass all IR notions.");
-    assert(!v.exPostBudgetBalanced && !v.expectedBudgetBalanced &&
-      v.exPostNoDeficit,
-    "A positive posted spread should collect nonnegative intermediary revenue.");
-    assertClose(v.expectedRevenue, 0.34 * 0.33 * 0.33,
-      "Posted-price revenue", 1e-10);
-    assertClose(v.tradeProbability, 0.33 * 0.33,
-      "Posted-price trade probability", 1e-10);
-    assertClose(v.welfare, 0.33 * 0.33 * (1 + 0.67 - 0.33) / 2,
-      "Posted-price welfare", 1e-10);
-    assert(subsidyRule.q.lower[25][74] === 1 &&
-      subsidyRule.q.upper[25][74] === 1,
-    "Posted prices should trade even when the seller receipt exceeds the buyer price.");
-    assertPatchClose(subsidyRule.pB.lower[25][74], [0.25, 0, 0, 0, 0, 0],
-      "Subsidized posted buyer payment patch");
-    assertPatchClose(subsidyRule.pS.lower[25][74], [0.75, 0, 0, 0, 0, 0],
-      "Subsidized posted seller receipt patch");
-    assert(subsidyVerdicts.bic && subsidyVerdicts.dsic &&
-      subsidyVerdicts.exPostIr,
-    "Independent posted cutoffs should remain truthful and individually rational.");
-    assert(!subsidyVerdicts.exPostBudgetBalanced &&
-      !subsidyVerdicts.expectedBudgetBalanced &&
-      !subsidyVerdicts.exPostNoDeficit &&
-      !subsidyVerdicts.expectedNoDeficit,
-    "A seller receipt above the buyer price should require a subsidy.");
-    assertClose(subsidyVerdicts.expectedRevenue, -9 / 32,
-      "Expected posted-price subsidy", 1e-10);
-    assertClose(subsidyVerdicts.tradeProbability, 9 / 16,
-      "Subsidized posted-price trade probability", 1e-10);
-    assertClose(subsidyVerdicts.welfare, 9 / 64,
-      "Subsidized posted-price welfare", 1e-10);
-  });
-
-  test("Balanced AGV is exactly quadratic, BIC, ex-ante IR, and not interim IR", function () {
-    var rule = model.presetAgv(0.25);
-    var summary = model.summarize(rule);
-    var v = summary.verdicts;
-    assertPatchClose(rule.pB.upper[0][model.CELL_RESOLUTION - 1],
-      [0.25, 0, 0, 0.5, 0, -0.5],
-      "AGV payment on a no-trade triangle");
-    assert(v.bic && !v.dsic, "AGV should be BIC but not DSIC.");
-    assert(v.exAnteIr, "K=1/4 should satisfy both ex-ante participation constraints.");
-    assert(!v.interimIr && !v.exPostIr,
-      "No AGV normalization can give both agents interim IR here.");
-    assert(v.exPostBudgetBalanced && v.expectedBudgetBalanced,
-      "The same AGV transfer on both sides should be pointwise balanced.");
-    assertClose(v.expectedBuyerPayoff, 1 / 12, "AGV buyer ex-ante payoff", 1e-9);
-    assertClose(v.expectedSellerPayoff, 1 / 12, "AGV seller ex-ante payoff", 1e-9);
-    assertClose(v.minInterimBuyerPayoff, -1 / 12,
-      "AGV minimum buyer interim payoff", 1e-9);
-    assertClose(v.minInterimSellerPayoff, -1 / 12,
-      "AGV minimum seller interim payoff", 1e-9);
-    assertClose(v.welfare, 1 / 6, "AGV welfare", 1e-9);
-  });
-
-  test("The AGV constant shifts participation exactly as the envelope predicts", function () {
-    var low = model.summarize(model.presetAgv(1 / 6)).verdicts;
-    var high = model.summarize(model.presetAgv(1 / 3)).verdicts;
-    assert(low.interimBuyerIr && !low.interimSellerIr,
-      "At K=1/6 only buyer interim IR should hold.");
-    assert(!high.interimBuyerIr && high.interimSellerIr,
-      "At K=1/3 only seller interim IR should hold.");
-    assert(low.exAnteIr && high.exAnteIr,
-      "Both endpoints of [1/6,1/3] should satisfy ex-ante IR.");
-  });
-
-  test("Split-the-difference direct reports are balanced and IR at truth but not IC", function () {
-    var rule = model.presetSplitDifference();
-    var efficient = model.efficientGrid();
-    var summary = model.summarize(rule);
-    var v = summary.verdicts;
-    var i;
-    var j;
-    assertClose(rule.parameters.sellerShare, 0.5,
-      "Default split seller share", 1e-12);
-    assertClose(rule.parameters.tradingThreshold, 0,
-      "Default split trading threshold", 1e-12);
-    for (i = 0; i < model.CELL_RESOLUTION; i += 1) {
-      for (j = 0; j < model.CELL_RESOLUTION; j += 1) {
-        assert(rule.q.lower[i][j] === efficient.lower[i][j] &&
-          rule.q.upper[i][j] === efficient.upper[i][j],
-        "The default split allocation should trade exactly when value covers cost.");
-      }
-    }
-    assertPatchClose(rule.pB.lower[50][25], [0, 0.5, 0.5, 0, 0, 0],
-      "Default split buyer-payment patch");
-    assertPatchClose(rule.pS.lower[50][25], [0, 0.5, 0.5, 0, 0, 0],
-      "Default split seller-payment patch");
-    assert(!v.bic && !v.dsic,
-      "Truthful direct reports should not be incentive compatible at the midpoint price.");
-    assert(v.exAnteIr && v.interimIr && v.exPostIr,
-      "Truth-profile midpoint payoffs should pass all IR notions.");
-    assert(v.exPostBudgetBalanced && v.expectedBudgetBalanced,
-      "A common midpoint transfer should be pointwise balanced.");
-    assertClose(v.expectedBuyerPayoff, 1 / 12, "Midpoint buyer payoff", 1e-9);
-    assertClose(v.expectedSellerPayoff, 1 / 12, "Midpoint seller payoff", 1e-9);
-    assertClose(v.tradeProbability, 1 / 2,
-      "Default split trade probability", 1e-10);
-    assertClose(v.welfare, 1 / 6, "Default split allocation welfare", 1e-9);
-  });
-
-  test("The split parameter assigns the exact gains-from-trade shares", function () {
-    var rule = model.presetSplitDifference(0.25);
-    var v = model.summarize(rule).verdicts;
-    assertClose(rule.parameters.sellerShare, 0.25,
-      "Off-default split seller share", 1e-12);
-    assertPatchClose(rule.pB.lower[50][25], [0, 0.25, 0.75, 0, 0, 0],
-      "Off-default split buyer-payment patch");
-    assertPatchClose(rule.pS.lower[50][25], [0, 0.25, 0.75, 0, 0, 0],
-      "Off-default split seller-payment patch");
-    assertClose(v.expectedBuyerPayoff, 1 / 8,
-      "Buyer three-quarter share of expected gains", 1e-9);
-    assertClose(v.expectedSellerPayoff, 1 / 24,
-      "Seller one-quarter share of expected gains", 1e-9);
-    assert(v.exPostIr && v.exPostBudgetBalanced,
-      "Every unit-interval split should remain ex-post IR and balanced.");
-  });
-
-  test("The split parameter accepts both endpoint shares", function () {
-    var buyerEndpoint = model.presetSplitDifference(0);
-    var sellerEndpoint = model.presetSplitDifference(1);
-    assertPatchClose(buyerEndpoint.pB.lower[50][25], [0, 0, 1, 0, 0, 0],
-      "Buyer endpoint split patch");
-    assertPatchClose(sellerEndpoint.pB.lower[50][25], [0, 1, 0, 0, 0, 0],
-      "Seller endpoint split patch");
-    assert(buyerEndpoint.parameters.sellerShare === 0 &&
-      sellerEndpoint.parameters.sellerShare === 1,
-    "Both closed-domain split endpoints should be retained exactly.");
-  });
-
-  test("The C-S direct equivalent is exact, BIC, balanced, and not DSIC", function () {
-    var rule = model.presetChatterjeeSamuelson();
-    var summary = model.summarize(rule);
-    var v = summary.verdicts;
-    assertClose(rule.parameters.threshold, 0.25,
-      "Default C-S trading threshold", 1e-12);
-    assertClose(rule.parameters.sellerShare, 0.5,
-      "Default C-S seller share", 1e-12);
-    assertPatchClose(rule.pB.lower[50][25], [1 / 6, 1 / 3, 1 / 3, 0, 0, 0],
-      "C-S transaction-price patch");
-    assert(v.bic && !v.dsic, "The C-S direct equivalent should be BIC but not DSIC.");
-    assert(v.exAnteIr && v.interimIr && v.exPostIr,
-      "The C-S direct equivalent should pass all IR notions.");
-    assert(v.exPostBudgetBalanced && v.expectedBudgetBalanced,
-      "The common C-S price should be exactly balanced.");
-    assertClose(v.welfare, 9 / 64, "C-S welfare", 1e-9);
-    assertClose(v.expectedBuyerPayoff, 9 / 128, "C-S buyer payoff", 1e-9);
-    assertClose(v.expectedSellerPayoff, 9 / 128, "C-S seller payoff", 1e-9);
-    assertClose(v.expectedRevenue, 0, "C-S expected revenue", 1e-9);
-  });
-
-  test("The split trading threshold is exact on the mesh and diagnostics track its change", function () {
-    var rule = model.presetSplitDifference(0.5, 0.5);
-    var v = model.summarize(rule).verdicts;
-    assertClose(rule.parameters.tradingThreshold, 0.5,
-      "Changed split trading threshold", 1e-12);
-    assert(rule.q.lower[50][0] === 1 && rule.q.upper[50][0] === 0,
-      "The threshold diagonal should belong only to the lower-right triangle.");
-    assert(rule.q.lower[51][0] === 1 && rule.q.upper[51][0] === 1,
-      "Both triangles strictly above the threshold should trade.");
-    assert(rule.q.lower[49][0] === 0 && rule.q.upper[49][0] === 0,
-      "Neither triangle below the threshold should trade.");
-    assertClose(v.tradeProbability, 1 / 8,
-      "Threshold-one-half trade probability", 1e-10);
-    assertClose(v.welfare, 1 / 12,
-      "Threshold-one-half welfare", 1e-10);
-    assert(!v.bic,
-      "The thresholded midpoint rule should not be BIC.");
-    assert(v.exAnteIr && v.interimIr && v.exPostIr,
-      "The threshold-one-half truth profile should pass all IR notions.");
-    assert(v.exPostBudgetBalanced && v.expectedBudgetBalanced,
-      "The common split transfer should remain exactly balanced.");
-  });
-
-  test("The split threshold resolves to the nearest one-cent mesh diagonal", function () {
-    var rule = model.presetSplitDifference(0.5, 0.274);
-    assertClose(rule.parameters.tradingThreshold, 0.27,
-      "Resolved split trading threshold", 1e-12);
-    assert(rule.q.lower[27][0] === 1 && rule.q.upper[27][0] === 0,
-      "The resolved threshold should use the twenty-seven-cell diagonal.");
-  });
-
-  test("The split threshold endpoints give efficient trade and no trade", function () {
-    var efficient = model.efficientGrid();
-    var thresholdZero = model.presetSplitDifference(0.5, 0).q;
-    var thresholdOne = model.presetSplitDifference(0.5, 1).q;
-    var i;
-    var j;
-    for (i = 0; i < model.CELL_RESOLUTION; i += 1) {
-      for (j = 0; j < model.CELL_RESOLUTION; j += 1) {
-        assert(thresholdZero.lower[i][j] === efficient.lower[i][j] &&
-          thresholdZero.upper[i][j] === efficient.upper[i][j],
-        "A zero split threshold should equal efficient trade.");
-        assert(thresholdOne.lower[i][j] === 0 &&
-          thresholdOne.upper[i][j] === 0,
-        "A unit split threshold should give no trade.");
-      }
-    }
-  });
-
-  test("The broker-revenue preset defaults to the truthful uniform revenue optimum", function () {
-    var rule = model.presetRevenueThreshold();
-    var summary = model.summarize(rule);
-    var v = summary.verdicts;
-    assertClose(rule.parameters.threshold, 0.5,
-      "Default broker threshold", 1e-12);
-    assertClose(rule.parameters.buyerMarkup, 0.5,
-      "Default broker buyer markup", 1e-12);
-    assertClose(rule.parameters.sellerDiscount, 0.5,
-      "Default broker seller discount", 1e-12);
-    assertPatchClose(rule.pB.lower[50][0], [0.5, 0, 1, 0, 0, 0],
-      "Broker buyer critical-payment patch");
-    assertPatchClose(rule.pS.lower[50][0], [-0.5, 1, 0, 0, 0, 0],
-      "Broker seller critical-receipt patch");
-    assert(v.bic && v.dsic,
-      "Critical payments should truthfully implement the threshold allocation.");
-    assert(v.exAnteIr && v.interimIr && v.exPostIr,
-      "The critical-payment broker rule should pass all IR notions.");
-    assert(!v.exPostBudgetBalanced && !v.expectedBudgetBalanced &&
-      v.exPostNoDeficit && v.expectedNoDeficit,
-    "The optimal broker rule should collect weakly positive revenue.");
-    assertClose(v.tradeProbability, 1 / 8,
-      "Optimal broker trade probability", 1e-10);
-    assertClose(v.welfare, 1 / 12,
-      "Optimal broker welfare", 1e-10);
-    assertClose(v.expectedBuyerPayoff, 1 / 48,
-      "Optimal broker buyer payoff", 1e-9);
-    assertClose(v.expectedSellerPayoff, 1 / 48,
-      "Optimal broker seller payoff", 1e-9);
-    assertClose(v.expectedRevenue, 1 / 24,
-      "Optimal broker expected revenue", 1e-9);
-    var below = model.summarize(
-      model.presetRevenueThreshold(0.49, 0.49, 0.49)
-    ).verdicts.expectedRevenue;
-    var above = model.summarize(
-      model.presetRevenueThreshold(0.51, 0.51, 0.51)
-    ).verdicts.expectedRevenue;
-    assert(v.expectedRevenue > below && v.expectedRevenue > above,
-      "The one-half truthful threshold should beat both adjacent slider choices.");
-  });
-
-  test("The broker threshold and payment parameters remain independent diagnostics", function () {
-    var truthful = model.summarize(
-      model.presetRevenueThreshold(0.25, 0.25, 0.25)
-    ).verdicts;
-    var rule = model.presetRevenueThreshold(0.5, 0.4, 0.6);
-    var v = model.summarize(rule).verdicts;
-    assert(truthful.bic && truthful.dsic && truthful.exPostIr,
-      "Matching both payment adjustments to the threshold should remain truthful and IR.");
-    assert(truthful.expectedBudgetBalanced && !truthful.exPostNoDeficit,
-      "The truthful quarter-threshold rule should balance only in expectation.");
-    assertPatchClose(rule.pB.lower[50][0], [0.4, 0, 1, 0, 0, 0],
-      "Independent broker buyer-payment patch");
-    assertPatchClose(rule.pS.lower[50][0], [-0.6, 1, 0, 0, 0, 0],
-      "Independent broker seller-receipt patch");
-    assert(!v.bic && !v.dsic,
-      "Payment adjustments that differ from the allocation threshold should fail IC.");
-    assert(v.exPostBuyerIr && !v.exPostSellerIr,
-      "Independent payment adjustments should expose their separate IR consequences.");
-  });
-
-  test("The broker family contains VCG and no trade at its two threshold endpoints", function () {
-    var revenueVcg = model.presetRevenueThreshold(0, 0, 0);
-    var vcg = model.presetVcg();
-    var noTrade = model.presetRevenueThreshold(1, 1, 1);
-    var i;
-    var j;
-    ["lower", "upper"].forEach(function (side) {
-      for (i = 0; i < model.CELL_RESOLUTION; i += 1) {
-        for (j = 0; j < model.CELL_RESOLUTION; j += 1) {
-          assert(revenueVcg.q[side][i][j] === vcg.q[side][i][j],
-            "The zero-threshold broker allocation should equal VCG.");
-          assertPatchClose(revenueVcg.pB[side][i][j], vcg.pB[side][i][j],
-            "The zero-threshold broker buyer payment should equal VCG");
-          assertPatchClose(revenueVcg.pS[side][i][j], vcg.pS[side][i][j],
-            "The zero-threshold broker seller receipt should equal VCG");
-          assert(noTrade.q[side][i][j] === 0,
-            "The unit-threshold broker allocation should never trade.");
-          assertPatchClose(noTrade.pB[side][i][j], model.constantPatch(0),
-            "The no-trade broker buyer payment should vanish");
-          assertPatchClose(noTrade.pS[side][i][j], model.constantPatch(0),
-            "The no-trade broker seller receipt should vanish");
-        }
+  test("Diagonal efficiency finds the exact open-boundary loss at every threshold", function () {
+    [0, 0.0001, 0.17, 0.25, 1].forEach(function (threshold) {
+      var rule = model.createRevenueThresholdRule(threshold, 0.4, 0.2);
+      var worst = verifyWorstLoss(rule, threshold, threshold === 0);
+      assertClose(worst.v, threshold, "Limiting buyer value");
+      assertClose(worst.c, 0, "Limiting seller cost");
+      if (threshold === 0.0001) {
+        assert(model.summarize(rule).verdicts.efficiencyLoss < model.VERDICT_TOLERANCE &&
+          worst.loss > model.VERDICT_TOLERANCE,
+        "A shared efficiency verdict must use expected loss rather than re-test worst loss.");
       }
     });
+    verifyWorstLoss(model.createVcgRule(), 0, true);
+    verifyWorstLoss(model.createAgvRule(0.6), 0, true);
+    verifyWorstLoss(model.createSplitDifferenceRule(), 0, true);
+    verifyWorstLoss(model.createChatterjeeSamuelsonRule(), 0.25, false);
   });
 
-  test("Fix IC/IR turns the efficient allocation into exact zero-boundary VCG", function () {
-    var q = model.efficientGrid();
-    var fixed = model.zeroBoundaryPayments(q);
-    var vcg = model.presetVcg();
-    var i;
-    var j;
-    for (i = 0; i < model.CELL_RESOLUTION; i += 1) {
-      for (j = 0; j < model.CELL_RESOLUTION; j += 1) {
-        assertPatchClose(fixed.pB.lower[i][j], vcg.pB.lower[i][j],
-          "Fixed buyer lower patch");
-        assertPatchClose(fixed.pB.upper[i][j], vcg.pB.upper[i][j],
-          "Fixed buyer upper patch");
-        assertPatchClose(fixed.pS.lower[i][j], vcg.pS.lower[i][j],
-          "Fixed seller lower patch");
-        assertPatchClose(fixed.pS.upper[i][j], vcg.pS.upper[i][j],
-          "Fixed seller upper patch");
-      }
-    }
-    var summary = model.summarize({ q: q, pB: fixed.pB, pS: fixed.pS });
-    assert(summary.verdicts.bic && summary.verdicts.dsic && summary.verdicts.exPostIr,
-      "The repaired efficient rule should be DSIC and ex-post IR.");
-  });
-
-  test("Fix IC/IR gives the C-S allocation its exact critical-value transfers", function () {
-    var q = model.chatterjeeSamuelsonGrid();
-    var fixed = model.zeroBoundaryPayments(q);
-    var summary = model.summarize({ q: q, pB: fixed.pB, pS: fixed.pS });
-    assertClose(valueAt(fixed.pB, 0.83, 0.2), 0.45,
-      "C-S-threshold buyer critical payment", 1e-10);
-    assertClose(valueAt(fixed.pS, 0.83, 0.2), 0.58,
-      "C-S-threshold seller critical receipt", 1e-10);
-    assert(summary.verdicts.bic && summary.verdicts.dsic && summary.verdicts.exPostIr,
-      "Critical-value transfers should make the threshold rule DSIC and ex-post IR.");
-    assert(!summary.verdicts.exPostBudgetBalanced,
-      "Critical-value transfers should not be pointwise balanced.");
-    assert(summary.verdicts.expectedBudgetBalanced,
-      "The zero-boundary C-S threshold transfers should balance in expectation.");
-  });
-
-  test("BIC implementability can hold when pointwise DSIC implementability fails", function () {
-    var q = model.createScalarGrid(
-      function (i, j) {
-        return j < model.CELL_RESOLUTION / 2 ?
-          i / (model.CELL_RESOLUTION - 1) :
-          (model.CELL_RESOLUTION - 1 - i) / (model.CELL_RESOLUTION - 1);
-      },
-      function (i, j) {
-        return j < model.CELL_RESOLUTION / 2 ?
-          i / (model.CELL_RESOLUTION - 1) :
-          (model.CELL_RESOLUTION - 1 - i) / (model.CELL_RESOLUTION - 1);
-      }
-    );
-    var bic = model.checkBicImplementability(q);
-    var dsic = model.checkDsicAllocation(q);
-    assert(bic.holds, "Both interim allocations should be constant at one half.");
-    assert(!dsic.holds, "The pointwise allocation should violate DSIC monotonicity.");
-    var fixed = model.zeroBoundaryPayments(q);
-    var summary = model.summarize({ q: q, pB: fixed.pB, pS: fixed.pS });
-    assert(summary.verdicts.bic && !summary.verdicts.dsic,
-      "Repair should achieve BIC but cannot repair pointwise allocation monotonicity.");
-    assert(summary.verdicts.exPostIr,
-      "Zero-boundary pointwise envelopes should give nonnegative truthful payoffs.");
-  });
-
-  test("Within-triangle changes and interim slopes are included in exact IC tests", function () {
-    var pointwiseFailure = model.constantScalarGrid(0);
-    pointwiseFailure.upper[0][0] = 1;
-    assert(!model.checkDsicAllocation(pointwiseFailure).holds,
-      "q_L>q_R within one cell should violate pointwise monotonicity.");
-
-    var interimFailure = model.constantScalarGrid(0.5);
-    var j;
-    for (j = 0; j < model.CELL_RESOLUTION; j += 1) {
-      interimFailure.upper[model.CELL_RESOLUTION / 2][j] = 1;
-      interimFailure.lower[model.CELL_RESOLUTION / 2][j] = 0;
-    }
-    assert(!model.checkBicImplementability(interimFailure).buyer.holds,
-      "A falling within-cell interim affine segment should violate buyer monotonicity.");
-    var formalPayments = model.zeroBoundaryPayments(interimFailure);
-    var formalSummary = model.summarize({
-      q: interimFailure,
-      pB: formalPayments.pB,
-      pS: formalPayments.pS
-    });
-    assert(!formalSummary.verdicts.bic,
-      "Formal envelope payments should not conceal the allocation's BIC failure.");
-    assert(formalSummary.verdicts.exPostIr,
-      "The zero-boundary calculation should still give nonnegative truthful payoffs.");
-  });
-
-  test("Editing one payment patch breaks the actual-transfer IC and balance checks", function () {
-    var rule = model.presetVcg();
-    rule.pB.lower[model.CELL_RESOLUTION - 1][0] = model.constantPatch(2);
-    var summary = model.summarize(rule);
-    assert(!summary.verdicts.bic && !summary.verdicts.dsic,
-      "Actual-transfer IC should fail after a local payment edit.");
-    assert(!summary.verdicts.exPostBudgetBalanced,
-      "The local edit should not look pointwise balanced.");
-    assert(summary.verdicts.buyerBicViolationCount > 0,
-      "The affected buyer interim interval should be marked.");
-  });
-
-  test("Ex-post IR uses continuous quadratic extrema rather than centroid samples", function () {
-    var rule = {
-      q: model.constantScalarGrid(0),
-      pB: model.constantPatchGrid(0),
-      pS: model.constantPatchGrid(0)
-    };
-    var boundaryLoss = model.CELL_SIZE / 5;
-    rule.pB.lower[0][0] = [boundaryLoss, -1, -1, 0, 0, 0];
-    var summary = model.summarize(rule);
-    var centroid = model.triangleCentroid(0, 0, true);
-    assert(model.patchGridValueAt(
-      summary.patches.buyerPayoff, centroid.v, centroid.c
-    ) > 0, "The payoff should be positive at the triangle centroid.");
-    assertClose(summary.verdicts.minBuyerPayoff, -boundaryLoss,
-      "The true vertex payoff minimum", 1e-10);
-    assert(!summary.verdicts.exPostBuyerIr,
-      "The exact continuous minimum should fail buyer ex-post IR.");
-  });
-
-  test("Ex-post IR finds a quadratic minimum strictly inside a triangle", function () {
-    var rule = {
-      q: model.constantScalarGrid(0),
-      pB: model.constantPatchGrid(0),
-      pS: model.constantPatchGrid(0)
-    };
-    var i = 28;
-    var j = 36;
-    var minimizingValue = 0.289;
-    var minimizingCost = 0.361;
-    var loss = 0.000001;
-    rule.pB.lower[i][j] = [
-      loss - minimizingValue * minimizingValue - minimizingCost * minimizingCost,
-      2 * minimizingValue,
-      2 * minimizingCost,
-      -1,
-      0,
-      -1
-    ];
-    var summary = model.summarize(rule);
-    var range = summary.ir.exPost.buyerRange;
-    var centroid = model.triangleCentroid(i, j, true);
-    assert(model.patchGridValueAt(
-      summary.patches.buyerPayoff, centroid.v, centroid.c
-    ) > 0, "The centroid should miss the interior participation failure.");
-    assertClose(range.min, -loss, "Interior quadratic payoff minimum", 1e-10);
-    assertClose(range.minLocation.v, minimizingValue,
-      "Interior minimizing buyer value", 1e-10);
-    assertClose(range.minLocation.c, minimizingCost,
-      "Interior minimizing seller cost", 1e-10);
-    assert(!summary.verdicts.exPostBuyerIr,
-      "The exact interior minimum should fail buyer ex-post IR.");
-  });
-
-  test("Every preset summary and exact output stays finite", function () {
+  test("Posted-price efficiency compares both missing-trade strips and harmful trade", function () {
     [
-      model.presetVcg(),
-      model.presetPostedPrice(0.67, 0.33),
-      model.presetAgv(0.25),
-      model.presetSplitDifference(),
-      model.presetChatterjeeSamuelson(),
-      model.presetRevenueThreshold()
-    ].forEach(function (rule) {
-      var summary = model.summarize(rule);
-      assert(allFiniteScalarGrid(rule.q) &&
-        allFinitePatchGrid(rule.pB) && allFinitePatchGrid(rule.pS),
-        "Preset patch coefficients should be finite.");
-      ["buyerPayoff", "sellerPayoff", "revenue"].forEach(function (key) {
-        assert(allFinitePatchGrid(summary.patches[key]),
-          "Exact summary patches finite: " + key);
-      });
-      Object.keys(summary.verdicts).forEach(function (key) {
-        if (typeof summary.verdicts[key] === "number") {
-          assert(Number.isFinite(summary.verdicts[key]),
-            "Summary scalar finite: " + key);
-        }
-      });
-      ["buyerAllocation", "sellerAllocation", "buyerPayment", "sellerPayment",
-        "buyerPayoff", "sellerPayoff"].forEach(function (key) {
-        assert(summary.interim[key].length === model.CELL_RESOLUTION &&
-          summary.interim[key].every(function (polynomial) {
-            return polynomial.every(Number.isFinite);
-          }), "Exact interim polynomials should remain finite: " + key);
-      });
-      [summary.deviation.buyer, summary.deviation.seller].forEach(function (diagnostic) {
-        assert(Number.isFinite(diagnostic.range.min) &&
-          Number.isFinite(diagnostic.range.max) &&
-          diagnostic.bestResponses.every(function (response) {
-            return Number.isFinite(response.trueType) &&
-              Number.isFinite(response.report) && Number.isFinite(response.utility) &&
-              Number.isFinite(response.truthfulUtility) && Number.isFinite(response.gain);
-          }), "Deviation diagnostics should remain finite.");
-      });
+      [0.5, 0.5, 0.5, false], [0.6, 0.4, 0.6, false],
+      [0.2, 0.4, 0.6, false], [0.25, 0.75, 0.5, true],
+      [0, 1, 1, true], [1, 0, 1, false],
+      [0, 0, 1, false], [1, 1, 1, false]
+    ].forEach(function (example) {
+      verifyWorstLoss(model.createPostedPriceRule(example[0], example[1]),
+        example[2], example[3]);
     });
   });
 
-  test("Invalid grids and nonfinite preset parameters fail before diagnostics", function () {
-    var threwAllocation = false;
-    var threwPayment = false;
-    var threwParameter = false;
-    var threwMagnitude = false;
-    var threwPresetMagnitude = false;
-    var threwSplitNonfinite = false;
-    var threwSplitRange = false;
-    var threwSplitThresholdNonfinite = false;
-    var threwSplitThresholdRange = false;
-    var threwPostedBuyerNonfinite = false;
-    var threwPostedSellerRange = false;
-    var threwRevenueThresholdNonfinite = false;
-    var threwRevenueMarkupRange = false;
-    var threwRevenueDiscountNonfinite = false;
-    var badAllocation = model.presetVcg();
-    badAllocation.q.lower[0][0] = 1.1;
-    try {
-      model.summarize(badAllocation);
-    } catch (error) {
-      threwAllocation = error instanceof RangeError;
-    }
-    var badPayment = model.presetVcg();
-    badPayment.pB.lower[0][0][0] = Infinity;
-    try {
-      model.summarize(badPayment);
-    } catch (error) {
-      threwPayment = error instanceof TypeError;
-    }
-    try {
-      model.presetAgv(NaN);
-    } catch (error) {
-      threwParameter = error instanceof TypeError;
-    }
-    var extremePayment = model.presetVcg();
-    extremePayment.pB.lower[0][0][0] = 1e141;
-    try {
-      model.summarize(extremePayment);
-    } catch (error) {
-      threwMagnitude = error instanceof RangeError;
-    }
-    try {
-      model.presetAgv(-1e141);
-    } catch (error) {
-      threwPresetMagnitude = error instanceof RangeError;
-    }
-    try {
-      model.presetSplitDifference(NaN);
-    } catch (error) {
-      threwSplitNonfinite = error instanceof TypeError;
-    }
-    try {
-      model.presetSplitDifference(-0.01);
-    } catch (error) {
-      threwSplitRange = error instanceof RangeError;
-    }
-    try {
-      model.presetSplitDifference(0.5, Infinity);
-    } catch (error) {
-      threwSplitThresholdNonfinite = error instanceof TypeError;
-    }
-    try {
-      model.presetSplitDifference(0.5, 1.01);
-    } catch (error) {
-      threwSplitThresholdRange = error instanceof RangeError;
-    }
-    try {
-      model.presetPostedPrice(NaN, 0.3);
-    } catch (error) {
-      threwPostedBuyerNonfinite = error instanceof TypeError;
-    }
-    try {
-      model.presetPostedPrice(0.7, -0.01);
-    } catch (error) {
-      threwPostedSellerRange = error instanceof RangeError;
-    }
-    try {
-      model.presetRevenueThreshold(Infinity, 0.5, 0.5);
-    } catch (error) {
-      threwRevenueThresholdNonfinite = error instanceof TypeError;
-    }
-    try {
-      model.presetRevenueThreshold(0.5, -0.01, 0.5);
-    } catch (error) {
-      threwRevenueMarkupRange = error instanceof RangeError;
-    }
-    try {
-      model.presetRevenueThreshold(0.5, 0.5, NaN);
-    } catch (error) {
-      threwRevenueDiscountNonfinite = error instanceof TypeError;
-    }
-    assert(threwAllocation, "Out-of-range q should throw RangeError.");
-    assert(threwPayment, "Nonfinite payment coefficients should throw TypeError.");
-    assert(threwParameter, "Nonfinite preset parameters should throw TypeError.");
-    assert(threwMagnitude,
-      "A payment outside the stable diagnostic range should throw RangeError.");
-    assert(threwPresetMagnitude,
-      "A preset outside the stable diagnostic range should throw RangeError.");
-    assert(threwSplitNonfinite,
-      "A nonfinite seller share should throw TypeError.");
-    assert(threwSplitRange,
-      "A seller share outside [0,1] should throw RangeError.");
-    assert(threwSplitThresholdNonfinite,
-      "A nonfinite split trading threshold should throw TypeError.");
-    assert(threwSplitThresholdRange,
-      "A split trading threshold outside [0,1] should throw RangeError.");
-    assert(threwPostedBuyerNonfinite,
-      "A nonfinite posted buyer price should throw TypeError.");
-    assert(threwPostedSellerRange,
-      "A posted seller receipt outside [0,1] should throw RangeError.");
-    assert(threwRevenueThresholdNonfinite,
-      "A nonfinite broker threshold should throw TypeError.");
-    assert(threwRevenueMarkupRange,
-      "A broker buyer markup outside [0,1] should throw RangeError.");
-    assert(threwRevenueDiscountNonfinite,
-      "A nonfinite broker seller discount should throw TypeError.");
+  test("Custom efficiency uses exact triangle loss independently of transfers", function () {
+    var q = model.createEfficientCustomAllocation();
+    q.lower[16][2] = 0.4;
+    var zero = model.createCustomPaymentGrid(0);
+    var changed = model.createCustomPaymentGrid(4);
+    var first = verifyWorstLoss(model.createCustomRule(q, zero, zero), 0.45, false);
+    var second = verifyWorstLoss(model.createCustomRule(q, changed, zero), 0.45, false);
+    assert(JSON.stringify(first) === JSON.stringify(second),
+      "Transfers must not change gains lost through the allocation.");
   });
 
   run();
@@ -965,9 +1042,9 @@
     var summary = document.getElementById("summary");
     summary.className = allPassed ? "pass" : "fail";
     summary.textContent = passed + " of " + tests.length +
-      " bargaining-sandbox model tests passed.";
+      " Bargaining sandbox model tests passed.";
     document.body.dataset.status = allPassed ? "passed" : "failed";
     document.title = (allPassed ? "PASS" : "FAIL") +
-      " — Bargaining-sandbox model tests";
+      " — Bargaining Mechanism Sandbox model tests";
   }
 }());

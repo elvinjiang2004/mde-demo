@@ -45,14 +45,14 @@
     );
   }
 
-  function postedPriceGrid(resolution, buyerPrice, sellerReceipt) {
+  function postedPriceGrid(resolution, buyerPrice, sellerPrice) {
     var cellSize = 1 / resolution;
     var boundedBuyerPrice = Math.min(1, Math.max(0, buyerPrice));
-    var resolvedSellerReceipt = sellerReceipt === undefined ?
-      buyerPrice : sellerReceipt;
-    var boundedSellerReceipt = Math.min(1, Math.max(0, resolvedSellerReceipt));
+    var resolvedSellerPrice = sellerPrice === undefined ?
+      buyerPrice : sellerPrice;
+    var boundedSellerPrice = Math.min(1, Math.max(0, resolvedSellerPrice));
     var buyerThreshold = Math.round(boundedBuyerPrice / cellSize);
-    var sellerThreshold = Math.round(boundedSellerReceipt / cellSize);
+    var sellerThreshold = Math.round(boundedSellerPrice / cellSize);
     return createGrid(
       resolution,
       function (i, j) {
@@ -789,6 +789,95 @@
     };
   }
 
+  function checkDsicPaymentOffsets(actual, envelope, agent, tolerance) {
+    var resolution = resolutionOf(actual);
+    var tol = tolerance === undefined ? 1e-7 : tolerance;
+    var violations = constantGrid(resolution, false);
+    var own = agent === "buyer" ? [1, 3, 4] : [2, 4, 5];
+    var other = agent === "buyer" ? [0, 2, 5] : [0, 1, 3];
+    var maximum = 0;
+    var outer;
+    var inner;
+
+    function patchAt(grid, i, j, isLower) {
+      return grid[isLower ? "lower" : "upper"][i][j];
+    }
+
+    function mark(i, j, isLower, reference) {
+      var actualPatch = patchAt(actual, i, j, isLower);
+      var envelopePatch = patchAt(envelope, i, j, isLower);
+      var magnitude = 0;
+      own.forEach(function (index) {
+        magnitude = Math.max(
+          magnitude, Math.abs(actualPatch[index] - envelopePatch[index])
+        );
+      });
+      other.forEach(function (index) {
+        magnitude = Math.max(
+          magnitude,
+          Math.abs(actualPatch[index] - envelopePatch[index] - reference[index])
+        );
+      });
+      if (magnitude > tol) {
+        violations[isLower ? "lower" : "upper"][i][j] = true;
+        maximum = Math.max(maximum, magnitude);
+      }
+    }
+
+    for (outer = 0; outer < resolution; outer += 1) {
+      var referenceI = agent === "buyer" ? 0 : outer;
+      var referenceJ = agent === "buyer" ? outer : 0;
+      var referenceActual = actual.upper[referenceI][referenceJ];
+      var referenceEnvelope = envelope.upper[referenceI][referenceJ];
+      var reference = referenceActual.map(function (value, index) {
+        return value - referenceEnvelope[index];
+      });
+      for (inner = 0; inner < resolution; inner += 1) {
+        var i = agent === "buyer" ? inner : outer;
+        var j = agent === "buyer" ? outer : inner;
+        mark(i, j, true, reference);
+        mark(i, j, false, reference);
+      }
+    }
+    var violationCount = countTrueGrid(violations);
+    return {
+      holds: violationCount === 0,
+      violations: violations,
+      violationCount: violationCount,
+      maxViolation: maximum
+    };
+  }
+
+  function maximumEfficiencyLoss(q) {
+    var resolution = resolutionOf(q);
+    var best = { loss: 0, v: 0, c: 0, attained: true, approachFrom: null };
+    // Welfare loss is affine on each triangle. Its closed-vertex maximum
+    // includes limits from both sides; point ownership determines attainment.
+    [true, false].forEach(function (isLower) {
+      var side = isLower ? "lower" : "upper";
+      for (var i = 0; i < resolution; i += 1) {
+        for (var j = 0; j < resolution; j += 1) {
+          var allocation = q[side][i][j];
+          triangleVertices(i, j, isLower, resolution).forEach(function (point) {
+            var surplus = point.v - point.c;
+            var loss = Math.max(surplus, 0) - surplus * allocation;
+            var attained = loss === 0 ||
+              scalarGridValueAt(q, point.v, point.c) === allocation;
+            if (loss > best.loss ||
+                (loss === best.loss && attained && !best.attained)) {
+              best = {
+                loss: loss, v: point.v, c: point.c, attained: attained,
+                approachFrom: attained ? null :
+                  triangleCentroid(i, j, isLower, resolution)
+              };
+            }
+          });
+        }
+      }
+    });
+    return best;
+  }
+
   function allocationErrorAt(q, v, c) {
     var allocation = scalarGridValueAt(q, v, c);
     var efficient = v >= c ? 1 : 0;
@@ -814,6 +903,7 @@
     efficientWelfare: efficientWelfare,
     countTrueGrid: countTrueGrid,
     checkDsicAllocation: checkDsicAllocation,
+    checkDsicPaymentOffsets: checkDsicPaymentOffsets,
     evaluatePatch: evaluatePatch,
     scalarGridValueAt: scalarGridValueAt,
     patchGridValueAt: patchGridValueAt,
@@ -840,6 +930,7 @@
     buyerBestInterimReport: buyerBestInterimReport,
     sellerBestInterimReport: sellerBestInterimReport,
     interimDeviationDiagnostics: interimDeviationDiagnostics,
+    maximumEfficiencyLoss: maximumEfficiencyLoss,
     allocationErrorAt: allocationErrorAt
   });
 })(window);

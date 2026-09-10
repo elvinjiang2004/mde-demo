@@ -1,0 +1,314 @@
+.chart-660x450 {
+  max-width: 660px;
+  cursor: default;
+}
+
+.main-diagnostic-layout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  width: 100%;
+  gap: 2rem;
+}
+
+.main-column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.main-column-480 {
+  flex: 0 1 480px;
+}
+
+.main-column-660 {
+  flex: 0 1 660px;
+}
+
+.shrink-to-fit {
+  min-width: 0;
+}
+
+.slider-320 {
+  max-width: 320px;
+}
+
+.point-count-buttons {
+  margin-top: 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.point-count-buttons .text-button {
+  margin-top: 0;
+}
+
+.point-count-buttons .text-button:disabled {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.diagnostic-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+}
+
+.diagnostic-column-440 {
+  min-width: min(440px, 100%);
+  flex: 1 1 440px;
+}
+
+.chart-440x300 {
+  max-width: 440px;
+  cursor: default;
+}
+
+.main-diagnostic-layout.two-panel-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 660px));
+  justify-content: space-between;
+}
+
+.two-panel-layout .main-column,
+.two-panel-layout .diagnostic-column {
+  width: 100%;
+  min-width: 0;
+  max-width: 660px;
+}
+
+.two-panel-layout .main-column {
+  gap: 0.8rem;
+}
+
+.two-panel-layout .diagnostic-column {
+  display: block;
+}
+
+.envelope-chart-figure > figcaption,
+.math-chart-figure > figcaption {
+  min-height: 1.25rem;
+}
+
+.envelope-chart-frame,
+.math-chart-frame {
+  position: relative;
+}
+
+.chart-480x520-field-canvas {
+  position: absolute;
+  z-index: 0;
+  top: 7.692%;
+  left: 14.583%;
+  width: 79.167%;
+  height: 73.077%;
+  display: block;
+  pointer-events: none;
+}
+
+.math-chart-frame > svg {
+  position: relative;
+  z-index: 1;
+}
+
+.envelope-chart-axis-label,
+.math-chart-axis-label {
+  position: absolute;
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--text-font);
+  font-size: clamp(9px, 1.82vw, 12px);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.envelope-chart-axis-label,
+.math-chart-x-axis-label {
+  right: 0;
+  bottom: 3%;
+  left: 0;
+  text-align: center;
+}
+
+.math-chart-y-axis-label {
+  transform: translate(-50%, -50%) rotate(-90deg);
+  transform-origin: center;
+}
+
+.chart-480x520-x-axis-label {
+  bottom: 7%;
+  left: 8.333%;
+}
+
+.chart-480x520-y-axis-label {
+  top: 44.231%;
+  left: 3.333%;
+}
+
+.chart-220x240-x-axis-label {
+  bottom: 7%;
+}
+
+.chart-220x240-y-axis-label {
+  top: 40.625%;
+  left: 4.091%;
+}
+
+/* Envelope plots use their own figure class to avoid this smaller diagnostic cap. */
+.diagnostic-column .math-chart-figure,
+.diagnostic-column .math-chart-frame {
+  width: 100%;
+  max-width: 440px;
+}
+
+.envelope-chart-axis-label mjx-container,
+.math-chart-axis-label mjx-container {
+  margin: 0;
+}
+
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+}
+
+.control-row .point-control-heading,
+.control-row .point-count-buttons {
+  margin: 0;
+}
+
+.control-point {
+  fill: var(--marker-fill);
+  stroke: var(--blue);
+  stroke-width: 2.2;
+  cursor: ns-resize;
+}
+
+.control-point-selected {
+  stroke: var(--ink);
+  stroke-width: 2.6;
+}
+
+.curve-q {
+  stroke: var(--blue);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rent-curve {
+  stroke: var(--green);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rent-area {
+  fill: var(--green-fill-subtle);
+  stroke: none;
+}
+
+.deviation-line {
+  stroke: var(--guide-light);
+  stroke-width: 1.1;
+}
+
+.deviation-line-violation {
+  stroke: var(--red);
+  stroke-width: 1.4;
+}
+
+.deviation-line-selected {
+  stroke: var(--blue);
+  stroke-width: 2;
+}
+
+.tangency-point {
+  fill: var(--marker-fill);
+  stroke: var(--guide);
+  stroke-width: 1.2;
+}
+
+.payment-curve {
+  stroke: var(--orange);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.family-line {
+  stroke-width: 2;
+  fill: none;
+  opacity: 0.55;
+}
+
+.envelope-segment {
+  stroke-width: 3.2;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.kink-marker {
+  fill: var(--ink);
+  stroke: var(--surface-background);
+  stroke-width: 1;
+}
+
+.line-endpoint {
+  fill: var(--marker-fill);
+  stroke-width: 2.2;
+  cursor: move;
+}
+
+.line-endpoint-selected {
+  stroke-width: 2.8;
+}
+
+.point-letter {
+  font-family: var(--text-font);
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.point-control-heading {
+  margin: 0 0 0.9rem;
+  color: var(--ink);
+  font-family: var(--text-font);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.envelope-segment-clamped {
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 1 5;
+}
+
+.slope-step {
+  stroke-width: 3;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.slope-endpoint {
+  stroke: none;
+}
+
+.slope-jump-guide {
+  stroke: var(--guide-light);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.slope-infinite-marker {
+  stroke-width: 1.6;
+  stroke-dasharray: 2 4;
+}
+

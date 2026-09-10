@@ -2,6 +2,7 @@
 
 (function () {
   var SVG_NS = "http://www.w3.org/2000/svg";
+  // MathJax mutates shared state; serialize requests and discard superseded text.
   var typesetQueue = Promise.resolve();
   var loadPromise = null;
   var requestVersions = new WeakMap();

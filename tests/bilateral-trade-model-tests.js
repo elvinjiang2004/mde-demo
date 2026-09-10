@@ -257,6 +257,29 @@
     assertClose(v.expectedSellerPayoff, 0, "Expected seller payoff under never-trade");
   });
 
+  test("Ex-ante balance distinguishes zero revenue, deficits, and surpluses", function () {
+    var surplus = model.constantCellGrid(0);
+    for (var i = 0; i < model.CELL_RESOLUTION; i += 1) {
+      for (var j = 0; j < model.CELL_RESOLUTION; j += 1) {
+        surplus.lower[i][j] = i - j >= 10 ? 1 : 0;
+        surplus.upper[i][j] = i - j > 10 ? 1 : 0;
+      }
+    }
+    var fixtures = [model.constantCellGrid(0), model.efficientGrid(), surplus];
+    fixtures.forEach(function (grid, index) {
+      var verdicts = model.summarize(grid).verdicts;
+      assert(verdicts.expectedBudgetBalanced === (index === 0),
+        "Only the zero-revenue fixture should pass ex-ante balance.");
+      assert(verdicts.buyerBic && verdicts.sellerBic &&
+        verdicts.interimBuyerIr && verdicts.interimSellerIr,
+      "These monotone rules satisfy BIC and normalized interim IR.");
+    });
+    var positive = model.summarize(surplus).verdicts;
+    assertClose(positive.expectedRevenue, 1 / 24, "Threshold surplus", 1e-9);
+    assert(positive.expectedNoDeficit && !positive.expectedBudgetBalanced,
+      "No deficit must not be displayed as exact expected balance.");
+  });
+
   test("The always-trade rule q=1 has an exact, constant deficit of 1", function () {
     var grid = model.constantCellGrid(1);
     [[0.1, 0.9], [0.4166666666666667, 0.5833333333333334], [0.99, 0.01]]
@@ -531,6 +554,58 @@
         }
       });
     });
+  });
+
+  test("Ex-post efficiency measures gains lost at exact type pairs", function () {
+    [
+      { q: 0, loss: 1, v: 1, c: 0 },
+      { q: 1, loss: 1, v: 0, c: 1 },
+      { q: 0.25, loss: 0.75, v: 1, c: 0 },
+      { q: 0.75, loss: 0.75, v: 0, c: 1 }
+    ].forEach(function (example) {
+      var summary = model.summarize(model.constantCellGrid(example.q));
+      var worst = summary.exPostEfficiency;
+      assertClose(worst.loss, example.loss, "Worst pointwise welfare loss");
+      assert(worst.v === example.v && worst.c === example.c && worst.attained,
+        "A constant allocation attains its worst loss at the appropriate corner.");
+      assertClose(summary.verdicts.efficiencyLoss, 1 / 6,
+        "Expected loss is different from the worst pointwise loss");
+    });
+    var efficient = model.summarize(model.efficientGrid()).exPostEfficiency;
+    assert(efficient.loss === 0 && efficient.attained,
+      "Efficient trade should have exactly zero loss everywhere.");
+  });
+
+  test("An isolated painted triangle reports its exact limiting loss", function () {
+    var grid = model.efficientGrid();
+    grid.lower[16][2] = 0.4;
+    var maximum = model.summarize(grid).exPostEfficiency;
+    assertClose(maximum.loss, 0.45, "Worst loss weighs the probability error by v-c");
+    assertClose(maximum.v, 0.85, "Limiting buyer value");
+    assertClose(maximum.c, 0.1, "Limiting seller cost");
+    assert(!maximum.attained && maximum.approachFrom,
+      "The neighboring efficient triangle owns the limiting corner.");
+    var actual = model.allocationErrorAt(grid, maximum.v, maximum.c);
+    assert(actual.q === 1, "The literal corner is efficient, so it is not a maximizer.");
+    [0.1, 0.001, 0.00001].forEach(function (weight) {
+      var v = maximum.v + weight * (maximum.approachFrom.v - maximum.v);
+      var c = maximum.c + weight * (maximum.approachFrom.c - maximum.c);
+      var q = model.allocationErrorAt(grid, v, c).q;
+      var loss = (v - c) * (1 - q);
+      assertClose(q, 0.4, "Approach stays in the painted triangle");
+      assert(loss < maximum.loss && maximum.loss - loss < weight,
+        "Loss approaches the bound from below, without raster sampling.");
+    });
+  });
+
+  test("Grid endpoint ownership can attain a posted-price worst loss", function () {
+    var grid = model.postedPriceGrid(0.5);
+    var worst = model.summarize(grid).exPostEfficiency;
+    assertClose(worst.loss, 0.5, "Posted-price worst loss");
+    assert(worst.attained, "The mesh excludes the seller's cutoff from trade.");
+    var q = model.allocationErrorAt(grid, worst.v, worst.c).q;
+    assertClose(Math.max(worst.v - worst.c, 0) - (worst.v - worst.c) * q,
+      worst.loss, "The reported point really attains the largest loss");
   });
 
   run();

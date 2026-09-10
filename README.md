@@ -55,6 +55,7 @@ Open these files in a browser to run the test suites:
 - `tests/bilateral-trade-model-tests.html` — bilateral-trade model checks.
 - `tests/bilateral-trade-ui-tests.html` — bilateral-trade interface and SVG checks.
 - `tests/bargaining-sandbox-model-tests.html` — bargaining-sandbox model checks.
+- `tests/bargaining-sandbox-parity-tests.html` — formula/legacy-mesh parity and shared M-S payment checks.
 - `tests/bargaining-sandbox-ui-tests.html` — bargaining-sandbox interface and SVG checks.
 - `tests/envelope-theorem-model-tests.html` — envelope-theorem model checks.
 - `tests/envelope-theorem-ui-tests.html` — envelope-theorem interface and responsive-layout checks.
@@ -70,6 +71,7 @@ affect ordinary use of the menu or module pages.
 ## Files
 
 - `index.html` — module menu.
+- `about.html` — About page, linked from the menu header.
 - `auctions/first-price/` — first-price module page, model, and controls.
 - `auctions/second-price/` — second-price module page, model, and controls.
 - `bilateral-trade/myerson-satterthwaite-theorem/` — bilateral-trade module.
@@ -77,8 +79,8 @@ affect ordinary use of the menu or module pages.
 - `general-topics/envelope-theorem/` — envelope-theorem module.
 - `general-topics/payments-from-allocation-rule/` — allocation-rule and payment
   module.
-- `styles.css` — shared module and menu styles, including automatic light and
-  dark palettes that follow the operating-system preference.
+- `styles.css` — ordered entry point for the focused stylesheets in `css/`.
+- `css/` — theme, shared page/control styling, chart families, and responsive rules.
 - `assets/mathjax/` — vendored MathJax 4 TeX-to-SVG build and offline assets.
 - `js/mathjax-config.js` — shared local MathJax configuration.
 - `js/mathjax-runtime.js` — shared initial and dynamic MathJax lifecycle.
