@@ -1,3 +1,21 @@
+/* Preserve each chart's coordinate box while trimming its outer whitespace. */
+.chart-viewport {
+  display: flow-root;
+  width: 100%;
+  min-width: 0;
+  padding-block: 14px;
+  overflow: hidden;
+}
+
+.chart-viewport:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.chart-viewport svg:focus-visible {
+  outline: none;
+}
+
 .panel-background {
   fill: var(--surface-background);
 }

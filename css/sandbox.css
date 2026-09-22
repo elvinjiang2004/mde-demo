@@ -1,6 +1,6 @@
 .sandbox-toolbar {
-  margin-bottom: 2.2rem;
-  padding-bottom: 1.4rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.8rem;
   border-bottom: 1px solid var(--line-light);
 }
 
@@ -75,7 +75,7 @@
 .surface-editor-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2.2rem 1.6rem;
+  gap: 1.4rem 1rem;
   align-items: start;
 }
 
@@ -92,7 +92,7 @@
 }
 
 .sandbox-diagnostic-grid {
-  margin-top: 3rem;
+  margin-top: 1.75rem;
 }
 
 .mechanism-details {

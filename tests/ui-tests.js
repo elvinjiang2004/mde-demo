@@ -38,6 +38,11 @@
 
     function reset() {
       appDocument.getElementById("reset-button").click();
+      [["value-number", 50], ["bid-number", 30]].forEach(function (choice) {
+        var field = appDocument.getElementById(choice[0]);
+        field.value = String(choice[1]);
+        change(field);
+      });
     }
 
     function withReset(callback) {
@@ -71,6 +76,51 @@
     }
 
     var tests = [
+      {
+        name: "Parameter reset preserves choices and the preview sits with bidder controls",
+        run: function () {
+          withReset(function () {
+            var button = appDocument.getElementById("reset-button");
+            var parameters = appDocument.querySelector(".model-specifications");
+            var choices = appDocument.querySelector(".choice-controls");
+            assert(parameters.contains(button) && button.textContent === "Reset parameters",
+              "The parameter reset should sit below the model controls on the left.");
+            assert(!parameters.querySelector("h2") && parameters.getAttribute("aria-label"),
+              "Parameters should retain an accessible name without a visible subheading.");
+            assert(choices.contains(appDocument.getElementById("value-pdf-preview")),
+              "The value-density preview should be in the value and bid column.");
+            function set(id, value) {
+              var field = appDocument.getElementById(id);
+              field.value = String(value);
+              change(field);
+            }
+            set("upper-bound", 200);
+            set("lower-bound", 20);
+            set("bidder-count", 5);
+            set("alpha-number", 2);
+            set("beta-number", 3);
+            set("value-number", 72);
+            set("bid-number", 43);
+            button.click();
+            [["bidder-count", 2], ["lower-bound", 0], ["upper-bound", 100],
+              ["alpha-number", 1], ["beta-number", 1], ["value-number", 72],
+              ["bid-number", 43]].forEach(function (pair) {
+              assert(Number(appDocument.getElementById(pair[0]).value) === pair[1],
+                "Reset should restore parameters and preserve valid choices: " + pair[0]);
+            });
+            set("upper-bound", 400);
+            set("lower-bound", 200);
+            set("value-number", 250);
+            set("bid-number", 350);
+            button.click();
+            assert(Number(appDocument.getElementById("value-number").value) === 100 &&
+              Number(appDocument.getElementById("bid-number").value) === 100,
+              "Choices outside the restored support should clamp to its nearest endpoint.");
+            assert(appDocument.getElementById("input-error").hidden,
+              "Reset should clear parameter validation errors.");
+          });
+        }
+      },
       {
         name: "The opposing-bid PDF drops vertically at its support endpoint",
         run: function () {
@@ -370,8 +420,9 @@
             chooseBeta(2, 1);
             assert(!derivation.hidden,
               "The general optimal-bid proof should remain visible for other Beta shapes.");
-            assert(controls.contains(appDocument.getElementById("value-pdf-preview")),
-              "The Beta value-PDF preview should be part of the shape controls.");
+            assert(appDocument.querySelector(".choice-controls").contains(
+              appDocument.getElementById("value-pdf-preview")),
+              "The Beta value-PDF preview should sit with value and bid controls.");
             var previewCaption = appDocument.querySelector(".value-pdf-preview-figure figcaption");
             assert(/^PDF of value,\s*$/.test(previewCaption.firstChild.nodeValue) &&
               previewCaption.querySelector(

@@ -42,6 +42,11 @@
 
     function reset() {
       appDocument.getElementById("reset-button").click();
+      [["value-number", 50], ["bid-number", 30]].forEach(function (choice) {
+        var field = appDocument.getElementById(choice[0]);
+        field.value = String(choice[1]);
+        dispatchChange(field, appWindow);
+      });
     }
 
     function withReset(callback) {
@@ -62,6 +67,24 @@
       dispatchChange(betaNumber, appWindow);
     }
 
+    function assertPayoffInsideRegion(sign) {
+      var label = appDocument.querySelector(".expected-payoff-label");
+      var region = appDocument.querySelector(".spa-payoff-area-" + sign);
+      var box = label.getBBox();
+      var svg = appDocument.getElementById("second-price-chart");
+      var point = svg.createSVGPoint();
+      assert(label.dataset.payoffSign === sign && region,
+        "The net payoff should select its matching shaded region.");
+      [0, 0.25, 0.5, 0.75, 1].forEach(function (xFraction) {
+        [0, 0.5, 1].forEach(function (yFraction) {
+          point.x = box.x + box.width * xFraction;
+          point.y = box.y + box.height * yFraction;
+          assert(region.isPointInFill(point),
+            "The whole " + sign + " payoff label should fit its shaded region.");
+        });
+      });
+    }
+
     function numericSvgAttributes(chart) {
       var names = [
         "x", "x1", "x2", "y", "y1", "y2", "cx", "cy",
@@ -75,6 +98,51 @@
     }
 
     var tests = [
+      {
+        name: "Parameter reset preserves choices and the preview sits with bidder controls",
+        run: function () {
+          withReset(function () {
+            var button = appDocument.getElementById("reset-button");
+            var parameters = appDocument.querySelector(".model-specifications");
+            var choices = appDocument.querySelector(".choice-controls");
+            assert(parameters.contains(button) && button.textContent === "Reset parameters",
+              "The parameter reset should sit below the model controls on the left.");
+            assert(!parameters.querySelector("h2") && parameters.getAttribute("aria-label"),
+              "Parameters should retain an accessible name without a visible subheading.");
+            assert(choices.contains(appDocument.getElementById("value-pdf-preview")),
+              "The value-density preview should be in the value and bid column.");
+            function set(id, value) {
+              var field = appDocument.getElementById(id);
+              field.value = String(value);
+              dispatchChange(field, appWindow);
+            }
+            set("upper-bound", 200);
+            set("lower-bound", 20);
+            set("bidder-count", 5);
+            set("alpha-number", 2);
+            set("beta-number", 3);
+            set("value-number", 72);
+            set("bid-number", 43);
+            button.click();
+            [["bidder-count", 2], ["lower-bound", 0], ["upper-bound", 100],
+              ["alpha-number", 1], ["beta-number", 1], ["value-number", 72],
+              ["bid-number", 43]].forEach(function (pair) {
+              assert(Number(appDocument.getElementById(pair[0]).value) === pair[1],
+                "Reset should restore parameters and preserve valid choices: " + pair[0]);
+            });
+            set("upper-bound", 400);
+            set("lower-bound", 200);
+            set("value-number", 250);
+            set("bid-number", 350);
+            button.click();
+            assert(Number(appDocument.getElementById("value-number").value) === 100 &&
+              Number(appDocument.getElementById("bid-number").value) === 100,
+              "Choices outside the restored support should clamp to its nearest endpoint.");
+            assert(appDocument.getElementById("input-error").hidden,
+              "Reset should clear parameter validation errors.");
+          });
+        }
+      },
       {
         name: "The second-price route loads the shared distribution kernel first",
         run: function () {
@@ -539,14 +607,10 @@
             assert(appWindow.getComputedStyle(loss).strokeDasharray === "none",
               "The red loss boundary should be solid.");
             var label = appDocument.querySelector(".expected-payoff-label");
-            var bidLine = appDocument.querySelector(".axis-bid-marker");
             assert(current.expectedPayoff > 0 &&
-              label.dataset.payoffSign === "positive" &&
-              label.dataset.placement === "bid-marker-left" &&
-              label.getAttribute("text-anchor") === "end" &&
-              Number(bidLine.getAttribute("x1")) -
-                Number(label.getAttribute("x")) === 9,
-            "A positive overbid payoff should attach just left of x₁.");
+              label.dataset.placement === "inside-green",
+              "A positive overbid payoff should stay in the green area.");
+            assertPayoffInsideRegion("positive");
           });
         }
       },
@@ -579,13 +643,9 @@
               expectedLabel.textContent.includes("Expected payoff") &&
               expectedLabel.textContent.includes("-"),
             "A negative overbid should show one red net expected-payoff number.");
-            var bidLine = appDocument.querySelector(".axis-bid-marker");
-            assert(expectedLabel.dataset.payoffSign === "negative" &&
-              expectedLabel.dataset.placement === "bid-marker-right" &&
-              expectedLabel.getAttribute("text-anchor") === "start" &&
-              Number(expectedLabel.getAttribute("x")) -
-                Number(bidLine.getAttribute("x1")) === 9,
-            "A negative overbid payoff should attach just right of x₁.");
+            assert(expectedLabel.dataset.placement === "inside-red",
+              "A negative overbid payoff should stay in the red area.");
+            assertPayoffInsideRegion("negative");
             assert(probabilityLabels.length === 1,
               "The winning probability should still have one full label.");
             assert(!appDocument.querySelector(".truthful-area-label") &&
@@ -673,7 +733,7 @@
         }
       },
       {
-        name: "The payoff label flips while the probability label stays at the y-axis",
+        name: "Endpoint payoff text stays in its region while probability stays at the y-axis",
         run: function () {
           withReset(function () {
             var value = appDocument.getElementById("value-number");
@@ -692,10 +752,12 @@
             var guideLabel = appDocument.querySelector(
               ".winning-probability-guide-label"
             );
-            assert(payoffLabel.dataset.payoffSign === "negative" &&
-              payoffLabel.dataset.placement === "bid-marker-left" &&
-              markerX - Number(payoffLabel.getAttribute("x")) === 9,
-            "A negative payoff label should flip left while staying beside x₁ at b.");
+            assert(payoffLabel.dataset.placement === "inside-red",
+              "The upper-endpoint negative payoff should stay in the red area.");
+            assertPayoffInsideRegion("negative");
+            value.value = "80";
+            dispatchChange(value, appWindow);
+            assertPayoffInsideRegion("positive");
             assert(guideLabel.dataset.placement === "y-axis-right" &&
               Number(guideLabel.getAttribute("x")) -
                 Number(appDocument.querySelectorAll(".panel-background")[1]
@@ -708,6 +770,26 @@
             assert(pdfLabel.dataset.placement === "left-of-marker" &&
               markerX - Number(pdfLabel.getAttribute("x")) === 12,
             "A PDF label without right-side room should stay beside x₁ on its left.");
+          });
+        }
+      },
+      {
+        name: "Overbid label containment follows curved CDFs and shifted supports",
+        run: function () {
+          withReset(function () {
+            var value = appDocument.getElementById("value-number");
+            var bid = appDocument.getElementById("bid-number");
+            var lower = appDocument.getElementById("lower-bound");
+            lower.value = "-100";
+            dispatchChange(lower, appWindow);
+            chooseBeta(2, 3);
+            [[60, "positive"], [-60, "negative"]].forEach(function (choice) {
+              value.value = String(choice[0]);
+              dispatchChange(value, appWindow);
+              bid.value = "100";
+              dispatchChange(bid, appWindow);
+              assertPayoffInsideRegion(choice[1]);
+            });
           });
         }
       },

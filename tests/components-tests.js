@@ -67,10 +67,9 @@
   test("model-parameter-controls renders every id the auction pages depend on", function () {
     var controls = render("model-parameter-controls", {});
     [
-      "parameters-title", "beta-shape-controls", "bidder-count", "lower-bound",
+      "beta-shape-controls", "bidder-count", "lower-bound",
       "upper-bound", "alpha-control-label", "alpha-number", "alpha-slider",
-      "beta-control-label", "beta-number", "beta-slider", "value-pdf-preview",
-      "value-pdf-preview-title", "value-pdf-preview-description", "input-error"
+      "beta-control-label", "beta-number", "beta-slider", "reset-button", "input-error"
     ].forEach(function (id) {
       assert(controls.querySelector("#" + id),
         "model-parameter-controls should render an element with id=\"" + id + "\".");
@@ -84,9 +83,13 @@
   test("model-parameter-controls keeps the MathJax inline-math delimiters", function () {
     var controls = render("model-parameter-controls", {});
     var html = controls.innerHTML;
-    assert(controls.querySelector(".value-pdf-preview-figure figcaption").textContent ===
+    assert(!controls.querySelector("h2") &&
+      controls.querySelector("#reset-button").textContent === "Reset parameters",
+      "Parameters should have their reset button and no subheading.");
+    var preview = render("value-density-preview", {});
+    assert(preview.querySelector(".value-pdf-preview-figure figcaption").textContent ===
       "PDF of value, \\(V_i\\)", "The HTML caption should retain its MathJax source.");
-    assert(controls.querySelector("#value-pdf-preview-title").textContent ===
+    assert(preview.querySelector("#value-pdf-preview-title").textContent ===
       "PDF of value, V subscript i", "The initial SVG title should use readable plain text.");
     ["\\(n\\)", "\\(a\\)", "\\(b\\)", "\\(\\alpha\\)", "\\(\\beta\\)"].forEach(function (delimiter) {
       assert(html.indexOf(delimiter) >= 0,

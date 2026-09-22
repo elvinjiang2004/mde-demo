@@ -6,6 +6,7 @@
   <meta name="description" content="Paint a bilateral-trade allocation rule q(v,c) and see its Bayesian IC, ex-post IR, budget-balance, and efficiency properties update live.">
   <title>The Myerson-Satterthwaite Theorem | Mechanism Design Explorer</title>
   <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="../../css/trade-demo.css">
   <link rel="stylesheet" href="module.css">
   <script defer src="../../js/components.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
@@ -13,6 +14,7 @@
   <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
+  <script defer src="../../js/chart-viewport.js"></script>
   <script defer src="../../js/bilateral-trade-envelope.js"></script>
   <script defer src="../../js/bilateral-trade-visuals.js"></script>
   <script defer src="../../js/equation-chain.js"></script>
@@ -71,6 +73,12 @@
     </section>
 
     <section class="explorable explorable-divider" aria-label="Allocation-rule painting interface">
+      <div class="color-legends" role="group" aria-label="Plot color scales">
+        <div class="color-legend"><span class="color-legend-title">Utility</span><span class="color-scale-bar utility-gradient"></span><div class="color-scale-ticks"><span>Negative</span><span>0</span><span>Positive</span></div></div>
+        <div class="color-legend"><span class="color-legend-title">Payment / revenue</span><span class="color-scale-bar payment-gradient"></span><div class="color-scale-ticks"><span>Negative</span><span>0</span><span>Positive</span></div></div>
+        <div class="color-legend"><span class="color-legend-title">Allocation</span><span class="color-scale-bar allocation-gradient"></span><div class="color-scale-ticks"><span>0</span><span>1</span></div></div>
+      </div>
+
       <div class="main-diagnostic-layout">
         <div class="main-column main-column-480">
           <div class="chart-column">
@@ -563,7 +571,7 @@
       <h2 id="efficiency-title">Efficiency</h2>
       <p>
         The efficient allocation rule specifies trade when \(v>c\) and no trade
-        when \(v&lt;c\). That is, \(q^*(v,c)=\mathbb{1}(v>c)\) is the efficient
+        when \(v&lt;c\). That is, \(q^*(v,c)=\mathbb{1}(v\geq c)\) is the efficient
         allocation rule. This has interim allocation probabilities
       </p>
 
@@ -627,21 +635,22 @@
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation"></span>
         <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} F_S(v)\,v\,f_B(v)\,dv-\int_{\underline{c}}^{\overline{c}} \left(1-F_B(c)\right)c\,f_S(c)\,dc\)</span>
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
 
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs"></span>
-        <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[V F_S(V)\right]-\mathbb{E}\!\left[C\left(1-F_B(C)\right)\right]\)</span>
+        <span class="equation-step-connector equation-step-extra" hidden></span>
+        <span class="equation-step-lhs equation-step-extra" hidden></span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}\!\left[V F_S(V)\right]-\mathbb{E}\!\left[C\left(1-F_B(C)\right)\right]\)</span>
 
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs"></span>
-        <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[V\,P(C\leq V\mid V)\right]-\mathbb{E}\!\left[C\,P(V\geq C\mid C)\right]\)</span>
+        <span class="equation-step-connector equation-step-extra" hidden></span>
+        <span class="equation-step-lhs equation-step-extra" hidden></span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}\!\left[V\,P(C\leq V\mid V)\right]-\mathbb{E}\!\left[C\,P(V\geq C\mid C)\right]\)</span>
 
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs"></span>
-        <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[V\,\mathbb{1}(C\leq V)\right]-\mathbb{E}\!\left[C\,\mathbb{1}(C\leq V)\right]\)</span>
+        <span class="equation-step-connector equation-step-extra" hidden></span>
+        <span class="equation-step-lhs equation-step-extra" hidden></span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}\!\left[V\,\mathbb{1}(C\leq V)\right]-\mathbb{E}\!\left[C\,\mathbb{1}(C\leq V)\right]\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
@@ -656,31 +665,31 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\!\!\int_{-\infty}^{\infty}\left(\int_{-\infty}^{\infty}\mathbb{1}(c\leq x)\,\mathbb{1}(x\leq v)\,dx\right)f_B(v)f_S(c)\,dv\,dc \text{, by the layer-cake representation}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\!\!\int_{-\infty}^{\infty}\left(\int_{-\infty}^{\infty}\mathbb{1}(c\leq t)\,\mathbb{1}(t\leq v)\,dt\right)f_B(v)f_S(c)\,dv\,dc \text{, by the layer-cake representation}\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\left(\int_{-\infty}^{\infty}\mathbb{1}(c\leq x)f_S(c)\,dc\right)\left(\int_{-\infty}^{\infty}\mathbb{1}(x\leq v)f_B(v)\,dv\right)dx \text{, by Fubini's Theorem}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\left(\int_{-\infty}^{\infty}\mathbb{1}(c\leq t)f_S(c)\,dc\right)\left(\int_{-\infty}^{\infty}\mathbb{1}(t\leq v)f_B(v)\,dv\right)dt \text{, by Fubini's Theorem}\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\left(\int_{-\infty}^{x}f_S(c)\,dc\right)\left(\int_{x}^{\infty}f_B(v)\,dv\right)dx\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\left(\int_{-\infty}^{t}f_S(c)\,dc\right)\left(\int_{t}^{\infty}f_B(v)\,dv\right)dt\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty} F_S(x)\left(1-F_B(x)\right)dx.\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty} F_S(t)\left(1-F_B(t)\right)dt.\)</span>
       </div>
 
       <p>
         The layer-cake representation for \(v-c\) when \(v\geq c\) is
       </p>
 
-      <div class="equation-display" aria-label="v minus c equals the integral from c to v of d x, which equals the integral over the whole line of the indicator that c is at most x times the indicator that x is at most v, d x">
+      <div class="equation-display" aria-label="v minus c equals the integral from c to v of d t, which equals the integral over the whole line of the indicator that c is at most t times the indicator that t is at most v, d t">
         \[
-          v-c=\int_c^v dx=\int_{-\infty}^{\infty}\mathbb{1}(c\leq x)\,\mathbb{1}(x\leq v)\,dx.
+          v-c=\int_c^v dt=\int_{-\infty}^{\infty}\mathbb{1}(c\leq t)\,\mathbb{1}(t\leq v)\,dt.
         \]
       </div>
       <p>
@@ -690,7 +699,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[p_B(v,c)\right]-\mathbb{E}\!\left[p_S(v,c)\right]\)</span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty} F_S(x)\left(1-F_B(x)\right)dx - \int_{\underline{v}}^{\overline{v}} F_S(v)\left(1-F_B(v)\right)dv-\int_{\underline{c}}^{\overline{c}} F_S(c)\left(1-F_B(c)\right)\,dc.\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty} F_S(t)\left(1-F_B(t)\right)dt - \int_{\underline{v}}^{\overline{v}} F_S(v)\left(1-F_B(v)\right)dv-\int_{\underline{c}}^{\overline{c}} F_S(c)\left(1-F_B(c)\right)\,dc.\)</span>
 
       <p>
         First, notice the integrands for the three terms are the same.

@@ -201,6 +201,73 @@
 
     var tests = [
       {
+        name: "Formula masks track live trading regions and preserve global AGV transfers",
+        run: async function () {
+          await selectPreset("revenue-threshold");
+          var slider = appDocument.getElementById("threshold-slider");
+          slider.value = "0.37";
+          dispatchInput(slider, appWindow);
+          await nextAppFrames(appWindow, 2);
+          surfaceIds.forEach(function (id) {
+            var layer = image(id);
+            assert(layer.dataset.rasterSize === "240", "Clipping must work during preview");
+            assert(layer.style.clipPath === "polygon(37% 100%, 100% 100%, 100% 37%)", "The edge must use the current threshold, independently of raster pixels");
+          });
+          await selectPreset("posted-price");
+          var buyer = appDocument.getElementById("posted-buyer-price-slider");
+          var seller = appDocument.getElementById("posted-seller-price-slider");
+          buyer.value = "0.23"; seller.value = "0.61";
+          dispatchInput(buyer, appWindow); dispatchInput(seller, appWindow);
+          await nextAppFrames(appWindow, 2);
+          assert(image("allocation-chart").style.clipPath === "polygon(23% 100%, 100% 100%, 100% 39%, 23% 39%)");
+          await selectPreset("agv");
+          assert(image("buyer-payment-chart").style.clipPath === "none" && image("seller-payment-chart").style.clipPath === "none", "AGV payments apply on the whole square");
+          await selectPreset("custom");
+          surfaceIds.forEach(function (id) {
+            assert(image(id).hidden && appDocument.getElementById(id).querySelectorAll("polygon[data-custom-triangle='true']").length === 800, "Custom retains its editable vector mesh");
+          });
+          await resetDefaults();
+        }
+      },
+      {
+        name: "Three shared legends follow settings and both payments use red-to-green",
+        run: async function () {
+          assert(appDocument.querySelectorAll(".color-scale-bar").length === 3);
+          var legend = appDocument.querySelector(".color-legends");
+          assert(legend.getBoundingClientRect().top >= appDocument.querySelector(".sandbox-toolbar").getBoundingClientRect().bottom);
+          assert(legend.getBoundingClientRect().bottom <= appDocument.querySelector(".surface-editor-grid").getBoundingClientRect().top);
+          await selectPreset("vcg");
+          var green = appWindow.BilateralTradeVisuals.readHeatmapPalette(appWindow.getComputedStyle(appDocument.documentElement)).green;
+          ["buyer-payment-chart", "seller-payment-chart"].forEach(function (id) {
+            var canvas = image(id);
+            var pixel = canvas.getContext("2d").getImageData(Math.floor(canvas.width * 0.8), Math.floor(canvas.height * 0.8), 1, 1).data;
+            assert(pixel[3] > 0 && [0,1,2].every(function (i) { return Math.abs(pixel[i] - green[i]) <= 2; }), "Positive payments share the green palette: " + id);
+          });
+          await resetDefaults();
+        }
+      },
+      {
+        name: "Hovering outside every plot clamps the sandbox marker to each edge",
+        run: async function () {
+          allChartIds.forEach(function (id) {
+            var chart = appDocument.getElementById(id);
+            [[60,230,70,230], [460,230,450,230], [260,30,260,40], [260,430,260,420]].forEach(function (sample) {
+              var point = clientPoint(chart, sample[0], sample[1]);
+              firePointer(chart, "pointermove", point.x, point.y, 101, appWindow);
+              var marker = chart.querySelector(".plot-probe-point");
+              assert(marker, "Margin hover should remain active: " + id);
+              assertClose(Number(marker.getAttribute("cx")), sample[2], "Clamped x", 1e-4);
+              assertClose(Number(marker.getAttribute("cy")), sample[3], "Clamped y", 1e-4);
+              assert(chart.querySelectorAll(".plot-probe-line").length === 2);
+            });
+            var center = clientPoint(chart, 260, 230);
+            firePointer(chart, "pointermove", center.x, center.y, 101, appWindow);
+            dispatchKey(chart, "Escape", appWindow);
+          });
+          await resetDefaults();
+        }
+      },
+      {
         name: "Palette changes recolor formula and Custom fields without changing the rule",
         run: async function () {
           var html = appDocument.documentElement;
@@ -356,7 +423,7 @@
                 id + " should identify the formula representation.");
               assert(image(id) && image(id).dataset.renderer === "formula-canvas",
                 id + " should have one compact direct-canvas raster.");
-              assert(!chart.querySelector("polygon"),
+              assert(!chart.querySelector("polygon:not([data-layer='no-trade-background'])"),
                 id + " should not construct a triangle mesh.");
             });
           assert(appDocument.querySelectorAll(

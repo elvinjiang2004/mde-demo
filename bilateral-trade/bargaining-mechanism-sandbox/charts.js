@@ -139,6 +139,19 @@
       clearDynamicSurface(structure);
       canvas.hidden = false;
       paintSurfaceCanvas(key, canvas, rasterSize);
+      if (key === "q") {
+        var geometry = surfaceRegionGeometry();
+        if (geometry) {
+          appendSvg(structure.field, "polygon", {
+            points: geometry.noTrade.map(function (point) {
+              return (LAYOUT.left + point[0] * (LAYOUT.right - LAYOUT.left)) + "," +
+                (LAYOUT.top + point[1] * (LAYOUT.bottom - LAYOUT.top));
+            }).join(" "),
+            fill: cssColor(state.palette.neutral),
+            "data-layer": "no-trade-background"
+          });
+        }
+      }
       canvas.dataset.rasterSize = String(rasterSize);
       canvas.dataset.stateKey = stateKey;
       structure.title.textContent = definition.title;
@@ -150,10 +163,8 @@
       svg.dataset.stateKey = stateKey;
       svg.dataset.renderCount = String(state.renderCounts[key]);
       svg.dataset.renderer = "formula-canvas";
-      svg.dataset.colorLow = key === "q" ? "clear" :
-        (key === "pB" ? "red" : "green");
-      svg.dataset.colorHigh = key === "q" ? "blue" :
-        (key === "pB" ? "green" : "red");
+      svg.dataset.colorLow = key === "q" ? "clear" : "red";
+      svg.dataset.colorHigh = key === "q" ? "blue" : "green";
       if (rasterSize === PREVIEW_RASTER_SIZE) {
         state.previewFields[key] = true;
       }
@@ -191,10 +202,8 @@
       svg.dataset.triangleCount = String(2 * R * R);
       svg.dataset.paymentRendering = key === "q" ? "not-applicable" :
         "analytic-affine";
-      svg.dataset.colorLow = key === "q" ? "clear" :
-        (key === "pB" ? "red" : "green");
-      svg.dataset.colorHigh = key === "q" ? "blue" :
-        (key === "pB" ? "green" : "red");
+      svg.dataset.colorLow = key === "q" ? "clear" : "red";
+      svg.dataset.colorHigh = key === "q" ? "blue" : "green";
     }
     function tagCustomTriangles(triangles) {
       ["lower", "upper"].forEach(function (side) {
@@ -311,8 +320,8 @@
       return visuals.signedChannels(
         value,
         extent,
-        key === "pB" ? state.palette.red : state.palette.green,
-        key === "pB" ? state.palette.green : state.palette.red
+        state.palette.red,
+        state.palette.green
       );
     }
 
@@ -406,10 +415,36 @@
         ". The raster is display-only; probes evaluate the exact rule.";
     }
 
+    function surfaceRegionGeometry() {
+      if (state.rule.family === "posted-price") {
+        var x = state.rule.parameters.buyerPrice;
+        var y = 1 - state.rule.parameters.sellerPrice;
+        return { trade: [[x, 1], [1, 1], [1, y], [x, y]],
+          noTrade: [[0, 0], [1, 0], [1, y], [x, y], [x, 1], [0, 1]] };
+      }
+      var threshold = state.rule.family === "balanced-agv" ? 0 : state.rule.parameters.threshold;
+      if (!Number.isFinite(threshold)) { return null; }
+      return { trade: [[threshold, 1], [1, 1], [1, threshold]],
+        noTrade: [[0, 0], [1, 0], [1, threshold], [threshold, 1], [0, 1]] };
+    }
+
     function paintSurfaceCanvas(key, canvas, rasterSize) {
       var range = model.fieldRange(state.rule, key);
       var extent = Math.max(0.05, Math.abs(range.min), Math.abs(range.max));
       var valueAt = model.fieldEvaluator(state.rule, key);
+      var geometry = surfaceRegionGeometry();
+      var noTrade = state.rule.regions[0].fields[key];
+      // Extend the smooth trade polynomial under a vector clip. Sampling the
+      // discontinuous allocation indicator creates visible stair steps on drag.
+      var clipTrade = geometry && noTrade.every(function (coefficient) { return coefficient === 0; });
+      canvas.style.clipPath = clipTrade ? "polygon(" + geometry.trade.map(function (point) {
+        return (point[0] * 100) + "% " + (point[1] * 100) + "%";
+      }).join(", ") + ")" : "none";
+      canvas.dataset.edgeRenderer = clipTrade ? "vector-clip" : "continuous-raster";
+      if (clipTrade) {
+        var polynomial = state.rule.regions[1].fields[key];
+        valueAt = function (v, c) { return model.evaluatePolynomial(polynomial, v, c); };
+      }
       paintFieldRaster(
         canvas,
         rasterSize,
@@ -421,8 +456,8 @@
           return visuals.signedChannels(
             value,
             extent,
-            key === "pB" ? state.palette.red : state.palette.green,
-            key === "pB" ? state.palette.green : state.palette.red
+            state.palette.red,
+            state.palette.green
           );
         }
       );
@@ -695,7 +730,7 @@
           verdictParagraph(
             agent + " ex-ante IR",
             isBuyer ? verdicts.exAnteBuyerIr : verdicts.exAnteSellerIr,
-            "payoff = " + formatDiagnostic(expected)
+            "expected payoff = " + formatDiagnostic(expected)
           ),
           verdictParagraph(
             agent + " interim IR",
@@ -923,7 +958,15 @@
     }
 
     function bindProbes() {
+      Object.keys(surfaces).forEach(function (key) {
+        global.TradeDemoStyle.bindEdgeHover(surfaces[key].chart, LAYOUT, function (x, y) {
+          setSurfaceProbe(key, x, y, false);
+        });
+      });
       DIAGNOSTIC_KEYS.forEach(function (key) {
+        global.TradeDemoStyle.bindEdgeHover(diagnostics[key].chart, LAYOUT, function (x, y) {
+          setDiagnosticProbe(key, x, y, false);
+        });
         visuals.bindProbeChart(
           diagnostics[key].chart,
           LAYOUT,

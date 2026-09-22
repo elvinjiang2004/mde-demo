@@ -49,7 +49,6 @@
   }
 
   var MODEL_PARAMETER_CONTROLS_HTML = [
-    '<h2 id="parameters-title">Model parameters</h2>',
     '<div',
     '  id="beta-shape-controls"',
     '  class="parameter-grid beta-shape-controls"',
@@ -115,6 +114,12 @@
     '    <input id="beta-slider" type="range" min="0.2" max="10" step="0.1" value="1">',
     '    <div class="range-endpoints" aria-hidden="true"><span>0.2</span><span>10</span></div>',
     '  </div>',
+    '</div>',
+    '<button id="reset-button" class="text-button" type="button">Reset parameters</button>',
+    '<div id="input-error" class="input-error" role="alert" hidden></div>'
+  ].join("\n");
+
+  var VALUE_DENSITY_PREVIEW_HTML = [
     '  <figure class="value-pdf-preview-figure">',
     '    <figcaption>PDF of value, \\(V_i\\)</figcaption>',
     '    <svg',
@@ -126,10 +131,14 @@
     '      <title id="value-pdf-preview-title">PDF of value, V subscript i</title>',
     '      <desc id="value-pdf-preview-description">The selected Beta value density.</desc>',
     '    </svg>',
-    '  </figure>',
-    '</div>',
-    '<div id="input-error" class="input-error" role="alert" hidden></div>'
+    '  </figure>'
   ].join("\n");
+
+  class ValueDensityPreview extends HTMLElement {
+    connectedCallback() {
+      this.innerHTML = VALUE_DENSITY_PREVIEW_HTML;
+    }
+  }
 
   class ModelParameterControls extends HTMLElement {
     connectedCallback() {
@@ -140,4 +149,5 @@
   define("page-header", PageHeader);
   define("page-footer", PageFooter);
   define("model-parameter-controls", ModelParameterControls);
+  define("value-density-preview", ValueDensityPreview);
 })();

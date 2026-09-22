@@ -788,16 +788,64 @@
         );
       }
 
-      if (overbid) {
+      function placeInPayoffRegion() {
+        var regionLeft = negative ? valueX : left;
+        var regionRight = negative ? bidX : valueX;
+        var regionWidth = regionRight - regionLeft;
         var selectedProbabilityY = yScale(current.winProbability, panel);
-        var truthfulProbabilityY = yScale(truthful.winProbability, panel);
-        placeBesideBid(negative ? "right" : "left");
-        labelY = keepLabelInPanel(
-          negative ?
-            (selectedProbabilityY + truthfulProbabilityY) / 2 :
-            (truthfulProbabilityY + baseY) / 2,
-          block
-        );
+        var spec = distributionSpec();
+        var selected = null;
+
+        candidates.some(function (candidate) {
+          var candidateBlock = svgTextBlock(candidate, characterWidth, lineHeight);
+          if (candidateBlock.width + 2 * horizontalPadding > regionWidth) {
+            return false;
+          }
+          // Monotone G makes this edge the tightest vertical clearance:
+          // green lies below G; red lies above G and below G(bid).
+          var curveX = negative ?
+            regionLeft + horizontalPadding + candidateBlock.width :
+            regionRight - horizontalPadding - candidateBlock.width;
+          var curveBid = state.a + (curveX - left) /
+            (right - left) * (state.b - state.a);
+          var curveY = yScale(model.highestOpponentBidCdf(
+            curveBid, state.n, state.a, state.b, spec
+          ), panel);
+          var top = negative ? selectedProbabilityY : curveY;
+          var bottom = negative ? curveY : baseY;
+          selected = { lines: candidate, block: candidateBlock,
+            top: top, bottom: bottom };
+          return candidateBlock.height + 12 <= bottom - top;
+        });
+
+        if (selected) {
+          lines = selected.lines;
+          block = selected.block;
+          labelX = negative ? regionLeft + horizontalPadding :
+            regionRight - horizontalPadding;
+          anchor = negative ? "start" : "end";
+          labelY = keepLabelInPanel((selected.top + selected.bottom) / 2 + 4, block);
+          widthFits = true;
+          heightFits = block.height + 12 <= selected.bottom - selected.top;
+        } else {
+          // A vanishing region cannot contain readable text. Keep its label
+          // centered on the region as far as the plot boundaries allow.
+          lines = candidates[candidates.length - 1];
+          block = svgTextBlock(lines, characterWidth, lineHeight);
+          labelX = model.clamp((regionLeft + regionRight) / 2,
+            left + block.width / 2 + horizontalPadding,
+            right - block.width / 2 - horizontalPadding);
+          anchor = "middle";
+          var truthfulProbabilityY = yScale(truthful.winProbability, panel);
+          labelY = keepLabelInPanel((negative ?
+            selectedProbabilityY + truthfulProbabilityY :
+            truthfulProbabilityY + baseY) / 2, block);
+        }
+        placement = negative ? "inside-red" : "inside-green";
+      }
+
+      if (overbid) {
+        placeInPayoffRegion();
       } else {
         var rectangleTop = yScale(current.winProbability, panel);
         var rectangleWidth = valueX - bidX;
@@ -840,7 +888,7 @@
           placement
       );
       label.setAttribute("data-placement", placement);
-      if (placement !== "inside") {
+      if (placement === "bid-marker-left" || placement === "bid-marker-right") {
         label.setAttribute("data-marker-distance", horizontalPadding);
       }
       label.setAttribute("data-payoff-sign", payoffSign);
@@ -848,10 +896,8 @@
         "data-payoff-region",
         negative ? "red" : "green"
       );
-      if (!overbid) {
-        label.setAttribute("data-width-fit", widthFits);
-        label.setAttribute("data-height-fit", heightFits);
-      }
+      label.setAttribute("data-width-fit", widthFits);
+      label.setAttribute("data-height-fit", heightFits);
       if (payoffSign === "zero") {
         label.setAttribute("style", "fill: var(--ink)");
       }

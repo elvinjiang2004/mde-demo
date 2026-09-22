@@ -1,0 +1,19 @@
+.color-legends {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0 0 1.4rem;
+  font-size: 0.82rem;
+}
+
+.color-legend { min-width: 0; }
+.color-legend-title { display: block; margin-bottom: 0.3rem; font-weight: 700; }
+.color-scale-bar { display: block; height: 8px; border: 1px solid var(--line); }
+.color-scale-ticks { display: flex; justify-content: space-between; gap: 0.4rem; margin-top: 0.2rem; }
+.utility-gradient { background: linear-gradient(to right, rgb(var(--heatmap-blue-rgb)), transparent 50%, rgb(var(--heatmap-yellow-rgb))); }
+.payment-gradient { background: linear-gradient(to right, rgb(var(--heatmap-red-rgb)), transparent 50%, rgb(var(--heatmap-green-rgb))); }
+.allocation-gradient { background: linear-gradient(to right, transparent, rgb(var(--heatmap-blue-rgb))); }
+
+@media (max-width: 680px) {
+  .color-legends { grid-template-columns: minmax(0, 1fr); }
+}

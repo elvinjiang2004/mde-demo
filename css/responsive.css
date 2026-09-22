@@ -77,8 +77,12 @@
   }
 
   .model-specifications {
-    margin: 2.5rem 0 1.25rem;
+    margin: 1.5rem 0 1rem;
     padding-bottom: 0.4rem;
+  }
+
+  .explorable-divider {
+    margin-top: 1.5rem;
   }
 
   .parameter-grid.beta-shape-controls {

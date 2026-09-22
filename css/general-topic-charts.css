@@ -8,14 +8,14 @@
   flex-wrap: wrap;
   align-items: flex-start;
   width: 100%;
-  gap: 2rem;
+  gap: 1.25rem;
 }
 
 .main-column {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
+  gap: 1rem;
 }
 
 .main-column-480 {
@@ -53,7 +53,7 @@
 .diagnostic-column {
   display: flex;
   flex-direction: column;
-  gap: 1.8rem;
+  gap: 1.1rem;
 }
 
 .diagnostic-column-440 {
@@ -69,7 +69,7 @@
 .main-diagnostic-layout.two-panel-layout {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 660px));
-  justify-content: space-between;
+  justify-content: center;
 }
 
 .two-panel-layout .main-column,

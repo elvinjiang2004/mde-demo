@@ -125,11 +125,12 @@
     }
 
     function resetState() {
+      flushPointerBid();
       state.n = DEFAULTS.n;
       state.a = DEFAULTS.a;
       state.b = DEFAULTS.b;
-      state.value = DEFAULTS.value;
-      state.bid = DEFAULTS.bid;
+      state.value = model.clamp(state.value, state.a, state.b);
+      state.bid = model.clamp(state.bid, state.a, state.b);
       state.alpha = DEFAULTS.alpha;
       state.beta = DEFAULTS.beta;
       clearError();

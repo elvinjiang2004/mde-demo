@@ -6,12 +6,14 @@
   <meta name="description" content="Edit a direct bilateral-trade allocation rule and its buyer and seller payment rules, then inspect incentive, participation, budget, and efficiency diagnostics.">
   <title>Bargaining Mechanism Sandbox | Mechanism Design Explorer</title>
   <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="../../css/trade-demo.css">
   <script defer src="../../js/components.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
+  <script defer src="../../js/chart-viewport.js"></script>
   <script defer src="../../js/bilateral-trade-envelope.js"></script>
   <script defer src="../../js/bilateral-trade-visuals.js"></script>
   <script defer src="formula-diagonal.js"></script>
@@ -20,6 +22,7 @@
   <script defer src="custom-grid.js"></script>
   <script defer src="formula-model.js"></script>
   <script defer src="model.js"></script>
+  <script defer src="../../js/trade-demo-style.js"></script>
   <script defer src="charts.js"></script>
   <script defer src="editor.js"></script>
   <script defer src="app.js"></script>
@@ -274,6 +277,12 @@
 
       <p id="formula-probe-help" class="sr-only">Hover or focus a chart to inspect its exact value. Arrow keys move the keyboard probe. In Custom mode they select triangles without skipping either half; L and R select a triangle side, Enter or Space applies the brush, and holding either key while navigating paints continuously.</p>
       <p id="formula-probe-status" class="sr-only" role="status" aria-live="polite"></p>
+
+      <div class="color-legends" role="group" aria-label="Plot color scales">
+        <div class="color-legend"><span class="color-legend-title">Utility</span><span class="color-scale-bar utility-gradient"></span><div class="color-scale-ticks"><span>Negative</span><span>0</span><span>Positive</span></div></div>
+        <div class="color-legend"><span class="color-legend-title">Payment / revenue</span><span class="color-scale-bar payment-gradient"></span><div class="color-scale-ticks"><span>Negative</span><span>0</span><span>Positive</span></div></div>
+        <div class="color-legend"><span class="color-legend-title">Allocation</span><span class="color-scale-bar allocation-gradient"></span><div class="color-scale-ticks"><span>0</span><span>1</span></div></div>
+      </div>
 
       <div class="surface-editor-grid">
         <div class="surface-editor">
