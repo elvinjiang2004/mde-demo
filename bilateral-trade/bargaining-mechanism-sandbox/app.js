@@ -24,7 +24,7 @@
     vcg: "VCG",
     "posted-price": "Posted price",
     agv: "AGV",
-    "split-the-difference": "Split-the-difference",
+    "split-the-difference": "Split-the-surplus",
     "chatterjee-samuelson": "Chatterjee-Samuelson",
     "revenue-threshold": "Revenue threshold",
     custom: "Custom"

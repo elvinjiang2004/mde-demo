@@ -18,14 +18,15 @@
 #voting-demo .ranking-token.drag-source { border-style: dashed; }
 .ranking-relation { pointer-events: none; }
 .ranking-ghost { position: fixed; z-index: 200; display: flex; width: 48px; height: 48px; align-items: center; justify-content: center; border: 1px solid var(--ink); font-size: 1.35rem; pointer-events: none; }
-.mode-controls { display: flex; flex-direction: column; align-items: flex-start; align-self: start; gap: .5rem; }
+.mode-controls { display: flex; flex-direction: column; align-items: flex-start; align-self: end; gap: .5rem; }
 .mode-toggle { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; cursor: pointer; }
 .mode-toggle input { width: 18px; height: 18px; accent-color: var(--ink); }
 .game-stages { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 1.8rem 0 1rem; }
 .game-stage { min-width: 0; padding: 0 1.5rem; border-left: 1px solid var(--muted); }
 .game-stage:first-child { padding-left: 0; border-left: 0; }
 .game-stage:last-child { padding-right: 0; }
-.game-stage h2 { font-size: 1.3rem; margin-bottom: 1rem; }
+/* Reserve two heading lines so mode labels do not shift the voting stages. */
+.game-stage h2 { font-size: 1.3rem; min-height: 2.4em; margin-bottom: 1rem; }
 .contest { min-height: 2rem; margin-bottom: .65rem; }
 .vote-actions { display: flex; gap: .8rem; margin-bottom: .75rem; }
 .ballot-list { margin: 0 0 1rem; }
@@ -34,8 +35,6 @@
 .stage-result { border-top: 1px solid var(--muted); padding-top: .7rem; }
 .stage-result strong { margin-left: .6rem; }
 .outcome-candidate { margin-bottom: .75rem; }
-#benchmark { margin-top: 1.25rem; }
-#benchmark p { margin-top: .5rem; margin-bottom: .5rem; }
 #strategy-details { border-top: 1px solid var(--muted); padding-top: .4rem; margin-top: 1.25rem; }
 #strategy-details summary { cursor: pointer; padding: .6rem 0; min-height: 44px; }
 .table-scroll { overflow-x: auto; }

@@ -13,13 +13,13 @@ installation, local server, or internet connection.
 
 The available modules are located at:
 
+    general-topics/envelope-theorem/index.html
+    general-topics/revelation-principle/index.html
+    general-topics/payments-from-allocation-rule/index.html
     auctions/first-price/index.html
     auctions/second-price/index.html
     bilateral-trade/bargaining-mechanism-sandbox/index.html
     bilateral-trade/myerson-satterthwaite-theorem/index.html
-    general-topics/envelope-theorem/index.html
-    general-topics/payments-from-allocation-rule/index.html
-    general-topics/revelation-principle/index.html
 
 Explicit `index.html` paths are used so navigation works through `file://`.
 
@@ -27,16 +27,16 @@ Explicit `index.html` paths are used so navigation works through `file://`.
 
 The menu contains three categories:
 
+- **General Topics**
+  - The Envelope Theorem
+  - The Revelation Principle
+  - Payments from an Allocation Rule (draft)
 - **Auctions**
   - First-Price Auction Equilibrium
   - Second-Price Auction Equilibrium
 - **Bilateral Trade**
-  - Myerson-Satterthwaite Theorem
   - Bargaining Mechanism Sandbox
-- **General Topics**
-  - The Envelope Theorem
-  - Payments from an Allocation Rule (draft)
-  - Revelation Principle
+  - Myerson-Satterthwaite Theorem
 
 ## Browser checks
 

@@ -197,7 +197,7 @@
         }
       },
       {
-        name: "Auctions, Bilateral Trade, and General Topics are the only categories",
+        name: "General Topics, Auctions, and Bilateral Trade are the only categories",
         run: function () {
           var categories = menuDocument.querySelectorAll(".module-category");
           assert(categories.length === 3,
@@ -205,10 +205,9 @@
           var titles = Array.from(categories).map(function (category) {
             return category.querySelector("h2").textContent;
           });
-          assert(titles[0] === "Auctions" && titles[1] === "Bilateral Trade" &&
-            titles[2] === "General Topics",
-          "The categories should be Auctions, Bilateral Trade, and General " +
-            "Topics, in order.");
+          assert(titles[0] === "General Topics" && titles[1] === "Auctions" &&
+            titles[2] === "Bilateral Trade",
+          "The categories should be General Topics, Auctions, and Bilateral Trade, in order.");
         }
       },
       {
@@ -220,12 +219,12 @@
               return menuWindow.getComputedStyle(row).display === "flex";
             }),
           "Each category should arrange its modules in a row.");
-          assert(rows[0].querySelectorAll(":scope > li").length === 2,
-            "The Auctions row should contain two module entries.");
-          assert(rows[1].querySelectorAll(":scope > li").length === 2,
-            "The Bilateral Trade row should contain two module entries.");
-          assert(rows[2].querySelectorAll(":scope > li").length === 3,
+          assert(rows[0].querySelectorAll(":scope > li").length === 3,
             "The General Topics row should contain three working modules.");
+          assert(rows[1].querySelectorAll(":scope > li").length === 2,
+            "The Auctions row should contain two module entries.");
+          assert(rows[2].querySelectorAll(":scope > li").length === 2,
+            "The Bilateral Trade row should contain two module entries.");
         }
       },
       {
@@ -319,7 +318,7 @@
             'a.module-link[href="general-topics/revelation-principle/index.html"]'
           );
           assert(tile, "General Topics should link to the working voting demo.");
-          assert(tile.querySelector(".module-title").textContent === "Revelation Principle",
+          assert(tile.querySelector(".module-title").textContent === "The Revelation Principle",
             "The module title is incorrect.");
           assert(!tile.hasAttribute("aria-disabled") && !tile.classList.contains("module-pending"),
             "The verified demo should be enabled.");

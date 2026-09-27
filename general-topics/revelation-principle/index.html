@@ -4,10 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Explore indirect voting and a direct revelation mechanism.">
-  <title>Revelation Principle | Mechanism Design Explorer</title>
+  <title>The Revelation Principle | Mechanism Design Explorer</title>
   <link rel="stylesheet" href="../../styles.css">
   <link rel="stylesheet" href="module.css">
   <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="model.js"></script>
   <script defer src="ranking-control.js"></script>
@@ -22,15 +25,63 @@
 
   <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
-      <h1 id="page-title">Revelation Principle</h1>
-      <!-- User-authored environment, information, timing, and solution concept. -->
+      <h1 id="page-title">The Revelation Principle</h1>
+      <p>
+        There are \(N\) agents and a set of possible outcomes \(Y\ni y\)
+        specified by a principal or designer. Succinctly, a mechanism
+        maps actions to outcomes. We can encode a mechanism as an ordered pair
+        \((A,f)\), consisting of the action space \(A=A_1\times\cdots\times A_N\)
+        and a function \(f:A\to Y\). Next, define the following for each agent
+        \(i\), where \(i=1,\ldots,N\):
+      </p>
+      <ul>
+        <li>His/her type: \(\theta_i\in\Theta_i\).</li>
+        <li>His/her prior beliefs about the distribution of other agents' types: \(p_i(\theta_{-i}\mid\theta_i)\).</li>
+        <li>His/her utility function: \(U_i(y,\theta_i)\).</li>
+      </ul>
+      <p>
+        A mechanism with these agent characteristics induces a game where each
+        agent \(i\) learns his/her type \(\theta_i\), chooses an action in \(A_i\),
+        and receives payoffs based on \(U_i\). We predict behavior in this game
+        primarily using two solution concepts: Bayesian-Nash equilibrium (BNE)
+        and dominant-strategy equilibrium (DSE). We assume the designer may only
+        use mechanisms that induce at least one of these equilibria. Then, we can see a mechanism
+        as inducing a game which induces some equilibria each of which, for each type, induces an outcome.
+        Selecting one of these equilibria, we can summarize this chain as a mechanism inducing
+        a mapping from types to outcomes, which we call an <em>outcome rule</em>.
+      </p>
+      <p>
+        The designer may have an external goal, such as revenue maximization.
+        However, the space the designer must search to find,
+        for example, a revenue-maximizing mechanism is vast. There is no limit
+        on how large the action space \(A\) can be.
+        The revelation principle helps greatly in narrowing this search. It
+        tells us that, without loss of generality, we can consider only
+        <em>direct revelation mechanisms</em> whose action space equals the type
+        space. We interpret an action in such a mechanism as reporting a type.
+      </p>
+      <p>
+        <strong>Theorem (The Revelation Principle).</strong>
+        An outcome rule is induced by a mechanism in BNE(respectively, DSE) if and only if it is
+        induced by a direct revelation mechanism where agents report truthfully
+        in BNE(respectively, DSE).
+      </p>
+      <p>
+        In the interactive demo, you take the perspective of Voter 1 in an
+        election to elect candidate A, B, or C. The mechanism first asks voters
+        to vote between A and B, then the winner moves on to compete against C.
+        Voter 1's preferences are private, while the other two voters'
+        preferences are commonly known. Notice what the direct version of this
+        mechanism does for Voter 1. See <a href="#notes">Notes</a> for more details
+        about the mechanism.
+      </p>
     </section>
 
     <!-- Empty lesson locations await user-authored prose. -->
     <section id="model-specifications" class="model-specifications" hidden>
       <!-- User-authored strategy and benchmark description. -->
     </section>
-    <section id="voting-demo" aria-label="Voting demo">
+    <section id="voting-demo" class="explorable-divider" aria-label="Voting demo">
       <p id="ranking-help" class="sr-only">Best to worst. Drag one square onto another to swap, or select two squares. Escape cancels.</p>
       <div class="preferences-row">
         <fieldset>
@@ -90,10 +141,6 @@
           <h2 id="outcome-title">Outcome</h2>
           <div id="outcome-candidate" class="candidate outcome-candidate">—</div>
           <p>Voter 1's payoff <strong id="own-payoff">—</strong></p>
-          <div id="benchmark" style="visibility: hidden">
-            <p class="sr-only" id="benchmark-label">Selected equilibrium</p>
-            <p><strong id="benchmark-candidate"></strong> · payoff <strong id="benchmark-payoff"></strong></p>
-          </div>
         </section>
       </div>
       <p id="game-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true">New election. Choose Voter 1's round 1 vote.</p>
@@ -117,7 +164,18 @@
     </section>
     <section id="references" class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>
-      <!-- User-authored References. -->
+      <ul class="reference-list">
+        <li>
+          Börgers, Tilman. <a href="https://doi.org/10.1093/acprof:oso/9780199734023.001.0001"><em>An Introduction
+          to the Theory of Mechanism Design</em></a>. Oxford University Press, 2015.
+        </li>
+        <li>
+          Stole, Lars. <a href="https://ocw.mit.edu/courses/14-124-microeconomic-theory-iv-spring-2017/8e0c2484aed6906405ffe7d9ba73375e_MIT14_124S17_LecNote3.pdf">“Mechanism
+          Design and Self-Selection Contracts.”</a> Section 3 of <em>Lectures on the
+          Theory of Contracts</em>, especially section 3.1, pp. 45–48.
+          MIT OpenCourseWare, <em>14.124 Microeconomic Theory IV</em>, Spring 2017.
+        </li>
+      </ul>
     </section>
   </main>
 

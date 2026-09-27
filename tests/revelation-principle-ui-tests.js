@@ -59,11 +59,11 @@
       assert(el("final-ballots").textContent.indexOf("—") >= 0 && el("outcome-candidate").textContent === "—", "Final still unrevealed");
       el("vote-survivor").click();
       assert(el("outcome-candidate").textContent === "A" && el("own-payoff").textContent === "2", "Sincere final vote elects A");
-      assert(el("benchmark-candidate").textContent === "A" && el("benchmark-payoff").textContent === "2" && win.getComputedStyle(el("benchmark")).visibility === "visible", "Indirect equilibrium benchmark retained");
+      assert(!el("benchmark") && el("own-payoff").closest(".game-stage").querySelectorAll("p").length === 1 && el("game-status").textContent.indexOf("Benchmark:") === -1, "Only the realized indirect payoff is displayed and announced");
       vote("A");
       assert(snapshot().final === "A", "Same first ballot preserves completed history");
       vote("B");
-      assert(snapshot().final === null && win.getComputedStyle(el("benchmark")).visibility === "hidden" && el("outcome-candidate").textContent === "—", "New root invalidates continuation");
+      assert(snapshot().final === null && el("own-payoff").textContent === "—" && el("outcome-candidate").textContent === "—", "New root invalidates continuation");
       el("vote-survivor").click();
       assert(el("first-winner").textContent === "B" && el("outcome-candidate").textContent === "B" && el("own-payoff").textContent === "1", "Revised first ballot changes the final contest and payoff");
       el("vote-c").click();
@@ -74,7 +74,8 @@
       var id = snapshot().selectedId;
       direct();
       assert(snapshot().report === "ABC" && el("outcome-candidate").textContent === "A", "Truth initialized");
-      assert(el("report-title").textContent === "Voter 1's true preferences" && !/\b(you|your)\b/i.test(el("voting-demo").textContent), "Requested heading and Voter 1 terminology");
+      assert(el("report-title").textContent === "Voter 1's reported preferences" && el("first-title").textContent === "Simulated round 1" && el("final-title").textContent === "Simulated round 2", "Direct headings identify reports and simulated rounds");
+      assert(!/\b(you|your)\b/i.test(el("voting-demo").textContent), "Voter 1 terminology");
       assert(!el("first-actions").hidden && !el("final-actions").hidden, "Direct ballots stay visible");
       assert(Array.from(doc.querySelectorAll(".vote")).every(function (b) { return b.disabled; }), "Direct ballots are read-only");
       function selectedBallot(actions) { return el(actions).querySelector('[aria-pressed="true"]').textContent; }
@@ -90,11 +91,12 @@
       assert(el("outcome-candidate").textContent === "C" && el("own-payoff").textContent === "0", "True payoff, not reported payoff");
       assert(selectedBallot("first-actions") === el("first-ballots").querySelector("dd").textContent && selectedBallot("final-actions") === el("final-ballots").querySelector("dd").textContent, "Selected votes follow report edits");
       assert(snapshot().selectedId === id, "Report leaves selected equilibrium frozen");
-      assert(win.getComputedStyle(el("benchmark")).visibility === "hidden" && el("game-status").textContent.indexOf("Benchmark:") === -1, "No second direct-mode payoff, visually or in the announcement");
+      assert(!el("benchmark") && el("game-status").textContent.indexOf("Benchmark:") === -1, "No second direct-mode payoff, visually or in the announcement");
       el("new-election").click();
       assert(snapshot().report === "ABC" && el("outcome-candidate").textContent === "A", "New election restores truthful report");
       direct();
       assert(snapshot().first === null && snapshot().final === null && el("first-winner").textContent === "—", "Switch back begins fresh election");
+      assert(el("report-title").textContent === "Voter 1's true preferences" && el("first-title").textContent === "Round 1" && el("final-title").textContent === "Round 2", "Switch back restores indirect headings");
       assert(!doc.querySelector('.vote[aria-pressed="true"]') && !doc.querySelector("[data-first]").disabled, "Manual ballots reenable without stale selections");
     }),
     test("Indirect true-preference display follows private edits and rejects click, keyboard, and drag input", function () {

@@ -68,9 +68,11 @@
     if (state.first !== null) { overrides.first = state.first; }
     if (state.final !== null) { overrides.final = state.final; }
     var trace = state.direct ? M.simulate(profile, state.report) : M.simulate(profile, state.trueRanking, overrides);
-    var benchmark = M.simulate(profile, state.trueRanking);
     var survivor = trace.first.winner;
     byId("direct-mode").checked = state.direct;
+    text("report-title", state.direct ? "Voter 1's reported preferences" : "Voter 1's true preferences");
+    text("first-title", state.direct ? "Simulated round 1" : "Round 1");
+    text("final-title", state.direct ? "Simulated round 2" : "Round 2");
     byId("ranking-report").setAttribute("aria-label", state.direct ? "Voter 1 reported ranking" : "Voter 1 true ranking");
     if (state.direct) { byId("ranking-report").setAttribute("aria-describedby", "ranking-help"); }
     else { byId("ranking-report").removeAttribute("aria-describedby"); }
@@ -96,15 +98,10 @@
     text("outcome-candidate", finalShown ? trace.final.winner : "—");
     byId("outcome-candidate").dataset.candidate = finalShown ? trace.final.winner : "";
     text("own-payoff", finalShown ? M.utility(state.trueRanking, trace.final.winner) : "—");
-    byId("benchmark").style.visibility = finalShown && !state.direct ? "visible" : "hidden";
-    text("benchmark-candidate", benchmark.final.winner);
-    var benchmarkPayoff = M.utility(state.trueRanking, benchmark.final.winner);
-    text("benchmark-payoff", benchmarkPayoff);
     if (finalShown) {
       var payoff = M.utility(state.trueRanking, trace.final.winner);
       announce((state.direct ? "Voter 1's report " + displayRanking(state.report) + ". " : "") +
-        trace.final.winner + " elected. Voter 1's payoff: " + payoff +
-        (state.direct ? "." : ". Benchmark: " + benchmarkPayoff + "."));
+        trace.final.winner + " elected. Voter 1's payoff: " + payoff + ".");
     } else {
       announce(firstShown ? survivor + " advances. Choose Voter 1's round 2 vote." : "New election. Choose Voter 1's round 1 vote.");
     }
@@ -152,5 +149,6 @@
   });
   renderDirectRule();
   render();
+  global.MechanismMath.typesetInitial(".introduction");
   document.body.dataset.ready = "true";
 })(window);
