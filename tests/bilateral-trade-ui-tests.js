@@ -616,9 +616,9 @@
           var revenue = appDocument.getElementById("revenue-text");
           assert(revenue.dataset.expectedNoDeficit === "false",
             "The efficient benchmark should not be ex-ante budget balanced.");
-          assert(buyerIc.textContent === "BIC: passes" &&
-            sellerIc.textContent === "BIC: passes",
-          "IC panels should contain only the BIC verdict.");
+          assert(buyerIc.textContent === "BIC: passes (best-response path (orange points) lies on v′ = v)" &&
+            sellerIc.textContent === "BIC: passes (best-response path (orange points) lies on c′ = c)",
+          "IC panels should link the BIC verdict to the truthful diagonal.");
           assert(revenue.children.length === 1 &&
             revenue.textContent === "Ex-ante BB: fails (expected revenue = -0.167)",
           "The BB panel should contain only the expected-balance verdict and revenue.");
@@ -1052,8 +1052,8 @@
             assert(buyerIc.dataset.icImplementable === "false" &&
               sellerIc.dataset.icImplementable === "false",
             "An isolated spike should violate Bayesian IC on both sides.");
-            assert(buyerIc.textContent === "BIC: fails" &&
-              sellerIc.textContent === "BIC: fails",
+            assert(buyerIc.textContent === "BIC: fails (best-response path (orange points) does not lie entirely on v′ = v)" &&
+              sellerIc.textContent === "BIC: fails (best-response path (orange points) does not lie entirely on c′ = c)",
             "Failed IC should use the requested BIC wording without monotonicity labels.");
             var efficiencyText = appDocument.getElementById("efficiency-text");
             var loss = Number(appDocument.getElementById("efficiency-chart").dataset.efficiencyLoss);
@@ -1078,7 +1078,7 @@
               assert(truthful && best &&
                 appWindow.getComputedStyle(truthful).stroke !== "none" &&
                 appWindow.getComputedStyle(best).stroke !== "none",
-              id + " should display the truthful diagonal and individually optimized report marks.");
+              id + " should display and individually optimized report marks.");
             });
 
             var revenue = appDocument.getElementById("revenue-text");

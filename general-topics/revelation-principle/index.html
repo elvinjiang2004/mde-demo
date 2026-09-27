@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore indirect voting and a direct revelation mechanism.">
+  <title>Revelation Principle | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="module.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/math-utils.js"></script>
+  <script defer src="model.js"></script>
+  <script defer src="ranking-control.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to the main content</a>
+
+  <header class="site-header">
+    <page-header category="General Topics" home="../../index.html"></page-header>
+  </header>
+
+  <main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">Revelation Principle</h1>
+      <!-- User-authored environment, information, timing, and solution concept. -->
+    </section>
+
+    <!-- Empty lesson locations await user-authored prose. -->
+    <section id="model-specifications" class="model-specifications" hidden>
+      <!-- User-authored strategy and benchmark description. -->
+    </section>
+    <section id="voting-demo" aria-label="Voting demo">
+      <p id="ranking-help" class="sr-only">Best to worst. Drag one square onto another to swap, or select two squares. Escape cancels.</p>
+      <div class="preferences-row">
+        <fieldset>
+          <legend>Voter 1</legend>
+          <div id="ranking-1" class="ranking-editor" aria-label="Voter 1 true ranking" aria-describedby="ranking-help"></div>
+          <button id="random-preferences-1" class="text-button" type="button" aria-label="Random preferences for Voter 1">Random preferences</button>
+        </fieldset>
+        <fieldset>
+          <legend>Voter 2</legend>
+          <div id="ranking-2" class="ranking-editor" aria-label="Voter 2 public ranking" aria-describedby="ranking-help"></div>
+          <button id="random-preferences-2" class="text-button" type="button" aria-label="Random preferences for Voter 2">Random preferences</button>
+        </fieldset>
+        <fieldset>
+          <legend>Voter 3</legend>
+          <div id="ranking-3" class="ranking-editor" aria-label="Voter 3 public ranking" aria-describedby="ranking-help"></div>
+          <button id="random-preferences-3" class="text-button" type="button" aria-label="Random preferences for Voter 3">Random preferences</button>
+        </fieldset>
+        <div class="mode-controls">
+          <label class="mode-toggle"><input id="direct-mode" type="checkbox"> Direct mechanism</label>
+          <button id="new-election" class="text-button" type="button">New election</button>
+        </div>
+      </div>
+      <div id="game-stages" class="game-stages">
+        <section id="report-stage" class="game-stage" aria-labelledby="report-title">
+          <h2 id="report-title">Voter 1's true preferences</h2>
+          <div id="ranking-report" class="ranking-editor" aria-label="Voter 1 true ranking"></div>
+        </section>
+        <section class="game-stage" aria-labelledby="first-title">
+          <h2 id="first-title">Round 1</h2>
+          <p id="first-contest" class="contest">A vs B</p>
+          <div id="first-actions" class="vote-actions" role="group" aria-label="Voter 1's round 1 ballot">
+            <button type="button" class="candidate vote" data-first="A" data-candidate="A" aria-label="Vote A in round 1" aria-pressed="false">A</button>
+            <button type="button" class="candidate vote" data-first="B" data-candidate="B" aria-label="Vote B in round 1" aria-pressed="false">B</button>
+          </div>
+          <dl id="first-ballots" class="ballot-list">
+            <div><dt>Voter 1</dt><dd data-ballot="0">—</dd></div>
+            <div><dt>Voter 2</dt><dd data-ballot="1">—</dd></div>
+            <div><dt>Voter 3</dt><dd data-ballot="2">—</dd></div>
+          </dl>
+          <p class="stage-result">Advances <strong id="first-winner">—</strong></p>
+        </section>
+        <section class="game-stage" aria-labelledby="final-title">
+          <h2 id="final-title">Round 2</h2>
+          <p id="final-contest" class="contest">— vs C</p>
+          <div id="final-actions" class="vote-actions" role="group" aria-label="Voter 1's round 2 ballot">
+            <button id="vote-survivor" type="button" class="candidate vote" aria-label="Vote for the round 1 winner" aria-pressed="false" disabled>—</button>
+            <button id="vote-c" type="button" class="candidate vote" data-candidate="C" aria-label="Vote C in round 2" aria-pressed="false" disabled>C</button>
+          </div>
+          <dl id="final-ballots" class="ballot-list">
+            <div><dt>Voter 1</dt><dd data-ballot="0">—</dd></div>
+            <div><dt>Voter 2</dt><dd data-ballot="1">—</dd></div>
+            <div><dt>Voter 3</dt><dd data-ballot="2">—</dd></div>
+          </dl>
+          <p class="stage-result">Elected <strong id="final-winner">—</strong></p>
+        </section>
+        <section class="game-stage" aria-labelledby="outcome-title">
+          <h2 id="outcome-title">Outcome</h2>
+          <div id="outcome-candidate" class="candidate outcome-candidate">—</div>
+          <p>Voter 1's payoff <strong id="own-payoff">—</strong></p>
+          <div id="benchmark" style="visibility: hidden">
+            <p class="sr-only" id="benchmark-label">Selected equilibrium</p>
+            <p><strong id="benchmark-candidate"></strong> · payoff <strong id="benchmark-payoff"></strong></p>
+          </div>
+        </section>
+      </div>
+      <p id="game-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true">New election. Choose Voter 1's round 1 vote.</p>
+      <details id="strategy-details">
+        <summary>Voter 1's direct mechanism rule</summary>
+        <div class="table-scroll" tabindex="0" role="region" aria-label="Voter 1's direct mechanism rule and voting paths">
+          <table>
+            <thead><tr><th scope="col">Report</th><th scope="col">Round 1 vote</th><th scope="col">Round 2 contest</th><th scope="col">Round 2 vote</th><th scope="col">Elected candidate</th></tr></thead>
+            <tbody id="direct-rule"></tbody>
+          </table>
+        </div>
+      </details>
+      <noscript><p>Enable JavaScript to use the voting demo.</p></noscript>
+    </section>
+    <section id="derivation" class="derivation" hidden>
+      <!-- User-authored equilibrium conditions and revelation-principle argument. -->
+    </section>
+    <section id="notes" class="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title">Notes</h2>
+      <!-- User-authored Notes. -->
+    </section>
+    <section id="references" class="references" aria-labelledby="references-title">
+      <h2 id="references-title">References</h2>
+      <!-- User-authored References. -->
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <page-footer></page-footer>
+  </footer>
+</body>
+</html>

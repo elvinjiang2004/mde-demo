@@ -156,7 +156,7 @@
       validationStatus: byId("formula-validation-status"),
       probeStatus: byId("formula-probe-status"),
       diagnosticLiveStatus: byId("diagnostic-live-status"),
-      parameterRow: document.querySelector(".sandbox-action-row"),
+      parameterBar: byId("formula-parameter-bar"),
       fixIcIrControl: byId("fix-ic-ir-control"),
       fixIcIrCheckbox: byId("fix-ic-ir-checkbox"),
       presetButtons: {}
@@ -524,8 +524,7 @@
     });
     elements.fixIcIrControl.hidden = state.activePreset !== "custom";
     elements.fixIcIrCheckbox.checked = state.custom.fixIcIr;
-    elements.parameterRow.hidden = visibleCount === 0 &&
-      state.activePreset !== "custom";
+    elements.parameterBar.hidden = visibleCount === 0;
     editor.syncEditingState();
     editor.syncSurfaceControls();
   }

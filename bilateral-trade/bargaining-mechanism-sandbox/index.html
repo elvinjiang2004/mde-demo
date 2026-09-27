@@ -63,7 +63,7 @@
         <li>
           Incentive Compatibility (IC): In equilibrium, the buyer and seller
           report truthfully. This has two forms: Bayesian IC (BIC), where
-          truthful reporting is a Bayes&ndash;Nash equilibrium, and Dominant
+          truthful reporting is a Bayesian&ndash;Nash equilibrium, and Dominant
           Strategy IC (DSIC), where truthful reporting is a dominant-strategy
           equilibrium.
         </li>
@@ -96,7 +96,7 @@
       data-live-render-count="0"
       data-quality-status="idle"
     >
-      <aside class="sandbox-toolbar" aria-label="Bargaining rule controls">
+      <aside class="sandbox-toolbar parameter-presets" aria-label="Bargaining rule presets">
         <div class="preset-buttons" role="group" aria-labelledby="preset-buttons-label">
           <span id="preset-buttons-label" class="preset-buttons-label">Presets:</span>
           <button id="preset-vcg" class="text-button preset-button" type="button" aria-pressed="true">VCG</button>
@@ -108,6 +108,13 @@
           <button id="preset-custom" class="text-button preset-button" type="button" aria-pressed="false">Custom</button>
         </div>
 
+        <div id="fix-ic-ir-control" class="fix-ic-ir-control" hidden>
+          <input id="fix-ic-ir-checkbox" type="checkbox">
+          <label for="fix-ic-ir-checkbox">Fix IC/IR</label>
+        </div>
+      </aside>
+
+      <aside id="formula-parameter-bar" class="sticky-parameter-bar" aria-label="Bargaining rule parameters" hidden>
         <div class="sandbox-action-row">
           <div id="posted-buyer-price-control" class="range-group sandbox-parameter-control" hidden>
             <div class="range-label-row">
@@ -266,11 +273,6 @@
             <input id="seller-discount-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5" aria-labelledby="seller-discount-control-label">
             <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
           </div>
-
-          <div id="fix-ic-ir-control" class="fix-ic-ir-control" hidden>
-            <input id="fix-ic-ir-checkbox" type="checkbox">
-            <label for="fix-ic-ir-checkbox">Fix IC/IR</label>
-          </div>
         </div>
         <p id="formula-validation-status" class="control-status" role="status" aria-live="polite"></p>
       </aside>
@@ -280,8 +282,8 @@
 
       <div class="color-legends" role="group" aria-label="Plot color scales">
         <div class="color-legend"><span class="color-legend-title">Allocation</span><span class="color-scale-bar allocation-gradient"></span><div class="color-scale-ticks"><span>0</span><span>1</span></div></div>
-        <div class="color-legend"><span class="color-legend-title">Payment / revenue</span><span class="color-scale-bar payment-gradient"></span><div class="color-scale-ticks"><span>Negative</span><span>0</span><span>Positive</span></div></div>
-        <div class="color-legend"><span class="color-legend-title">Utility</span><span class="color-scale-bar utility-gradient"></span><div class="color-scale-ticks"><span>Negative</span><span>0</span><span>Positive</span></div></div>
+        <div class="color-legend"><span class="color-legend-title">Effect on revenue</span><span class="color-scale-bar payment-gradient"></span><div class="color-scale-ticks"><span>−1</span><span>0</span><span>+1</span></div></div>
+        <div class="color-legend"><span class="color-legend-title">Utility</span><span class="color-scale-bar utility-gradient"></span><div class="color-scale-ticks"><span>−1</span><span>0</span><span>+1</span></div></div>
       </div>
 
       <div class="surface-editor-grid">
@@ -453,8 +455,8 @@
       <p id="diagnostic-live-status" class="sr-only" aria-live="polite"></p>
     </section>
 
-    <section class="derivation mechanism-details" aria-labelledby="mechanism-details-title">
-      <h2 id="mechanism-details-title">Mechanism Details</h2>
+    <details class="derivation mechanism-details" aria-labelledby="mechanism-details-title">
+      <summary id="mechanism-details-title">Mechanism Details</summary>
       <div
         class="mechanism-details-table-region"
         role="region"
@@ -522,6 +524,39 @@
           </tbody>
         </table>
       </div>
+    </details>
+
+    <section class="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title">Notes</h2>
+      <!-- Notes reserved for the author. -->
+    </section>
+    <section class="references" aria-labelledby="references-title">
+      <h2 id="references-title">References</h2>
+      <ul class="reference-list">
+        <li>
+          Groves, Theodore. &ldquo;Incentives in Teams.&rdquo;
+          <em>Econometrica</em> 41, no. 4 (1973): 617&ndash;631.
+          <a href="https://doi.org/10.2307/1914085">https://doi.org/10.2307/1914085</a>.
+        </li>
+        <li>
+          d&rsquo;Aspremont, Claude, and Louis-Andr&eacute; G&eacute;rard-Varet.
+          &ldquo;Incentives and Incomplete Information.&rdquo;
+          <em>Journal of Public Economics</em> 11, no. 1 (1979): 25&ndash;45.
+          <a href="https://doi.org/10.1016/0047-2727(79)90043-4">https://doi.org/10.1016/0047-2727(79)90043-4</a>.
+        </li>
+        <li>
+          Chatterjee, Kalyan, and William Samuelson. &ldquo;Bargaining under
+          Incomplete Information.&rdquo; <em>Operations Research</em> 31, no. 5
+          (1983): 835&ndash;851.
+          <a href="https://doi.org/10.1287/opre.31.5.835">https://doi.org/10.1287/opre.31.5.835</a>.
+        </li>
+        <li>
+          Myerson, Roger B., and Mark A. Satterthwaite. &ldquo;Efficient Mechanisms
+          for Bilateral Trading.&rdquo; <em>Journal of Economic Theory</em> 29, no. 2
+          (1983): 265&ndash;281.
+          <a href="https://doi.org/10.1016/0022-0531(83)90048-0">https://doi.org/10.1016/0022-0531(83)90048-0</a>.
+        </li>
+      </ul>
     </section>
   </main>
 

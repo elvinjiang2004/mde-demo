@@ -163,8 +163,8 @@
       svg.dataset.stateKey = stateKey;
       svg.dataset.renderCount = String(state.renderCounts[key]);
       svg.dataset.renderer = "formula-canvas";
-      svg.dataset.colorLow = key === "q" ? "clear" : "red";
-      svg.dataset.colorHigh = key === "q" ? "blue" : "green";
+      svg.dataset.colorLow = key === "q" ? "clear" : (key === "pS" ? "green" : "red");
+      svg.dataset.colorHigh = key === "q" ? "blue" : (key === "pS" ? "red" : "green");
       if (rasterSize === PREVIEW_RASTER_SIZE) {
         state.previewFields[key] = true;
       }
@@ -202,8 +202,8 @@
       svg.dataset.triangleCount = String(2 * R * R);
       svg.dataset.paymentRendering = key === "q" ? "not-applicable" :
         "analytic-affine";
-      svg.dataset.colorLow = key === "q" ? "clear" : "red";
-      svg.dataset.colorHigh = key === "q" ? "blue" : "green";
+      svg.dataset.colorLow = key === "q" ? "clear" : (key === "pS" ? "green" : "red");
+      svg.dataset.colorHigh = key === "q" ? "blue" : (key === "pS" ? "red" : "green");
     }
     function tagCustomTriangles(triangles) {
       ["lower", "upper"].forEach(function (side) {
@@ -227,16 +227,7 @@
     }
 
     function customSurfaceExtent(key) {
-      if (key === "q") {
-        return 1;
-      }
-      var range = model.fieldRange(state.rule, key);
-      return Math.max(
-        0.05,
-        Math.abs(range.min),
-        Math.abs(range.max),
-        isSurfaceEditable(key) ? Math.abs(state.brushes[key]) : 0
-      );
+      return key === "q" ? 1 : visuals.SIGNED_COLOR_EXTENT;
     }
 
     function customSurfaceColor(key, i, j, isLower, qValue, extent) {
@@ -291,11 +282,13 @@
         "data-coefficient-c": patch[2]
       });
       appendPaymentGradientStop(gradient, 0, minimum, key, extent);
-      if (minimum < 0 && maximum > 0) {
-        appendPaymentGradientStop(
-          gradient, -minimum / range, 0, key, extent
-        );
-      }
+      [-extent, 0, extent].forEach(function (value) {
+        if (minimum < value && maximum > value) {
+          appendPaymentGradientStop(
+            gradient, (value - minimum) / range, value, key, extent
+          );
+        }
+      });
       appendPaymentGradientStop(gradient, 1, maximum, key, extent);
       return "url(#" + id + ")";
     }
@@ -318,7 +311,7 @@
 
     function paymentChannels(key, value, extent) {
       return visuals.signedChannels(
-        value,
+        key === "pS" ? -value : value,
         extent,
         state.palette.red,
         state.palette.green
@@ -402,6 +395,9 @@
     function surfaceDescription(key) {
       var field = key === "q" ? "allocation probability" :
         (key === "pB" ? "buyer payment" : "seller payment");
+      var colorDescription = key === "q" ? "" :
+        " Color shows the effect on revenue on a fixed -1 to 1 scale; " +
+        (key === "pS" ? "positive seller payments are red." : "positive buyer payments are green.");
       if (state.activePreset === "custom") {
         var editing = isSurfaceEditable(key) ?
           " Enter or Space applies this surface's brush to the selected triangle." :
@@ -409,10 +405,10 @@
         var paymentDisplay = key === "q" ? "" :
           " Nonconstant affine payments vary continuously inside each triangle.";
         return "Custom " + field + " on a 20 by 20 split-triangle grid." +
-          editing + paymentDisplay + " Probes evaluate the exact rule.";
+          editing + paymentDisplay + colorDescription + " Probes evaluate the exact rule.";
       }
       return PRESET_LABELS[state.activePreset] + " formula-backed " + field +
-        ". The raster is display-only; probes evaluate the exact rule.";
+        ". The raster is display-only; probes evaluate the exact rule." + colorDescription;
     }
 
     function surfaceRegionGeometry() {
@@ -429,8 +425,7 @@
     }
 
     function paintSurfaceCanvas(key, canvas, rasterSize) {
-      var range = model.fieldRange(state.rule, key);
-      var extent = Math.max(0.05, Math.abs(range.min), Math.abs(range.max));
+      var extent = visuals.SIGNED_COLOR_EXTENT;
       var valueAt = model.fieldEvaluator(state.rule, key);
       var geometry = surfaceRegionGeometry();
       var noTrade = state.rule.regions[0].fields[key];
@@ -453,12 +448,7 @@
           if (key === "q") {
             return visuals.qChannels(state.palette, value);
           }
-          return visuals.signedChannels(
-            value,
-            extent,
-            state.palette.red,
-            state.palette.green
-          );
+          return paymentChannels(key, value, extent);
         }
       );
     }
@@ -621,7 +611,7 @@
           cx: mesh.svgXOf(point.trueValue, LAYOUT),
           cy: mesh.svgYOf(point.report, LAYOUT),
           r: 1.8,
-          fill: "var(--blue)",
+          fill: "var(--orange)",
           stroke: "var(--annotation-halo)",
           "stroke-width": 0.7,
           "vector-effect": "non-scaling-stroke",
@@ -632,13 +622,8 @@
       });
     }
 
-    function diagnosticExtent(key) {
-      var range = state.summary.ranges[key];
-      return Math.max(0.05, Math.abs(range.min), Math.abs(range.max));
-    }
-
     function paintDiagnosticCanvas(key, canvas, rasterSize) {
-      var extent = key === "efficiency" ? 1 : diagnosticExtent(key);
+      var extent = visuals.SIGNED_COLOR_EXTENT;
       var valueAt = model.diagnosticEvaluator(state.rule, key);
       paintFieldRaster(
         canvas,
@@ -713,7 +698,10 @@
       if (key === "buyerIc" || key === "sellerIc") {
         var ic = diagnosticState(key);
         lines = [
-          verdictParagraph("BIC", ic.holds),
+          verdictParagraph("BIC", ic.holds,
+            "best-response path (orange points) " +
+              (ic.holds ? "lies on" : "does not lie entirely on") +
+              " " + (key === "buyerIc" ? "v′ = v" : "c′ = c")),
           verdictParagraph("DSIC", ic.dsicHolds,
             "maximum deviation gain = " + formatDiagnostic(ic.maximumExPostGain))
         ];
@@ -770,7 +758,11 @@
       var verdicts = state.summary.verdicts;
       elements.diagnosticLiveStatus.textContent =
         "Buyer BIC " + (verdicts.buyerBic ? "passes" : "fails") +
+        " (best-response path (orange points) " + (verdicts.buyerBic ? "lies on" : "does not lie entirely on") +
+        " v′ = v)" +
         ". Seller BIC " + (verdicts.sellerBic ? "passes" : "fails") +
+        " (best-response path (orange points) " + (verdicts.sellerBic ? "lies on" : "does not lie entirely on") +
+        " c′ = c)" +
         ". Expected revenue " + formatDiagnostic(verdicts.expectedRevenue) +
         ". " + diagnostics.efficiency.text.children[0].textContent +
         ". " + diagnostics.efficiency.text.children[1].textContent + ".";

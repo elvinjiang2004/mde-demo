@@ -14,6 +14,7 @@
   };
   var MISMATCH_THRESHOLD = 0.02;
   var DIAGNOSTIC_RASTER_SIZE = 330;
+  var SIGNED_COLOR_EXTENT = 1;
 
   function readRgbTriplet(style, propertyName, fallback) {
     var source = style.getPropertyValue(propertyName).trim()
@@ -96,25 +97,6 @@
       return palette.blue;
     }
     return base;
-  }
-
-  function payoffDisplayExtent(summary) {
-    var values = [
-      0.05,
-      Math.abs(summary.deviation.buyer.range.min),
-      Math.abs(summary.deviation.buyer.range.max),
-      Math.abs(summary.deviation.seller.range.min),
-      Math.abs(summary.deviation.seller.range.max)
-    ];
-    if (summary.ir && summary.ir.exPost) {
-      values.push(
-        Math.abs(summary.ir.exPost.buyerRange.min),
-        Math.abs(summary.ir.exPost.buyerRange.max),
-        Math.abs(summary.ir.exPost.sellerRange.min),
-        Math.abs(summary.ir.exPost.sellerRange.max)
-      );
-    }
-    return Math.max.apply(Math, values);
   }
 
   function plotPointFromEvent(chart, event, layout) {
@@ -356,7 +338,7 @@
     qChannels: qChannels,
     signedChannels: signedChannels,
     efficiencyChannels: efficiencyChannels,
-    payoffDisplayExtent: payoffDisplayExtent,
+    SIGNED_COLOR_EXTENT: SIGNED_COLOR_EXTENT,
     plotPointFromEvent: plotPointFromEvent,
     bindProbeChart: bindProbeChart,
     drawFrame: drawFrame,

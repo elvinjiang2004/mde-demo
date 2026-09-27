@@ -99,6 +99,12 @@
   max-width: none;
 }
 
+.mechanism-details > summary {
+  cursor: pointer;
+  padding: 0.6rem 0;
+  min-height: 44px;
+}
+
 .mechanism-details-table-region {
   max-width: 100%;
   overflow-x: auto;
@@ -127,6 +133,7 @@
   font-weight: 600;
 }
 
+.mechanism-details > summary:focus-visible,
 .mechanism-details-table-region:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
@@ -152,8 +159,83 @@
   }
 }
 
+/* Keep parameter controls within the explorable section's scroll boundary. */
+.parameter-presets {
+  margin-bottom: 0.5rem;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.sticky-parameter-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin-bottom: 1.25rem;
+  padding: 0.55rem 0.25rem 0.45rem;
+  background: var(--page-background);
+  border-bottom: 1px solid var(--line-light);
+}
+
+.sticky-parameter-bar .sandbox-action-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.4rem 1.5rem;
+  margin-top: 0;
+}
+
+.sticky-parameter-bar .slider-220 {
+  max-width: none;
+}
+
+.sticky-parameter-bar .control-status:empty {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .sticky-parameter-bar .sandbox-action-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sticky-parameter-bar .sandbox-parameter-control {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(75px, 1.1fr) 3.5rem;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .sticky-parameter-bar .range-label-row {
+    display: contents;
+  }
+
+  .sticky-parameter-bar .range-label-row label {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .sticky-parameter-bar .range-number-input {
+    grid-column: 3;
+    grid-row: 1;
+    width: 100%;
+  }
+
+  .sticky-parameter-bar input[type="range"] {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .sticky-parameter-bar .range-endpoints {
+    display: none;
+  }
+}
+
 @media print {
   .sandbox-toolbar,
+  .sticky-parameter-bar,
   .surface-choice-controls {
     display: none;
   }

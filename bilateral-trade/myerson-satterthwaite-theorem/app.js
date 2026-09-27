@@ -671,7 +671,7 @@
         cx: svgXOf(response.trueType, DIAG_LAYOUT),
         cy: svgYOf(response.report, DIAG_LAYOUT),
         r: 1.2,
-        fill: "var(--blue)",
+        fill: "var(--orange)",
         stroke: "var(--annotation-halo)",
         "stroke-width": 0.5,
         "vector-effect": "non-scaling-stroke",
@@ -692,19 +692,19 @@
   function drawBuyerIcChart(summary) {
     drawDeviationChart(
       elements.buyerIcChart, "buyer", summary,
-      visuals.payoffDisplayExtent(summary)
+      visuals.SIGNED_COLOR_EXTENT
     );
   }
 
   function drawSellerIcChart(summary) {
     drawDeviationChart(
       elements.sellerIcChart, "seller", summary,
-      visuals.payoffDisplayExtent(summary)
+      visuals.SIGNED_COLOR_EXTENT
     );
   }
 
   function drawPayoffCharts(summary) {
-    var extent = visuals.payoffDisplayExtent(summary);
+    var extent = visuals.SIGNED_COLOR_EXTENT;
     var colorFn = function (value) {
       return visuals.signedChannels(
         value, extent,
@@ -759,11 +759,7 @@
 
   function drawRevenueChart(summary) {
     var svg = elements.revenueChart;
-    var extent = Math.max(
-      0.05,
-      Math.abs(summary.verdicts.minRevenue),
-      Math.abs(summary.verdicts.maxRevenue)
-    );
+    var extent = visuals.SIGNED_COLOR_EXTENT;
     svg.replaceChildren();
     appendSvg(svg, "title", { id: "revenue-chart-title" }, "Net revenue");
     appendSvg(svg, "desc", { id: "revenue-chart-description" }, revenueChartDescription(summary));
@@ -991,8 +987,14 @@
     elements.efficiencyChart.dataset.welfare = String(v.welfare);
     elements.efficiencyChart.dataset.efficiencyLoss = String(v.efficiencyLoss);
 
-    renderDiagnosticLine(elements.buyerIcText, "BIC", v.buyerBic);
-    renderDiagnosticLine(elements.sellerIcText, "BIC", v.sellerBic);
+    renderDiagnosticLine(elements.buyerIcText, "BIC", v.buyerBic,
+      "best-response path (orange points) " +
+        (v.buyerBic ? "lies on" : "does not lie entirely on") +
+        " v′ = v");
+    renderDiagnosticLine(elements.sellerIcText, "BIC", v.sellerBic,
+      "best-response path (orange points) " +
+        (v.sellerBic ? "lies on" : "does not lie entirely on") +
+        " c′ = c");
     renderDiagnosticLine(elements.buyerPayoffText, "Interim IR", v.interimBuyerIr,
       "minimum = " + formatSigned(v.minBuyerPayoff));
     renderDiagnosticLine(elements.sellerPayoffText, "Interim IR", v.interimSellerIr,
@@ -1008,7 +1010,11 @@
     var v = summary.verdicts;
     elements.liveSummary.textContent =
       "Buyer BIC " + (v.buyerBic ? "passes" : "fails") +
+        " (best-response path (orange points) " + (v.buyerBic ? "lies on" : "does not lie entirely on") +
+        " v′ = v)" +
       ". Seller BIC " + (v.sellerBic ? "passes" : "fails") +
+        " (best-response path (orange points) " + (v.sellerBic ? "lies on" : "does not lie entirely on") +
+        " c′ = c)" +
       ". Buyer interim IR " + (v.interimBuyerIr ? "passes" : "fails") +
       " (minimum = " + formatSigned(v.minBuyerPayoff) + ")" +
       ". Seller interim IR " + (v.interimSellerIr ? "passes" : "fails") +

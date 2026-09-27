@@ -19,6 +19,7 @@ The available modules are located at:
     bilateral-trade/myerson-satterthwaite-theorem/index.html
     general-topics/envelope-theorem/index.html
     general-topics/payments-from-allocation-rule/index.html
+    general-topics/revelation-principle/index.html
 
 Explicit `index.html` paths are used so navigation works through `file://`.
 
@@ -35,6 +36,7 @@ The menu contains three categories:
 - **General Topics**
   - The Envelope Theorem
   - Payments from an Allocation Rule (draft)
+  - Revelation Principle
 
 ## Browser checks
 
@@ -63,6 +65,8 @@ Open these files in a browser to run the test suites:
   payment model checks.
 - `tests/payments-from-allocation-rule-ui-tests.html` — allocation-rule interface
   and SVG checks.
+- `tests/revelation-principle-model-tests.html` — exhaustive voting equilibria and truthful-reporting checks.
+- `tests/revelation-principle-ui-tests.html` — ranking swaps, mode transitions, voting history, and responsive layout.
 
 The iframe-based menu and interface checks may require a local static server or
 a browser configuration that permits local-file iframe access. This does not
@@ -79,6 +83,7 @@ affect ordinary use of the menu or module pages.
 - `general-topics/envelope-theorem/` — envelope-theorem module.
 - `general-topics/payments-from-allocation-rule/` — allocation-rule and payment
   module.
+- `general-topics/revelation-principle/` — indirect voting and direct preference-reporting demo.
 - `styles.css` — ordered entry point for the focused stylesheets in `css/`.
 - `css/` — theme, shared page/control styling, chart families, and responsive rules.
 - `assets/mathjax/` — vendored MathJax 4 TeX-to-SVG build and offline assets.

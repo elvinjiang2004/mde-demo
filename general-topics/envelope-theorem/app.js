@@ -17,6 +17,7 @@
   };
 
   var POINT_RADIUS = 9;
+  var SELECTED_POINT_RADIUS = POINT_RADIUS + 1.5;
   var POINT_HIT_RADIUS = 18;
   var VALUE_KEY_STEP = 0.02;
   var SLOPE_PAD_FRACTION = 0.12;
@@ -284,6 +285,15 @@
   }
 
   function drawAxisFrame(svg, layout, xTicks, yTicks, yMapper, formatYTick) {
+    // Reserve endpoint overhang in both panels so viewport fitting cannot move
+    // the plot when a point reaches an edge or its selection radius changes.
+    appendSvg(svg, "rect", {
+      x: layout.left - SELECTED_POINT_RADIUS,
+      y: layout.top - SELECTED_POINT_RADIUS,
+      width: layout.right - layout.left + 2 * SELECTED_POINT_RADIUS,
+      height: layout.bottom - layout.top + 2 * SELECTED_POINT_RADIUS,
+      fill: "none", stroke: "none", "pointer-events": "none", "aria-hidden": "true"
+    });
     var formatY = formatYTick || formatSigned;
     xTicks.forEach(function (value) {
       var x = svgTOf(value, layout);
@@ -412,7 +422,7 @@
     var list = pointList(summary.lines);
     list.forEach(function (point, index) {
       var isSelected = index === state.selectedIndex;
-      var radius = isSelected ? POINT_RADIUS + 1.5 : POINT_RADIUS;
+      var radius = isSelected ? SELECTED_POINT_RADIUS : POINT_RADIUS;
       var cx = svgTOf(point.t, MAIN_LAYOUT);
       var cy = svgVOf(point.v, MAIN_LAYOUT);
       appendSvg(svg, "circle", {

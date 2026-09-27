@@ -10,6 +10,7 @@
     { file: "bargaining-sandbox-parity-tests.html", name: "Bargaining sandbox representation parity", kind: "model" },
     { file: "envelope-theorem-model-tests.html", name: "Envelope theorem model", kind: "model" },
     { file: "payments-from-allocation-rule-model-tests.html", name: "Payments model", kind: "model" },
+    { file: "revelation-principle-model-tests.html", name: "Revelation Principle model", kind: "model" },
     { file: "chart-viewport-ui-tests.html", name: "Chart viewport spacing", kind: "interface" },
     { file: "components-tests.html", name: "Shared components", kind: "interface" },
     { file: "menu-tests.html", name: "Module menu", kind: "interface" },
@@ -18,7 +19,8 @@
     { file: "bilateral-trade-ui-tests.html", name: "Myerson-Satterthwaite interface", kind: "interface" },
     { file: "bargaining-sandbox-ui-tests.html", name: "Bargaining sandbox interface", kind: "interface" },
     { file: "envelope-theorem-ui-tests.html", name: "Envelope theorem interface", kind: "interface" },
-    { file: "payments-from-allocation-rule-ui-tests.html", name: "Payments interface", kind: "interface" }
+    { file: "payments-from-allocation-rule-ui-tests.html", name: "Payments interface", kind: "interface" },
+    { file: "revelation-principle-ui-tests.html", name: "Revelation Principle interface", kind: "interface" }
   ];
 
   var CONCURRENCY = 3;

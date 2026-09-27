@@ -224,8 +224,8 @@
             "The Auctions row should contain two module entries.");
           assert(rows[1].querySelectorAll(":scope > li").length === 2,
             "The Bilateral Trade row should contain two module entries.");
-          assert(rows[2].querySelectorAll(":scope > li").length === 2,
-            "The General Topics row should contain two module entries.");
+          assert(rows[2].querySelectorAll(":scope > li").length === 3,
+            "The General Topics row should contain three working modules.");
         }
       },
       {
@@ -252,11 +252,11 @@
           assert(link.querySelector(".module-title").textContent ===
             "Second-Price Auction Equilibrium",
           "The second-price module title is incorrect.");
-          assert(menuDocument.querySelectorAll(".module-link").length === 6,
-            "Both auction modules, both bilateral-trade modules, and both " +
-            "General Topics modules should be links.");
-          assert(!menuDocument.querySelector(".module-pending") &&
-            !menuDocument.querySelector('[aria-disabled="true"]'),
+          assert(menuDocument.querySelectorAll(".module-link").length === 7,
+            "Both auction modules, both bilateral-trade modules, and all " +
+            "three General Topics modules should be links.");
+          assert(!menuDocument.querySelector('.module-link[aria-disabled="true"]') &&
+            !menuDocument.querySelector("a.module-pending"),
           "No implemented module should remain disabled.");
         }
       },
@@ -310,6 +310,21 @@
           assert(link.querySelector(".module-title").textContent ===
             "Payments from an Allocation Rule (draft)",
           "The payments-from-allocation-rule module title is incorrect.");
+        }
+      },
+      {
+        name: "The Revelation Principle voting demo is selectable",
+        run: function () {
+          var tile = menuDocument.querySelector(
+            'a.module-link[href="general-topics/revelation-principle/index.html"]'
+          );
+          assert(tile, "General Topics should link to the working voting demo.");
+          assert(tile.querySelector(".module-title").textContent === "Revelation Principle",
+            "The module title is incorrect.");
+          assert(!tile.hasAttribute("aria-disabled") && !tile.classList.contains("module-pending"),
+            "The verified demo should be enabled.");
+          assert(menuDocument.querySelectorAll(".module-pending").length === 0,
+            "All current menu modules are functional.");
         }
       }
     ];

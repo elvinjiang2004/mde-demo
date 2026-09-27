@@ -41,8 +41,8 @@
           \(\{f(x,t)\mid x\in X\}\).
         </li>
         <li>
-          \(X^*(t)=\operatorname*{arg\,max}\{f(x,t)\mid x\in X\}\), the set
-          of maximizers at \(t\).
+          \(X^*(t)=\operatorname*{arg\,max}\{f(x,t)\mid x\in X\}\), the <em>set
+          of maximizers</em> at \(t\).
         </li>
         <li>
           \(x^*(t)\in X^*(t)\ne\varnothing\), a particular selection from
@@ -171,7 +171,104 @@
     <section class="derivation" aria-labelledby="derivation-title">
       <h2 id="derivation-title">The Envelope Theorem for mechanisms</h2>
 
-      </section>
+      <p>
+        We will use a simple problem that carries many important features in
+        its analysis to exemplify the envelope theorem's application in
+        mechanism design. There is one monopoly seller and one buyer. The
+        seller has value \(0\) for the object, while the buyer has value
+        \(V\sim F\), where \(F\) has support \([0,1]\). The seller does not know the buyer's value,
+        so chooses a direct mechanism ahead of time with allocation rule
+        \(q(v')\) and payment rule \(p(v')\). Given the buyer reports \(v'\),
+        the allocation rule specifies the probability of allocation and the
+        payment rule specifies the amount the buyer must pay. Then, the buyer's utility function is
+        \(u(v,v')=vq(v')-p(v')\), where \(v\) is his value and \(v'\) is his
+        reported value.
+      </p>
+
+      <p>
+        Now let's connect some of the abstract terms in Milgrom and Segal
+        (2002) to this specific problem. From the buyer's perspective,
+      </p>
+
+      <ul>
+        <li>
+          Objective function: \(u(v,v')=vq(v')-p(v')\), the buyer's utility.
+        </li>
+        <li>
+          Choice variable: \(v'\in[0,1]\), the buyer's reported value.
+        </li>
+        <li>
+          Parameter: \(v\in[0,1]\), the buyer's randomly drawn value.
+        </li>
+      </ul>
+
+      <p>
+        We assume \(p(v')\) is finite for all \(v'\in[0,1]\), so that
+        \(u(v,v')\) is finite for all \(v,v'\in[0,1]\).
+      </p>
+
+      <p>
+        In equilibrium, the buyer maximizes his utility by choosing the best
+        report \(v'\) given his value \(v\). Then,
+      </p>
+
+      <ul>
+        <li>
+          Value function: \(U(v)=\sup\{u(v,v')\mid v'\in[0,1]\}\),
+          the buyer's equilibrium utility.
+        </li>
+        <li>
+          Family of functions: \(\{u(\cdot,v')\mid v'\in[0,1]\}\),
+          the buyer's utility functions indexed by reports.
+        </li>
+        <li>
+          Set of maximizers: \(V^*(v)=\operatorname*{arg\,max}\{u(v,v')\mid v'\in[0,1]\}\),
+          the set of optimal reports at \(v\).
+        </li>
+        <li>
+          Selection from the set of maximizers: \(v^*(v)\in V^*(v)\), an optimal report
+          selected from the non-empty set of maximizers at \(v\).
+        </li>
+      </ul>
+        
+
+      <p>
+        In many cases, and certainly in this case, we will restrict our attention to
+        <em>incentive-compatible</em> mechanisms. These mechanisms, by definition, are such that reporting
+        truthfully (that is, reporting \(v\) when your value is \(v\))
+        maximizes utility. Then, in an incentive-compatible mechanism, for every \(v\in[0,1]\), \(v\in V^*(v)\).
+        Theorem 1 says that, if \(U\) is differentiable at \(v\in (0,1)\), \(U'(v)=u_v(v,v^*(v))=q(v^*(v))\).
+        In an incentive-compatible mechanism, we can select \(v^*(v)=v\), so \(U'(v)=q(v)\).
+        
+      </p>
+
+      <p>
+        Now, look at the conditions of Theorem 2. Are they satisfied? Clearly,
+        condition 1 is satisfied: with \(v'\) fixed, \(u\) is affine in
+        \(v\). For condition 2, as we stated earlier, \(u_v(v,v')=q(v')\), and
+        \(q(v')\in[0,1]\) by definition. So, we can choose our bounding
+        function \(b\) as \(b(v)=1\), which is clearly integrable. Theorem 2
+        now states that \(U\) is absolutely continuous and, thus,
+        differentiable almost everywhere.
+      </p>
+
+      <p>
+        Condition 3 is also clearly satisfied because \(u\) is affine in
+        \(v\) with \(v'\) fixed. Condition 4 is satisfied automatically by incentive compatibility, since
+        \(v\in V^*(v)\) for all \(v\in[0,1]\). Theorem 2 then says that, for an incentive-compatible
+        mechanism,
+      </p>
+      <div class="equation-display" aria-label="U of v equals U of zero plus the integral from zero to v of q of t d t">
+        \[
+          U(v)=U(0)+\int_0^v q(t)\,dt.
+        \]
+      </div>
+      <p>
+        A consequence of this is that, given an allocation rule \(q\),
+        incentive compatibility pins down the shape of $U$ and, thus, the payment rule \(p\),
+        leaving freedom only in the choice of \(U(0)\). 
+      </p>
+    </section>
 
     <section class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>

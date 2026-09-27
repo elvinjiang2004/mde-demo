@@ -214,11 +214,19 @@
         run: async function () {
           var main = appDocument.getElementById("main-chart");
           var slope = appDocument.getElementById("slope-chart");
+          await nextFrames(appWindow, 4);
+          var originalTop = main.getBoundingClientRect().top;
+          var originalSlopeTop = slope.getBoundingClientRect().top;
           var oldSlope = slope.innerHTML;
           firePointer(main, "pointerdown", 60, 316.8, 41);
           firePointer(main, "pointermove", 231, 49.8, 41);
           firePointer(main, "pointerup", 231, 49.8, 41);
-          await nextFrames(appWindow, 2);
+          await nextFrames(appWindow, 4);
+
+          assertClose(main.getBoundingClientRect().top, originalTop,
+            "Reaching the top edge must not shift the plot under the pointer.", 0.1);
+          assertClose(slope.getBoundingClientRect().top, originalSlopeTop,
+            "The linked plot must remain aligned during dragging.", 0.1);
 
           var selected = main.querySelector(".line-endpoint-selected");
           var lineA = main.querySelector(

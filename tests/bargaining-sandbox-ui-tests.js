@@ -230,19 +230,47 @@
         }
       },
       {
-        name: "Three shared legends follow settings and both payments use red-to-green",
+        name: "Fixed legends and payment colors show opposite effects on revenue",
         run: async function () {
           assert(appDocument.querySelectorAll(".color-scale-bar").length === 3);
           var legend = appDocument.querySelector(".color-legends");
           assert(legend.getBoundingClientRect().top >= appDocument.querySelector(".sandbox-toolbar").getBoundingClientRect().bottom);
           assert(legend.getBoundingClientRect().bottom <= appDocument.querySelector(".surface-editor-grid").getBoundingClientRect().top);
           await selectPreset("vcg");
-          var green = appWindow.BilateralTradeVisuals.readHeatmapPalette(appWindow.getComputedStyle(appDocument.documentElement)).green;
+          var palette = appWindow.BilateralTradeVisuals.readHeatmapPalette(appWindow.getComputedStyle(appDocument.documentElement));
+          assert(legend.textContent.includes("Effect on revenue"));
+          assert(legend.querySelectorAll(".color-scale-ticks")[1].textContent === "−10+1");
           ["buyer-payment-chart", "seller-payment-chart"].forEach(function (id) {
             var canvas = image(id);
             var pixel = canvas.getContext("2d").getImageData(Math.floor(canvas.width * 0.8), Math.floor(canvas.height * 0.8), 1, 1).data;
-            assert(pixel[3] > 0 && [0,1,2].every(function (i) { return Math.abs(pixel[i] - green[i]) <= 2; }), "Positive payments share the green palette: " + id);
+            var color = id === "seller-payment-chart" ? palette.red : palette.green;
+            assert(pixel[3] > 0 && [0,1,2].every(function (i) { return Math.abs(pixel[i] - color[i]) <= 6; }), "Payment colors follow their revenue effect: " + id);
           });
+          await resetDefaults();
+        }
+      },
+      {
+        name: "Payment and utility opacity stays on the fixed scale across settings",
+        run: async function () {
+          await selectPreset("posted-price");
+          for (var price of [0.2, 0.6]) {
+            await setNumbers({"posted-buyer-price": price, "posted-seller-price": price});
+            for (var id of ["buyer-payment-chart", "seller-payment-chart"]) {
+              var canvas = image(id);
+              var pixel = canvas.getContext("2d").getImageData(
+                Math.floor(canvas.width * 0.9), Math.floor(canvas.height * 0.9), 1, 1).data;
+              assertClose(pixel[3], Math.round(255 * price), id + " fixed opacity", 1);
+            }
+          }
+          await selectPreset("agv");
+          await setNumbers({"agv-constant": 1.75});
+          for (var id of ["buyer-payment-chart", "seller-payment-chart", "buyer-payoff-chart", "seller-payoff-chart"]) {
+            var canvas = image(id);
+            assert(canvas.getContext("2d").getImageData(
+              Math.floor(canvas.width / 2), Math.floor(canvas.height / 2), 1, 1).data[3] === 255,
+              "Values beyond the fixed scale saturate: " + id);
+          }
+          await setNumbers({"agv-constant": 0.25});
           await resetDefaults();
         }
       },
@@ -392,7 +420,7 @@
           var details = appDocument.querySelector(".mechanism-details");
           var detailRows = details.querySelectorAll("tbody tr");
           assert(details.previousElementSibling.id === "bargaining-sandbox-explorable" &&
-            details.querySelector("h2").textContent === "Mechanism Details" &&
+            details.querySelector("summary").textContent === "Mechanism Details" &&
             detailRows.length === 8 &&
             details.querySelectorAll("thead th").length === 4,
           "The supplied eight-row mechanism table should follow the demo.");
@@ -407,8 +435,16 @@
           assert(indicatorTex.length === 6 && indicatorTex.every(function (tex) {
             return tex.includes("\\mathbb{1}(") && !tex.includes("\\mathbf{1}");
           }), "Every table indicator should use blackboard-bold 1 with parentheses.");
-          assert(!appDocument.querySelector(".notes, .references"),
-            "The sandbox should contain no unsupplied Notes or References.");
+          assert(details.tagName === "DETAILS" && !details.open,
+            "Mechanism Details should start collapsed.");
+          details.querySelector("summary").click();
+          assert(details.open, "The summary should expand Mechanism Details.");
+          details.querySelector("summary").click();
+          assert(!details.open, "The summary should collapse Mechanism Details.");
+          assert(appDocument.querySelector(".notes").textContent.trim() === "Notes",
+            "Notes should remain ready for the author.");
+          assert(appDocument.querySelectorAll(".references .reference-list li").length === 4,
+            "The sandbox should include the four requested paper citations.");
           assert(model && appWindow.BargainingSandboxApp &&
             !appWindow.LegacyBargainingSandboxModel,
           "The production page must not load the retired model fixture.");
@@ -514,7 +550,9 @@
           await selectPreset("chatterjee-samuelson");
           ["buyer-ic-text", "seller-ic-text"].forEach(function (id) {
             assert(lines(id).join("|") ===
-              "BIC: passes|DSIC: fails (maximum deviation gain = 0.2500)",
+              "BIC: passes (best-response path (orange points) lies on " +
+                (id === "buyer-ic-text" ? "v′ = v" : "c′ = c") +
+                ")|DSIC: fails (maximum deviation gain = 0.2500)",
             "The DSIC line must use the ex-post gain even when BIC passes.");
           });
           assert(lines("revenue-text").join("|") ===
@@ -522,7 +560,7 @@
           "Balanced transfers should show precisely the two requested BB lines.");
           await selectPreset("vcg");
           assert(lines("buyer-ic-text").join("|") ===
-            "BIC: passes|DSIC: passes (maximum deviation gain = 0)",
+            "BIC: passes (best-response path (orange points) lies on v′ = v)|DSIC: passes (maximum deviation gain = 0)",
           "VCG should report zero profitable deviations.");
           assert(lines("revenue-text").join("|") ===
             "Ex-ante BB: fails (expected revenue = -0.1667)|Ex-post BB: fails (largest deficit = 1.0000)",
@@ -881,6 +919,58 @@
           firePointer(splitSlider, "pointerup", 0, 0, 21, appWindow);
           await waitForQuality();
           await resetDefaults();
+        }
+      },
+      {
+        name: "Parameter sliders stay visible beside scrolled diagnostics and leave with the demo",
+        run: async function () {
+          var originalWidth = frame.style.width;
+          var originalHeight = frame.style.height;
+          var bar = appDocument.getElementById("formula-parameter-bar");
+          try {
+            await resetDefaults();
+            for (var width of [1280, 375]) {
+              frame.style.width = width + "px";
+              frame.style.height = "667px";
+              await nextAppFrames(appWindow, 3);
+              var chart = appDocument.getElementById("buyer-payoff-chart");
+              appWindow.scrollTo({top: appWindow.scrollY + chart.getBoundingClientRect().top -
+                bar.getBoundingClientRect().height - 24, behavior: "instant"});
+              await nextAppFrames(appWindow, 2);
+              assertClose(bar.getBoundingClientRect().top, 0, "The sliders stay at the viewport top", 1);
+              assert(bar.getBoundingClientRect().height < 190, "Three sliders leave room for graphs");
+              assert(chart.getBoundingClientRect().top > bar.getBoundingClientRect().bottom,
+                "The chosen graph stays below the bar");
+              assert(appDocument.querySelector(".preset-buttons").getBoundingClientRect().bottom < 0,
+                "Preset buttons scroll away");
+              var baseline = liveRenderCount();
+              var before = renderCount("revenue-chart");
+              var slider = appDocument.getElementById("threshold-slider");
+              firePointer(slider, "pointerdown", 0, 0, 66, appWindow);
+              slider.value = width === 1280 ? "0.31" : "0.42";
+              dispatchInput(slider, appWindow);
+              await waitForLiveCount(baseline + 1);
+              assert(renderCount("revenue-chart") === before + 1, "Diagnostics update during the pinned gesture");
+              assert(root.dataset.threshold === slider.value, "Exact state follows the pinned slider");
+              firePointer(slider, "pointerup", 0, 0, 66, appWindow);
+              await waitForQuality();
+              frame.style.height = "320px";
+              await nextAppFrames(appWindow, 2);
+              appWindow.scrollTo({top: appWindow.scrollY + root.getBoundingClientRect().bottom, behavior: "instant"});
+              await nextAppFrames(appWindow, 2);
+              assert(bar.getBoundingClientRect().bottom <= 1, "The bar leaves with the graph section");
+            }
+            await selectPreset("custom");
+            assert(bar.hidden && !appDocument.getElementById("fix-ic-ir-control").hidden,
+              "Custom keeps its ordinary painting controls without a sticky bar");
+            await selectPreset("vcg");
+            assert(bar.hidden, "A preset without sliders has no sticky bar");
+          } finally {
+            frame.style.width = originalWidth;
+            frame.style.height = originalHeight;
+            appWindow.scrollTo({top: 0, behavior: "instant"});
+            await resetDefaults();
+          }
         }
       },
       {
