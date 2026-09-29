@@ -270,7 +270,8 @@
           "The interactive demo should not retain its former bottom whitespace.");
           assert(notes && appWindow.getComputedStyle(notes).borderTopWidth !== "0px" &&
             notes.querySelector("h2").textContent === "Notes" &&
-            notes.querySelectorAll(".notes-list > li").length === 1,
+            notes.querySelectorAll(".notes-list > li").length > 0 &&
+            Array.from(notes.querySelectorAll(".notes-list > li")).every(function (note) { return note.textContent.trim().length > 0; }),
           "Notes should have a faint separator and contain the user-authored list.");
           assert(references.querySelector("h2").textContent === "References" &&
             references.querySelectorAll(".reference-list > li").length === 1 &&

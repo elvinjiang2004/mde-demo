@@ -34,9 +34,9 @@
       <p>
         One indivisible object is to be sold in a sealed-bid auction with no reserve
         price. There are \(n \ge 2\) risk-neutral bidders. Bidders have values \(V_1, \ldots, V_n \overset{\mathrm{i.i.d.}}{\sim}\)
-        \(F(v)\). Each bidder \(i\) privately observes his realized value \(v_i\), hence independent, private values
-        (IPV). We also assume that \(F\) has continuous, strictly positive density
-        \(f\) on a positive support with finite expectation. Next,
+        \(F(v)\). We assume that \(F\) has continuous, strictly positive density
+        \(f\) on its support \([\underline{v}, \overline{v}]\). Each bidder \(i\) privately observes his
+        realized value \(v_i\). Next,
         all bidders simultaneously submit their bids. The highest bidder wins the
         object, gets his value for the object, and pays the highest opposing bid,
         while losing bidders get nothing and pay zero. Ties are broken uniformly
@@ -53,6 +53,10 @@
           \beta^{\mathrm{II}}(v_i)=v_i,\quad i=2,\ldots,n.
         \]
       </div>
+      <p>
+        We claim that it is optimal for bidder 1 to bid according to \(\beta^{\mathrm{II}}\) regardless
+        of the bidding strategy the other bidders use, making \(\beta^{\mathrm{II}}\) a dominant bidding strategy.
+      </p>
 
       <p>
         In the interactive demo, you take the perspective of bidder 1, considering different
@@ -62,7 +66,7 @@
         (\(\alpha = 1\), \(\beta = 1\) for
         \(\operatorname{Uniform}[a,b]\) values). Choose your value
         \(v_1\) or randomly draw it. Then, propose a bid
-        \(x_1\), and observe how changing it affects your expected
+        \(x_1\) and observe how changing it affects your expected
         payoff.
       </p>
     </section>
@@ -148,7 +152,7 @@
       class="derivation"
       aria-labelledby="dominant-strategy-title"
     >
-      <h2 id="dominant-strategy-title">Dominant strategy for bidder 1</h2>
+      <h2 id="dominant-strategy-title">Proof of the dominant strategy for bidder 1</h2>
       <p>
         Notice from the demo where the loss from underbidding and
         overbidding comes from. Underbidding causes you to lose in cases
@@ -198,10 +202,13 @@
     <section class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
       <ul class="notes-list">
-          <li>
-            The dominance of truthful bidding is robust under several extensions, including risk aversion,
-            interdependent values, and asymmetric bidders.
-          </li>
+        <li>
+          IPV stands for independent, private values.
+        </li>
+        <li>
+          The dominant strategy equilibrium of the second-price auction is robust under
+          several extensions, such as risk aversion or assymetric value distributions.
+        </li>
       </ul>
     </section>
 

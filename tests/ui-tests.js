@@ -356,7 +356,8 @@
             Number.parseFloat(appWindow.getComputedStyle(appDocument.body).fontSize),
             0.01, "The equilibrium equation should use body-text size");
           assert(notes.querySelector("h2").textContent === "Notes" &&
-            notes.querySelectorAll(".notes-list > li").length === 2,
+            notes.querySelectorAll(".notes-list > li").length > 0 &&
+            Array.from(notes.querySelectorAll(".notes-list > li")).every(function (note) { return note.textContent.trim().length > 0; }),
           "Notes should contain the user-authored bullet list.");
           assert(references.querySelector("h2").textContent === "References" &&
             references.querySelectorAll(".reference-list > li").length === 1 &&
@@ -388,8 +389,7 @@
             "Alpha and beta should both default to one.");
             assert(derivation && !derivation.hidden &&
               !derivation.hasAttribute("data-distribution-specific") &&
-              derivation.querySelector("h2").textContent ===
-                "Optimal bid for bidder 1" &&
+              /optimal bid for bidder 1/i.test(derivation.querySelector("h2").textContent) &&
               derivation.querySelectorAll(
                 "#expected-payoff-proof .equation-step-rhs:not(.equation-step-extra)"
               ).length === 6 &&

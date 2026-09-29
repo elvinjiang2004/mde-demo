@@ -636,11 +636,9 @@
         }
       },
       {
-        name: "No preset or reset controls remain on the page",
+        name: "Reset is the only button alongside the allocation brush",
         run: function () {
-          assert(!appDocument.querySelector(".preset-buttons") &&
-            !appDocument.getElementById("reset-button"),
-          "The preset row and a reset button should both be absent.");
+          assert(!appDocument.querySelector(".preset-buttons") && appDocument.getElementById("reset-button"), "A single reset replaces a preset row.");
           [
             "preset-efficient", "preset-always", "preset-never",
             "preset-posted-price", "preset-chatterjee", "preset-random"
@@ -655,8 +653,7 @@
           var controls = appDocument.querySelector(".choice-controls");
           assert(controls.querySelectorAll(".range-group").length === 1,
             "Only the allocation-brush control should remain.");
-          assert(controls.querySelectorAll("button").length === 0,
-            "The painting controls should offer no buttons at all.");
+          assert(controls.querySelectorAll("button").length === 1 && controls.querySelector("button").id === "reset-button", "Reset is the only painting button.");
         }
       },
       {
@@ -1272,6 +1269,39 @@
         assert(appDocument.getElementById("live-summary").textContent.includes(
           "Ex-ante BB: passes (expected revenue = " + expected.toFixed(3) + ")"),
         "The live summary should announce the same passing surplus verdict.");
+      }
+    });
+
+    tests.push({
+      name: "Reset restores every efficient triangle and all exact diagnostics",
+      run: async function () {
+        var reset=appDocument.getElementById("reset-button"), chart=appDocument.getElementById("paint-chart");
+        reset.click();
+        function fills(){return Array.from(chart.querySelectorAll("polygon")).map(function(n){return n.getAttribute("fill");}).join(",");}
+        var initial=fills();
+        paintEntireGrid(0);
+        assert(fills()!==initial,"Paint changes the efficient grid");
+        reset.click();
+        await window.MechanismTest.nextAnimationFrames(appWindow,3);
+        assert(fills()===initial,"All 800 efficient triangles restored");
+        assertClose(Number(appDocument.getElementById("revenue-text").dataset.expectedRevenue),-1/6,"Efficient expected revenue restored");
+        assertClose(Number(appDocument.getElementById("efficiency-chart").dataset.efficiencyLoss),0,"Efficient welfare restored");
+        assert(appDocument.getElementById("buyer-ic-text").dataset.icImplementable==="true","BIC diagnostics refreshed");
+        assertClose(Number(appDocument.getElementById("brush-value-number").value),0,"Reset preserves the chosen brush");
+        chart.dispatchEvent(new appWindow.KeyboardEvent("keydown",{key:"Enter",bubbles:true}));
+        reset.click();
+        chart.dispatchEvent(new appWindow.KeyboardEvent("keydown",{key:"ArrowRight",bubbles:true}));
+        chart.dispatchEvent(new appWindow.KeyboardEvent("keyup",{key:"Enter",bubbles:true}));
+        await window.MechanismTest.nextAnimationFrames(appWindow,3);
+        assert(fills()===initial,"Reset cancels held-key painting");
+        var rect=chart.getBoundingClientRect();
+        var x=rect.left+413/480*rect.width, y=rect.top+413/520*rect.height;
+        firePointer(chart,"pointerdown",x,y,99);
+        reset.click();
+        firePointer(chart,"pointermove",x-20/480*rect.width,y,99);
+        firePointer(chart,"pointerup",x,y,99);
+        await window.MechanismTest.nextAnimationFrames(appWindow,3);
+        assert(fills()===initial,"Reset also cancels pointer painting");
       }
     });
 

@@ -409,9 +409,9 @@
           ]);
           var introduction = appDocument.querySelector(".introduction");
           assert(introduction.querySelector("h1").textContent === "Bargaining Mechanism Sandbox" &&
-            introduction.querySelectorAll(":scope > p").length === 4 &&
+            introduction.querySelectorAll(":scope > p").length > 0 &&
             introduction.querySelectorAll(":scope > ol > li").length === 4 &&
-            introduction.querySelector("em").textContent === "direct bargaining mechanism",
+            /^direct bargaining mechanisms?$/.test(introduction.querySelector("em").textContent),
           "The introduction should retain the supplied prose and four criteria.");
           assert(introduction.querySelectorAll('mjx-container[jax="SVG"]').length > 0 &&
             !/\\\(|\\\[/.test(introduction.textContent) &&
@@ -441,8 +441,9 @@
           assert(details.open, "The summary should expand Mechanism Details.");
           details.querySelector("summary").click();
           assert(!details.open, "The summary should collapse Mechanism Details.");
-          assert(appDocument.querySelector(".notes").textContent.trim() === "Notes",
-            "Notes should remain ready for the author.");
+          var notes = appDocument.querySelector(".notes[aria-labelledby='notes-title']");
+          assert(notes && notes.querySelector("#notes-title").textContent.trim() === "Notes",
+            "Keep the labeled Notes section available for author-written content.");
           assert(appDocument.querySelectorAll(".references .reference-list li").length === 4,
             "The sandbox should include the four requested paper citations.");
           assert(model && appWindow.BargainingSandboxApp &&

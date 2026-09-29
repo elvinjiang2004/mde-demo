@@ -2,7 +2,11 @@
   "use strict";
 
   var frame = document.getElementById("menu-frame");
+  var didRun = false;
   frame.addEventListener("load", runTests);
+  // A cached child can finish before this deferred parent script executes.
+  if (frame.contentDocument && frame.contentDocument.readyState === "complete" &&
+      frame.contentDocument.querySelector("body.catalog-page")) { runTests(); }
 
   function assert(condition, message) {
     if (!condition) {
@@ -71,6 +75,8 @@
   }
 
   function runTests() {
+    if (didRun) { return; }
+    didRun = true;
     var menuDocument = frame.contentDocument;
     var menuWindow = frame.contentWindow;
     var tests = [
@@ -221,8 +227,8 @@
           "Each category should arrange its modules in a row.");
           assert(rows[0].querySelectorAll(":scope > li").length === 3,
             "The General Topics row should contain three working modules.");
-          assert(rows[1].querySelectorAll(":scope > li").length === 2,
-            "The Auctions row should contain two module entries.");
+          assert(rows[1].querySelectorAll(":scope > li").length === 3,
+            "The Auctions row should contain three module entries.");
           assert(rows[2].querySelectorAll(":scope > li").length === 2,
             "The Bilateral Trade row should contain two module entries.");
         }
@@ -241,6 +247,14 @@
         }
       },
       {
+        name: "The optimal-auctions module is selectable",
+        run: function () {
+          var link = menuDocument.querySelector('a.module-link[href="auctions/optimal-auctions/index.html"]');
+          assert(link && link.querySelector(".module-title").textContent === "Optimal Auctions",
+            "The optimal-auctions editor should have an explicit working route.");
+        }
+      },
+      {
         name: "The second-price module is selectable",
         run: function () {
           var link = menuDocument.querySelector(
@@ -251,8 +265,8 @@
           assert(link.querySelector(".module-title").textContent ===
             "Second-Price Auction Equilibrium",
           "The second-price module title is incorrect.");
-          assert(menuDocument.querySelectorAll(".module-link").length === 7,
-            "Both auction modules, both bilateral-trade modules, and all " +
+          assert(menuDocument.querySelectorAll(".module-link").length === 8,
+            "All three auction modules, both bilateral-trade modules, and all " +
             "three General Topics modules should be links.");
           assert(!menuDocument.querySelector('.module-link[aria-disabled="true"]') &&
             !menuDocument.querySelector("a.module-pending"),

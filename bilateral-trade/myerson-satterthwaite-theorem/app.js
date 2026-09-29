@@ -54,6 +54,7 @@
     }
   };
   var dragActive = false;
+  var dragPointerId = null;
   var dragDirty = false;
   var dragFrameRequested = false;
   var paintFrameRequested = false;
@@ -104,6 +105,7 @@
   }
 
   function bindEvents() {
+    byId("reset-button").addEventListener("click", resetEfficientGrid);
     elements.brushValueSlider.addEventListener("input", function () {
       setBrushValue(Number.parseFloat(elements.brushValueSlider.value));
     });
@@ -127,6 +129,7 @@
         return;
       }
       dragActive = true;
+      dragPointerId = event.pointerId;
       dragDirty = false;
       elements.paintChart.setPointerCapture(event.pointerId);
       dragDirty = paintTriangle(triangle.i, triangle.j, triangle.isLower);
@@ -298,6 +301,18 @@
     drawAllocationProbe();
   }
 
+  function resetEfficientGrid() {
+    var pointerId = dragPointerId;
+    dragActive = false; dragDirty = false; dragPointerId = null;
+    keyboardPaintKeys.Enter = false; keyboardPaintKeys.Space = false;
+    keyboardPaintDirty = false; pendingPaintTriangles = {};
+    if (pointerId !== null && elements.paintChart.hasPointerCapture(pointerId)) {
+      elements.paintChart.releasePointerCapture(pointerId);
+    }
+    state.grid = model.efficientGrid();
+    recomputeAndDrawAll();
+  }
+
   function pointerToTriangle(event) {
     return triangleMesh.pointerToTriangle(elements.paintChart, event, MAIN_LAYOUT);
   }
@@ -307,6 +322,7 @@
       return;
     }
     dragActive = false;
+    dragPointerId = null;
     if (elements.paintChart.hasPointerCapture(event.pointerId)) {
       elements.paintChart.releasePointerCapture(event.pointerId);
     }

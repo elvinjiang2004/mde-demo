@@ -39,9 +39,9 @@
       <h1 id="page-title">Bargaining Mechanism Sandbox</h1>
       <p>
         A seller has an object that she may sell to a buyer. The seller has
-        value \(C \sim F_S(c)\) and the buyer has value \(V \sim F_B(v)\). We
-        assume \(F_S\) has continuous, strictly positive density \(f_S\) on its
-        support \([\underline{c},\overline{c}]\), and, likewise, \(F_B\) has
+        value \(C \sim F_S(c)\) and the buyer has value \(V \sim F_B(v)\) which are distributed independently. We
+        assume that \(F_S\) has continuous, strictly positive density \(f_S\) on its
+        support \([\underline{c},\overline{c}]\), and, likewise, that \(F_B\) has
         continuous, strictly positive density \(f_B\) on its support
         \([\underline{v},\overline{v}]\). We also assume the intersection of the
         supports is also an interval of positive length, that is, it is not empty and not a single
@@ -49,20 +49,15 @@
         \(c\), but not the other's.
       </p>
       <p>
-        A <em>direct bargaining mechanism</em> consists of an allocation rule
-        and two payment rules. Given that the buyer reports value \(v\) and the
-        seller reports value \(c\), the allocation rule \(q(v,c)\) specifies the
-        probability of trade; the buyer's payment rule \(p_B(v,c)\) specifies
-        the amount the buyer must pay; and the seller's payment rule
-        \(p_S(v,c)\) specifies the amount the seller must receive. Notice that
-        we do not impose \(p_B(v,c)=p_S(v,c)\), so the payment need not be
-        directly from the buyer to the seller.
-      </p>
-      <p>We evaluate this mechanism according to the following criteria:</p>
+        We consider <em>direct bargaining mechanisms</em> consisting of an allocation rule and two payment rules
+        \((q(v,c),p_B(v,c),p_S(v,c))\). As functions of the reported values (\(v',c'\)), the allocation rule specifies
+        the probability that trade occurs \((q(v',c'))\), and the payment rules specify the payments from the buyer and
+        to the seller which are not necessarily equal, respectively.
+        We evaluate this mechanism by the following properties:</p>
       <ol>
         <li>
-          Incentive Compatibility (IC): In equilibrium, the buyer and seller
-          report truthfully. This has two forms: Bayesian IC (BIC), where
+          Incentive Compatibility (IC): The buyer and seller
+          reporting truthfully is an equilibrum. This has two forms: Bayesian IC (BIC), where
           truthful reporting is a Bayesian&ndash;Nash equilibrium, and Dominant
           Strategy IC (DSIC), where truthful reporting is a dominant-strategy
           equilibrium.
@@ -73,8 +68,8 @@
           ex post.
         </li>
         <li>
-          (Weak) Budget Balance (BB): Trade does not need to be subsidized. This is evaluated at two stages: ex ante and ex
-          post.
+          (Weak) Budget Balance (BB): Trade does not need to be subsidized.
+          This is evaluated at two stages: ex ante and expost.
         </li>
         <li>
           Efficiency: The mechanism maximizes welfare. This is evaluated at
@@ -529,6 +524,13 @@
     <section class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
       <!-- Notes reserved for the author. -->
+       <li>
+        Ex-ante efficiency is almost identical to ex-post efficiency. The difference is that
+        ex-post efficiency requires the object to be allocated to the person with the higher value
+        at every realized value profile. Ex-ante
+        efficiency only requires expected welfare to be maximized, so only requires the object to be allocated
+        in this way almost surely.
+       </li>
     </section>
     <section class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>

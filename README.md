@@ -18,6 +18,7 @@ The available modules are located at:
     general-topics/payments-from-allocation-rule/index.html
     auctions/first-price/index.html
     auctions/second-price/index.html
+    auctions/optimal-auctions/index.html
     bilateral-trade/bargaining-mechanism-sandbox/index.html
     bilateral-trade/myerson-satterthwaite-theorem/index.html
 
@@ -34,6 +35,7 @@ The menu contains three categories:
 - **Auctions**
   - First-Price Auction Equilibrium
   - Second-Price Auction Equilibrium
+  - Optimal Auctions
 - **Bilateral Trade**
   - Bargaining Mechanism Sandbox
   - Myerson-Satterthwaite Theorem
@@ -53,6 +55,8 @@ Open these files in a browser to run the test suites:
 - `tests/model-tests.html` — first-price economic model checks.
 - `tests/ui-tests.html` — first-price interface and SVG checks.
 - `tests/second-price-model-tests.html` — second-price economic model checks.
+- `tests/optimal-auctions-model-tests.html` - exact interim payments, BIC, and virtual revenue.
+- `tests/optimal-auctions-ui-tests.html` - allocation painting, lotteries, reset, and responsive charts.
 - `tests/second-price-ui-tests.html` — second-price interface and SVG checks.
 - `tests/bilateral-trade-model-tests.html` — bilateral-trade model checks.
 - `tests/bilateral-trade-ui-tests.html` — bilateral-trade interface and SVG checks.
@@ -77,6 +81,7 @@ affect ordinary use of the menu or module pages.
 - `index.html` — module menu.
 - `about.html` — About page, linked from the menu header.
 - `auctions/first-price/` — first-price module page, model, and controls.
+- `auctions/optimal-auctions/` - two-bidder allocation editor and revenue diagnostics.
 - `auctions/second-price/` — second-price module page, model, and controls.
 - `bilateral-trade/myerson-satterthwaite-theorem/` — bilateral-trade module.
 - `bilateral-trade/bargaining-mechanism-sandbox/` — direct bargaining-mechanism editor.

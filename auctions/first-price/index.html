@@ -35,9 +35,9 @@
       <p>
         One indivisible object is to be sold in a sealed-bid auction with no reserve
         price. There are \(n \ge 2\) risk-neutral bidders. Bidders have values \(V_1, \ldots, V_n \overset{\mathrm{i.i.d.}}{\sim}\)
-        \(F(v)\). Each bidder \(i\) privately observes his realized value \(v_i\) hence independent, private values
-        (IPV). We also assume that \(F\) has continuous, strictly positive density
-        \(f\) on a positive support with finite expectation. Next,
+        \(F(v)\). We assume that \(F\) has continuous, strictly positive density
+        \(f\) on its support \([\underline{v}, \overline{v}]\). Each bidder \(i\) privately observes
+        his realized value \(v_i\). Next,
         all bidders simultaneously submit their bids. The highest bidder wins the
         object, gets his value for the object, and pays his own bid, while losing
         bidders get nothing and pay zero. Ties are broken uniformly at random
@@ -59,6 +59,10 @@
           = \mathbb{E}\!\left[Y_1 \mid v_i > Y_1\right], i = 2, \ldots, n.
         \]
       </div>
+      <p>
+        We claim that it is also optimal for bidder 1 to bid according to \(\beta^{\mathrm{I}}\),
+        making \(\beta^{\mathrm{I}}\) an equilibrium bidding strategy.
+      </p>
 
       <p>
         In the interactive demo, you take the perspective of bidder 1, considering different
@@ -68,7 +72,7 @@
         (\(\alpha = 1\), \(\beta = 1\) for
         \(\operatorname{Uniform}[a,b]\) values). Choose your value
         \(v_1\) or randomly draw it. Then, propose a bid
-        \(x_1\), and observe how changing it affects your expected
+        \(x_1\) and observe how changing it affects your expected
         payoff.
       </p>
     </section>
@@ -153,12 +157,13 @@
       class="derivation"
       aria-labelledby="derivation-title"
     >
-      <h2 id="derivation-title">Optimal bid for bidder 1</h2>
+      <h2 id="derivation-title">Proof of the optimal bid for bidder 1</h2>
       <p>
         After playing with the bid slider for a few different parameter
         settings, you may notice that the best bidder 1 can do, across all
         possible values he may have, is to follow the same bidding strategy as
-        everyone else. Let us verify this more rigorously.
+        everyone else. This suggests that \(\beta^{\mathrm{I}}\) is indeed an equilibrium bidding strategy.
+        Let us verify this more rigorously.
       </p>
       <p>
         Let \(G(y)=F(y)^{n-1}\) denote the distribution function of
@@ -264,13 +269,17 @@
       <h2 id="notes-title">Notes</h2>
       <ul class="notes-list">
           <li>
-            A more descriptive name for this setting may be "independent, private values first-price auction with risk-neutral, symmetric bidders,
-            no reserve price, and no budget-constraints," but IPV is a common abbreviation.
+            IPV stands for independent, private values.
           </li>
           <li>
             We have not shown this equilibrium is unique, but a little more work shows that it is the unique symmetric, increasing equilibrium.
             See Krishna (2009), sec. 2.3, pp. 14–16.
             If we do not restrict to symmetric, increasing equilibria, even more work is required.
+          </li>
+          <li>
+            The conditional expectation \(\mathbb{E}\!\left[Y_1 \mid v_i > Y_1\right]\) is not defined for
+            \(v_i= a\) because \(P(v_i > Y_1) = 0\). Then, we define \(\beta^{\mathrm{I}}(a)\)
+            as the limit of this conditional expectation as \(v_i \to a^+\) which is \(a\).
           </li>
 
       </ul>

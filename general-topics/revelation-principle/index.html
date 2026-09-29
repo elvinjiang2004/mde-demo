@@ -32,13 +32,16 @@
         maps actions to outcomes. We can encode a mechanism as an ordered pair
         \((A,f)\), consisting of the action space \(A=A_1\times\cdots\times A_N\)
         and a function \(f:A\to Y\). Next, define the following for each agent
-        \(i\), where \(i=1,\ldots,N\):
+        \(i\), \(i=1,\ldots,N\):
       </p>
       <ul>
         <li>His/her type: \(\theta_i\in\Theta_i\).</li>
-        <li>His/her prior beliefs about the distribution of other agents' types: \(p_i(\theta_{-i}\mid\theta_i)\).</li>
-        <li>His/her utility function: \(U_i(y,\theta_i)\).</li>
+        <li>His/her belief about the distribution of other agents' types, conditional on his/her own type: \(p_i(\theta_{-i}\mid\theta_i)\).</li>
+        <li>His/her utility function, conditional on the outcome and all agents' types: \(U_i(y,\theta)\).</li>
       </ul>
+      <p>
+        Where \(\theta=(\theta_1,\ldots,\theta_N)\) and \(\theta_{-i}=(\theta_1,\ldots,\theta_{i-1},\theta_{i+1},\ldots,\theta_N)\).
+      </p>
       <p>
         A mechanism with these agent characteristics induces a game where each
         agent \(i\) learns his/her type \(\theta_i\), chooses an action in \(A_i\),

@@ -178,9 +178,9 @@
         seller has value \(0\) for the object, while the buyer has value
         \(V\sim F\), where \(F\) has support \([0,1]\). The seller does not know the buyer's value,
         so chooses a direct mechanism ahead of time with allocation rule
-        \(q(v')\) and payment rule \(p(v')\). Given the buyer reports \(v'\),
-        the allocation rule specifies the probability of allocation and the
-        payment rule specifies the amount the buyer must pay. Then, the buyer's utility function is
+        \(q(v)\) and payment rule \(p(v)\). Given the buyer reports \(v'\),
+        the allocation rule specifies the probability of sale \(q(v')\) and the
+        payment rule specifies the amount the buyer must pay \(p(v')\). Then, the buyer's utility function is
         \(u(v,v')=vq(v')-p(v')\), where \(v\) is his value and \(v'\) is his
         reported value.
       </p>
@@ -198,7 +198,7 @@
           Choice variable: \(v'\in[0,1]\), the buyer's reported value.
         </li>
         <li>
-          Parameter: \(v\in[0,1]\), the buyer's randomly drawn value.
+          Parameter: \(v\in[0,1]\), the buyer's truevalue.
         </li>
       </ul>
 
@@ -227,7 +227,7 @@
         </li>
         <li>
           Selection from the set of maximizers: \(v^*(v)\in V^*(v)\), an optimal report
-          selected from the non-empty set of maximizers at \(v\).
+          selected from non-empty \(V^*(v)\).
         </li>
       </ul>
         
@@ -264,9 +264,10 @@
         \]
       </div>
       <p>
-        A consequence of this is that, given an allocation rule \(q\),
-        incentive compatibility pins down the shape of $U$ and, thus, the payment rule \(p\),
-        leaving freedom only in the choice of \(U(0)\). 
+        A consequence of this is that, given an implementable allocation rule \(q\),
+        incentive compatibility pins down the shape of \(U\) and, thus, the shape of the payment rule \(p\).
+        This fact is important for results like the Revenue Equivalence Theorem or the
+        Myerson-Satterthwaite Theorem.
       </p>
     </section>
 

@@ -1,0 +1,45 @@
+.optimal-auctions-page .allocation-diagnostics {
+  min-width: min(600px, 100%);
+  flex: 1 1 600px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 0.5rem 1rem;
+}
+.optimal-auctions-page .allocation-diagnostics > figure { min-width: 0; }
+.optimal-auctions-page .chart-360x300,
+.optimal-auctions-page .chart-260x160 { display: block; width: 100%; height: auto; }
+.optimal-auctions-page .chart-260x160 { max-width: 260px; cursor: crosshair; touch-action: none; }
+.optimal-auctions-page .chart-360x300 text,
+.optimal-auctions-page .chart-260x160 text { fill: var(--ink); font-family: var(--text-font); font-size: 12px; }
+/* Compensate SVG text for responsive scaling without resizing the plots. */
+.optimal-auctions-page .chart-360x300 text { font-size: var(--diagnostic-font-size, 12px); }
+/* Trim fixed internal margins; axis titles share the viewport's reserved padding. */
+.optimal-auctions-page .allocation-diagnostics .chart-360x300 { margin-block: -3.333333% -1.111111%; }
+.optimal-auctions-page #allocation-chart { touch-action: none; cursor: crosshair; }
+.optimal-auctions-page .choice-controls .range-group { max-width: none; }
+.optimal-auctions-page .lottery-brush-row { display: grid; grid-template-columns: minmax(0, 260px) minmax(84px, 112px); gap: 10px; align-items: center; }
+.optimal-auctions-page .brush-probabilities { min-width: 0; display: grid; gap: 6px; }
+.optimal-auctions-page .brush-probabilities .range-label-row { gap: 8px; }
+.optimal-auctions-page .brush-probabilities input { flex: 1; width: 0; max-width: 5.5rem; }
+.optimal-auctions-page .validation-text { color: var(--error-text); display: block; font-size: 0.86rem; }
+.optimal-auctions-page .constraint-status { text-align: center; margin: 0; min-height: 2.21em; font-size: 0.86rem; }
+.optimal-auctions-page .revenue-output { grid-column: 1 / -1; margin: 0; text-align: center; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+.optimal-auctions-page [data-bic="false"] { color: var(--red); }
+.optimal-auctions-page [data-bic="true"] { color: var(--green); }
+.optimal-auctions-page .axis { fill: none; stroke: var(--axis); stroke-width: 1; }
+.optimal-auctions-page .zero-line { stroke: var(--zero-line); stroke-width: 1; }
+.optimal-auctions-page .curve-one { stroke: var(--blue); fill: none; stroke-width: 2.5; }
+.optimal-auctions-page .curve-two { stroke: var(--orange); fill: none; stroke-width: 2.5; }
+.optimal-auctions-page .virtual-value-curve { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 5 4; }
+.optimal-auctions-page .chart-360x300 .bidder-one { fill: var(--blue); }
+.optimal-auctions-page .chart-360x300 .bidder-two { fill: var(--orange); }
+.optimal-auctions-page .expected-payment-label { font-weight: 700; }
+.optimal-auctions-page .diagnostic-axis-label { text-align: center; margin: 0 0 3px; min-height: 20px; font-size: clamp(9px, 1.82vw, 12px); line-height: 1; font-weight: 700; }
+.optimal-auctions-page .stable-chart-viewport { padding-block: 14px; }
+.optimal-auctions-page .allocation-diagnostics .stable-chart-viewport { padding-bottom: 7px; }
+/* The M-S coordinate frame, with its fixed axis margins reserved up front. */
+.optimal-auctions-page .main-column .math-chart-frame { margin-top: -6.875%; margin-bottom: -7.583333%; }
+@media (max-width: 600px) {
+  .optimal-auctions-page .allocation-diagnostics { grid-template-columns: minmax(0, 1fr); }
+}

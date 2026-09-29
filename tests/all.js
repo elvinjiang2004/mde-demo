@@ -2,6 +2,8 @@
   "use strict";
 
   var SUITES = [
+    { file: "optimal-auctions-model-tests.html", name: "Optimal auctions model", kind: "model" },
+    { file: "optimal-auctions-ui-tests.html", name: "Optimal auctions interface", kind: "interface" },
     { file: "distribution-tests.html", name: "Shared distributions", kind: "model" },
     { file: "model-tests.html", name: "First-price model", kind: "model" },
     { file: "second-price-model-tests.html", name: "Second-price model", kind: "model" },

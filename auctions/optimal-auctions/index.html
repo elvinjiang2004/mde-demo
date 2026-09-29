@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Edit a two-bidder allocation rule and inspect virtual values, interim payments, and revenue.">
+  <title>Optimal Auctions | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="module.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/math-utils.js"></script>
+  <script defer src="../../js/svg-utils.js"></script>
+  <script defer src="../../js/bilateral-trade-visuals.js"></script>
+  <script defer src="model.js"></script>
+  <script defer src="charts.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body class="optimal-auctions-page">
+  <a class="skip-link" href="#main-content">Skip to the main content</a>
+  <header class="site-header"><page-header category="Auctions" home="../../index.html"></page-header></header>
+  <main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">Optimal Auctions</h1>
+      <!-- Environment and explanation await user-authored or approved lesson prose. -->
+    </section>
+    <section id="model-specifications" class="model-specifications" hidden></section>
+    <section id="auction-demo" class="explorable-divider" aria-label="Optimal auction allocation editor">
+      <div class="main-diagnostic-layout">
+        <div class="main-column main-column-480">
+          <div class="chart-column">
+            <figure class="diagnostic-figure math-chart-figure">
+              <figcaption>Allocation rule, \((q_1(v_1,v_2),q_2(v_1,v_2))\)</figcaption>
+              <div class="chart-viewport stable-chart-viewport" data-chart-for="allocation-chart">
+                <div class="math-chart-frame">
+                  <svg width="480" height="520" id="allocation-chart" class="tradeoff-chart chart-480x520" viewBox="0 0 480 520" role="group" tabindex="0" aria-labelledby="allocation-title allocation-description" aria-describedby="paint-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r Enter Space Escape">
+                    <title id="allocation-title">Allocation rule on a 20 by 20 split-triangle grid</title>
+                    <desc id="allocation-description">Paint a feasible lottery in each triangle.</desc>
+                  </svg>
+                  <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Bidder 1 value, \(v_1\)</p>
+                  <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Bidder 2 value, \(v_2\)</p>
+                </div>
+              </div>
+            </figure>
+          </div>
+          <p id="paint-help" class="sr-only">Hover to inspect; click or drag to paint. Arrow keys visit both triangle halves. L and R select the left and right halves. Enter or Space paints; hold either key while navigating to paint continuously. Escape hides the probe and ends a stroke.</p>
+          <output id="selected-cell" class="sr-only"></output>
+          <aside id="lottery-controls" class="choice-controls" aria-label="Allocation brush controls">
+            <div class="range-group">
+              <div id="brush-label" class="range-label-row"><span>Allocation brush, \((q_1,q_2)\)</span></div>
+              <div class="lottery-brush-row">
+                <div class="chart-viewport stable-chart-viewport" data-chart-for="lottery-chart">
+                  <svg width="260" height="160" id="lottery-chart" class="chart-260x160" viewBox="0 0 260 160" role="group" tabindex="0" aria-labelledby="brush-label lottery-title" aria-describedby="lottery-description" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home">
+                    <title id="lottery-title">Feasible allocation lotteries</title>
+                    <desc id="lottery-description">Select a lottery in the triangle. Left and right adjust bidder 1's probability; up and down adjust bidder 2's. Home selects no sale. The number fields provide the same control.</desc>
+                  </svg>
+                </div>
+                <div class="brush-probabilities">
+                  <div class="range-label-row"><label for="brush-q1">\(q_1\)</label><input id="brush-q1" class="range-number-input" type="number" min="0" max="1" step="0.01" value="0" inputmode="decimal"></div>
+                  <div class="range-label-row"><label for="brush-q2">\(q_2\)</label><input id="brush-q2" class="range-number-input" type="number" min="0" max="1" step="0.01" value="0" inputmode="decimal"></div>
+                </div>
+              </div>
+              <button id="reset-button" class="text-button" type="button" aria-label="Reset to the efficient allocation">Reset</button>
+              <output id="brush-error" class="validation-text" role="status"></output>
+            </div>
+          </aside>
+        </div>
+        <div class="allocation-diagnostics">
+          <figure class="diagnostic-figure">
+            <figcaption>Interim allocation, \(Q_1(v_1)\)</figcaption>
+            <div class="chart-viewport stable-chart-viewport" data-chart-for="interim-1-chart">
+              <svg width="360" height="300" id="interim-1-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="interim-1-title interim-1-description">
+                <title id="interim-1-title">Bidder 1 interim allocation</title>
+                <desc id="interim-1-description"></desc>
+              </svg>
+              <p class="diagnostic-axis-label">Bidder 1 value, \(v_1\)</p>
+            </div>
+            <p id="bic-status-1" class="constraint-status"><span id="bic-verdict-1"></span> (\(Q_1\) <span id="bic-monotonicity-1"></span>)</p>
+          </figure>
+          <figure class="diagnostic-figure">
+            <figcaption>Interim allocation, \(Q_2(v_2)\)</figcaption>
+            <div class="chart-viewport stable-chart-viewport" data-chart-for="interim-2-chart">
+              <svg width="360" height="300" id="interim-2-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="interim-2-title interim-2-description">
+                <title id="interim-2-title">Bidder 2 interim allocation</title>
+                <desc id="interim-2-description"></desc>
+              </svg>
+              <p class="diagnostic-axis-label">Bidder 2 value, \(v_2\)</p>
+            </div>
+            <p id="bic-status-2" class="constraint-status"><span id="bic-verdict-2"></span> (\(Q_2\) <span id="bic-monotonicity-2"></span>)</p>
+          </figure>
+          <figure class="diagnostic-figure">
+            <figcaption><span id="payment-caption-1">Interim payment</span>, \(P_1(v_1)\)</figcaption>
+            <div class="chart-viewport stable-chart-viewport" data-chart-for="payment-1-chart">
+              <svg width="360" height="300" id="payment-1-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="payment-1-title payment-1-description">
+                <title id="payment-1-title">Bidder 1 interim payment</title>
+                <desc id="payment-1-description"></desc>
+              </svg>
+              <p class="diagnostic-axis-label">Bidder 1 value, \(v_1\)</p>
+            </div>
+          </figure>
+          <figure class="diagnostic-figure">
+            <figcaption><span id="payment-caption-2">Interim payment</span>, \(P_2(v_2)\)</figcaption>
+            <div class="chart-viewport stable-chart-viewport" data-chart-for="payment-2-chart">
+              <svg width="360" height="300" id="payment-2-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="payment-2-title payment-2-description">
+                <title id="payment-2-title">Bidder 2 interim payment</title>
+                <desc id="payment-2-description"></desc>
+              </svg>
+              <p class="diagnostic-axis-label">Bidder 2 value, \(v_2\)</p>
+            </div>
+          </figure>
+          <p class="revenue-output"><span id="revenue-label">Expected revenue</span>: <strong id="revenue-value"></strong></p>
+        </div>
+      </div>
+      <p id="live-summary" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+    </section>
+    <section id="derivation" hidden><!-- User-authored derivation. --></section>
+    <section id="notes" hidden><!-- User-authored notes. --></section>
+    <section id="references" hidden><!-- User-approved bibliography. --></section>
+  </main>
+  <footer class="site-footer"><page-footer></page-footer></footer>
+</body>
+</html>
