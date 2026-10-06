@@ -22,10 +22,10 @@
   ]);
   var PRESET_LABELS = Object.freeze({
     vcg: "VCG",
-    "posted-price": "Posted price",
+    "posted-price": "Posted price pair",
     agv: "AGV",
-    "split-the-difference": "Split-the-surplus",
-    "chatterjee-samuelson": "Chatterjee-Samuelson",
+    "split-the-difference": "k-Double-Auction",
+    "chatterjee-samuelson": "IC Chatterjee-Samuelson",
     "revenue-threshold": "Revenue threshold",
     custom: "Custom"
   });

@@ -37,7 +37,7 @@
       <ul>
         <li>His/her type: \(\theta_i\in\Theta_i\).</li>
         <li>His/her belief about the distribution of other agents' types, conditional on his/her own type: \(p_i(\theta_{-i}\mid\theta_i)\).</li>
-        <li>His/her utility function, conditional on the outcome and all agents' types: \(U_i(y,\theta)\).</li>
+        <li>His/her expected utility, conditional on the outcome and all agents' types: \(U_i(y,\theta)\).</li>
       </ul>
       <p>
         Where \(\theta=(\theta_1,\ldots,\theta_N)\) and \(\theta_{-i}=(\theta_1,\ldots,\theta_{i-1},\theta_{i+1},\ldots,\theta_N)\).
@@ -47,10 +47,9 @@
         agent \(i\) learns his/her type \(\theta_i\), chooses an action in \(A_i\),
         and receives payoffs based on \(U_i\). We predict behavior in this game
         primarily using two solution concepts: Bayesian-Nash equilibrium (BNE)
-        and dominant-strategy equilibrium (DSE). We assume the designer may only
-        use mechanisms that induce at least one of these equilibria. Then, we can see a mechanism
-        as inducing a game which induces some equilibria each of which, for each type, induces an outcome.
-        Selecting one of these equilibria, we can summarize this chain as a mechanism inducing
+        and dominant-strategy equilibrium (DSE). Then, we can see a mechanism
+        as inducing a game which may induce some equilibria each of which, for each type profile \(\theta\), induces an outcome.
+        Selecting one of these equilibria, if they exist, we can summarize this chain as a mechanism inducing
         a mapping from types to outcomes, which we call an <em>outcome rule</em>.
       </p>
       <p>

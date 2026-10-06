@@ -401,7 +401,7 @@
       if (state.activePreset === "custom") {
         var editing = isSurfaceEditable(key) ?
           " Enter or Space applies this surface's brush to the selected triangle." :
-          " Fix IC/IR derives this payment from the allocation, so it is read-only.";
+          " With Use envelope payments selected, this payment is derived from the allocation and is read-only.";
         var paymentDisplay = key === "q" ? "" :
           " Nonconstant affine payments vary continuously inside each triangle.";
         return "Custom " + field + " on a 20 by 20 split-triangle grid." +

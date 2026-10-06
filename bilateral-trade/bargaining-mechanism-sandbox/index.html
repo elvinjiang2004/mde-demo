@@ -57,7 +57,7 @@
       <ol>
         <li>
           Incentive Compatibility (IC): The buyer and seller
-          reporting truthfully is an equilibrum. This has two forms: Bayesian IC (BIC), where
+          reporting truthfully is an equilibrium. This has two forms: Bayesian IC (BIC), where
           truthful reporting is a Bayesian&ndash;Nash equilibrium, and Dominant
           Strategy IC (DSIC), where truthful reporting is a dominant-strategy
           equilibrium.
@@ -95,17 +95,17 @@
         <div class="preset-buttons" role="group" aria-labelledby="preset-buttons-label">
           <span id="preset-buttons-label" class="preset-buttons-label">Presets:</span>
           <button id="preset-vcg" class="text-button preset-button" type="button" aria-pressed="true">VCG</button>
-          <button id="preset-posted-price" class="text-button preset-button" type="button" aria-pressed="false">Posted price</button>
+          <button id="preset-posted-price" class="text-button preset-button" type="button" aria-pressed="false">Posted price pair</button>
           <button id="preset-agv" class="text-button preset-button" type="button" aria-pressed="false">AGV</button>
-          <button id="preset-split-the-difference" class="text-button preset-button" type="button" aria-pressed="false">Split-the-surplus</button>
-          <button id="preset-chatterjee-samuelson" class="text-button preset-button" type="button" aria-pressed="false">Chatterjee&ndash;Samuelson</button>
+          <button id="preset-split-the-difference" class="text-button preset-button" type="button" aria-pressed="false">k-Double-Auction</button>
+          <button id="preset-chatterjee-samuelson" class="text-button preset-button" type="button" aria-pressed="false">IC Chatterjee-Samuelson</button>
           <button id="preset-revenue-threshold" class="text-button preset-button" type="button" aria-pressed="false">Revenue threshold</button>
           <button id="preset-custom" class="text-button preset-button" type="button" aria-pressed="false">Custom</button>
         </div>
 
         <div id="fix-ic-ir-control" class="fix-ic-ir-control" hidden>
           <input id="fix-ic-ir-checkbox" type="checkbox">
-          <label for="fix-ic-ir-checkbox">Fix IC/IR</label>
+          <label for="fix-ic-ir-checkbox">Use envelope payments</label>
         </div>
       </aside>
 
@@ -191,7 +191,7 @@
 
           <div id="split-seller-share-control" class="range-group sandbox-parameter-control" hidden>
             <div class="range-label-row">
-              <label id="split-seller-share-control-label" for="split-seller-share-slider">Seller share of gains, \(s\)</label>
+              <label id="split-seller-share-control-label" for="split-seller-share-slider">Weight of buyer's report on price, \(k\)</label>
               <input
                 id="split-seller-share-number"
                 class="range-number-input"
@@ -487,13 +487,13 @@
               <td>\(\frac{1}{2}(v^2-c^2)+K\)</td>
             </tr>
             <tr>
-              <th scope="row">Split-the-surplus</th>
+              <th scope="row">k-Double-Auction</th>
               <td>\(\mathbb{1}(v-c\geq t)\)</td>
-              <td>\([c+s(v-c)]q(v,c)\)</td>
-              <td>\([c+s(v-c)]q(v,c)\)</td>
+              <td>\([kv+(1-k)c]q(v,c)\)</td>
+              <td>\([kv+(1-k)c]q(v,c)\)</td>
             </tr>
             <tr>
-              <th scope="row">Chatterjee&ndash;Samuelson</th>
+              <th scope="row">IC Chatterjee-Samuelson</th>
               <td>\(\mathbb{1}(v-c\geq \frac{1}{4})\)</td>
               <td>\(\left(\frac{v+c}{3}+\frac{1}{6}\right)q(v,c)\)</td>
               <td>\(\left(\frac{v+c}{3}+\frac{1}{6}\right)q(v,c)\)</td>
