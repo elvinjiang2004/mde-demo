@@ -149,6 +149,6 @@
   });
   renderDirectRule();
   render();
-  global.MechanismMath.typesetInitial(".introduction");
+  global.MechanismMath.typesetInitial(".introduction, #derivation");
   document.body.dataset.ready = "true";
 })(window);

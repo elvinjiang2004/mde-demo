@@ -444,8 +444,16 @@
           var notes = appDocument.querySelector(".notes[aria-labelledby='notes-title']");
           assert(notes && notes.querySelector("#notes-title").textContent.trim() === "Notes",
             "Keep the labeled Notes section available for author-written content.");
-          assert(appDocument.querySelectorAll(".references .reference-list li").length === 4,
-            "The sandbox should include the four requested paper citations.");
+          var referenceLinks = Array.from(appDocument.querySelectorAll(".references .reference-list a"))
+            .map(function (link) { return link.getAttribute("href"); });
+          assert([
+            "https://doi.org/10.2307/1914085",
+            "https://doi.org/10.1016/0047-2727(79)90043-4",
+            "https://doi.org/10.1287/opre.31.5.835",
+            "https://doi.org/10.1016/0022-0531(83)90048-0",
+            "https://doi.org/10.1016/0022-0531(89)90120-8"
+          ].every(function (doi) { return referenceLinks.indexOf(doi) >= 0; }),
+            "The sandbox should include all five requested paper citations with their DOIs.");
           assert(model && appWindow.BargainingSandboxApp &&
             !appWindow.LegacyBargainingSandboxModel,
           "The production page must not load the retired model fixture.");

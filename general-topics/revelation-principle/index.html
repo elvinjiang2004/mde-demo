@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="../../styles.css">
   <link rel="stylesheet" href="module.css">
   <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/bibliography.js"></script>
+  <script defer src="../../js/references.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
@@ -27,55 +29,63 @@
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">The Revelation Principle</h1>
       <p>
-        There are \(N\) agents and a set of possible outcomes \(Y\ni y\)
-        specified by a principal or designer. Succinctly, a mechanism
-        maps actions to outcomes. We can encode a mechanism as an ordered pair
-        \((A,f)\), consisting of the action space \(A=A_1\times\cdots\times A_N\)
-        and a function \(f:A\to Y\). Next, define the following for each agent
-        \(i\), \(i=1,\ldots,N\):
+        There are \(n\) agents and a set of possible outcomes \(Y\), specified
+        by a principal or designer. For each agent \(i\), \(i=1,\ldots,n\),
+        define the following:
       </p>
       <ul>
-        <li>His/her type: \(\theta_i\in\Theta_i\).</li>
-        <li>His/her belief about the distribution of other agents' types, conditional on his/her own type: \(p_i(\theta_{-i}\mid\theta_i)\).</li>
-        <li>His/her expected utility, conditional on the outcome and all agents' types: \(U_i(y,\theta)\).</li>
+        <li><strong>Type:</strong> \(\theta_i\in T_i\). We write
+        \(\theta=(\theta_1,\ldots,\theta_n)\in T\) and
+        \(\theta_{-i}=(\theta_1,\ldots,\theta_{i-1},\theta_{i+1},\ldots,\theta_n)\).
+        We call \(T=\prod_{i=1}^n T_i\) the <em>type space</em>.</li>
+        <li>
+          <strong>Belief:</strong> The distribution of the other agents' types,
+          conditional on the agent's own type, \(p_i(\theta_{-i}\mid\theta_i)\).
+        </li>
+        <li>
+          <strong>Expected utility:</strong> The expected utility conditional on
+          the outcome and all agents' types, \(U_i(y,\theta)\), where \(y\in Y\).
+        </li>
       </ul>
       <p>
-        Where \(\theta=(\theta_1,\ldots,\theta_N)\) and \(\theta_{-i}=(\theta_1,\ldots,\theta_{i-1},\theta_{i+1},\ldots,\theta_N)\).
+        
       </p>
       <p>
-        A mechanism with these agent characteristics induces a game where each
-        agent \(i\) learns his/her type \(\theta_i\), chooses an action in \(A_i\),
-        and receives payoffs based on \(U_i\). We predict behavior in this game
-        primarily using two solution concepts: Bayesian-Nash equilibrium (BNE)
-        and dominant-strategy equilibrium (DSE). Then, we can see a mechanism
-        as inducing a game which may induce some equilibria each of which, for each type profile \(\theta\), induces an outcome.
-        Selecting one of these equilibria, if they exist, we can summarize this chain as a mechanism inducing
-        a mapping from types to outcomes, which we call an <em>outcome rule</em>.
+        A <em>mechanism</em> maps actions to outcomes. Then, we write it as an ordered
+        pair \((A,f)\), consisting of an action space \(A=\prod_{i=1}^n A_i\)
+        and an outcome function \(f:A\to Y\). It induces a game in which each
+        agent \(i\) learns their type \(\theta_i\), chooses an action in \(A_i\),
+        and receives payoffs based on \(U_i\).
       </p>
       <p>
-        The designer may have an external goal, such as revenue maximization.
-        However, the space the designer must search to find,
-        for example, a revenue-maximizing mechanism is vast. There is no limit
-        on how large the action space \(A\) can be.
-        The revelation principle helps greatly in narrowing this search. It
-        tells us that, without loss of generality, we can consider only
-        <em>direct revelation mechanisms</em> whose action space equals the type
-        space. We interpret an action in such a mechanism as reporting a type.
+        We use two solution concepts: <strong>Bayesian Nash Equilibrium (BNE)</strong>
+        and <strong>Dominant Strategy Equilibrium (DSE)</strong>. Selecting an
+        equilibrium in the induced game, when one exists, gives a mapping from type profiles to
+        outcomes, which we call an <em>outcome rule</em>, \(g:T\to Y\). We say that this mechanism
+        <em>implements</em> this outcome rule in BNE (respectively, DSE).
       </p>
       <p>
-        <strong>Theorem (The Revelation Principle).</strong>
-        An outcome rule is induced by a mechanism in BNE(respectively, DSE) if and only if it is
-        induced by a direct revelation mechanism where agents report truthfully
-        in BNE(respectively, DSE).
+        The designer may have an objective, for example, to maximize expected revenue among all feasible mechanisms.
+        However, the space of mechanisms the designer must search for an optimal one is vast because there is
+        no limit on how large the action space \(A\) can be. The revelation
+        principle reduces this space considerably. It shows that, without loss of generality, we can consider
+        <em>direct revelation mechanisms</em>, whose action space \(A\) is equal to the type space \(T\).
+        An action in such a mechanism is interpreted as a report of a type.
       </p>
       <p>
-        In the interactive demo, you take the perspective of Voter 1 in an
-        election to elect candidate A, B, or C. The mechanism first asks voters
-        to vote between A and B, then the winner moves on to compete against C.
-        Voter 1's preferences are private, while the other two voters'
-        preferences are commonly known. Notice what the direct version of this
-        mechanism does for Voter 1. See <a href="#notes">Notes</a> for more details
-        about the mechanism.
+        <strong>Theorem (The Revelation Principle):</strong>
+        An outcome rule is implemented by a mechanism in BNE (respectively, DSE)
+        if and only if it is implemented by a direct revelation mechanism where
+        truthful reporting is a BNE (respectively, DSE).
+      </p>
+      <p>
+        In the interactive demo, take the perspective of Voter 1 in an election
+        between candidates A, B, and C. The mechanism first asks voters to vote
+        between A and B, then the winner competes against C. Your
+        preferences are private, while the other two voters' preferences are
+        commonly known. Observe what the direct version of this mechanism does
+        based on your report. See <a href="#notes">Notes</a> for more details about the
+        mechanism.
       </p>
     </section>
 
@@ -157,8 +167,129 @@
       </details>
       <noscript><p>Enable JavaScript to use the voting demo.</p></noscript>
     </section>
-    <section id="derivation" class="derivation" hidden>
-      <!-- User-authored equilibrium conditions and revelation-principle argument. -->
+    <section id="derivation" class="derivation" aria-labelledby="derivation-title">
+      <h2 id="derivation-title">Proof of the Revelation Principle</h2>
+      <p>
+        You may notice in the demo you cannot increase your payoff in the direct
+        mechanism by misrepresenting your preferences. That is, for all preference
+        profiles, it is optimal for you to report truthfully in the direct mechanism.
+        The simulated rounds give an idea as to why and show the revelation principle
+        proof's general idea: a direct mechanism can just execute the equilibrium
+        strategies of any indirect one. Let's verify this more rigorously.
+      </p>
+      <p>
+        The reverse direction of the Revelation Principle is obvious for both versions. For the
+        forward direction of the BNE version, suppose that a mechanism \((A,f^I)\) induces a
+        game with a BNE \(s^*=(s_1^*,\ldots,s_n^*)\) where
+        \(s_i^*:T_i\to A_i\). Consider the mechanism \((T,f^D)\) with
+        \(f^D(\theta)=f^I\bigl(s_1^*(\theta_1),\ldots,s_n^*(\theta_n)\bigr)\).
+      </p>
+      <p>
+        For agent \(i\), in the game induced by \((A,f^I)\), since
+        \((s_1^*,\ldots,s_n^*)\) is a BNE, for all realizations of
+        \(\theta_i\in T_i\), \(s_i^*(\theta_i)\) is an optimal action given the
+        others use the strategy profile
+        \(s_{-i}^*=(s_1^*,\ldots,s_{i-1}^*,s_{i+1}^*,\ldots,s_n^*)\).
+        That is, for all \(\theta_i\in T_i\), for all \(a_i\in A_i\),
+      </p>
+      <div class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Bayesian Nash equilibrium incentive inequality, conditional on the agent's true type">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">
+          \(\displaystyle \mathbb{E}_{\theta_{-i}}\!\left[
+            U_i\!\left(f^I\bigl(s_i^*(\theta_i),s_{-i}^*(\theta_{-i})\bigr),
+            (\theta_i,\theta_{-i})\right)\mid\theta_i\right]\)
+        </span>
+        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs">
+          \(\displaystyle \mathbb{E}_{\theta_{-i}}\!\left[
+            U_i\!\left(f^I\bigl(a_i,s_{-i}^*(\theta_{-i})\bigr),
+            (\theta_i,\theta_{-i})\right)\mid\theta_i\right].\)
+        </span>
+      </div>
+      <p>
+        In particular, for all \(\theta_i\in T_i\), for all
+        \(\hat{\theta}_i\in T_i\),
+      </p>
+      <div class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="A misreport mimics an indirect equilibrium action, giving the direct mechanism's truthful-reporting inequality">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">
+          \(\displaystyle \mathbb{E}_{\theta_{-i}}\!\left[
+            U_i\!\left(f^I\bigl(s_i^*(\theta_i),s_{-i}^*(\theta_{-i})\bigr),
+            (\theta_i,\theta_{-i})\right)\mid\theta_i\right]\)
+        </span>
+        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs">
+          \(\displaystyle \mathbb{E}_{\theta_{-i}}\!\left[
+            U_i\!\left(f^I\bigl(s_i^*(\hat{\theta}_i),s_{-i}^*(\theta_{-i})\bigr),
+            (\theta_i,\theta_{-i})\right)\mid\theta_i\right]\)
+        </span>
+
+        <span class="equation-step-connector">\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs">
+          \(\displaystyle \mathbb{E}_{\theta_{-i}}\!\left[
+            U_i\!\left(f^D\bigl((\theta_i,\theta_{-i})\bigr),
+            (\theta_i,\theta_{-i})\right)\mid\theta_i\right]\)
+        </span>
+        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs">
+          \(\displaystyle \mathbb{E}_{\theta_{-i}}\!\left[
+            U_i\!\left(f^D\bigl((\hat{\theta}_i,\theta_{-i})\bigr),
+            (\theta_i,\theta_{-i})\right)\mid\theta_i\right].\)
+        </span>
+      </div>
+      <p>
+        Thus, truthful reporting is a BNE in the game induced by \((T,f^D)\).
+        Clearly, in this BNE, the mechanism implements the same outcome rule.
+      </p>
+      <p>
+        For the forward direction of the DSE version, suppose instead that \(s^*=(s_1^*,\ldots,s_n^*)\)
+        is a DSE. Then, for agent \(i\), for all realizations of \(\theta\in T\),
+        \(s_i^*(\theta_i)\) is an optimal action for any actions the others use
+        \(a_{-i}=(a_1,\ldots,a_{i-1},a_{i+1},\ldots,a_n)\).
+        That is, for all \(\theta\in T\), for all \(a=(a_i,a_{-i})\in A\),
+      </p>
+      <div class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Dominant strategy incentive inequality for every true type profile and opponents' actions">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">
+          \(\displaystyle U_i\!\left(f^I\bigl(s_i^*(\theta_i),a_{-i}\bigr),
+            \theta\right)\)
+        </span>
+        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs">
+          \(\displaystyle U_i\!\left(f^I(a_i,a_{-i}),
+            \theta\right).\)
+        </span>
+      </div>
+      <p>
+        In particular, for all \(\theta\in T\), for all
+        \(\hat{\theta}=(\hat{\theta}_i,\hat{\theta}_{-i})\in T\),
+      </p>
+      <div class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Equivalent indirect and direct dominant strategy inequalities with arbitrary reports and the true type profile fixed">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">
+          \(\displaystyle U_i\!\left(f^I\bigl(s^*(\theta_i,\hat{\theta}_{-i})\bigr),
+            \theta\right)\)
+        </span>
+        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs">
+          \(\displaystyle U_i\!\left(f^I\bigl(s^*(\hat{\theta}_i,\hat{\theta}_{-i})\bigr),
+            \theta\right)\)
+        </span>
+
+        <span class="equation-step-connector">\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs">
+          \(\displaystyle U_i\!\left(f^D(\theta_i,\hat{\theta}_{-i}),
+            \theta\right)\)
+        </span>
+        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs">
+          \(\displaystyle U_i\!\left(f^D(\hat{\theta}_i,\hat{\theta}_{-i}),
+            \theta\right).\)
+        </span>
+      </div>
+      <p>
+        Thus, truthful reporting is a DSE in the game induced by \((T,f^D)\).
+      </p>
     </section>
     <section id="notes" class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
@@ -167,16 +298,8 @@
     <section id="references" class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>
       <ul class="reference-list">
-        <li>
-          Börgers, Tilman. <a href="https://doi.org/10.1093/acprof:oso/9780199734023.001.0001"><em>An Introduction
-          to the Theory of Mechanism Design</em></a>. Oxford University Press, 2015.
-        </li>
-        <li>
-          Stole, Lars. <a href="https://ocw.mit.edu/courses/14-124-microeconomic-theory-iv-spring-2017/8e0c2484aed6906405ffe7d9ba73375e_MIT14_124S17_LecNote3.pdf">“Mechanism
-          Design and Self-Selection Contracts.”</a> Section 3 of <em>Lectures on the
-          Theory of Contracts</em>, especially section 3.1, pp. 45–48.
-          MIT OpenCourseWare, <em>14.124 Microeconomic Theory IV</em>, Spring 2017.
-        </li>
+        <li data-reference="borgers-2015"></li>
+        <li data-reference="stole-contracts-2017" data-locator="especially section 3.1, pp. 45–48"></li>
       </ul>
     </section>
   </main>

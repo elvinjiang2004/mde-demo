@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="../../styles.css">
   <link rel="stylesheet" href="../../css/trade-demo.css">
   <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/bibliography.js"></script>
+  <script defer src="../../js/references.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
@@ -38,49 +40,57 @@
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">Bargaining Mechanism Sandbox</h1>
       <p>
-        A seller has an object that she may sell to a buyer. The seller has
-        value \(C \sim F_S(c)\) and the buyer has value \(V \sim F_B(v)\) which are distributed independently. We
-        assume that \(F_S\) has continuous, strictly positive density \(f_S\) on its
-        support \([\underline{c},\overline{c}]\), and, likewise, that \(F_B\) has
-        continuous, strictly positive density \(f_B\) on its support
-        \([\underline{v},\overline{v}]\). We also assume the intersection of the
-        supports is also an interval of positive length, that is, it is not empty and not a single
-        point. The buyer and seller observe their respective values, \(v\) and
+        A seller has an object that she may sell to a buyer. The seller and buyer
+        have independent private values \(C\sim F_S\) and \(V\sim F_B\),
+        respectively. We assume that \(F_S\) has a continuous, strictly positive
+        density \(f_S\) on its support \([\underline{c},\overline{c}]\), and that
+        \(F_B\) has a continuous, strictly positive density \(f_B\) on its support
+        \([\underline{v},\overline{v}]\). These distributions are common knowledge.
+        We also assume that the supports overlap on an interval of positive
+        length. The buyer and seller observe their respective values, \(v\) and
         \(c\), but not the other's.
       </p>
       <p>
-        We consider <em>direct bargaining mechanisms</em> consisting of an allocation rule and two payment rules
-        \((q(v,c),p_B(v,c),p_S(v,c))\). As functions of the reported values (\(v',c'\)), the allocation rule specifies
-        the probability that trade occurs \((q(v',c'))\), and the payment rules specify the payments from the buyer and
-        to the seller which are not necessarily equal, respectively.
-        We evaluate this mechanism by the following properties:</p>
+        We consider a <em>direct bargaining mechanism</em> consisting of an
+        allocation rule \(q:T\to[0,1]\), a payment rule for the buyer
+        \(p_B:T\to\mathbb{R}\), and a payment rule for the seller
+        \(p_S:T\to\mathbb{R}\), where
+        \(T=[\underline{v},\overline{v}]\times[\underline{c},\overline{c}]\).
+        As functions of the reported values, the allocation rule specifies the
+        probability that trade occurs, the buyer's payment rule specifies the
+        expected payment from the buyer, and the seller's payment rule specifies
+        the expected payment to the seller.
+      </p>
+      <p>We evaluate the mechanism by the following properties:</p>
       <ol>
         <li>
-          Incentive Compatibility (IC): The buyer and seller
-          reporting truthfully is an equilibrium. This has two forms: Bayesian IC (BIC), where
-          truthful reporting is a Bayesian&ndash;Nash equilibrium, and Dominant
-          Strategy IC (DSIC), where truthful reporting is a dominant-strategy
-          equilibrium.
+          <strong>Incentive Compatibility (IC):</strong>
+          Truthful reporting by the buyer and seller is an equilibrium. This
+          has two forms: Bayesian IC (BIC), where truthful reporting is a
+          Bayesian Nash equilibrium, and dominant strategy IC (DSIC), where
+          truthful reporting is a dominant strategy equilibrium.
         </li>
         <li>
-          Individual Rationality (IR): Both the buyer and seller want to
-          participate. This is evaluated at three stages: ex ante, interim, and
-          ex post.
+          <strong>Individual Rationality (IR):</strong>
+          Under truthful reporting, both the buyer and seller have a weakly
+          positive payoff at the relevant stage. This is evaluated at three
+          stages: ex ante, interim, and ex post.
         </li>
         <li>
-          (Weak) Budget Balance (BB): Trade does not need to be subsidized.
-          This is evaluated at two stages: ex ante and expost.
+          <strong>(Weak) Budget Balance (BB):</strong>
+          Under truthful reporting, trade does not need to be subsidized. This is
+          evaluated at two stages: ex ante and ex post.
         </li>
         <li>
-          Efficiency: The mechanism maximizes welfare. This is evaluated at
-          two stages: ex ante and ex post.
+          <strong>Efficiency:</strong>
+          Under truthful reporting, the mechanism maximizes welfare. This is
+          evaluated at two stages: ex ante and ex post.
         </li>
       </ol>
       <p>
-        In the interactive demo, browse through a set of common mechanisms and
+        In the interactive demo, browse through a set of mechanisms and
         observe their strengths and weaknesses. Here,
-        \(V,C \mathrel{\overset{\mathrm{i.i.d.}}{\sim}}
-        \operatorname{Uniform}[0,1]\).
+        \(V,C\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Uniform}[0,1]\).
       </p>
     </section>
 
@@ -531,33 +541,24 @@
         efficiency only requires expected welfare to be maximized, so only requires the object to be allocated
         in this way almost surely.
        </li>
+       <li>
+        In order for a mechanism to satisfy multiple properties simultaneously,
+        for example IR and BB, it should be in the same equilibrium. For IC mechanisms,
+        the equilibrium is unique, so this is not an issue.
+       </li>
+       <li>
+        The k-Double Auction has a continuum of equilibria (<span data-citation="leininger-linhart-radner-1989" data-citation-style="parenthetical"></span>). The equilibrium shown in the demo
+        is the one that maximizes expected welfare among them.
+       </li>
     </section>
     <section class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>
       <ul class="reference-list">
-        <li>
-          Groves, Theodore. &ldquo;Incentives in Teams.&rdquo;
-          <em>Econometrica</em> 41, no. 4 (1973): 617&ndash;631.
-          <a href="https://doi.org/10.2307/1914085">https://doi.org/10.2307/1914085</a>.
-        </li>
-        <li>
-          d&rsquo;Aspremont, Claude, and Louis-Andr&eacute; G&eacute;rard-Varet.
-          &ldquo;Incentives and Incomplete Information.&rdquo;
-          <em>Journal of Public Economics</em> 11, no. 1 (1979): 25&ndash;45.
-          <a href="https://doi.org/10.1016/0047-2727(79)90043-4">https://doi.org/10.1016/0047-2727(79)90043-4</a>.
-        </li>
-        <li>
-          Chatterjee, Kalyan, and William Samuelson. &ldquo;Bargaining under
-          Incomplete Information.&rdquo; <em>Operations Research</em> 31, no. 5
-          (1983): 835&ndash;851.
-          <a href="https://doi.org/10.1287/opre.31.5.835">https://doi.org/10.1287/opre.31.5.835</a>.
-        </li>
-        <li>
-          Myerson, Roger B., and Mark A. Satterthwaite. &ldquo;Efficient Mechanisms
-          for Bilateral Trading.&rdquo; <em>Journal of Economic Theory</em> 29, no. 2
-          (1983): 265&ndash;281.
-          <a href="https://doi.org/10.1016/0022-0531(83)90048-0">https://doi.org/10.1016/0022-0531(83)90048-0</a>.
-        </li>
+        <li data-reference="groves-1973"></li>
+        <li data-reference="daspremont-gerard-varet-1979"></li>
+        <li data-reference="chatterjee-samuelson-1983"></li>
+        <li data-reference="myerson-satterthwaite-1983"></li>
+        <li data-reference="leininger-linhart-radner-1989"></li>
       </ul>
     </section>
   </main>

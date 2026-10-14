@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="../../css/trade-demo.css">
   <link rel="stylesheet" href="module.css">
   <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/bibliography.js"></script>
+  <script defer src="../../js/references.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
@@ -32,46 +34,58 @@
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">The Myerson-Satterthwaite Theorem</h1>
       <p>
-        A seller has an object that she may sell to a buyer. The seller has
-        value \(C \sim F_S(c)\) and the buyer has value \(V \sim F_B(v)\) which are distributed independently. We
-        assume that \(F_S\) has continuous, strictly positive density \(f_S\) on its
-        support \([\underline{c},\overline{c}]\), and, likewise, that \(F_B\) has
-        continuous, strictly positive density \(f_B\) on its support
-        \([\underline{v},\overline{v}]\). We also assume the intersection of the
-        supports is also an interval of positive length, that is, it is not empty and not a single
-        point. The buyer and seller observe their respective values, \(v\) and
+        A seller has an object that she may sell to a buyer. The seller and buyer
+        have independent private values \(C\sim F_S\) and \(V\sim F_B\),
+        respectively. We assume that \(F_S\) has a continuous, strictly positive
+        density \(f_S\) on its support \([\underline{c},\overline{c}]\), and that
+        \(F_B\) has a continuous, strictly positive density \(f_B\) on its support
+        \([\underline{v},\overline{v}]\). These distributions are common knowledge.
+        We also assume that the supports overlap on an interval of positive
+        length. The buyer and seller observe their respective values, \(v\) and
         \(c\), but not the other's.
       </p>
       <p>
-        We consider <em>direct bargaining mechanisms</em> consisting of an allocation rule and two payment rules
-        \((q(v,c),p_B(v,c),p_S(v,c))\). As functions of the reported values, the allocation rule specifies
-        the probability that trade occurs, and the payment rules specify the payments from the buyer and
-        to the seller which are not necessarily equal, respectively. We would like a direct bargaining
-        mechanism that satisfies the following properties:
+        We consider a <em>direct bargaining mechanism</em> consisting of an
+        allocation rule \(q:T\to[0,1]\), a payment rule for the buyer
+        \(p_B:T\to\mathbb{R}\), and a payment rule for the seller
+        \(p_S:T\to\mathbb{R}\), where
+        \(T=[\underline{v},\overline{v}]\times[\underline{c},\overline{c}]\).
+        As functions of the reported values, the allocation rule specifies the
+        probability that trade occurs, the buyer's payment rule specifies the
+        expected payment from the buyer, and the seller's payment rule specifies
+        the expected payment to the seller.
       </p>
+      <p>We additionally require that the mechanism satisfies the following properties:</p>
       <ol>
         <li>
-          (Bayesian) Incentive Compatibility (IC): The buyer and seller
-          reporting truthfully is an equilibrium.
+          <strong>(Bayesian) Incentive Compatibility (IC):</strong>
+          Truthful reporting by the buyer and seller is a Bayesian Nash equilibrium.
         </li>
         <li>
-          (Interim) Individual Rationality (IR): After observing their values, both the buyer and seller
-          have a weakly positive expected payoff.
+          <strong>(Interim) Individual Rationality (IR):</strong>
+          In truthful equilibrium, after observing their values, both the buyer
+          and seller have a weakly positive expected payoff.
         </li>
         <li>
-          (Weak, ex-ante) Budget Balance (BB): Trade does not need to be subsidized in expectation.
+          <strong>(Weak, ex-ante)<sup><a id="budget-balance-note-ref"
+            href="#budget-balance-note" role="doc-noteref"
+            aria-label="Note 1 on ex-ante and ex-post budget balance">1</a></sup> Budget Balance (BB):</strong>
+          In truthful equilibrium, trade does not need to be subsidized in expectation.
         </li>
         <li>
-          (Ex-post) Efficiency: The mechanism maximizes welfare at
-          every realized value profile. In other words, the person who values
-          the object most always ends up with it.
+          <strong>(Ex post) Efficiency:</strong>
+          In truthful equilibrium, the mechanism maximizes welfare at every
+          realized value profile.
         </li>
       </ol>
       <p>
-        The Myerson-Satterthwaite Theorem claims that such a mechanism does not exist.
-        In the interactive demo, design a direct bargaining mechanism
-        and see where it fails. Here, \(V,C \mathrel{\overset{\mathrm{i.i.d.}}{\sim}}
-        \operatorname{Uniform}[0,1]\).
+        <strong>Theorem (The Myerson-Satterthwaite Theorem):</strong>
+        No mechanism satisfies all four properties.
+      </p>
+      <p>
+        In the interactive demo, design a direct bargaining mechanism and see
+        where it fails. Here,
+        \(V,C\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Uniform}[0,1]\).
       </p>
     </section>
 
@@ -320,11 +334,13 @@
         <li>IR: \(\displaystyle U_B(v)\geq 0\), for all \(v\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\geq 0\), for all \(c\in[\underline{c},\overline{c}]\).</li>
       </ul>
       <p>
-        We have the following theorem regarding the implementability of an allocation rule \(q(v,c)\):
+        We have the following theorem regarding the implementability<sup><a
+          id="implementability-note-ref" href="#implementability-note" role="doc-noteref"
+          aria-label="Note 2 on implementability">2</a></sup> of an allocation rule \(q\):
       </p>
       <p>
         <strong>Theorem:</strong> 
-        An allocation rule \(q(v,c)\) is IC implementable by some payment rules 
+        An allocation rule \(q\) is implementable
         if and only if \(Q_B\) is weakly increasing and \(Q_S\) is weakly decreasing. Furthermore, the payment
         rules must set interim expected payments as
       </p>
@@ -335,34 +351,63 @@
         \]
       </div>
       <p>
-        <em>Proof:</em> Start with the forward implication.
-        For the buyer, for all \(v, v'\in[\underline{v},\overline{v}]\), by IC
+        <em>Proof:</em> Start with the forward direction. Suppose \(q\) is implementable with \(p_B\) and \(p_S\).
+        For the buyer, for all \(v_1,v_2\in[\underline{v},\overline{v}]\) with \(v_1\lt v_2\), IC gives
       </p>
 
-      <div id="buyer-monotonicity-envelope-proof" class="equation-chain-steps">
+      <div id="buyer-monotonicity-proof" class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Buyer incentive compatibility inequalities for truthful reports at both values">
         <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle U_B(v) \)</span>
+        <span class="equation-step-lhs">\(\displaystyle U_B(v_1)\geq U_B(v_1,v_2)\)</span>
+        <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle U_B(v_2)\geq U_B(v_2,v_1)\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \iff v_1Q_B(v_1)-P_B(v_1)\geq v_1Q_B(v_2)-P_B(v_2)\)</span>
+        <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_2Q_B(v_2)-P_B(v_2)\geq v_2Q_B(v_1)-P_B(v_1)\)</span>
+
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false"
+          aria-label="Show or hide intermediate monotonicity steps" hidden><span
+            class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+        <span class="equation-step-connector equation-step-extra" hidden></span>
+        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle \iff v_1Q_B(v_1)-v_1Q_B(v_2)\geq P_B(v_1)-P_B(v_2)\)</span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \text{and}\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_2Q_B(v_2)-v_2Q_B(v_1)\geq P_B(v_2)-P_B(v_1)\)</span>
+
+        <span class="equation-step-connector equation-step-extra" hidden></span>
+        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle \iff v_1(Q_B(v_1)-Q_B(v_2))\geq P_B(v_1)-P_B(v_2)\)</span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \text{and}\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_2(Q_B(v_2)-Q_B(v_1))\geq P_B(v_2)-P_B(v_1).\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \iff -v_1(Q_B(v_2)-Q_B(v_1))\geq P_B(v_1)-P_B(v_2)\)</span>
+        <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_2(Q_B(v_2)-Q_B(v_1))\geq P_B(v_2)-P_B(v_1).\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \implies (v_2-v_1)(Q_B(v_2)-Q_B(v_1))\)</span>
         <span class="equation-step-relation">\(\displaystyle \geq\)</span>
-        <span class="equation-step-rhs">\(\displaystyle U_B(v,v') = vQ_B(v')-P_B(v') \)</span>
-        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
-
-        <span class="equation-step-connector">\(\displaystyle \iff \)</span>
-        <span class="equation-step-lhs">\(\displaystyle U_B(v) \)</span>
-        <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \max\left\{ vQ_B(v')-P_B(v')| v' \in [\underline{v},\overline{v}] \right\} \)</span>
-
+        <span class="equation-step-rhs">\(\displaystyle 0\)</span>
       </div>
 
+      <p>
+        Then, since \(v_2>v_1\), we have \(Q_B(v_2)-Q_B(v_1)\geq 0\), so \(Q_B\) is weakly
+        increasing. For the seller, a similar reasoning shows for all \(c_1,c_2\in[\underline{c},\overline{c}]\) with \(c_1\lt c_2\), IC gives
+        \(-(Q_S(c_2)-Q_S(c_1))\geq 0\), so \(Q_S\) is weakly decreasing.
+      </p>
     <p>
-      Then, \(U_B(v)\) is the upper envelope of a family of affine functions\(\implies\) it is convex \(\implies\)
-      it is absolutely continuous \(\implies\) its derivative exists almost everywhere.
-      By the envelope theorem, we can differentiate through the maximum almost everywhere,
-      so \(U_B'(v)=Q_B(v)\) almost everywhere, and so \(Q_B\) is weakly increasing, since \(U_B\) is convex.
-      A similar argument shows that \(-Q_S\) is weakly increasing, so \(Q_S\) is weakly decreasing.
+      Additionally, for all \(v\in[\underline{v},\overline{v}]\) and \(c\in[\underline{c},\overline{c}]\), IC gives
     </p>
+      <div id="buyer-ic-integral" class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Buyer incentive compatibility inequalities for truthful reports at both values">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle U_B(v)=\sup\{vQ_B(v')-P_B(v')|v'\in[\underline{v},\overline{v}]\}\)</span>
+        <span class="equation-step-relation">\(\displaystyle \text{and} \)</span>
+        <span class="equation-step-rhs">\(\displaystyle U_S(c)=\sup\{P_S(c')-cQ_S(c')|c'\in[\underline{c},\overline{c}]\}.\)</span>
+
+      </div>
     <p>
-      Once we have \(Q_B\) and \(Q_S\), Corollary 1 in Milgrom and Segal (2002) states that
-      \(U_B\) and \(U_S\) satisfy the integral conditions
+    Then, interim truthful utilities are the upper envelopes of a family of affine functions in \(v\) and in \(c\), respectively.
+    <a href="../../general-topics/envelope-theorem/index.html">The Envelope Theorem</a> gives the integral conditions:
     </p>
 
       <div id="IC integral conditions" class="equation-chain-steps">
@@ -388,13 +433,9 @@
         <span class="equation-step-relation" >\(\displaystyle \text{and} \)</span>
         <span class="equation-step-rhs" >\(\displaystyle P_S(c) = U_S(\overline{c}) + \int_c^{\overline{c}} Q_S(t)\, dt+c\,Q_S(c) \)</span>
       </div>
-    <p>
-      And we can set ex-post payments as \(p_B(v,c)=P_B(v)\) and \(p_S(v,c)=P_S(c)\).
-    </p>
-
       <p>
-      For the reverse implication, suppose \(Q_B\) is weakly increasing, \(Q_S\) is weakly decreasing,
-      and the payments imply the above interim expected payments. 
+      For the reverse direction, suppose \(q\) is such that \(Q_B\) is weakly increasing and \(Q_S\) is weakly decreasing.
+      Define \(P_B\) and \(P_S\) as above, and set ex-post payments as \(p_B(v,c)=P_B(v)\) and \(p_S(v,c)=P_S(c)\).
       Let's verify that this mechanism is IC. For a buyer with value \(v\), for all \(v'\in[\underline{v},\overline{v}]\),
       the difference between the expected payoff from truthfully reporting \(v\) and misreporting \(v'\) is
       </p>
@@ -423,7 +464,7 @@
       </div>
       <p class="has-qed">
         Because \(Q_B\) is weakly increasing, this difference is weakly positive for all \(v,v'\in[\underline{v},\overline{v}]\).
-        A similar argument gives the seller's IC condition. Thus, the mechanism is IC.
+        A similar argument gives IC for the seller. Thus, the mechanism is IC.
         <span class="qed">\(\blacksquare\)</span>
       </p>
       <p>
@@ -751,41 +792,30 @@
 
     <section class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
-      <ul class="notes-list">
-          <li>
-            Most of the times, the Myerson-Satterthwaite theorem is stated for ex-post BB.
-            Börgers and Norman (2009) show that the two problems are equivalent, that is,
-            if a mechanism is ex-ante BB, then it can be modified to be ex-post BB while preserving IC and IR.
-          </li>
-
-      </ul>
+      <ol class="notes-list">
+        <li id="budget-balance-note" tabindex="-1">
+          Most of the times, the Myerson-Satterthwaite theorem is stated for ex-post BB.
+          <span data-citation="borgers-norman-2009"></span> show that the two problems are equivalent, that is,
+          if a mechanism is ex-ante BB, then it can be modified to be ex-post BB while preserving IC and IR.
+          <a href="#budget-balance-note-ref" role="doc-backlink"
+            aria-label="Return to Weak, ex-ante">↩</a>
+        </li>
+        <li id="implementability-note" tabindex="-1">
+          By definition, an allocation rule \(q\) is <em>implementable</em> if and
+          only if there exist payment rules \(p_B\) and \(p_S\) such that the
+          mechanism \((q,p_B,p_S)\) is IC.
+          <a href="#implementability-note-ref" role="doc-backlink"
+            aria-label="Return to the word implementability">↩</a>
+        </li>
+      </ol>
     </section>
 
     <section class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>
       <ul class="reference-list">
-        <li>
-          Börgers, Tilman, Daniel Krähmer, and Roland Strausz.
-          <em>An Introduction to the Theory of Mechanism Design</em>, 63–71.
-          Oxford University Press, 2015.
-        </li>
-        <li>
-          Börgers, Tilman, and Peter Norman. “A note on budget balance under
-          interim participation constraints: the case of independent types.”
-          <em>Economic Theory</em> 39, no. 3 (2009): 477–489.
-          <a href="https://doi.org/10.1007/s00199-008-0347-7">https://doi.org/10.1007/s00199-008-0347-7</a>.
-        </li>
-        <li>
-          Milgrom, Paul, and Ilya Segal. “Envelope Theorems for Arbitrary
-          Choice Sets.” <em>Econometrica</em> 70, no. 2 (2002): 583–601.
-          <a href="https://doi.org/10.1111/1468-0262.00296">https://doi.org/10.1111/1468-0262.00296</a>.
-        </li>
-        <li>
-          Myerson, Roger B., and Mark A. Satterthwaite. “Efficient Mechanisms
-          for Bilateral Trading.” <em>Journal of Economic Theory</em> 29, no. 2
-          (1983): 265–281.
-          <a href="https://doi.org/10.1016/0022-0531(83)90048-0">https://doi.org/10.1016/0022-0531(83)90048-0</a>.
-        </li>
+        <li data-reference="borgers-2015" data-locator="pp. 63–71"></li>
+        <li data-reference="borgers-norman-2009"></li>
+        <li data-reference="myerson-satterthwaite-1983"></li>
       </ul>
     </section>
   </main>

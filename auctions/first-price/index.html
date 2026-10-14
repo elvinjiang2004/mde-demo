@@ -7,6 +7,8 @@
   <title>The IPV First-Price Auction Equilibrium | Mechanism Design Explorer</title>
   <link rel="stylesheet" href="../../styles.css">
   <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/bibliography.js"></script>
+  <script defer src="../../js/references.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
@@ -33,47 +35,52 @@
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">The IPV First-Price Auction Equilibrium</h1>
       <p>
-        One indivisible object is to be sold in a sealed-bid auction with no reserve
-        price. There are \(n \ge 2\) risk-neutral bidders. Bidders have values \(V_1, \ldots, V_n \overset{\mathrm{i.i.d.}}{\sim}\)
-        \(F(v)\). We assume that \(F\) has continuous, strictly positive density
-        \(f\) on its support \([\underline{v}, \overline{v}]\). Each bidder \(i\) privately observes
-        his realized value \(v_i\). Next,
-        all bidders simultaneously submit their bids. The highest bidder wins the
-        object, gets his value for the object, and pays his own bid, while losing
-        bidders get nothing and pay zero. Ties are broken uniformly at random
-        though occur with probability zero since \(f\) is continuous.
+        One indivisible object is to be sold. There are \(n\geq 2\)
+        risk-neutral bidders. Bidders have independent private values
+        \(V_i\sim F\), \(i=1,\ldots,n\). We assume that \(F\) has a continuous,
+        strictly positive density \(f\) on its support
+        \([\underline{v},\overline{v}]\). The distribution \(F\) is common knowledge.
+      </p>
+      <p>
+        We consider a <em>first-price sealed-bid auction</em> with no reserve
+        price. Each bidder \(i\) privately observes his realized value \(v_i\),
+        and then all bidders simultaneously submit their bids. The highest bidder
+        wins the object, receives his value for it, and pays his own bid, while
+        losing bidders receive nothing and pay zero. Ties are broken uniformly
+        at random.
       </p>
       <p>
         Consider bidder 1 with value \(v_1\). Let
-        <span class="highest-value-definition" aria-label="Y subscript 1 equals the maximum of X subscript 1 through X subscript n minus 1">
-          \(Y_1 = \max\{X_1, \ldots, X_{n-1}\}\)
-        </span>, where
-        \(X_1,\ldots,X_{n-1}\overset{\mathrm{i.i.d.}}{\sim}F(v)\).
-        Suppose bidders
-        \(2,\ldots,n\) bid according to the symmetric, increasing function
+        <span class="highest-value-definition" aria-label="Y subscript 1 equals the maximum of V subscript 2 through V subscript n">
+          \(Y_1=\max\{V_2,\ldots,V_n\}\)
+        </span> denote the highest opposing value. Suppose bidders
+        \(2,\ldots,n\) use the following symmetric, increasing bidding strategy
+        for \(v_i>\underline{v}\):
       </p>
-
       <div class="equation-display" aria-label="beta superscript I of v equals the expected value of Y subscript 1 conditional on v being greater than Y subscript 1">
         \[
           \beta^{\mathrm{I}}(v_i)
-          = \mathbb{E}\!\left[Y_1 \mid v_i > Y_1\right], i = 2, \ldots, n.
+          =\mathbb{E}\!\left[Y_1\mid v_i > Y_1\right].
         \]
       </div>
       <p>
-        We claim that it is also optimal for bidder 1 to bid according to \(\beta^{\mathrm{I}}\),
-        making \(\beta^{\mathrm{I}}\) an equilibrium bidding strategy.
+        At the lower endpoint, define
+        \(\beta^{\mathrm{I}}(\underline{v})=\underline{v}\) by continuity.
       </p>
-
       <p>
-        In the interactive demo, you take the perspective of bidder 1, considering different
-        bids in response to the other bidders using this strategy. Here,
-        \(V_i = a + (b-a)X_i\), where
-        \(X_1, \ldots, X_{n} \overset{\mathrm{i.i.d.}}{\sim} \operatorname{Beta}(\alpha, \beta)\)
-        (\(\alpha = 1\), \(\beta = 1\) for
-        \(\operatorname{Uniform}[a,b]\) values). Choose your value
-        \(v_1\) or randomly draw it. Then, propose a bid
-        \(x_1\) and observe how changing it affects your expected
-        payoff.
+        <strong>Proposition:</strong>
+        It is also optimal for bidder 1 to use \(\beta^{\mathrm{I}}\). Thus, all
+        bidders using this strategy is a Bayesian Nash equilibrium.
+      </p>
+      <p>
+        In the interactive demo, take the perspective of bidder 1 and consider
+        different bids in response to the other bidders using this strategy.
+        Here, \(V_i=a+(b-a)Z_i\), where
+        \(Z_i\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Beta}(\alpha,\beta)\),
+        \(i=1,\ldots,n\). When \(\alpha=\beta=1\), values are
+        \(\mathrm{Uniform}[a,b]\). Choose your value \(v_1\) or randomly draw it.
+        Then, propose a bid \(x_1\) and observe how changing it affects your
+        expected payoff.
       </p>
     </section>
 
@@ -273,27 +280,16 @@
           </li>
           <li>
             We have not shown this equilibrium is unique, but a little more work shows that it is the unique symmetric, increasing equilibrium.
-            See Krishna (2009), sec. 2.3, pp. 14–16.
+            See <span data-citation="krishna-2009"></span>, sec. 2.3, pp. 14–16.
             If we do not restrict to symmetric, increasing equilibria, even more work is required.
           </li>
-          <li>
-            The conditional expectation \(\mathbb{E}\!\left[Y_1 \mid v_i > Y_1\right]\) is not defined for
-            \(v_i= a\) because \(P(v_i > Y_1) = 0\). Then, we define \(\beta^{\mathrm{I}}(a)\)
-            as the limit of this conditional expectation as \(v_i \to a^+\) which is \(a\).
-          </li>
-
       </ul>
     </section>
 
     <section class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>
       <ul class="reference-list">
-        <li>
-          Vijay Krishna,
-          <a href="https://shop.elsevier.com/books/auction-theory/krishna/978-0-12-374507-1"><cite>Auction Theory</cite></a>,
-          2nd ed. (Academic Press, 2009), sec. 2.3, Proposition 2.2,
-          pp. 14–16.
-        </li>
+        <li data-reference="krishna-2009" data-locator="sec. 2.3, Proposition 2.2, pp. 14–16"></li>
       </ul>
     </section>
   </main>

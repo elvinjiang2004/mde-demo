@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="../../styles.css">
   <link rel="stylesheet" href="module.css">
   <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/bibliography.js"></script>
+  <script defer src="../../js/references.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
@@ -24,7 +26,49 @@
   <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">Optimal Auctions</h1>
-      <!-- Environment and explanation await user-authored or approved lesson prose. -->
+      <p>
+        A seller intends to sell an object for which she has no value. There are
+        \(n\geq 2\) risk-neutral bidders. Bidders have independent private values
+        \(V_i\sim F_i\), \(i=1,\ldots,n\). We assume that each \(F_i\) has a
+        continuous, strictly positive density \(f_i\) on its support
+        \([\underline{v}_i,\overline{v}_i]\). These distributions are common knowledge.
+      </p>
+      <p>
+        The seller wishes to maximize expected revenue with a <em>direct selling
+        mechanism</em> consisting of an allocation rule \(q:T\to[0,1]^n\) and a
+        payment rule \(p:T\to\mathbb{R}^n\), where
+        \(T=\prod_{i=1}^n[\underline{v}_i,\overline{v}_i]\). As functions of the
+        reported values, for each bidder, the allocation rule specifies the
+        probability the object is sold to him, and the payment rule specifies
+        the expected payment from him. Writing \(q=(q_1,\ldots,q_n)\),
+        since there is only one object to be sold, we require that for all \(v\in T\),
+        \(\sum_{i=1}^n q_i(v)\leq 1.\)
+      </p>
+      <p>We additionally require that the mechanism satisfies the following properties:</p>
+      <ol>
+        <li>
+          <strong>(Bayesian) Incentive Compatibility (IC):</strong>
+          All bidders truthfully reporting is a Bayesian Nash equilibrium.
+        </li>
+        <li>
+          <strong>(Interim) Individual Rationality (IR):</strong>
+          In truthful equilibrium, after observing their values, all bidders have a weakly positive
+          expected payoff.
+        </li>
+      </ol>
+      <p>
+        <strong>Theorem (<span data-citation="myerson-1981" data-citation-style="parenthetical"></span>):</strong>
+        When the design problem is <em>regular</em>,
+        meaning that each bidder's <em>virtual value</em>
+        \(\phi_i(v_i)=v_i-\frac{1-F_i(v_i)}{f_i(v_i)}\) is weakly increasing,
+        there is a revenue-maximizing auction that allocates the object to a
+        bidder with the highest positive virtual value. Otherwise, if no bidder has a
+        positive virtual value, the object is not sold.
+      </p>
+      <p>
+        In the interactive demo, design a direct selling mechanism for two
+        bidders. Here, \(V_1,V_2\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Uniform}[0,1]\).
+      </p>
     </section>
     <section id="model-specifications" class="model-specifications" hidden></section>
     <section id="auction-demo" class="explorable-divider" aria-label="Optimal auction allocation editor">
@@ -117,7 +161,12 @@
     </section>
     <section id="derivation" hidden><!-- User-authored derivation. --></section>
     <section id="notes" hidden><!-- User-authored notes. --></section>
-    <section id="references" hidden><!-- User-approved bibliography. --></section>
+    <section id="references" class="references" aria-labelledby="references-title">
+      <h2 id="references-title">References</h2>
+      <ul class="reference-list">
+        <li data-reference="myerson-1981"></li>
+      </ul>
+    </section>
   </main>
   <footer class="site-footer"><page-footer></page-footer></footer>
 </body>

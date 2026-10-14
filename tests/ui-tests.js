@@ -208,12 +208,12 @@
           var definition = introduction.querySelector(".highest-value-definition");
           assert(definition && definition.querySelector('mjx-container[jax="SVG"]') &&
             definition.getAttribute("aria-label").includes("maximum") &&
-            definition.getAttribute("aria-label").includes("X subscript 1") &&
-            definition.getAttribute("aria-label").includes("n minus 1") &&
+            definition.getAttribute("aria-label").includes("V subscript 2") &&
+            definition.getAttribute("aria-label").includes("V subscript n") &&
             introduction.querySelector(
-              '[data-mml-node="math"][data-latex*="X_1"][data-latex*="X_{n-1}"]'
+              '[data-mml-node="math"][data-latex*="V_2"][data-latex*="V_n"]'
             ),
-            "The introduction should define Y_1 using n-1 auxiliary opponent draws.");
+            "The introduction should define Y_1 as the highest of the n-1 opposing values.");
         }
       },
       {

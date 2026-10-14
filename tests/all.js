@@ -15,6 +15,7 @@
     { file: "revelation-principle-model-tests.html", name: "Revelation Principle model", kind: "model" },
     { file: "chart-viewport-ui-tests.html", name: "Chart viewport spacing", kind: "interface" },
     { file: "components-tests.html", name: "Shared components", kind: "interface" },
+    { file: "bibliography-tests.html", name: "Global bibliography", kind: "interface" },
     { file: "menu-tests.html", name: "Module menu", kind: "interface" },
     { file: "ui-tests.html", name: "First-price interface", kind: "interface" },
     { file: "second-price-ui-tests.html", name: "Second-price interface", kind: "interface" },

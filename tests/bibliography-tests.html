@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Global bibliography tests</title>
+  <style>
+    body { max-width: 760px; margin: 3rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; }
+    .pass { color: #17613f; }
+    .fail { color: #8e3030; }
+    #sandbox, #app-frame { position: absolute; left: -9999px; top: 0; }
+    #app-frame { width: 1280px; height: 900px; }
+  </style>
+  <script defer src="test-harness.js"></script>
+  <script defer src="../js/bibliography.js"></script>
+  <script defer src="../js/references.js"></script>
+  <script defer src="bibliography-tests.js"></script>
+</head>
+<body data-status="running">
+  <h1>Global bibliography tests</h1>
+  <p id="summary">Running tests…</p>
+  <ol id="results"></ol>
+  <div id="sandbox">
+    <ul class="reference-list"><li data-reference="krishna-2009"></li></ul>
+    <p><span data-citation="krishna-2009"></span></p>
+  </div>
+  <iframe id="app-frame" title="Lesson bibliography fixture"></iframe>
+</body>
+</html>

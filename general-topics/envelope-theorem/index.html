@@ -7,6 +7,8 @@
   <title>The Envelope Theorem | Mechanism Design Explorer</title>
   <link rel="stylesheet" href="../../styles.css">
   <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/bibliography.js"></script>
+  <script defer src="../../js/references.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
@@ -29,37 +31,37 @@
 
       <p>
         A single agent wishes to maximize a real-valued function \(f(x,t)\)
-        with \(t\in[0,1]\) with his choice of \(x\in X\). We call \(f\) the
-        <em>objective function</em>, \(t\) a <em>parameter</em>, and \(x\) the
-        <em>choice variable</em>. Denote the following:
+        by choosing \(x\in X\), for a given parameter \(t\in T=[0,1]\).
+        We call \(f:X\times T\to\mathbb{R}\) the <em>objective function</em>,
+        \(t\) a <em>parameter</em>, and \(x\) the <em>choice variable</em>.
+        Define the following:
       </p>
 
       <ul>
         <li>
-          \(V(t)=\sup\{f(x,t)\mid x\in X\}\), the <em>value function</em> or
-          upper envelope of the family of functions
+          <strong>Value function:</strong> \(V(t)=\sup\{f(x,t)\mid x\in X\}\),
+          the upper envelope of the family of functions
           \(\{f(x,t)\mid x\in X\}\).
         </li>
         <li>
-          \(X^*(t)=\operatorname*{arg\,max}\{f(x,t)\mid x\in X\}\), the <em>set
-          of maximizers</em> at \(t\).
+          <strong>Set of maximizers:</strong>
+          \(X^*(t)=\operatorname*{arg\,max}\{f(x,t)\mid x\in X\}\).
         </li>
         <li>
-          \(x^*(t)\in X^*(t)\), when \(X^*(t)\) is non-empty, a particular selection from
-          the non-empty set of maximizers at \(t\).
+          <strong>Selection:</strong> \(x^*(t)\in X^*(t)\), a particular
+          maximizer when \(X^*(t)\) is nonempty.
         </li>
       </ul>
 
       <p>
-        Envelopes theorems characterize the
-        behavior of \(V(t)\) as the parameter \(t\) varies. There are many different envelope
-        theorems (or perhaps many different versions of the same envelope
-        theorem). The following are two that are unique in their generality.
+        Envelope theorems characterize how \(V(t)\) behaves as the parameter
+        \(t\) varies. <span data-citation="milgrom-segal-2002"></span> give the following two results
+        for arbitrary choice sets.
       </p>
 
-      <p>Theorem 1 from Milgrom and Segal (2002) states,</p>
       <p>
-        <strong>Theorem:</strong> Let \(t\in(0,1)\) and suppose
+        <strong>Theorem 1 (<span data-citation="milgrom-segal-2002" data-citation-style="parenthetical"></span>):</strong>
+        Let \(t\in(0,1)\) and suppose
         \(f_t(x^*(t),t)\) exists. If \(V\) is differentiable at \(t\), then
       </p>
       <div class="equation-display" aria-label="V prime of t equals the partial derivative of f with respect to t evaluated at x star of t comma t">
@@ -68,33 +70,35 @@
         \]
       </div>
 
-      <p>Theorem 2 from Milgrom and Segal (2002) states,</p>
-      <p><strong>Theorem:</strong> Suppose the following conditions hold:</p>
+      <p>
+        <strong>Theorem 2 (<span data-citation="milgrom-segal-2002" data-citation-style="parenthetical"></span>):</strong>
+        Suppose the following conditions hold:
+      </p>
       <ol>
         <li>
           \(f(x,t)\) is absolutely continuous in \(t\), for all \(x\in X\).
         </li>
         <li>
           There exists an integrable function
-          \(b:[0,1]\to\mathbb{R}_{+}\) such that
+          \(b:T\to\mathbb{R}_{+}\) such that
           \(\lvert f_t(x,t)\rvert\le b(t)\) for all \(x\in X\) and almost all
-          \(t\in[0,1]\).
+          \(t\in T\).
         </li>
       </ol>
 
       <p>
-        Then, \(V\) is absolutely continuous and, thus, differentiable almost
+        Then \(V\) is absolutely continuous and, therefore, differentiable almost
         everywhere.
       </p>
-      <p>Suppose additionally,</p>
+      <p>Suppose additionally that:</p>
       <ol start="3">
         <li>
-          \(f(x,t)\) is differentiable at every \(t\in[0,1]\), for all
+          \(f(x,t)\) is differentiable at every \(t\in T\), for all
           \(x\in X\).
         </li>
-        <li>\(X^*(t)\ne\varnothing\) at almost every \(t\in[0,1]\).</li>
+        <li>\(X^*(t)\ne\varnothing\) at almost every \(t\in T\).</li>
       </ol>
-      <p>Then, for all \(t\in[0,1]\)</p>
+      <p>Then, for every \(t\in T\)</p>
       <div class="equation-display" aria-label="V of t equals V of zero plus the integral from zero to t of the partial derivative of f with respect to t evaluated at x star of s comma s d s">
         \[
           V(t)=V(0)+\int_0^t f_t(x^*(s),s)\,ds.
@@ -264,7 +268,9 @@
         \]
       </div>
       <p>
-        A consequence of this is that, given an implementable allocation rule \(q\),
+        A consequence of this is that, given an implementable<sup><a
+          id="implementability-note-ref" href="#implementability-note" role="doc-noteref"
+          aria-label="Note 1 on implementability">1</a></sup> allocation rule \(q\),
         incentive compatibility pins down the shape of \(U\) and, thus, the shape of the payment rule \(p\).
         This fact is important for results like the Revenue Equivalence Theorem or the
         Myerson-Satterthwaite Theorem.
@@ -273,21 +279,21 @@
 
     <section class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
-      <ul class="notes-list">
-      </ul>
+      <ol class="notes-list">
+        <li id="implementability-note" tabindex="-1">
+          In the single-parameter setting considered here, an allocation rule is
+          implementable if and only if it is weakly increasing.
+          <a href="#implementability-note-ref" role="doc-backlink"
+            aria-label="Return to the word implementable">↩</a>
+        </li>
+      </ol>
     </section>
 
     <section class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>
       <ul class="reference-list">
-        <li>
-          Börgers, Tilman. <a href="https://doi.org/10.1093/acprof:oso/9780199734023.001.0001"><em>An Introduction
-          to the Theory of Mechanism Design</em></a>. Oxford University Press, 2015.
-        </li>
-        <li>
-          Milgrom, Paul, and Ilya Segal. "Envelope Theorems for Arbitrary
-          Choice Sets." <em>Econometrica</em> 70, no. 2 (2002): 583–601.
-        </li>
+        <li data-reference="borgers-2015"></li>
+        <li data-reference="milgrom-segal-2002"></li>
       </ul>
     </section>
   </main>
