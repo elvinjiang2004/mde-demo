@@ -417,12 +417,12 @@
             .getBoundingClientRect();
           var yAxisRect = appDocument.querySelector(".chart-480x520-y-axis-label")
             .getBoundingClientRect();
-          var mainLabelLeft = paintRect.left + 40 / 480 * paintRect.width;
-          var mainLabelWidth = 440 / 480 * paintRect.width;
+          var mainLabelLeft = paintRect.left + 50 / 480 * paintRect.width;
+          var mainLabelWidth = 400 / 480 * paintRect.width;
           assertClose(xAxisRect.left, mainLabelLeft,
-            "The HTML buyer-value axis label should keep its established inset.", 1);
+            "The HTML buyer-value axis label should start at the plotting edge.", 1);
           assertClose(xAxisRect.width, mainLabelWidth,
-            "The HTML buyer-value axis label should keep its established span.", 1);
+            "The HTML buyer-value axis label should span the plotting area.", 1);
           assert(yAxisRect.left >= paintRect.left &&
             yAxisRect.right <= paintRect.right &&
             yAxisRect.top >= paintRect.top &&
@@ -435,14 +435,15 @@
             var chart = appDocument.getElementById(id);
             var chartRect = chart.getBoundingClientRect();
             var frame = chart.closest(".math-chart-frame");
-            var xRect = frame.querySelector(".chart-220x240-x-axis-label")
+            var xRect = chart.closest(".chart-viewport").querySelector(".chart-220x240-x-axis-label")
               .getBoundingClientRect();
             var yRect = frame.querySelector(".chart-220x240-y-axis-label")
               .getBoundingClientRect();
-            assertClose(xRect.left, chartRect.left,
-              "Chart " + id + "'s x label should keep its full-width span.", 1);
-            assertClose(xRect.width, chartRect.width,
-              "Chart " + id + "'s x label should span the chart.", 1);
+            var plotRect = chart.querySelector("rect.axis-line").getBoundingClientRect();
+            assertClose(xRect.left, plotRect.left,
+              "Chart " + id + "'s x label should start at its plotting edge.", 1);
+            assertClose(xRect.width, plotRect.width,
+              "Chart " + id + "'s x label should span its plotting area.", 1);
             assert(yRect.left >= chartRect.left && yRect.right <= chartRect.right &&
               yRect.top >= chartRect.top && yRect.bottom <= chartRect.bottom,
             "Chart " + id + "'s y label should stay inside its plot.");

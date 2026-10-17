@@ -34,10 +34,10 @@
         define the following:
       </p>
       <ul>
-        <li><strong>Type:</strong> \(\theta_i\in T_i\). We write
-        \(\theta=(\theta_1,\ldots,\theta_n)\in T\) and
+        <li><strong>Type:</strong> \(\theta_i\in T_i\). We call \(T=\prod_{i=1}^n T_i\) the <em>type space</em>
+        and write \(\theta=(\theta_1,\ldots,\theta_n)\in T\) and
         \(\theta_{-i}=(\theta_1,\ldots,\theta_{i-1},\theta_{i+1},\ldots,\theta_n)\).
-        We call \(T=\prod_{i=1}^n T_i\) the <em>type space</em>.</li>
+        </li>
         <li>
           <strong>Belief:</strong> The distribution of the other agents' types,
           conditional on the agent's own type, \(p_i(\theta_{-i}\mid\theta_i)\).
@@ -173,7 +173,7 @@
         You may notice in the demo you cannot increase your payoff in the direct
         mechanism by misrepresenting your preferences. That is, for all preference
         profiles, it is optimal for you to report truthfully in the direct mechanism.
-        The simulated rounds give an idea as to why and show the revelation principle
+        The simulated rounds give an idea as to why and show the Revelation Principle
         proof's general idea: a direct mechanism can just execute the equilibrium
         strategies of any indirect one. Let's verify this more rigorously.
       </p>
@@ -294,6 +294,10 @@
     <section id="notes" class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
       <!-- User-authored Notes. -->
+       <li>
+        The direct revelation implementation of a mechanism
+        is not necessarily strategically equivalent to the original mechanism.
+       </li>
     </section>
     <section id="references" class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>

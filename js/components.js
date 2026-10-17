@@ -122,6 +122,8 @@
   var VALUE_DENSITY_PREVIEW_HTML = [
     '  <figure class="value-pdf-preview-figure">',
     '    <figcaption>PDF of value, \\(V_i\\)</figcaption>',
+    '    <div class="chart-viewport stable-chart-viewport chart-density-viewport" data-chart-padding="14">',
+    '      <div class="chart-canvas-frame chart-320x120-frame">',
     '    <svg',
     '      id="value-pdf-preview"',
     '      viewBox="0 0 320 120"',
@@ -131,6 +133,8 @@
     '      <title id="value-pdf-preview-title">PDF of value, V subscript i</title>',
     '      <desc id="value-pdf-preview-description">The selected Beta value density.</desc>',
     '    </svg>',
+    '      </div>',
+    '    </div>',
     '  </figure>'
   ].join("\n");
 

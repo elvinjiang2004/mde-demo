@@ -225,10 +225,10 @@
               return menuWindow.getComputedStyle(row).display === "flex";
             }),
           "Each category should arrange its modules in a row.");
-          assert(rows[0].querySelectorAll(":scope > li").length === 3,
-            "The General Topics row should contain three working modules.");
-          assert(rows[1].querySelectorAll(":scope > li").length === 3,
-            "The Auctions row should contain three module entries.");
+          assert(rows[0].querySelectorAll(":scope > li").length === 2,
+            "The General Topics row should contain two working modules.");
+          assert(rows[1].querySelectorAll(":scope > li").length === 4,
+            "The Auctions row should contain four module entries.");
           assert(rows[2].querySelectorAll(":scope > li").length === 2,
             "The Bilateral Trade row should contain two module entries.");
         }
@@ -266,8 +266,8 @@
             "Second-Price Auction Equilibrium",
           "The second-price module title is incorrect.");
           assert(menuDocument.querySelectorAll(".module-link").length === 8,
-            "All three auction modules, both bilateral-trade modules, and all " +
-            "three General Topics modules should be links.");
+            "All four auction modules, both bilateral-trade modules, and both " +
+            "General Topics modules should be links.");
           assert(!menuDocument.querySelector('.module-link[aria-disabled="true"]') &&
             !menuDocument.querySelector("a.module-pending"),
           "No implemented module should remain disabled.");
@@ -313,16 +313,18 @@
         }
       },
       {
-        name: "The payments-from-allocation-rule (draft) module is selectable",
+        name: "Ironing is selectable under Auctions as a separate module",
         run: function () {
           var link = menuDocument.querySelector(
-            'a.module-link[href="general-topics/payments-from-allocation-rule/index.html"]'
+            '#auctions a.module-link[href="auctions/ironing/index.html"]'
           );
           assert(link,
-            "The payments-from-allocation-rule module should use its explicit index.html route.");
+            "Ironing should use its own explicit auction route.");
           assert(link.querySelector(".module-title").textContent ===
-            "Payments from an Allocation Rule (draft)",
-          "The payments-from-allocation-rule module title is incorrect.");
+            "Ironing",
+          "The Ironing module title is incorrect.");
+          assert(!menuDocument.querySelector('a[href="general-topics/payments-from-allocation-rule/index.html"]'),
+            "The repurposed draft should no longer appear under General Topics.");
         }
       },
       {

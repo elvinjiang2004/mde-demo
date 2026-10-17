@@ -50,6 +50,17 @@
       pages: "58–73",
       url: "https://doi.org/10.1287/moor.6.1.58"
     },
+    "border-1991": {
+      type: "article",
+      authors: [{ given: "Kim C.", family: "Border" }],
+      title: "Implementation of Reduced Form Auctions: A Geometric Approach",
+      journal: "Econometrica",
+      volume: 59,
+      issue: 4,
+      year: 1991,
+      pages: "1175–1187",
+      url: "https://doi.org/10.2307/2938181"
+    },
     "myerson-satterthwaite-1983": {
       type: "article",
       authors: [

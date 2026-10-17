@@ -16,7 +16,7 @@
   <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
-  <script defer src="../../js/chart-viewport.js"></script>
+  <script defer src="../../js/chart-layout.js"></script>
   <script defer src="../../js/bilateral-trade-envelope.js"></script>
   <script defer src="../../js/bilateral-trade-visuals.js"></script>
   <script defer src="../../js/equation-chain.js"></script>
@@ -55,7 +55,7 @@
         expected payment from the buyer, and the seller's payment rule specifies
         the expected payment to the seller.
       </p>
-      <p>We additionally require that the mechanism satisfies the following properties:</p>
+      <p>We want a mechanism that satisfies the following properties:</p>
       <ol>
         <li>
           <strong>(Bayesian) Incentive Compatibility (IC):</strong>
@@ -99,9 +99,10 @@
       <div class="main-diagnostic-layout">
         <div class="main-column main-column-480">
           <div class="chart-column">
-            <figure class="diagnostic-figure math-chart-figure">
+            <figure class="chart-figure diagnostic-figure math-chart-figure">
               <figcaption>Allocation rule, \(q(v,c)\)</figcaption>
-              <div class="math-chart-frame">
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
                 <svg
                   id="paint-chart"
                   class="tradeoff-chart chart-480x520"
@@ -115,8 +116,10 @@
                   <title id="paint-chart-title">Allocation rule, q(v,c)</title>
                   <desc id="paint-chart-description">A paintable grid of the probability of trade for every buyer-value, seller-cost pair, each cell split into an independently paintable left (L) and right (R) triangle.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+
                 <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
+              </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
               </div>
             </figure>
           </div>
@@ -147,11 +150,12 @@
         <p id="diagnostic-probe-help" class="sr-only">Hover or focus a plot to inspect its exact output. Arrow keys move the probe or selected allocation triangle without skipping either triangle half. L and R select either triangle in a cell. Enter or Space applies the brush; hold either key while navigating to paint continuously.</p>
         <p id="diagnostic-probe-status" class="sr-only" role="status" aria-live="polite"></p>
 
-        <div class="diagnostic-panel-grid">
+        <div class="chart-grid diagnostic-panel-grid">
           <div class="diagnostic-panel">
-            <figure class="diagnostic-figure">
+            <figure class="chart-figure diagnostic-figure">
               <figcaption>Buyer IC</figcaption>
-              <div class="math-chart-frame">
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
                   id="buyer-ic-chart"
                   class="diagnostic-chart"
@@ -165,17 +169,20 @@
                   <title id="buyer-ic-chart-title">Buyer IC</title>
                   <desc id="buyer-ic-chart-description">Exact buyer interim payoff by true value and alternate report, with truthful and exact best reports overlaid.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
+
                 <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Alternate buyer report, \(v'\)</p>
+              </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
               </div>
             </figure>
             <div id="buyer-ic-text" class="diagnostic-text"></div>
           </div>
 
           <div class="diagnostic-panel">
-            <figure class="diagnostic-figure">
+            <figure class="chart-figure diagnostic-figure">
               <figcaption>Seller IC</figcaption>
-              <div class="math-chart-frame">
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
                   id="seller-ic-chart"
                   class="diagnostic-chart"
@@ -189,17 +196,20 @@
                   <title id="seller-ic-chart-title">Seller IC</title>
                   <desc id="seller-ic-chart-description">Exact seller interim payoff by true value and alternate report, with truthful and exact best reports overlaid.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Seller value, \(c\)</p>
+
                 <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Alternate seller report, \(c'\)</p>
+              </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Seller value, \(c\)</p>
               </div>
             </figure>
             <div id="seller-ic-text" class="diagnostic-text"></div>
           </div>
 
           <div class="diagnostic-panel">
-            <figure class="diagnostic-figure">
+            <figure class="chart-figure diagnostic-figure">
               <figcaption>Net revenue</figcaption>
-              <div class="math-chart-frame">
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
                   id="revenue-chart"
                   class="diagnostic-chart"
@@ -213,17 +223,20 @@
                   <title id="revenue-chart-title">Net revenue</title>
                   <desc id="revenue-chart-description">Intermediary net revenue at every buyer-value, seller-cost pair; green is a surplus, red is a deficit.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
+
                 <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Seller value, \(c\)</p>
+              </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
               </div>
             </figure>
             <div id="revenue-text" class="diagnostic-text"></div>
           </div>
 
           <div class="diagnostic-panel">
-            <figure class="diagnostic-figure">
+            <figure class="chart-figure diagnostic-figure">
               <figcaption>Buyer IR</figcaption>
-              <div class="math-chart-frame">
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
                   id="buyer-payoff-chart"
                   class="diagnostic-chart"
@@ -237,17 +250,20 @@
                   <title id="buyer-payoff-chart-title">Buyer IR</title>
                   <desc id="buyer-payoff-chart-description">Buyer payoff u sub B at every buyer-value, seller-value pair.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
+
                 <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Seller value, \(c\)</p>
+              </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
               </div>
             </figure>
             <div id="buyer-payoff-text" class="diagnostic-text"></div>
           </div>
 
           <div class="diagnostic-panel">
-            <figure class="diagnostic-figure">
+            <figure class="chart-figure diagnostic-figure">
               <figcaption>Seller IR</figcaption>
-              <div class="math-chart-frame">
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
                   id="seller-payoff-chart"
                   class="diagnostic-chart"
@@ -261,17 +277,20 @@
                   <title id="seller-payoff-chart-title">Seller IR</title>
                   <desc id="seller-payoff-chart-description">Seller payoff u sub S at every buyer-value, seller-value pair.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
+
                 <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Seller value, \(c\)</p>
+              </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
               </div>
             </figure>
             <div id="seller-payoff-text" class="diagnostic-text"></div>
           </div>
 
           <div class="diagnostic-panel">
-            <figure class="diagnostic-figure">
+            <figure class="chart-figure diagnostic-figure">
               <figcaption>Efficiency</figcaption>
-              <div class="math-chart-frame">
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
                   id="efficiency-chart"
                   class="diagnostic-chart"
@@ -285,8 +304,10 @@
                   <title id="efficiency-chart-title">Efficiency comparison</title>
                   <desc id="efficiency-chart-description">Orange marks trade where v is less than c; blue marks missing trade where v is greater than c.</desc>
                 </svg>
-                <p class="math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
+
                 <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Seller value, \(c\)</p>
+              </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-220x240-x-axis-label">Buyer value, \(v\)</p>
               </div>
             </figure>
             <div id="efficiency-text" class="diagnostic-text"></div>
@@ -382,12 +403,12 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle \iff -v_1(Q_B(v_2)-Q_B(v_1))\geq P_B(v_1)-P_B(v_2)\)</span>
         <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
-        <span class="equation-step-rhs">\(\displaystyle v_2(Q_B(v_2)-Q_B(v_1))\geq P_B(v_2)-P_B(v_1).\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_2(Q_B(v_2)-Q_B(v_1))\geq P_B(v_2)-P_B(v_1)\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle \implies (v_2-v_1)(Q_B(v_2)-Q_B(v_1))\)</span>
         <span class="equation-step-relation">\(\displaystyle \geq\)</span>
-        <span class="equation-step-rhs">\(\displaystyle 0\)</span>
+        <span class="equation-step-rhs">\(\displaystyle 0.\)</span>
       </div>
 
       <p>
@@ -431,7 +452,7 @@
         <span class="equation-step-connector" >\(\displaystyle \iff \)</span>
         <span class="equation-step-lhs" >\(\displaystyle  P_B(v)= v\,Q_B(v)-U_B(\underline{v})-\int_{\underline{v}}^v Q_B(t)\, dt \) </span>
         <span class="equation-step-relation" >\(\displaystyle \text{and} \)</span>
-        <span class="equation-step-rhs" >\(\displaystyle P_S(c) = U_S(\overline{c}) + \int_c^{\overline{c}} Q_S(t)\, dt+c\,Q_S(c) \)</span>
+        <span class="equation-step-rhs" >\(\displaystyle P_S(c) = U_S(\overline{c}) + \int_c^{\overline{c}} Q_S(t)\, dt+c\,Q_S(c). \)</span>
       </div>
       <p>
       For the reverse direction, suppose \(q\) is such that \(Q_B\) is weakly increasing and \(Q_S\) is weakly decreasing.

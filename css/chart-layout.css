@@ -1,0 +1,77 @@
+/* Shared spacing around authored plot geometry. Percentages are native units / SVG width. */
+:root {
+  --chart-text-size: 0.86rem;
+  --chart-padding: 14px;
+  --chart-top-gutter: 12px;
+  --chart-tick-gutter: 28px;
+  --chart-row-gap: 1rem;
+}
+
+.chart-figure { margin: 0; min-width: 0; }
+.chart-figure > figcaption {
+  margin: 0;
+  min-height: 1.62em;
+  font-size: var(--chart-text-size);
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: left;
+}
+.chart-grid { row-gap: var(--chart-row-gap); column-gap: 1rem; }
+.main-diagnostic-layout.chart-grid { row-gap: var(--chart-row-gap); }
+.chart-plot-viewport, .chart-density-viewport { padding-block: var(--chart-padding); }
+.chart-canvas-frame {
+  position: relative;
+  display: flow-root;
+  margin-top: calc(var(--chart-top-gutter) - var(--chart-trim-top));
+  margin-bottom: calc(var(--chart-tick-gutter) - var(--chart-trim-bottom));
+}
+.chart-canvas-frame > svg { display: block; width: 100%; height: auto; }
+.chart-canvas-frame svg text {
+  font-size: var(--chart-font-size, 13.76px);
+  font-family: var(--text-font);
+}
+.chart-plot-viewport > .chart-x-axis-label {
+  position: static;
+  margin: 0;
+  min-height: 1.4em;
+  font-size: var(--chart-text-size);
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
+  transform: none;
+}
+.chart-canvas-frame .math-chart-y-axis-label {
+  font-size: var(--chart-text-size);
+  line-height: 1.4;
+}
+/* Hover coordinates share the numeric tick row, leaving the HTML title clear. */
+.chart-canvas-frame .plot-probe-coordinate[text-anchor="middle"] { transform: translateY(-13px); }
+.chart-220x240-frame .plot-probe-coordinate[text-anchor="middle"] { transform: translateY(-12px); }
+.chart-figure .chart-diagnostic, .chart-figure + .diagnostic-text {
+  margin: 0;
+  min-height: 2.8em;
+  font-size: var(--chart-text-size);
+  line-height: 1.4;
+  text-align: left;
+}
+
+.chart-480x520-frame { --chart-trim-top: 8.3333333333%; --chart-trim-bottom: 16.6666666667%; }
+.chart-220x240-frame { --chart-trim-top: 6.8181818182%; --chart-trim-bottom: 27.2727272727%; }
+.chart-660x450-frame { --chart-trim-top: 4.8484848485%; --chart-trim-bottom: 9.3939393939%; }
+.chart-360x300-frame { --chart-trim-top: 5.5555555556%; --chart-trim-bottom: 8.3333333333%; }
+.chart-640x360-frame { --chart-trim-top: 3.75%; --chart-trim-bottom: 6.875%; }
+#bargaining-sandbox-explorable .chart-480x520-frame { --chart-trim-bottom: 20.8333333333%; }
+.chart-480x520-frame + .chart-x-axis-label { margin-inline: 10.4166666667% 6.25%; }
+.chart-220x240-frame + .chart-x-axis-label { margin-inline: 15.9090909091% 9.0909090909%; }
+.chart-660x450-frame + .chart-x-axis-label { margin-inline: 9.0909090909% 4.5454545455%; }
+.chart-360x300-frame + .chart-x-axis-label { margin-inline: 11.1111111111% 5.5555555556%; }
+.chart-640x360-frame + .chart-x-axis-label { margin-inline: 8.4375% 4.0625%; }
+#bargaining-sandbox-explorable .chart-480x520-frame + .chart-x-axis-label { margin-inline: 14.5833333333% 6.25%; }
+
+/* Reserve the preview's known native endpoint row as its whole SVG scales. */
+.value-pdf-preview-figure > figcaption { margin-bottom: 0; }
+.chart-density-viewport { --chart-top-gutter: 0px; }
+.chart-320x120-frame { --chart-trim-top: 2.8125%; --chart-trim-bottom: 9.0625%; }
+.chart-density-viewport .chart-canvas-frame { margin-bottom: -2.1875%; }
+.chart-density-viewport .chart-canvas-frame svg text { font-size: 10px; }

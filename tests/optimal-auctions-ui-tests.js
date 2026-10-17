@@ -4,7 +4,7 @@
   var frame = document.getElementById("app-frame");
   var doc, win, serial = 0;
   function el(id) { return doc.getElementById(id); }
-  function revenue() { return Number(el("revenue-value").dataset.value); }
+  function totalPayments() { return Number(el("expected-payment-1").dataset.value) + Number(el("expected-payment-2").dataset.value); }
   function keyboard(key, type) { T.dispatch(el("allocation-chart"), type || "keydown", win, { key: key }); }
   function tap(key) { keyboard(key); keyboard(key, "keyup"); }
   function input(id, value) { el(id).value = value; T.dispatch(el(id), "input", win); }
@@ -55,12 +55,12 @@
     assert(el("allocation-chart").querySelectorAll(".allocation-layer > polygon").length === 800, "Same exact 800 triangles");
     assert(!doc.querySelector("[data-preset], [data-brush], #interaction-mode, #paint-selected, #other-half, details"), "No presets, brush shortcut buttons, modes, or collapsed brush");
     assert(el("lottery-controls").closest(".main-column") && el("lottery-chart").getBoundingClientRect().height > 0, "Visible triangle brush under the grid");
-    close(revenue(), 1 / 3);
+    close(totalPayments(), 1 / 3);
     [1, 2].forEach(function (bidder) {
       assert(el("interim-" + bidder + "-chart").querySelectorAll(".interim-curve").length === 20, "Separate allocation pieces");
       assert(el("payment-" + bidder + "-chart").querySelectorAll(".payment-area").length === 20, "Separate payment pieces");
     });
-    assert(!doc.querySelector(".assumption-line, .formula-label, .diagnostic-key, .payment-key, #optimal-revenue, #bic-details, #brush-summary, #bidder-revenues"), "Only requested diagnostic and control labels remain");
+    assert(!doc.querySelector(".assumption-line, .formula-label, .diagnostic-key, .payment-key, #optimal-revenue, #bic-details, #brush-summary, #bidder-revenues, .revenue-output, #revenue-label, #revenue-value"), "Only requested diagnostic and control labels remain");
   });
   test("Each bidder has directly labeled allocation and payment plots with diagnostics below", function () {
     [1, 2].forEach(function (bidder) {
@@ -75,6 +75,7 @@
       assert(win.getComputedStyle(interim.querySelector(".interim-curve")).strokeDasharray === "none", "Interim allocation is solid for either bidder");
       var status = el("bic-status-" + bidder);
       assert(status.closest("figure") === interim.closest("figure") && status.getBoundingClientRect().top > interim.getBoundingClientRect().top, "BIC below its allocation chart");
+      assert(win.getComputedStyle(status).textAlign === "left", "BIC diagnostic is left aligned");
       assert(!el("ir-status-" + bidder), "No IR diagnostic");
       assert(el("bic-monotonicity-" + bidder).textContent === "is weakly increasing", "Passing monotonicity explanation");
       var passProbe = doc.createElement("span");
@@ -83,18 +84,16 @@
       passProbe.remove();
       assert(Array.from(interim.querySelectorAll("text")).some(function (n) { return n.textContent === "-1"; }), "Integer negative tick");
       assert(!Array.from(interim.querySelectorAll("text")).some(function (n) { return /^Q[₁₂]$/.test(n.textContent); }), "No duplicate Q labels inside the plots");
-      var label = payment.querySelector(".expected-payment-label");
-      close(Number(label.dataset.value), 1 / 6);
-      var suffix = bidder === 1 ? "₁" : "₂";
-      assert(label.textContent === "E[P" + suffix + "(V" + suffix + ")] = 0.1667", "Expected payment includes the random value");
-      assert(label.dataset.placement === "inside-area", "Expected payment is inside highlighted area");
-      var bounds = label.getBBox();
-      var a = (bounds.x - 40) / 300;
-      assert(bounds.y > 270 - 250 * a * a / 2 && bounds.y + bounds.height < 270, "Whole label lies under efficient payment curve");
+      var value = el("expected-payment-" + bidder), label = value.closest("p");
+      close(Number(value.dataset.value), 1 / 6);
+      assert(label.textContent === "Expected payment from bidder " + bidder + ": 0.1667", "Requested expected-payment label");
+      assert(label.closest("figure") === payment.closest("figure") && label.previousElementSibling === payment.closest(".chart-viewport"), "Expected payment directly follows its graph");
+      assert(label.getBoundingClientRect().top >= payment.closest(".chart-viewport").getBoundingClientRect().bottom, "Expected payment is below the graph");
+      assert(win.getComputedStyle(label).textAlign === "left", "Expected payment is left aligned");
+      assert(!payment.querySelector(".expected-payment-label"), "Expected payment is outside the plot");
       assert(payment.dataset.yMin === "0" && payment.dataset.yMax === "1", "Fixed unit vertical scale");
       var paymentNumbers = payment.querySelector(".payment-curve:last-child").getAttribute("d").match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/g).map(Number);
       close(paymentNumbers[paymentNumbers.length - 1], 145);
-      assert(el("revenue-value").getBoundingClientRect().top > payment.getBoundingClientRect().bottom, "Revenue below both payment plots");
     });
   });
   test("Fixed payment axes preserve signed integrals for zero, negative, and asymmetric candidates", function () {
@@ -105,13 +104,12 @@
         var chart = el("payment-" + (i + 1) + "-chart");
         C.payment(chart, agent, i + 1);
         assert(chart.dataset.yMin === "0" && chart.dataset.yMax === "1", "Domain stays fixed for every mechanism");
-        close(Number(chart.querySelector(".expected-payment-label").dataset.value), agent.expectedPayment);
+        assert(chart.querySelector("desc").textContent.indexOf("Expected payment " + C.fixed(agent.expectedPayment)) !== -1, "Accessible signed integral remains exact");
         assert(chart.getBBox().y + chart.getBBox().height < 300, "Clipped negative curves do not enlarge viewport bounds");
         if (index === 1) { close(agent.expectedPayment, 5 / 24); }
         if (index === 2 && i === 0) {
           close(agent.expectedPayment, -0.25);
-          assert(chart.querySelector(".expected-payment-label").textContent.indexOf("Candidate E[P₁(V₁)] = -0.2500") !== -1, "Negative full integral remains labeled as a candidate");
-          assert(chart.querySelector(".expected-payment-label").dataset.placement === "panel-floor", "No positive shaded area uses the plot-floor fallback");
+          assert(chart.querySelector("desc").textContent.indexOf("envelope payment candidate; BIC fails") !== -1, "Negative full integral remains labeled as a candidate");
         }
       });
     });
@@ -246,15 +244,18 @@
     var s = el("allocation-chart");
     pointer(s, "pointerdown", 353, 326); pointer(s, "pointerup", 353, 326);
     assert(el("bic-status-1").dataset.bic === "false", "Interior hole creates an interim downward jump");
-    assert(el("revenue-label").textContent === "Envelope revenue candidate" && el("payment-caption-1").textContent === "Payment candidate", "Candidate labels preserved");
+    assert(el("payment-status-1").textContent === " (candidate)" && el("payment-caption-1").textContent === "Payment candidate", "Candidate labels preserved below and above the payment graph");
     assert(el("bic-status-2").dataset.bic === "true" && el("payment-caption-2").textContent === "Interim payment", "Unaffected bidder keeps a valid label");
+    assert(el("payment-status-2").textContent === "", "Valid expected payment has no candidate warning");
+    assert(el("live-summary").textContent.indexOf("Expected payment from bidder 1:") !== -1 && !/revenue/i.test(el("live-summary").textContent), "Live summary announces expected payments without revenue");
     assert(el("bic-monotonicity-1").textContent === "is not weakly increasing", "Failing monotonicity explanation");
     var status = el("bic-status-1"), probe = doc.createElement("span");
     probe.style.color = "var(--red)"; doc.body.appendChild(probe);
     assert(win.getComputedStyle(status).color === win.getComputedStyle(probe).color, "Failing verdict is red");
     probe.remove();
     brush(1, 0); pointer(s, "pointerdown", 353, 326); pointer(s, "pointerup", 353, 326);
-    close(revenue(), 1 / 3);
+    close(totalPayments(), 1 / 3);
+    assert(el("payment-status-1").textContent === "", "Restoring BIC clears the payment warning");
     assert(el("bic-status-1").dataset.bic === "true", "Repainting the original lottery restores passing diagnostics");
   });
   test("Charts fit responsive widths with uniform text and reserved padding", async function () {
@@ -267,9 +268,10 @@
         });
       }, 4000, "Chart padding at " + width);
       assert(doc.documentElement.scrollWidth <= doc.documentElement.clientWidth + 1, "No page overflow at " + width);
-      close(parseFloat(win.getComputedStyle(doc.querySelector("figcaption")).fontSize), 13.12);
+      close(parseFloat(win.getComputedStyle(doc.querySelector("figcaption")).fontSize), 13.76);
       close(parseFloat(win.getComputedStyle(el("brush-q1")).fontSize), 14.4);
-      close(parseFloat(win.getComputedStyle(el("allocation-chart").querySelector("text")).fontSize), 12);
+      var main = el("allocation-chart"), tick = main.querySelector(".axis-text");
+      close(parseFloat(win.getComputedStyle(tick).fontSize) * main.getScreenCTM().a, 13.76, 0.02);
       assert(win.getComputedStyle(doc.querySelector(".main-diagnostic-layout")).borderTopStyle === "none", "No outer demo border");
       var brushBox = el("lottery-chart").getBoundingClientRect(), fields = doc.querySelector(".brush-probabilities").getBoundingClientRect();
       assert(fields.left >= brushBox.right && fields.top < brushBox.bottom, "Stacked probability fields stay to the right");
@@ -283,7 +285,7 @@
         });
         var caption = figure.querySelector("figcaption").getBoundingClientRect();
         assert(border.getBoundingClientRect().top - caption.bottom < 30, "Compact caption-to-plot spacing");
-        assert(title.getBoundingClientRect().top - chart.querySelector("text").getBoundingClientRect().bottom < 8, "Axis title stays near its ticks");
+        close(title.getBoundingClientRect().top - border.getBoundingClientRect().bottom, 28, 0.1, "Shared tick gutter");
         assert(border && border.getAttribute("width") === "300" && border.getAttribute("height") === "250", "Boxed diagnostic plotting edges");
       });
       assert(el("lottery-controls").getBoundingClientRect().top >= el("allocation-chart").getBoundingClientRect().top, "Brush remains below grid");
@@ -303,7 +305,7 @@
     pointer(chart,"pointerup",393,306);
     await T.nextAnimationFrames(win,3);
     assert(initial===chart.querySelector(".allocation-layer").innerHTML,"Every lottery returns to efficient allocation");
-    close(revenue(),1/3);
+    close(totalPayments(),1/3);
     assert(el("bic-status-1").dataset.bic==="true" && el("bic-status-2").dataset.bic==="true","Reset refreshes BIC");
     close(Number(el("brush-q1").value),0.2); close(Number(el("brush-q2").value),0.3);
   });

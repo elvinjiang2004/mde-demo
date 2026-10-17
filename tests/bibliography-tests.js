@@ -110,11 +110,11 @@
     { path: "auctions/first-price", ids: ["krishna-2009"], locator: "pp. 14–16" },
     { path: "auctions/second-price", ids: ["krishna-2009"], locator: "p. 13" },
     { path: "auctions/optimal-auctions", ids: ["myerson-1981"] },
+    { path: "auctions/ironing", ids: ["myerson-1981", "border-1991"] },
     { path: "bilateral-trade/myerson-satterthwaite-theorem", ids: ["borgers-2015", "borgers-norman-2009", "myerson-satterthwaite-1983"], locator: "pp. 63–71" },
     { path: "bilateral-trade/bargaining-mechanism-sandbox", ids: ["groves-1973", "daspremont-gerard-varet-1979", "chatterjee-samuelson-1983", "myerson-satterthwaite-1983", "leininger-linhart-radner-1989"] },
     { path: "general-topics/envelope-theorem", ids: ["borgers-2015", "milgrom-segal-2002"] },
-    { path: "general-topics/revelation-principle", ids: ["borgers-2015", "stole-contracts-2017"], locator: "especially section 3.1, pp. 45–48" },
-    { path: "general-topics/payments-from-allocation-rule", ids: [] }
+    { path: "general-topics/revelation-principle", ids: ["borgers-2015", "stole-contracts-2017"], locator: "especially section 3.1, pp. 45–48" }
   ];
   var repeated = {};
   lessons.forEach(function (lesson) {

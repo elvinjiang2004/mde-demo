@@ -10,18 +10,6 @@ window.OptimalAuctionsCharts = (function () {
   var simplex = { center: 130, top: 18, bottom: 132, halfWidth: 114 };
   var gradientCache = null;
 
-  // Match the M-S initial axis frame without fitting to changing annotations.
-  // Only a width change can update this fixed-axis margin, before rendering.
-  function alignMainFrame(svg) {
-    var width = parseFloat(getComputedStyle(svg).width);
-    if (svg.dataset.alignedWidth === String(width)) { return; }
-    var ticks = svg.querySelectorAll(".axis-text");
-    if (!ticks.length) { return; }
-    var top = Math.min.apply(null, Array.from(ticks).map(function (tick) { return tick.getBBox().y; }));
-    svg.parentElement.style.marginTop = -(top * width / layout.viewWidth) + "px";
-    svg.dataset.alignedWidth = String(width);
-  }
-
   function fixed(x) { return (Math.abs(x) < 0.00005 ? 0 : x).toFixed(4); }
   function clear(svg) { svg.querySelectorAll(":scope > g, :scope > defs").forEach(function (node) { node.remove(); }); }
   function line(parent, x1, y1, x2, y2, attributes) {
@@ -73,13 +61,11 @@ window.OptimalAuctionsCharts = (function () {
     var colors = palette();
     var nodes = mesh.drawTriangleMesh(g, grid, layout, function (q) { return color(q, colors); });
     visuals.drawFrame(svg, layout, mesh, false);
-    alignMainFrame(svg);
     var overlay = append(svg, "g", { "pointer-events": "none" });
     var selected = append(overlay, "polygon", { class: "cell-cursor" });
     return {
       update: function (current) {
-        alignMainFrame(svg);
-        var colorsNow = palette();
+            var colorsNow = palette();
         ["lower", "upper"].forEach(function (half) {
           current[half].forEach(function (row, i) { row.forEach(function (q, j) {
             nodes[half][i][j].setAttribute("fill", color(q, colorsNow));
@@ -157,20 +143,8 @@ window.OptimalAuctionsCharts = (function () {
     append(g, "circle", { cx: x, cy: y, r: 5, fill: color(q, palette()), stroke: "var(--ink)", "stroke-width": 2 });
   }
 
-  function alignDiagnosticText(svg) {
-    var width = parseFloat(getComputedStyle(svg).width);
-    var title = svg.closest("figure").querySelector(".diagnostic-axis-label");
-    var size = parseFloat(getComputedStyle(title).fontSize);
-    if (width > 0) {
-      var font = size * svg.viewBox.baseVal.width / width + "px";
-      if (svg.style.getPropertyValue("--diagnostic-font-size") !== font) {
-        svg.style.setProperty("--diagnostic-font-size", font);
-      }
-    }
-  }
-
   function axes(g, box, low, high) {
-    alignDiagnosticText(g.ownerSVGElement);
+    ChartLayout.setTextSize(g.ownerSVGElement);
     function x(v) { return box.left + v * (box.right - box.left); }
     function y(v) { return box.bottom - (v - low) / (high - low) * (box.bottom - box.top); }
     append(g, "rect", { class: "diagnostic-frame axis-line", x: box.left, y: box.top,
@@ -235,36 +209,6 @@ window.OptimalAuctionsCharts = (function () {
       last < 0 ? crossing(0) : last > 1 ? crossing(1) : piece.b];
   }
 
-  function paymentLabel(g, agent, bidder, scale) {
-    var box = diagnosticBox;
-    var suffix = bidder === 1 ? "₁" : "₂";
-    var label = append(g, "text", { x: (box.left + box.right) / 2, y: box.bottom - 10,
-      "text-anchor": "middle", class: "expected-payment-label annotation-halo bidder-" + (bidder === 1 ? "one" : "two"),
-      "data-value": agent.expectedPayment }, (agent.bic ? "E[P" : "Candidate E[P") + suffix + "(V" + suffix + ")] = " + fixed(agent.expectedPayment));
-    var width = label.getComputedTextLength() + 12;
-    var height = label.getBBox().height + 12;
-    var best = null;
-    for (var left = box.right - width; left >= box.left; left -= 3) {
-      var a = (left - box.left) / (box.right - box.left);
-      var b = (left + width - box.left) / (box.right - box.left);
-      var minimum = 1;
-      agent.pieces.forEach(function (piece) {
-        if (piece.b <= a || piece.a >= b) { return; }
-        minimum = Math.min(minimum, M.evaluatePiece(piece, Math.max(a, piece.a)).payment,
-          M.evaluatePiece(piece, Math.min(b, piece.b)).payment);
-      });
-      var clearance = box.bottom - scale.y(minimum);
-      if (clearance >= height && (!best || clearance > best.clearance)) {
-        best = { x: left + width / 2, clearance: clearance };
-      }
-    }
-    label.dataset.placement = best ? "inside-area" : "panel-floor";
-    if (best) {
-      label.setAttribute("x", best.x);
-      label.setAttribute("y", box.bottom - best.clearance / 2 + 4);
-    }
-  }
-
   function payment(svg, agent, bidder) {
     clear(svg);
     var g = append(svg, "g", {});
@@ -284,9 +228,8 @@ window.OptimalAuctionsCharts = (function () {
         fill: bidder === 1 ? "var(--blue)" : "var(--orange)", "fill-opacity": 0.2 });
       append(plot, "path", { d: "M" + c.start + c.segment, class: "payment-curve curve-" + (bidder === 1 ? "one" : "two") });
     });
-    paymentLabel(g, agent, bidder, scale);
     svg.querySelector("desc").textContent = "Bidder " + bidder + (agent.bic ? " interim payment. " : " envelope payment candidate; BIC fails. ") +
-      "Expected payment " + fixed(agent.expectedPayment) + ". Fixed vertical scale 0 to 1; values outside this range are clipped. The label uses the full signed integral, including any clipped part.";
+      "Expected payment " + fixed(agent.expectedPayment) + ". Fixed vertical scale 0 to 1; values outside this range are clipped. The diagnostic below uses the full signed integral, including any clipped part.";
   }
 
   return Object.freeze({ allocation: allocation, lottery: lottery, interim: interim,

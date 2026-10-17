@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Shape a symmetric interim allocation rule and explore feasibility, payments, revenue, and Myerson ironing.">
+  <title>Ironing | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="module.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/bibliography.js"></script>
+  <script defer src="../../js/references.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/math-utils.js"></script>
+  <script defer src="../../js/svg-utils.js"></script>
+  <script defer src="../../js/chart-layout.js"></script>
+
+  <script defer src="model.js"></script>
+  <script defer src="charts.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body class="ironing-page">
+  <a class="skip-link" href="#main-content">Skip to the main content</a>
+  <header class="site-header"><page-header category="Auctions" home="../../index.html"></page-header></header>
+  <main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">Ironing</h1>
+      <p>
+        A seller intends to sell an object for which she has no value. There are
+        \(n\geq 2\) risk-neutral bidders. Bidders have independent private values
+        \(V_i\sim F_i\), \(i=1,\ldots,n\). We assume that each \(F_i\) has a
+        piecewise-continuous density \(f_i\), bounded above and away from zero, on its support
+        \([\underline{v}_i,\overline{v}_i]\). These distributions are common knowledge.
+      </p>
+      <p>
+        The seller wishes to maximize expected revenue with a <em>direct selling
+        mechanism</em> consisting of an allocation rule \(q:T\to[0,1]^n\) and a
+        payment rule \(p:T\to\mathbb{R}^n\), where
+        \(T=\prod_{i=1}^n[\underline{v}_i,\overline{v}_i]\). As functions of the
+        reported values, for each bidder, the allocation rule specifies the
+        probability the object is sold to him, and the payment rule specifies
+        the expected payment from him. Writing \(q=(q_1,\ldots,q_n)\),
+        since there is only one object to be sold, we require that for all \(v\in T\),
+        \(\sum_{i=1}^n q_i(v)\leq 1.\)
+      </p>
+      <p>We additionally require that the mechanism satisfies the following properties:</p>
+      <ol>
+        <li>
+          <strong>(Bayesian) Incentive Compatibility (IC):</strong>
+          All bidders truthfully reporting is a Bayesian Nash equilibrium.
+        </li>
+        <li>
+          <strong>(Interim) Individual Rationality (IR):</strong>
+          In truthful equilibrium, after observing their values, all bidders have a weakly positive
+          expected payoff.
+        </li>
+      </ol>
+      <p>
+        <strong>Theorem (<span data-citation="myerson-1981" data-citation-style="parenthetical"></span>):</strong>
+        When the design problem is <em>regular</em>,
+        meaning that each bidder's <em>virtual value</em>
+        \(\phi_i(v_i)=v_i-\frac{1-F_i(v_i)}{f_i(v_i)}\) is weakly increasing,
+        there is a revenue-maximizing auction that allocates the object to a
+        bidder with the highest positive virtual value. Otherwise, if no bidder has a
+        positive virtual value, the object is not sold.
+      </p>
+    </section>
+    <section id="distribution-controls" class="model-specifications" aria-label="Auction and distribution parameters">
+      <div class="parameter-grid distribution-parameter-grid">
+        <label class="parameter-control" for="bidder-number">
+          <span>Number of bidders, \(n\)</span>
+          <select id="bidder-number"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+        </label>
+        <div class="shape-parameter">
+          <div class="shape-label-row"><label for="split-number">Breakpoint, \(c\)</label>
+            <input id="split-number" class="shape-number-input" type="number" min="0.1" max="0.9" step="0.01" value="0.5"></div>
+          <input id="split-range" type="range" min="0.1" max="0.9" step="0.01" value="0.5" aria-label="Distribution breakpoint">
+          <div class="range-endpoints" aria-hidden="true"><span>0.1</span><span>0.9</span></div>
+        </div>
+        <div class="shape-parameter">
+          <div class="shape-label-row"><label for="mass-number">Lower-interval probability, \(\pi\)</label>
+            <input id="mass-number" class="shape-number-input" type="number" min="0.1" max="0.9" step="0.01" value="0.75"></div>
+          <input id="mass-range" type="range" min="0.1" max="0.9" step="0.01" value="0.75" aria-label="Probability of the lower interval">
+          <div class="range-endpoints" aria-hidden="true"><span>0.1</span><span>0.9</span></div>
+        </div>
+      </div>
+      <button id="reset-parameters" class="text-button" type="button">Reset parameters</button>
+      <output id="distribution-error" class="validation-text" role="alert"></output>
+    </section>
+    <section id="auction-demo" aria-label="Symmetric auction ironing editor">
+      <div class="interaction-layout">
+        <div class="chart-column ironing-plots chart-grid">
+            <figure class="chart-figure">
+              <figcaption>Interim allocation, \(Q(v)\)</figcaption>
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="chart-canvas-frame chart-640x360-frame">
+                <svg id="allocation-chart" class="chart-640x360" width="640" height="360" viewBox="0 0 640 360" role="group" aria-labelledby="allocation-title allocation-description">
+                  <title id="allocation-title">Editable interim allocation rule</title><desc id="allocation-description"></desc>
+                </svg>
+              </div>
+              <p class="chart-x-axis-label chart-axis-label">Value, \(v\)</p>
+
+              </div>
+              <p id="bic-status" class="chart-diagnostic constraint-status"><span id="bic-verdict"></span> (\(Q\) <span id="bic-monotonicity"></span>)</p>
+
+            </figure>
+            <figure class="chart-figure">
+              <figcaption><span id="payment-caption">Interim payment</span>, \(P(v)\)</figcaption>
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="chart-canvas-frame chart-640x360-frame">
+                <svg id="payment-chart" class="chart-640x360" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="payment-title payment-description">
+                  <title id="payment-title">Interim envelope payment</title><desc id="payment-description"></desc>
+                </svg>
+              </div>
+              <p class="chart-x-axis-label chart-axis-label">Value, \(v\)</p>
+
+              </div>
+              <p id="payment-kind" class="sr-only">Envelope payment</p>
+              <p class="chart-diagnostic plot-diagnostic"><span id="revenue-label">Expected revenue</span>: <output id="revenue-value"></output></p>
+            </figure>
+            <figure class="chart-figure">
+              <figcaption>Integrated virtual value, \(H(u)\), and virtual value</figcaption>
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="chart-canvas-frame chart-640x360-frame">
+                <svg id="integrated-chart" class="chart-640x360" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="integrated-title integrated-description">
+                  <title id="integrated-title">Integrated virtual value, lower convex hull, and virtual values</title><desc id="integrated-description"></desc>
+                </svg>
+              </div>
+              <p class="chart-x-axis-label chart-axis-label">Quantile, \(u=F(v)\)</p>
+
+              </div>
+              <p id="pool-summary" class="chart-diagnostic plot-diagnostic ironing-diagnostic"></p>
+            </figure>
+            <figure class="chart-figure">
+              <figcaption>Single-item feasibility, allocation demand and capacity</figcaption>
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="chart-canvas-frame chart-640x360-frame">
+                <svg id="feasibility-chart" class="chart-640x360" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="feasibility-title feasibility-description">
+                  <title id="feasibility-title">Allocation to highest-allocation sets and single-item capacity</title><desc id="feasibility-description"></desc>
+                </svg>
+              </div>
+              <p class="chart-x-axis-label chart-axis-label">Highest-allocation type mass, \(m\)</p>
+
+              </div>
+              <p id="feasibility-status" class="chart-diagnostic constraint-status"></p>
+            </figure>
+        </div>
+        <aside class="choice-controls ironing-controls" aria-label="Allocation controls">
+          <value-density-preview></value-density-preview>
+          <p id="distribution-status" class="sr-only"></p>
+          <div class="slider-grid">
+            <div class="range-group">
+              <div class="range-label-row">
+                <label for="value-number">Value, \(v\)</label>
+                <input id="value-number" class="range-number-input" type="number" min="0" max="1" step="0.001">
+              </div>
+              <input id="value-range" type="range" min="0" max="1" step="0.001" aria-label="Selected point value">
+              <div class="range-endpoints" aria-hidden="true"><span id="value-min-label">0</span><span id="value-max-label">1</span></div>
+            </div>
+            <div class="range-group">
+              <div class="range-label-row">
+                <label for="allocation-number">Allocation, \(Q(v)\)</label>
+                <input id="allocation-number" class="range-number-input" type="number" min="0" max="1" step="0.001">
+              </div>
+              <input id="allocation-range" type="range" min="0" max="1" step="0.001" aria-label="Selected point allocation">
+              <div class="range-endpoints" aria-hidden="true"><span>0</span><span>1</span></div>
+            </div>
+          </div>
+          <p class="sr-only" id="interpolation-kind">Interpolation: linear in value</p>
+          <div class="editor-buttons"><button id="add-point" class="text-button" type="button">Add point</button><button id="remove-point" class="text-button" type="button">Remove point</button><button id="reset-button" class="text-button" type="button">Reset</button></div>
+          <output id="control-error" class="validation-text" role="alert"></output>
+          <div class="ironing-actions">
+            <button id="use-optimum" class="text-button" type="button">Use optimal feasible mechanism</button>
+          </div>
+          <p class="sr-only" id="point-help">Select a point directly or with Tab. Drag in both directions. Arrow up and down adjust allocation; left and right adjust value. Shift makes larger steps. Matching the neighboring value creates a jump. Number fields provide the same controls. Editing connects the displayed points linearly in value.</p>
+        </aside>
+      </div>
+      <p id="live-summary" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+    </section>
+
+    <section id="derivation" hidden><!-- User-authored derivation. --></section>
+    <section id="notes" hidden><!-- User-authored notes. --></section>
+    <section id="references" class="references" aria-labelledby="references-title">
+      <h2 id="references-title">References</h2>
+      <ul class="reference-list">
+        <li data-reference="myerson-1981" data-locator="Section 6, pp. 68–70"></li>
+        <li data-reference="border-1991" data-locator="Propositions 3.1–3.2, p. 1178"></li>
+      </ul>
+    </section>
+  </main>
+  <footer class="site-footer"><page-footer></page-footer></footer>
+</body>
+</html>

@@ -15,6 +15,7 @@
   <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
+  <script defer src="../../js/chart-layout.js"></script>
   <script defer src="../../js/bilateral-trade-visuals.js"></script>
   <script defer src="model.js"></script>
   <script defer src="charts.js"></script>
@@ -75,17 +76,18 @@
       <div class="main-diagnostic-layout">
         <div class="main-column main-column-480">
           <div class="chart-column">
-            <figure class="diagnostic-figure math-chart-figure">
+            <figure class="chart-figure diagnostic-figure math-chart-figure">
               <figcaption>Allocation rule, \((q_1(v_1,v_2),q_2(v_1,v_2))\)</figcaption>
-              <div class="chart-viewport stable-chart-viewport" data-chart-for="allocation-chart">
-                <div class="math-chart-frame">
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-for="allocation-chart">
+                <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
                   <svg width="480" height="520" id="allocation-chart" class="tradeoff-chart chart-480x520" viewBox="0 0 480 520" role="group" tabindex="0" aria-labelledby="allocation-title allocation-description" aria-describedby="paint-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End l r Enter Space Escape">
                     <title id="allocation-title">Allocation rule on a 20 by 20 split-triangle grid</title>
                     <desc id="allocation-description">Paint a feasible lottery in each triangle.</desc>
                   </svg>
-                  <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Bidder 1 value, \(v_1\)</p>
+
                   <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Bidder 2 value, \(v_2\)</p>
                 </div>
+              <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Bidder 1 value, \(v_1\)</p>
               </div>
             </figure>
           </div>
@@ -111,50 +113,63 @@
             </div>
           </aside>
         </div>
-        <div class="allocation-diagnostics">
-          <figure class="diagnostic-figure">
+        <div class="allocation-diagnostics chart-grid">
+          <figure class="chart-figure diagnostic-figure">
             <figcaption>Interim allocation, \(Q_1(v_1)\)</figcaption>
-            <div class="chart-viewport stable-chart-viewport" data-chart-for="interim-1-chart">
-              <svg width="360" height="300" id="interim-1-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="interim-1-title interim-1-description">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-for="interim-1-chart">
+              <div class="chart-canvas-frame chart-360x300-frame">
+                <svg width="360" height="300" id="interim-1-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="interim-1-title interim-1-description">
                 <title id="interim-1-title">Bidder 1 interim allocation</title>
                 <desc id="interim-1-description"></desc>
               </svg>
-              <p class="diagnostic-axis-label">Bidder 1 value, \(v_1\)</p>
+              </div>
+              <p class="chart-x-axis-label diagnostic-axis-label">Bidder 1 value, \(v_1\)</p>
+
             </div>
-            <p id="bic-status-1" class="constraint-status"><span id="bic-verdict-1"></span> (\(Q_1\) <span id="bic-monotonicity-1"></span>)</p>
+            <p id="bic-status-1" class="chart-diagnostic constraint-status"><span id="bic-verdict-1"></span> (\(Q_1\) <span id="bic-monotonicity-1"></span>)</p>
           </figure>
-          <figure class="diagnostic-figure">
+          <figure class="chart-figure diagnostic-figure">
             <figcaption>Interim allocation, \(Q_2(v_2)\)</figcaption>
-            <div class="chart-viewport stable-chart-viewport" data-chart-for="interim-2-chart">
-              <svg width="360" height="300" id="interim-2-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="interim-2-title interim-2-description">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-for="interim-2-chart">
+              <div class="chart-canvas-frame chart-360x300-frame">
+                <svg width="360" height="300" id="interim-2-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="interim-2-title interim-2-description">
                 <title id="interim-2-title">Bidder 2 interim allocation</title>
                 <desc id="interim-2-description"></desc>
               </svg>
-              <p class="diagnostic-axis-label">Bidder 2 value, \(v_2\)</p>
+              </div>
+              <p class="chart-x-axis-label diagnostic-axis-label">Bidder 2 value, \(v_2\)</p>
+
             </div>
-            <p id="bic-status-2" class="constraint-status"><span id="bic-verdict-2"></span> (\(Q_2\) <span id="bic-monotonicity-2"></span>)</p>
+            <p id="bic-status-2" class="chart-diagnostic constraint-status"><span id="bic-verdict-2"></span> (\(Q_2\) <span id="bic-monotonicity-2"></span>)</p>
           </figure>
-          <figure class="diagnostic-figure">
+          <figure class="chart-figure diagnostic-figure">
             <figcaption><span id="payment-caption-1">Interim payment</span>, \(P_1(v_1)\)</figcaption>
-            <div class="chart-viewport stable-chart-viewport" data-chart-for="payment-1-chart">
-              <svg width="360" height="300" id="payment-1-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="payment-1-title payment-1-description">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-for="payment-1-chart">
+              <div class="chart-canvas-frame chart-360x300-frame">
+                <svg width="360" height="300" id="payment-1-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="payment-1-title payment-1-description">
                 <title id="payment-1-title">Bidder 1 interim payment</title>
                 <desc id="payment-1-description"></desc>
               </svg>
-              <p class="diagnostic-axis-label">Bidder 1 value, \(v_1\)</p>
+              </div>
+              <p class="chart-x-axis-label diagnostic-axis-label">Bidder 1 value, \(v_1\)</p>
+
             </div>
+            <p class="chart-diagnostic payment-output">Expected payment from bidder 1: <output id="expected-payment-1"></output><span id="payment-status-1"></span></p>
           </figure>
-          <figure class="diagnostic-figure">
+          <figure class="chart-figure diagnostic-figure">
             <figcaption><span id="payment-caption-2">Interim payment</span>, \(P_2(v_2)\)</figcaption>
-            <div class="chart-viewport stable-chart-viewport" data-chart-for="payment-2-chart">
-              <svg width="360" height="300" id="payment-2-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="payment-2-title payment-2-description">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-for="payment-2-chart">
+              <div class="chart-canvas-frame chart-360x300-frame">
+                <svg width="360" height="300" id="payment-2-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="payment-2-title payment-2-description">
                 <title id="payment-2-title">Bidder 2 interim payment</title>
                 <desc id="payment-2-description"></desc>
               </svg>
-              <p class="diagnostic-axis-label">Bidder 2 value, \(v_2\)</p>
+              </div>
+              <p class="chart-x-axis-label diagnostic-axis-label">Bidder 2 value, \(v_2\)</p>
+
             </div>
+            <p class="chart-diagnostic payment-output">Expected payment from bidder 2: <output id="expected-payment-2"></output><span id="payment-status-2"></span></p>
           </figure>
-          <p class="revenue-output"><span id="revenue-label">Expected revenue</span>: <strong id="revenue-value"></strong></p>
         </div>
       </div>
       <p id="live-summary" class="sr-only" aria-live="polite" aria-atomic="true"></p>

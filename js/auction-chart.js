@@ -93,6 +93,7 @@
   }
 
   function drawPanelScaffold(svg, panel, left, right) {
+    ChartLayout.setTextSize(svg);
     appendSvg(svg, "rect", {
       x: left,
       y: panel.top,
@@ -103,7 +104,9 @@
 
     appendSvg(svg, "text", {
       x: left,
-      y: panel.top - 29,
+      y: panel.top - ChartLayout.svgUnits(svg, 26),
+      "dominant-baseline": "text-after-edge",
+      style: "font-size:var(--chart-font-size)",
       class: "panel-caption"
     }, panel.title);
 

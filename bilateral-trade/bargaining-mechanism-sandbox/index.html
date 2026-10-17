@@ -15,7 +15,7 @@
   <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
-  <script defer src="../../js/chart-viewport.js"></script>
+  <script defer src="../../js/chart-layout.js"></script>
   <script defer src="../../js/bilateral-trade-envelope.js"></script>
   <script defer src="../../js/bilateral-trade-visuals.js"></script>
   <script defer src="formula-diagonal.js"></script>
@@ -293,16 +293,19 @@
 
       <div class="surface-editor-grid">
         <div class="surface-editor">
-          <figure class="diagnostic-figure math-chart-figure">
+          <figure class="chart-figure diagnostic-figure math-chart-figure">
             <figcaption>Allocation rule, \(q(v,c)\)</figcaption>
-            <div class="math-chart-frame">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="allocation-chart" class="tradeoff-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="allocation-chart-title allocation-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="allocation-chart-title">Allocation rule, q(v,c)</title>
                 <desc id="allocation-chart-description">Formula-backed allocation probability by buyer-value and seller-value report.</desc>
               </svg>
-              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
             </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              </div>
           </figure>
           <aside id="allocation-edit-controls" class="surface-choice-controls" aria-label="Allocation painting controls" hidden>
             <div class="range-group">
@@ -317,16 +320,19 @@
         </div>
 
         <div class="surface-editor">
-          <figure class="diagnostic-figure math-chart-figure">
+          <figure class="chart-figure diagnostic-figure math-chart-figure">
             <figcaption>Buyer payment, \(p_B(v,c)\)</figcaption>
-            <div class="math-chart-frame">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="buyer-payment-chart" class="tradeoff-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="buyer-payment-chart-title buyer-payment-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="buyer-payment-chart-title">Buyer payment, p B(v,c)</title>
                 <desc id="buyer-payment-chart-description">Formula-backed buyer payment by buyer-value and seller-value report.</desc>
               </svg>
-              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
             </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              </div>
           </figure>
           <aside id="buyer-payment-edit-controls" class="surface-choice-controls" aria-label="Buyer-payment painting controls" hidden>
             <div class="range-group">
@@ -341,16 +347,19 @@
         </div>
 
         <div class="surface-editor">
-          <figure class="diagnostic-figure math-chart-figure">
+          <figure class="chart-figure diagnostic-figure math-chart-figure">
             <figcaption>Seller payment, \(p_S(v,c)\)</figcaption>
-            <div class="math-chart-frame">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="seller-payment-chart" class="tradeoff-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="seller-payment-chart-title seller-payment-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="seller-payment-chart-title">Seller payment, p S(v,c)</title>
                 <desc id="seller-payment-chart-description">Formula-backed seller payment by buyer-value and seller-value report.</desc>
               </svg>
-              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
             </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              </div>
           </figure>
           <aside id="seller-payment-edit-controls" class="surface-choice-controls" aria-label="Seller-payment painting controls" hidden>
             <div class="range-group">
@@ -365,93 +374,111 @@
         </div>
       </div>
 
-      <div class="diagnostic-panel-grid sandbox-diagnostic-grid">
+      <div class="chart-grid diagnostic-panel-grid sandbox-diagnostic-grid">
         <div class="diagnostic-panel">
-          <figure class="diagnostic-figure math-chart-figure">
+          <figure class="chart-figure diagnostic-figure math-chart-figure">
             <figcaption>Buyer interim-deviation payoff, \(U_B(v,r)\)</figcaption>
-            <div class="math-chart-frame">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="buyer-ic-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="buyer-ic-chart-title buyer-ic-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="buyer-ic-chart-title">Buyer interim-deviation payoff, U B(v,r)</title>
                 <desc id="buyer-ic-chart-description">Buyer interim utility by true value and alternate report, with truthful and best-report traces.</desc>
               </svg>
-              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">True buyer value, \(v\)</p>
+
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Alternate buyer report, \(r\)</p>
             </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">True buyer value, \(v\)</p>
+              </div>
           </figure>
           <div id="buyer-ic-text" class="diagnostic-text"></div>
         </div>
 
         <div class="diagnostic-panel">
-          <figure class="diagnostic-figure math-chart-figure">
+          <figure class="chart-figure diagnostic-figure math-chart-figure">
             <figcaption>Seller interim-deviation payoff, \(U_S(c,s)\)</figcaption>
-            <div class="math-chart-frame">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="seller-ic-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="seller-ic-chart-title seller-ic-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="seller-ic-chart-title">Seller interim-deviation payoff, U S(c,s)</title>
                 <desc id="seller-ic-chart-description">Seller interim utility by true cost and alternate report, with truthful and best-report traces.</desc>
               </svg>
-              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">True seller value, \(c\)</p>
+
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Alternate seller report, \(s\)</p>
             </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">True seller value, \(c\)</p>
+              </div>
           </figure>
           <div id="seller-ic-text" class="diagnostic-text"></div>
         </div>
 
         <div class="diagnostic-panel">
-          <figure class="diagnostic-figure math-chart-figure">
+          <figure class="chart-figure diagnostic-figure math-chart-figure">
             <figcaption>Net revenue, \(R(v,c)\)</figcaption>
-            <div class="math-chart-frame">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="revenue-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="revenue-chart-title revenue-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="revenue-chart-title">Net revenue, R(v,c)</title>
                 <desc id="revenue-chart-description">Intermediary net revenue by buyer-value and seller-value report.</desc>
               </svg>
-              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
             </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              </div>
           </figure>
           <div id="revenue-text" class="diagnostic-text"></div>
         </div>
 
         <div class="diagnostic-panel">
-          <figure class="diagnostic-figure math-chart-figure">
+          <figure class="chart-figure diagnostic-figure math-chart-figure">
             <figcaption>Buyer truthful payoff, \(u_B(v,c)\)</figcaption>
-            <div class="math-chart-frame">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="buyer-payoff-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="buyer-payoff-chart-title buyer-payoff-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="buyer-payoff-chart-title">Buyer truthful payoff, u B(v,c)</title>
                 <desc id="buyer-payoff-chart-description">Buyer truthful payoff by buyer value and seller value.</desc>
               </svg>
-              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
             </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              </div>
           </figure>
           <div id="buyer-payoff-text" class="diagnostic-text"></div>
         </div>
 
         <div class="diagnostic-panel">
-          <figure class="diagnostic-figure math-chart-figure">
+          <figure class="chart-figure diagnostic-figure math-chart-figure">
             <figcaption>Seller truthful payoff, \(u_S(v,c)\)</figcaption>
-            <div class="math-chart-frame">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="seller-payoff-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="seller-payoff-chart-title seller-payoff-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="seller-payoff-chart-title">Seller truthful payoff, u S(v,c)</title>
                 <desc id="seller-payoff-chart-description">Seller truthful payoff by buyer value and seller value.</desc>
               </svg>
-              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
             </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              </div>
           </figure>
           <div id="seller-payoff-text" class="diagnostic-text"></div>
         </div>
 
         <div class="diagnostic-panel">
-          <figure class="diagnostic-figure math-chart-figure">
+          <figure class="chart-figure diagnostic-figure math-chart-figure">
             <figcaption>Efficiency</figcaption>
-            <div class="math-chart-frame">
+            <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="efficiency-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="efficiency-chart-title efficiency-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
                 <title id="efficiency-chart-title">Efficiency comparison</title>
                 <desc id="efficiency-chart-description">Over-trade and missing-trade deviations from efficient allocation.</desc>
               </svg>
-              <p class="math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
             </div>
+                <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">Buyer value, \(v\)</p>
+              </div>
           </figure>
           <div id="efficiency-text" class="diagnostic-text"></div>
         </div>

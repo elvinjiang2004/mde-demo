@@ -14,7 +14,7 @@
   <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
-  <script defer src="../../js/chart-viewport.js"></script>
+  <script defer src="../../js/chart-layout.js"></script>
   <script defer src="model.js"></script>
   <script defer src="app.js"></script>
 </head>
@@ -115,12 +115,13 @@
     </section>
 
     <section class="explorable explorable-divider" aria-label="Family-of-lines interface">
-      <div class="main-diagnostic-layout two-panel-layout">
+      <div class="main-diagnostic-layout two-panel-layout chart-grid">
         <div class="main-column main-column-660">
           <div class="chart-column">
-            <figure class="diagnostic-figure envelope-chart-figure">
+            <figure class="chart-figure diagnostic-figure envelope-chart-figure">
               <figcaption>Envelope, \(V(t)\)</figcaption>
-              <div class="envelope-chart-frame">
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="envelope-chart-frame chart-canvas-frame chart-660x450-frame">
                 <svg
                   id="main-chart"
                   class="tradeoff-chart chart-660x450"
@@ -133,7 +134,9 @@
                   <title id="main-chart-title">Envelope, V(t)</title>
                   <desc id="main-chart-description">A family of straight lines, each with two points independently draggable anywhere along the plot's own edge, with their pointwise-maximum envelope V(t) searched universally and drawn in bold, dotted where it runs outside [0,1].</desc>
                 </svg>
-                <p class="envelope-chart-axis-label">Parameter, \(t\)</p>
+
+              </div>
+                <p class="chart-x-axis-label envelope-chart-axis-label">Parameter, \(t\)</p>
               </div>
             </figure>
           </div>
@@ -149,9 +152,10 @@
 
         <div class="diagnostic-column diagnostic-column-440">
           <div class="diagnostic-panel">
-            <figure class="diagnostic-figure envelope-chart-figure">
+            <figure class="chart-figure diagnostic-figure envelope-chart-figure">
               <figcaption>Active slope, \(f_t(x^*(t),t)\)</figcaption>
-              <div class="envelope-chart-frame">
+              <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
+                <div class="envelope-chart-frame chart-canvas-frame chart-660x450-frame">
                 <svg
                   id="slope-chart"
                   class="diagnostic-chart chart-660x450"
@@ -162,7 +166,9 @@
                   <title id="slope-chart-title">Active slope, f_t(x*(t),t)</title>
                   <desc id="slope-chart-description">The active line's own slope as a step function of t, jumping at each point where the envelope's maximizing line switches; a vertical line's infinite slope is marked by a dotted vertical line, in its own color, instead of a finite step.</desc>
                 </svg>
-                <p class="envelope-chart-axis-label">Parameter, \(t\)</p>
+
+              </div>
+                <p class="chart-x-axis-label envelope-chart-axis-label">Parameter, \(t\)</p>
               </div>
             </figure>
           </div>

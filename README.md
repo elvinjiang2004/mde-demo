@@ -15,10 +15,10 @@ The available modules are located at:
 
     general-topics/envelope-theorem/index.html
     general-topics/revelation-principle/index.html
-    general-topics/payments-from-allocation-rule/index.html
     auctions/first-price/index.html
     auctions/second-price/index.html
     auctions/optimal-auctions/index.html
+    auctions/ironing/index.html
     bilateral-trade/bargaining-mechanism-sandbox/index.html
     bilateral-trade/myerson-satterthwaite-theorem/index.html
 
@@ -31,11 +31,11 @@ The menu contains three categories:
 - **General Topics**
   - The Envelope Theorem
   - The Revelation Principle
-  - Payments from an Allocation Rule (draft)
 - **Auctions**
   - First-Price Auction Equilibrium
   - Second-Price Auction Equilibrium
   - Optimal Auctions
+  - Ironing
 - **Bilateral Trade**
   - Bargaining Mechanism Sandbox
   - Myerson-Satterthwaite Theorem
@@ -65,10 +65,8 @@ Open these files in a browser to run the test suites:
 - `tests/bargaining-sandbox-ui-tests.html` — bargaining-sandbox interface and SVG checks.
 - `tests/envelope-theorem-model-tests.html` — envelope-theorem model checks.
 - `tests/envelope-theorem-ui-tests.html` — envelope-theorem interface and responsive-layout checks.
-- `tests/payments-from-allocation-rule-model-tests.html` — allocation-rule and
-  payment model checks.
-- `tests/payments-from-allocation-rule-ui-tests.html` — allocation-rule interface
-  and SVG checks.
+- `tests/ironing-model-tests.html` — exact interim envelopes, piecewise-uniform distributions, Border feasibility, and Myerson ironing.
+- `tests/ironing-ui-tests.html` — distribution and allocation editing, benchmark comparison, and responsive charts.
 - `tests/revelation-principle-model-tests.html` — exhaustive voting equilibria and truthful-reporting checks.
 - `tests/revelation-principle-ui-tests.html` — ranking swaps, mode transitions, voting history, and responsive layout.
 
@@ -82,12 +80,11 @@ affect ordinary use of the menu or module pages.
 - `about.html` — About page, linked from the menu header.
 - `auctions/first-price/` — first-price module page, model, and controls.
 - `auctions/optimal-auctions/` - two-bidder allocation editor and revenue diagnostics.
+- `auctions/ironing/` — symmetric interim-allocation editor, feasibility, revenue, and ironing.
 - `auctions/second-price/` — second-price module page, model, and controls.
 - `bilateral-trade/myerson-satterthwaite-theorem/` — bilateral-trade module.
 - `bilateral-trade/bargaining-mechanism-sandbox/` — direct bargaining-mechanism editor.
 - `general-topics/envelope-theorem/` — envelope-theorem module.
-- `general-topics/payments-from-allocation-rule/` — allocation-rule and payment
-  module.
 - `general-topics/revelation-principle/` — indirect voting and direct preference-reporting demo.
 - `styles.css` — ordered entry point for the focused stylesheets in `css/`.
 - `css/` — theme, shared page/control styling, chart families, and responsive rules.

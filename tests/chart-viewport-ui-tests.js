@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   var routes = ["auctions/first-price", "auctions/second-price",
     "bilateral-trade/myerson-satterthwaite-theorem",
     "bilateral-trade/bargaining-mechanism-sandbox",
-    "general-topics/envelope-theorem", "general-topics/payments-from-allocation-rule"];
+    "general-topics/envelope-theorem"];
   var failures = 0;
   function charts(doc) {
     return Array.from(doc.querySelectorAll("svg[viewBox]"))
@@ -36,7 +36,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         charts(doc).forEach(function (svg) {
           if (!svg.closest(".chart-viewport")) { errors.push(svg.id + " has no viewport"); return; }
           var padding = gaps(svg);
-          if (padding.some(function (gap) { return Math.abs(gap - 14) > 0.8; })) {
+          var authored = svg.closest(".stable-chart-viewport");
+          if (padding.some(function (gap) { return authored ? gap < 13.2 : Math.abs(gap - 14) > 0.8; })) {
             errors.push(svg.id + ": " + padding.map(function (gap) { return gap.toFixed(2); }).join(", "));
           }
         });

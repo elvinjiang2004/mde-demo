@@ -51,10 +51,10 @@
       byId("bic-monotonicity-" + bidder).textContent = agent.bic ? "is weakly increasing" : "is not weakly increasing";
       byId("bic-status-" + bidder).dataset.bic = String(agent.bic);
       byId("payment-caption-" + bidder).textContent = agent.bic ? "Interim payment" : "Payment candidate";
+      byId("expected-payment-" + bidder).textContent = C.fixed(agent.expectedPayment);
+      byId("expected-payment-" + bidder).dataset.value = agent.expectedPayment;
+      byId("payment-status-" + bidder).textContent = agent.bic ? "" : " (candidate)";
     });
-    byId("revenue-label").textContent = result.bic ? "Expected revenue" : "Envelope revenue candidate";
-    byId("revenue-value").textContent = C.fixed(result.revenue);
-    byId("revenue-value").dataset.value = result.revenue;
     document.body.dataset.ready = "true";
   }
 
@@ -63,7 +63,11 @@
   }
 
   function announce() {
-    byId("live-summary").textContent = result.bidders.map(function (agent, index) { return "Bidder " + (index + 1) + ": " + byId("bic-status-" + (index + 1)).textContent; }).join(". ") + ". " + byId("revenue-label").textContent + ": " + C.fixed(result.revenue) + ". " + byId("selected-cell").textContent;
+    byId("live-summary").textContent = result.bidders.map(function (agent, index) {
+      var bidder = index + 1;
+      return "Bidder " + bidder + ": " + byId("bic-status-" + bidder).textContent + ". " +
+        byId("expected-payment-" + bidder).closest("p").textContent;
+    }).join(". ") + ". " + byId("selected-cell").textContent;
   }
 
   function updateBrush() {
