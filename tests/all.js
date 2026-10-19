@@ -1,31 +1,32 @@
 (function () {
   "use strict";
 
-  var SUITES = [
-    { file: "optimal-auctions-model-tests.html", name: "Optimal auctions model", kind: "model" },
-    { file: "optimal-auctions-ui-tests.html", name: "Optimal auctions interface", kind: "interface" },
-    { file: "distribution-tests.html", name: "Shared distributions", kind: "model" },
-    { file: "model-tests.html", name: "First-price model", kind: "model" },
-    { file: "second-price-model-tests.html", name: "Second-price model", kind: "model" },
-    { file: "bilateral-trade-model-tests.html", name: "Myerson-Satterthwaite model", kind: "model" },
-    { file: "bargaining-sandbox-model-tests.html", name: "Bargaining sandbox model", kind: "model" },
-    { file: "bargaining-sandbox-parity-tests.html", name: "Bargaining sandbox representation parity", kind: "model" },
-    { file: "envelope-theorem-model-tests.html", name: "Envelope theorem model", kind: "model" },
-    { file: "ironing-model-tests.html", name: "Ironing model", kind: "model" },
-    { file: "revelation-principle-model-tests.html", name: "Revelation Principle model", kind: "model" },
-    { file: "chart-viewport-ui-tests.html", name: "Chart viewport spacing", kind: "interface" },
-    { file: "chart-spacing-ui-tests.html", name: "Shared chart spacing", kind: "interface" },
-    { file: "components-tests.html", name: "Shared components", kind: "interface" },
-    { file: "bibliography-tests.html", name: "Global bibliography", kind: "interface" },
-    { file: "menu-tests.html", name: "Module menu", kind: "interface" },
-    { file: "ui-tests.html", name: "First-price interface", kind: "interface" },
-    { file: "second-price-ui-tests.html", name: "Second-price interface", kind: "interface" },
-    { file: "bilateral-trade-ui-tests.html", name: "Myerson-Satterthwaite interface", kind: "interface" },
-    { file: "bargaining-sandbox-ui-tests.html", name: "Bargaining sandbox interface", kind: "interface" },
-    { file: "envelope-theorem-ui-tests.html", name: "Envelope theorem interface", kind: "interface" },
-    { file: "ironing-ui-tests.html", name: "Ironing interface", kind: "interface" },
-    { file: "revelation-principle-ui-tests.html", name: "Revelation Principle interface", kind: "interface" }
-  ];
+  var SUITES = [];
+
+  function selectSuites() {
+    var catalog = window.MechanismTestCatalog;
+    if (!Array.isArray(catalog) || !catalog.length) { throw new Error("Test catalog is missing."); }
+    var query = new URLSearchParams(window.location.search);
+    var modules = query.getAll("module"), files = query.getAll("suite");
+    var layout = query.get("layout") === "1";
+    modules.forEach(function (id) {
+      if (!catalog.some(function (suite) { return suite.module === id; })) {
+        throw new Error("Unknown module: " + id);
+      }
+    });
+    files.forEach(function (file) {
+      if (!catalog.some(function (suite) { return suite.file === file; })) {
+        throw new Error("Unknown suite: " + file);
+      }
+    });
+    var filtered = modules.length || files.length || layout;
+    var selected = catalog.filter(function (suite) {
+      return filtered ? (modules.indexOf(suite.module) >= 0 || files.indexOf(suite.file) >= 0 ||
+        (layout && suite.group === "layout")) : suite.status !== "draft";
+    });
+    if (!selected.length) { throw new Error("No suites selected."); }
+    return selected;
+  }
 
   var CONCURRENCY = 3;
   var TIMEOUT_MS = 90000;
@@ -65,7 +66,7 @@
     }
     var status = doc.body.dataset.status ||
       doc.body.getAttribute("data-status");
-    if (status === "passed" || status === "failed") {
+    if (status === "passed" || status === "failed" || status === "blocked") {
       return {
         state: status,
         passed: doc.querySelectorAll("#results li.pass").length,
@@ -216,6 +217,17 @@
     }).catch(function () {
       /* The visible aggregate status remains the source of truth for people. */
     });
+  }
+  try {
+    SUITES = selectSuites();
+  } catch (error) {
+    summary.textContent = error.message;
+    summary.className = "fail";
+    var item = document.createElement("li"); item.className = "fail"; item.textContent = error.message;
+    document.body.appendChild(item);
+    document.body.dataset.status = "failed";
+    reportRunnerDom();
+    return;
   }
   if (window.location.protocol === "file:") {
     announceFileProtocol();

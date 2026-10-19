@@ -104,18 +104,14 @@
     render();
   }
   function bindNumberPair(prefix, update, errorId) {
-    ["number", "range"].forEach(function (kind) {
-      var input = el(prefix + "-" + kind);
-      input.addEventListener("input", function () {
-        cancelDrag();
-        if (input.value.trim() === "" || !Number.isFinite(input.valueAsNumber)) {
-          el(errorId || "control-error").textContent = "Enter a finite number."; return;
-        }
-        update(input.valueAsNumber);
-      });
-      input.addEventListener("change", function () { syncControls(); });
+    NumericControls.bindPair({
+      number: el(prefix + "-number"), range: el(prefix + "-range"),
+      beforeInput: cancelDrag, update: update,
+      invalid: function () { el(errorId || "control-error").textContent = "Enter a finite number."; },
+      afterCommit: syncControls
     });
   }
+
   bindNumberPair("value", function (v) { edit(v, state.points[state.selected].q); });
   bindNumberPair("allocation", function (q) { edit(state.points[state.selected].v, q); });
   el("bidder-number").addEventListener("input", function () {

@@ -5,12 +5,8 @@
     return Math.max(span / 500, Number.EPSILON);
   }
 
-  function formatEditableNumber(value) {
-    if (!Number.isFinite(value)) {
-      return "";
-    }
-    return String(Number.parseFloat(value.toPrecision(12)));
-  }
+  var numeric = window.NumericControls;
+  var formatEditableNumber = numeric.formatNumber;
 
   function formatChoiceNumber(value) {
     if (!Number.isFinite(value)) {
@@ -19,30 +15,9 @@
     return String(Number.parseFloat(value.toFixed(1)));
   }
 
-  function configureRange(range, min, max, step, value) {
-    range.min = String(min);
-    range.max = String(max);
-    range.step = String(step);
-    range.value = String(window.NumberUtils.clamp(value, min, max));
-  }
-
-  function configureNumberInput(input, min, max, value, formatter) {
-    input.min = String(min);
-    input.max = String(max);
-    input.step = "any";
-    input.value = (formatter || formatEditableNumber)(
-      window.NumberUtils.clamp(value, min, max)
-    );
-  }
-
-  function commitTypedChoice(input, currentValue, setter, formatter) {
-    var nextValue = input.valueAsNumber;
-    if (!Number.isFinite(nextValue)) {
-      input.value = (formatter || formatEditableNumber)(currentValue);
-      return;
-    }
-    setter(nextValue);
-  }
+  var configureRange = numeric.configureRange;
+  var configureNumberInput = numeric.configureNumberInput;
+  var commitTypedChoice = numeric.commit;
 
   function createValueBidControls(state, elements, render) {
     var clamp = window.NumberUtils.clamp;
@@ -80,12 +55,9 @@
     }
 
     function commitShapeParameter(name, input) {
-      var nextValue = input.valueAsNumber;
-      if (!Number.isFinite(nextValue)) {
-        input.value = formatChoiceNumber(state[name]);
-        return;
-      }
-      setShapeParameter(name, nextValue);
+      numeric.commit(input, state[name], function (value) {
+        setShapeParameter(name, value);
+      }, formatChoiceNumber);
     }
 
     return {
@@ -102,41 +74,21 @@
       options.render();
     });
 
-    elements.alphaSlider.addEventListener("input", function () {
-      options.setShapeParameter(
-        "alpha", Number.parseFloat(elements.alphaSlider.value)
-      );
+    ["alpha", "beta"].forEach(function (name) {
+      numeric.bindPair({
+        number: elements[name + "Number"], range: elements[name + "Slider"], numberEvent: "change",
+        update: function (value) { options.setShapeParameter(name, value); },
+        invalid: function (input) { input.value = formatChoiceNumber(state[name]); }
+      });
     });
-    elements.betaSlider.addEventListener("input", function () {
-      options.setShapeParameter(
-        "beta", Number.parseFloat(elements.betaSlider.value)
-      );
-    });
-    elements.alphaNumber.addEventListener("change", function () {
-      options.commitShapeParameter("alpha", elements.alphaNumber);
-    });
-    elements.betaNumber.addEventListener("change", function () {
-      options.commitShapeParameter("beta", elements.betaNumber);
-    });
-
     elements.lowerBound.addEventListener("change", options.updateBounds);
     elements.upperBound.addEventListener("change", options.updateBounds);
-
-    elements.valueSlider.addEventListener("input", function () {
-      options.setValue(Number.parseFloat(elements.valueSlider.value));
-    });
-    elements.bidSlider.addEventListener("input", function () {
-      options.setBid(Number.parseFloat(elements.bidSlider.value));
-    });
-    elements.valueNumber.addEventListener("change", function () {
-      commitTypedChoice(
-        elements.valueNumber, state.value, options.setValue, formatChoiceNumber
-      );
-    });
-    elements.bidNumber.addEventListener("change", function () {
-      commitTypedChoice(
-        elements.bidNumber, state.bid, options.setBid, formatChoiceNumber
-      );
+    ["value", "bid"].forEach(function (name) {
+      numeric.bindPair({
+        number: elements[name + "Number"], range: elements[name + "Slider"], numberEvent: "change",
+        update: name === "value" ? options.setValue : options.setBid,
+        invalid: function (input) { input.value = formatChoiceNumber(state[name]); }
+      });
     });
 
     elements.randomValueButton.addEventListener("click", options.randomValue);
