@@ -702,37 +702,67 @@
     var resolution = interim.buyerAllocation.length;
     var cellSize = 1 / resolution;
     var boundedType = Math.min(1, Math.max(0, trueType));
+    var maximumUtility = -Infinity;
+    var bestCandidateUtility = -Infinity;
     var bestUtility = -Infinity;
     var bestReport = boundedType;
+    var bestAttained = false;
+    var approachFrom = null;
+    var approachSide = null;
+    var utilityAt = agent === "buyer" ?
+      buyerInterimDeviationUtility : sellerInterimDeviationUtility;
     var i;
     for (i = 0; i < resolution; i += 1) {
       var lower = i * cellSize;
       var upper = (i + 1) * cellSize;
       var poly = deviationPolynomial(interim, agent, boundedType, i);
+      // A flat piece can attain its bound inside even when an edge is unowned.
       polynomialExtremaCandidates(poly, lower, upper, algebraTolerance)
+        .concat([0.5 * (lower + upper)])
         .forEach(function (candidate) {
           var utility = evaluatePolynomial(poly, candidate);
-          var isHigher = utility > bestUtility + algebraTolerance;
-          var isCloserTie = Math.abs(utility - bestUtility) <= algebraTolerance &&
-            Math.abs(candidate - boundedType) < Math.abs(bestReport - boundedType);
-          if (isHigher || isCloserTie) {
+          maximumUtility = Math.max(maximumUtility, utility);
+          if (utility < maximumUtility) {
+            return;
+          }
+          var actualUtility = utilityAt(interim, boundedType, candidate);
+          var attained = interimIntervalIndex(interim, candidate) === i ||
+            actualUtility === utility;
+          var isHigher = bestCandidateUtility < maximumUtility;
+          var isPreferredTie = (attained && !bestAttained) ||
+            (attained === bestAttained &&
+              Math.abs(candidate - boundedType) < Math.abs(bestReport - boundedType));
+          if (isHigher || isPreferredTie) {
+            bestCandidateUtility = utility;
             bestUtility = utility;
             bestReport = candidate;
+            bestAttained = attained;
+            approachFrom = attained ? null : 0.5 * (lower + upper);
+            approachSide = attained ? null : (candidate === lower ? "above" : "below");
           }
         });
     }
-    var truthfulUtility = agent === "buyer" ?
-      buyerInterimDeviationUtility(interim, boundedType, boundedType) :
-      sellerInterimDeviationUtility(interim, boundedType, boundedType);
-    if (truthfulUtility >= bestUtility - verdictTolerance) {
+    var truthfulUtility = utilityAt(interim, boundedType, boundedType);
+    maximumUtility = Math.max(maximumUtility, truthfulUtility);
+    var truthfulTie = truthfulUtility >= maximumUtility - verdictTolerance;
+    if (truthfulTie) {
       bestUtility = truthfulUtility;
       bestReport = boundedType;
+      bestAttained = true;
+      approachFrom = null;
+      approachSide = null;
     }
     return {
       report: Math.min(1, Math.max(0, bestReport)),
       utility: bestUtility,
       truthfulUtility: truthfulUtility,
-      gain: Math.max(0, bestUtility - truthfulUtility)
+      gain: Math.max(0, bestUtility - truthfulUtility),
+      maximumUtility: maximumUtility,
+      maximumGain: Math.max(0, maximumUtility - truthfulUtility),
+      truthfulTie: truthfulTie,
+      attained: bestAttained,
+      approachFrom: approachFrom,
+      approachSide: approachSide
     };
   }
 

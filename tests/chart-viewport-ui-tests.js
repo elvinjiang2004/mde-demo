@@ -2,7 +2,7 @@
 document.addEventListener("DOMContentLoaded", async function () {
   var harness = window.MechanismTest;
   var frame = document.getElementById("app-frame");
-  var routes = ["auctions/first-price", "auctions/second-price",
+  var routes = ["auction-equilibria/first-price", "auction-equilibria/second-price",
     "bilateral-trade/myerson-satterthwaite-theorem",
     "bilateral-trade/bargaining-mechanism-sandbox",
     "general-topics/envelope-theorem"];
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         "Lesson equations must not be cropped or wrapped.");
       var main = charts(doc).find(function (svg) { return svg.getAttribute("tabindex") === "0"; });
       if (main) {
-        main.focus();
+        main.focus({ preventScroll: true });
         harness.dispatch(main, "keydown", frame.contentWindow, { key: "ArrowRight" });
         await harness.nextAnimationFrames(frame.contentWindow, 3);
         await assertPadding(doc, route + " with keyboard probe");

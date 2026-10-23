@@ -179,21 +179,21 @@
       buyerIc: {
         chart: byId("buyer-ic-chart"),
         text: byId("buyer-ic-text"),
-        title: "Buyer interim-deviation payoff, U B(v,r)",
+        title: "Buyer interim-deviation payoff, U B(v,v')",
         kind: "ic",
         agent: "buyer"
       },
       sellerIc: {
         chart: byId("seller-ic-chart"),
         text: byId("seller-ic-text"),
-        title: "Seller interim-deviation payoff, U S(c,s)",
+        title: "Seller interim-deviation payoff, U S(c,c')",
         kind: "ic",
         agent: "seller"
       },
       revenue: {
         chart: byId("revenue-chart"),
         text: byId("revenue-text"),
-        title: "Net revenue, R(v,c)",
+        title: "Budget Balance, R(v,c)",
         kind: "field"
       },
       buyerPayoff: {

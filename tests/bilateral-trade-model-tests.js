@@ -208,6 +208,76 @@
     "The exact payoff diagnostics should expose profitable deviations for both agents.");
   });
 
+  test("Interim best-report limits respect boundary ownership for both agents", function () {
+    var shared = window.BilateralTradeEnvelope;
+    var q = shared.constantGrid(R, 0);
+    var p = shared.createGrid(R, function () {
+      return [0, 0, 0, 0, 0, 0];
+    }, function () { return [0, 0, 0, 0, 0, 0]; });
+    for (var i = R / 2 - 1; i < R / 2; i += 1) {
+      for (var j = 0; j < R; j += 1) { q.lower[i][j] = 1; }
+    }
+    var interim = shared.interimRulePolynomials({ q: q, pB: p, pS: p });
+    var buyer = shared.buyerBestInterimReport(interim, 0.8);
+    assertClose(buyer.report, 0.5, "Buyer limiting report", 1e-12);
+    assertClose(buyer.maximumUtility, 0.8, "Buyer payoff supremum", 1e-12);
+    assert(!buyer.attained && buyer.approachSide === "below" &&
+      buyer.approachFrom < buyer.report,
+    "The buyer's selected boundary must identify its unowned left limit.");
+    assertClose(shared.buyerInterimDeviationUtility(interim, 0.8, buyer.report),
+      0, "Literal buyer report payoff", 1e-12);
+    assert(shared.buyerInterimDeviationUtility(interim, 0.8,
+      buyer.report - 1e-9) > buyer.maximumUtility - 1e-6,
+    "Approaching from the reported side should approach the exact supremum.");
+
+    q = shared.constantGrid(R, 0);
+    var receipts = shared.createGrid(R, function () {
+      return [0, 0, 0, 0, 0, 0];
+    }, function (i, j) { return [j === R / 2 - 1 ? 1 : 0, 0, 0, 0, 0, 0]; });
+    for (i = 0; i < R; i += 1) {
+      q.upper[i][R / 2 - 1] = 1;
+    }
+    interim = shared.interimRulePolynomials({ q: q, pB: p, pS: receipts });
+    var seller = shared.sellerBestInterimReport(interim, 0.2);
+    assertClose(seller.maximumUtility, 0.8, "Seller payoff supremum", 1e-12);
+    assert(!seller.attained && seller.approachSide === "below" &&
+      seller.approachFrom < seller.report,
+    "Seller optimization must retain the same one-sided ownership metadata.");
+    assertClose(shared.sellerInterimDeviationUtility(interim, 0.2, seller.report),
+      0, "Literal seller report payoff", 1e-12);
+  });
+
+  test("Flat optima have attained interior reports and tiny gains retain open limits", function () {
+    var shared = window.BilateralTradeEnvelope;
+    var interim = { buyerAllocation: [], buyerPayment: [],
+      sellerAllocation: [], sellerPayment: [] };
+    for (var i = 0; i < 7; i += 1) {
+      interim.buyerAllocation.push([0]);
+      interim.buyerPayment.push([i === 5 ? -1 : 0]);
+      interim.sellerAllocation.push([0]);
+      interim.sellerPayment.push([0]);
+    }
+    var flat = shared.buyerBestInterimReport(interim, 0.1, { verdictTolerance: 0 });
+    assert(flat.attained && flat.approachFrom === null && flat.approachSide === null,
+      "A constant optimal piece must retain an attained interior candidate.");
+    assertClose(shared.buyerInterimDeviationUtility(interim, 0.1, flat.report),
+      1, "The selected flat optimum is feasible", 1e-12);
+
+    var delta = 5e-13;
+    interim = { buyerAllocation: [[0, 1], [0]],
+      buyerPayment: [[0], [-(0.5 - delta)]],
+      sellerAllocation: [[0], [0]], sellerPayment: [[0], [0]] };
+    var tiny = shared.buyerBestInterimReport(interim, 1, { verdictTolerance: 0 });
+    assert(!tiny.attained && !tiny.truthfulTie && tiny.maximumGain > 0,
+      "An algebra-tolerance difference must not turn an open supremum into a lower attained maximum.");
+    assertClose(tiny.maximumUtility, 0.5, "Exact tiny-gain supremum", 1e-15);
+    var displayedTruth = shared.buyerBestInterimReport(interim, 1);
+    assert(displayedTruth.truthfulTie && displayedTruth.attained &&
+      displayedTruth.report === 1 && displayedTruth.gain === 0 &&
+      displayedTruth.maximumGain > 0,
+    "Truthful display ties must preserve the positive raw supremum gain.");
+  });
+
   test("allocationErrorAt evaluates the represented rule at the requested point", function () {
     var over = model.allocationErrorAt(model.constantCellGrid(1), 0.2, 0.8);
     var under = model.allocationErrorAt(model.constantCellGrid(0), 0.8, 0.2);

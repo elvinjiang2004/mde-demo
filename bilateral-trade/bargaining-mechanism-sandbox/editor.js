@@ -135,6 +135,9 @@
     function bindCustomSurfaceChart(key) {
       var chart = surfaces[key].chart;
       chart.addEventListener("pointerdown", function (event) {
+        if (dragState || event.button !== 0 || event.isPrimary === false) {
+          return;
+        }
         finishKeyboardPaint();
         var point = visuals.plotPointFromEvent(chart, event, LAYOUT);
         if (!point) {
@@ -189,6 +192,7 @@
       });
       chart.addEventListener("pointerup", endPointerDrag);
       chart.addEventListener("pointercancel", endPointerDrag);
+      chart.addEventListener("lostpointercapture", endPointerDrag);
       chart.addEventListener("pointerleave", function () {
         if (document.activeElement !== chart) {
           charts.hideSurfaceProbe(key);
@@ -297,7 +301,9 @@
       if (!dragState || dragState.pointerId !== event.pointerId) {
         return;
       }
-      var chart = surfaces[dragState.key].chart;
+      var finishedDrag = dragState;
+      dragState = null;
+      var chart = surfaces[finishedDrag.key].chart;
       if (typeof chart.hasPointerCapture === "function" &&
           typeof chart.releasePointerCapture === "function") {
         try {
@@ -306,11 +312,8 @@
           }
         } catch {}
       }
-      var shouldRefresh = dragState.dirty;
-      var changedSurface = dragState.key;
-      dragState = null;
-      if (shouldRefresh) {
-        recomputeCustom("pointer-edit", changedSurface);
+      if (finishedDrag.dirty) {
+        recomputeCustom("pointer-edit", finishedDrag.key);
       }
     }
 

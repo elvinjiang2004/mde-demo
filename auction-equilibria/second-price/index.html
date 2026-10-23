@@ -12,6 +12,8 @@
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
   <script defer src="../../js/distributions.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
@@ -29,29 +31,24 @@
   <a class="skip-link" href="#main-content">Skip to the main content</a>
 
   <header class="site-header">
-    <page-header category="Auctions" home="../../index.html"></page-header>
+    <page-header category="Auction Equilibria" home="../../index.html"></page-header>
   </header>
 
   <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">The IPV Second-Price Auction Equilibrium</h1>
+
       <p>
-        One indivisible object is to be sold. There are \(n\geq 2\)
-        risk-neutral bidders. Bidders have independent private values
-        \(V_i\sim F\), \(i=1,\ldots,n\). We assume that \(F\) has a continuous,
-        strictly positive density \(f\) on its support
-        \([\underline{v},\overline{v}]\). The distribution \(F\) is common knowledge.
-      </p>
-      <p>
-        We consider a <em>second-price sealed-bid auction</em> with no reserve
-        price. Each bidder \(i\) privately observes his realized value \(v_i\),
-        and then all bidders simultaneously submit their bids. The highest bidder
+        In the <a class="environment-link" href="../../auction-equilibria/environment/index.html">IPV environment</a>,
+        an object will be sold via a <em>second-price sealed-bid auction</em> with no reserve
+        price. Each buyer \(i\) privately observes his realized value \(v_i\),
+        and then all buyers simultaneously submit their bids. The highest buyer
         wins the object, receives his value for it, and pays the highest
-        opposing bid, while losing bidders receive nothing and pay zero.
+        opposing bid, while losing buyers receive nothing and pay zero.
         Ties are broken uniformly at random.
       </p>
       <p>
-        Consider bidder 1 with value \(v_1\). Suppose bidders \(2,\ldots,n\)
+        Consider buyer 1 with value \(v_1\). Suppose buyers \(2,\ldots,n\)
         use the symmetric, increasing bidding strategy
       </p>
       <div class="equation-display" aria-label="beta superscript II of v equals v">
@@ -61,13 +58,13 @@
       </div>
       <p>
         <strong>Proposition:</strong>
-        It is optimal for bidder 1 to use \(\beta^{\mathrm{II}}\) regardless of
-        the other bidders' strategies. Thus, truthful bidding is a weakly
-        dominant strategy for every bidder.
+        It is optimal for buyer 1 to use \(\beta^{\mathrm{II}}\) regardless of
+        the other buyers' strategies. Thus, truthful bidding is a weakly
+        dominant strategy for every buyer.
       </p>
       <p>
-        In the interactive demo, take the perspective of bidder 1 and consider
-        different bids in response to the other bidders using this strategy.
+        In the interactive demo, take the perspective of buyer 1 and consider
+        different bids in response to the other buyers using this strategy.
         Here, \(V_i=a+(b-a)Z_i\), where
         \(Z_i\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Beta}(\alpha,\beta)\),
         \(i=1,\ldots,n\). When \(\alpha=\beta=1\), values are
@@ -100,7 +97,7 @@
           </div>
         </div>
 
-        <aside class="choice-controls" aria-label="Bidder controls">
+        <aside class="choice-controls" aria-label="Buyer controls">
           <value-density-preview></value-density-preview>
           <div class="slider-grid">
             <div class="range-group">
@@ -158,7 +155,7 @@
       class="derivation"
       aria-labelledby="dominant-strategy-title"
     >
-      <h2 id="dominant-strategy-title">Proof of the dominant strategy for bidder 1</h2>
+      <h2 id="dominant-strategy-title">Proof of the dominant strategy for buyer 1</h2>
       <p>
         Notice from the demo where the loss from underbidding and
         overbidding comes from. Underbidding causes you to lose in cases
@@ -169,7 +166,7 @@
         is, to bid your own value, in the second-price auction.
       </p>
       <p>
-        Suppose bidders \(2,\ldots,n\) bid \(x_2,\ldots,x_n\). Let
+        Suppose buyers \(2,\ldots,n\) bid \(x_2,\ldots,x_n\). Let
         \(p_1=\max\{x_i \mid i=2,\ldots,n\}\). Let \(x^-\) denote an
         alternative underbid, so \(x^- < v_1\), and let \(x^+\) denote an
         alternative overbid, so \(v_1 < x^+\). We consider four cases for
@@ -177,21 +174,21 @@
       </p>
       <p>
         <strong>Case 1:</strong> \(p_1 < x^- < v_1\). With either bid,
-        bidder 1 wins and gets \(v_1-p_1>0\).
+        buyer 1 wins and gets \(v_1-p_1>0\).
       </p>
       <p>
         <strong>Case 2:</strong> \(x^- < p_1 < v_1\). By bidding \(x^-\),
-        bidder 1 loses and gets \(0\), whereas by bidding \(v_1\), he wins
+        buyer 1 loses and gets \(0\), whereas by bidding \(v_1\), he wins
         and gets \(v_1-p_1>0\).
       </p>
       <p>
         <strong>Case 3:</strong> \(v_1 < p_1 < x^+\). By bidding \(x^+\),
-        bidder 1 wins and gets \(v_1-p_1<0\), whereas by bidding \(v_1\), he
+        buyer 1 wins and gets \(v_1-p_1<0\), whereas by bidding \(v_1\), he
         loses and gets \(0\).
       </p>
       <p>
         <strong>Case 4:</strong> \(v_1 < x^+ < p_1\). With either bid,
-        bidder 1 loses and gets \(0\).
+        buyer 1 loses and gets \(0\).
       </p>
       <p>
         Through these four cases, bidding \(v_1\) gives at least as good of
@@ -200,8 +197,8 @@
         where \(p_1=x^-\), \(p_1=v_1\), and \(p_1=x^+\). Then, since the
         initial underbid and overbid were chosen arbitrarily, this holds
         for all underbids and overbids, which is just all alternative bids.
-        Of course, there is no special reason we considered bidder 1, so it
-        is easy to extend this reasoning to all bidders. 
+        Of course, there is no special reason we considered buyer 1, so it
+        is easy to extend this reasoning to all buyers.
       </p>
     </section>
 
@@ -212,7 +209,7 @@
           IPV stands for independent, private values.
         </li>
         <li>
-          Truthful bidding remains a dominant strategy for bidders in the second-price auction under
+          Truthful bidding remains a dominant strategy for buyers in the second-price auction under
           several extensions, such as risk aversion or asymmetric value distributions.
         </li>
       </ul>
@@ -229,5 +226,10 @@
   <footer class="site-footer">
     <page-footer></page-footer>
   </footer>
+  <learning-sidebar page="second-price" environment="auction-equilibria">
+    <template data-insights>
+      <!-- User-authored Insights go here. -->
+    </template>
+  </learning-sidebar>
 </body>
 </html>

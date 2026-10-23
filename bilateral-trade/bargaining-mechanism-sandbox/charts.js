@@ -389,7 +389,7 @@
     }
 
     function selectionSide() {
-      return state.selected.isLower ? "R" : "L";
+      return state.selected.isLower ? "B-R" : "T-L";
     }
 
     function surfaceDescription(key) {
@@ -568,8 +568,9 @@
         if (state.activePreset === "custom") {
           return "Exact " + (buyer ? "buyer" : "seller") +
             " interim utility by true type and alternate report. The dashed " +
-            "diagonal is truthful reporting. The plotted marks are exact " +
-            "best reports at 61 displayed true types; the BIC verdict uses the " +
+            "diagonal is truthful reporting. Filled marks select best reports " +
+            "at 61 displayed true types; hollow marks are one-sided limits " +
+            "whose payoff supremum is not attained at that report. The BIC verdict uses the " +
             "exact grid monotonicity and payment identities.";
         }
         return "Exact " + (buyer ? "buyer" : "seller") +
@@ -611,12 +612,14 @@
           cx: mesh.svgXOf(point.trueValue, LAYOUT),
           cy: mesh.svgYOf(point.report, LAYOUT),
           r: 1.8,
-          fill: "var(--orange)",
-          stroke: "var(--annotation-halo)",
+          fill: point.attained ? "var(--orange)" : "none",
+          stroke: point.attained ? "var(--annotation-halo)" : "var(--orange)",
           "stroke-width": 0.7,
           "vector-effect": "non-scaling-stroke",
           "pointer-events": "none",
           "data-best-report-point": index,
+          "data-best-report-attained": String(point.attained),
+          "data-best-report-approach-side": point.approachSide || "",
           "data-trace-key": stateKey
         });
       });
@@ -699,8 +702,8 @@
         var ic = diagnosticState(key);
         lines = [
           verdictParagraph("BIC", ic.holds,
-            "best-response path (orange points) " +
-              (ic.holds ? "lies on" : "does not lie entirely on") +
+            "best-response points (orange) " +
+              (ic.holds ? "lie on" : "do not lie entirely on") +
               " " + (key === "buyerIc" ? "v′ = v" : "c′ = c")),
           verdictParagraph("DSIC", ic.dsicHolds,
             "maximum deviation gain = " + formatDiagnostic(ic.maximumExPostGain))
@@ -758,10 +761,10 @@
       var verdicts = state.summary.verdicts;
       elements.diagnosticLiveStatus.textContent =
         "Buyer BIC " + (verdicts.buyerBic ? "passes" : "fails") +
-        " (best-response path (orange points) " + (verdicts.buyerBic ? "lies on" : "does not lie entirely on") +
+        " (best-response points (orange) " + (verdicts.buyerBic ? "lie on" : "do not lie entirely on") +
         " v′ = v)" +
         ". Seller BIC " + (verdicts.sellerBic ? "passes" : "fails") +
-        " (best-response path (orange points) " + (verdicts.sellerBic ? "lies on" : "does not lie entirely on") +
+        " (best-response points (orange) " + (verdicts.sellerBic ? "lie on" : "do not lie entirely on") +
         " c′ = c)" +
         ". Expected revenue " + formatDiagnostic(verdicts.expectedRevenue) +
         ". " + diagnostics.efficiency.text.children[0].textContent +
@@ -891,7 +894,7 @@
         };
       }
       return {
-        symbol: key === "revenue" ? "R" : "q-q*",
+        symbol: key === "revenue" ? "R" : "L",
         value: visuals.formatProbe(scalar)
       };
     }
@@ -912,10 +915,10 @@
       } else {
         prefix = "Buyer value " + visuals.formatProbe(probe.x) +
           ", seller value " + visuals.formatProbe(probe.y);
-        name = key === "revenue" ? "net revenue" :
+        name = key === "revenue" ? "net revenue R" :
           (key === "buyerPayoff" ? "buyer truthful payoff" :
             (key === "sellerPayoff" ? "seller truthful payoff" :
-              "allocation minus efficient allocation"));
+              "allocation minus efficient allocation L"));
       }
       elements.probeStatus.textContent = prefix + ", " + name + " " +
         visuals.formatProbe(diagnosticScalarValue(key, value)) + ".";

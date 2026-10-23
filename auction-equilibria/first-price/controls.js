@@ -2,7 +2,7 @@
   "use strict";
 
   function create(state, elements, defaults, render, charts, distributionSpec) {
-    var model = window.SPAModel;
+    var model = window.FPAModel;
     var distributions = window.AuctionDistributions;
     var math = window.MechanismMath;
     var auctionControls = window.AuctionControls;
@@ -14,8 +14,10 @@
     var commitTypedChoice = auctionControls.commitTypedChoice;
     var formatMoney = window.AuctionChart.formatMoney;
     var DEFAULTS = defaults;
-    var chartDragActive = false;
+    var chartPointerId = null;
     var resizeTimer = null;
+    var pointerFrame = null;
+    var pendingPointerBid = null;
     var chartPointerToBid = charts.chartPointerToBid;
 
     var valueBidControls = auctionControls.createValueBidControls(
@@ -30,6 +32,50 @@
     var commitShapeParameter = shapeParameterControls.commitShapeParameter;
 
 
+    function schedulePointerBid(bid) {
+      pendingPointerBid = bid;
+      if (pointerFrame !== null) {
+        return;
+      }
+      pointerFrame = window.requestAnimationFrame(function () {
+        pointerFrame = null;
+        if (pendingPointerBid === null) {
+          return;
+        }
+        var nextBid = pendingPointerBid;
+        pendingPointerBid = null;
+        setBid(nextBid);
+      });
+    }
+
+    function flushPointerBid() {
+      if (pendingPointerBid === null) {
+        return;
+      }
+      if (pointerFrame !== null) {
+        window.cancelAnimationFrame(pointerFrame);
+        pointerFrame = null;
+      }
+      var nextBid = pendingPointerBid;
+      pendingPointerBid = null;
+      setBid(nextBid);
+    }
+
+    function finishChartDrag(event) {
+      if (chartPointerId === null || (event && event.pointerId !== chartPointerId)) {
+        return;
+      }
+      var pointerId = chartPointerId;
+      chartPointerId = null;
+      if (event && event.type === "pointerup") {
+        var bid = chartPointerToBid(event, true);
+        if (bid !== null) { schedulePointerBid(bid); }
+      }
+      flushPointerBid();
+      if (elements.chart.hasPointerCapture(pointerId)) {
+        elements.chart.releasePointerCapture(pointerId);
+      }
+    }
     function bindEvents() {
       auctionControls.bindCommonAuctionEvents({
         state: state,
@@ -45,44 +91,28 @@
         resize: scheduleResize
       });
       elements.chart.addEventListener("pointerdown", function (event) {
+        if (!event.isPrimary || event.button !== 0 || chartPointerId !== null) { return; }
         var bid = chartPointerToBid(event, false);
         if (bid === null) {
           return;
         }
-        chartDragActive = true;
-        try {
-          elements.chart.setPointerCapture(event.pointerId);
-        } catch (error) {
-        }
-        setBid(bid);
+        chartPointerId = event.pointerId;
+        elements.chart.setPointerCapture(event.pointerId);
+        schedulePointerBid(bid);
       });
 
       elements.chart.addEventListener("pointermove", function (event) {
-        if (!chartDragActive) {
+        if (event.pointerId !== chartPointerId) {
           return;
         }
         var bid = chartPointerToBid(event, true);
         if (bid !== null) {
-          setBid(bid);
+          schedulePointerBid(bid);
         }
       });
 
-      elements.chart.addEventListener("pointerup", function (event) {
-        if (chartDragActive) {
-          var bid = chartPointerToBid(event, true);
-          if (bid !== null) {
-            setBid(bid);
-          }
-        }
-        chartDragActive = false;
-        if (elements.chart.hasPointerCapture &&
-            elements.chart.hasPointerCapture(event.pointerId)) {
-          elements.chart.releasePointerCapture(event.pointerId);
-        }
-      });
-
-      elements.chart.addEventListener("pointercancel", function () {
-        chartDragActive = false;
+      ["pointerup", "pointercancel", "lostpointercapture"].forEach(function (type) {
+        elements.chart.addEventListener(type, finishChartDrag);
       });
 
     }
@@ -95,7 +125,6 @@
       );
       if (!validation.valid) {
         showError(validation.errors.join(" "));
-        revertBoundsInputs();
         return;
       }
       setValue(distributions.quantile(
@@ -104,6 +133,7 @@
     }
 
     function resetState() {
+      finishChartDrag();
       state.n = DEFAULTS.n;
       state.a = DEFAULTS.a;
       state.b = DEFAULTS.b;
@@ -124,19 +154,22 @@
       var nextA = Number.parseFloat(elements.lowerBound.value);
       var nextB = Number.parseFloat(elements.upperBound.value);
       var validation = model.validateAuction(
-        state.n, nextA, nextB, distributionSpec()
+        state.n,
+        nextA,
+        nextB,
+        distributionSpec()
       );
 
       if (!validation.valid) {
         showError(validation.errors.join(" "));
-        revertBoundsInputs();
+        elements.lowerBound.value = formatEditableNumber(state.a);
+        elements.upperBound.value = formatEditableNumber(state.b);
         return;
       }
 
       var oldSpan = state.b - state.a;
       var valuePosition = oldSpan > 0 ? (state.value - state.a) / oldSpan : 0.8;
-      var bidPosition = oldSpan > 0 ?
-        (state.bid - state.a) / oldSpan : 0.3;
+      var bidPosition = oldSpan > 0 ? (state.bid - state.a) / oldSpan : 0.3;
       var newSpan = nextB - nextA;
 
       state.a = nextA;
@@ -156,13 +189,7 @@
 
       var step = rangeStep(state.b - state.a);
       configureRange(elements.valueSlider, state.a, state.b, step, state.value);
-      configureRange(
-        elements.bidSlider,
-        state.a,
-        state.b,
-        step,
-        state.bid
-      );
+      configureRange(elements.bidSlider, state.a, state.b, step, state.bid);
       configureNumberInput(
         elements.valueNumber,
         state.a,
@@ -183,11 +210,6 @@
       elements.betaNumber.value = formatChoiceNumber(state.beta);
     }
 
-    function revertBoundsInputs() {
-      elements.lowerBound.value = formatEditableNumber(state.a);
-      elements.upperBound.value = formatEditableNumber(state.b);
-    }
-
     function showError(message) {
       elements.inputError.textContent = message;
       elements.inputError.hidden = false;
@@ -200,6 +222,8 @@
 
     function updateControls() {
       var span = state.b - state.a;
+      var valueText = formatMoney(state.value, span);
+      var bidText = formatMoney(state.bid, span);
       var lowerText = formatMoney(state.a, span);
       var upperText = formatMoney(state.b, span);
 
@@ -214,11 +238,11 @@
 
       elements.valueSlider.setAttribute(
         "aria-valuetext",
-        formatMoney(state.value, span) + " value units"
+        valueText + " value units"
       );
       elements.bidSlider.setAttribute(
         "aria-valuetext",
-        formatMoney(state.bid, span) + " value units"
+        bidText + " value units"
       );
     }
 
@@ -231,5 +255,5 @@
     });
   }
 
-  window.SecondPriceControls = Object.freeze({ create: create });
+  window.FirstPriceControls = Object.freeze({ create: create });
 }());

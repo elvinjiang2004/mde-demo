@@ -13,6 +13,8 @@
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
@@ -24,49 +26,11 @@
 </head>
 <body class="ironing-page">
   <a class="skip-link" href="#main-content">Skip to the main content</a>
-  <header class="site-header"><page-header category="Auctions" home="../../index.html"></page-header></header>
+  <header class="site-header"><page-header category="Auction Design" home="../../index.html"></page-header></header>
   <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">Ironing</h1>
-      <p>
-        A seller intends to sell an object for which she has no value. There are
-        \(n\geq 2\) risk-neutral bidders. Bidders have independent private values
-        \(V_i\sim F_i\), \(i=1,\ldots,n\). We assume that each \(F_i\) has a
-        piecewise-continuous density \(f_i\), bounded above and away from zero, on its support
-        \([\underline{v}_i,\overline{v}_i]\). These distributions are common knowledge.
-      </p>
-      <p>
-        The seller wishes to maximize expected revenue with a <em>direct selling
-        mechanism</em> consisting of an allocation rule \(q:T\to[0,1]^n\) and a
-        payment rule \(p:T\to\mathbb{R}^n\), where
-        \(T=\prod_{i=1}^n[\underline{v}_i,\overline{v}_i]\). As functions of the
-        reported values, for each bidder, the allocation rule specifies the
-        probability the object is sold to him, and the payment rule specifies
-        the expected payment from him. Writing \(q=(q_1,\ldots,q_n)\),
-        since there is only one object to be sold, we require that for all \(v\in T\),
-        \(\sum_{i=1}^n q_i(v)\leq 1.\)
-      </p>
-      <p>We additionally require that the mechanism satisfies the following properties:</p>
-      <ol>
-        <li>
-          <strong>(Bayesian) Incentive Compatibility (IC):</strong>
-          All bidders truthfully reporting is a Bayesian Nash equilibrium.
-        </li>
-        <li>
-          <strong>(Interim) Individual Rationality (IR):</strong>
-          In truthful equilibrium, after observing their values, all bidders have a weakly positive
-          expected payoff.
-        </li>
-      </ol>
-      <p>
-        <strong>Theorem (<span data-citation="myerson-1981" data-citation-style="parenthetical"></span>):</strong>
-        When the design problem is <em>regular</em>,
-        meaning that each bidder's <em>virtual value</em>
-        \(\phi_i(v_i)=v_i-\frac{1-F_i(v_i)}{f_i(v_i)}\) is weakly increasing,
-        there is a revenue-maximizing auction that allocates the object to a
-        bidder with the highest positive virtual value. Otherwise, if no bidder has a
-        positive virtual value, the object is not sold.
-      </p>
+      <p><a class="environment-link" href="../../auction-design/environment/index.html">Environment</a></p>
     </section>
     <section id="distribution-controls" class="model-specifications" aria-label="Auction and distribution parameters">
       <div class="parameter-grid distribution-parameter-grid">
@@ -192,5 +156,10 @@
     </section>
   </main>
   <footer class="site-footer"><page-footer></page-footer></footer>
+  <learning-sidebar page="ironing" environment="auction-design">
+    <template data-insights>
+      <!-- User-authored Insights go here. -->
+    </template>
+  </learning-sidebar>
 </body>
 </html>

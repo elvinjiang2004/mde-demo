@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   var T = MechanismTest, frame = document.getElementById("app-frame");
-  var routes = ["auctions/first-price", "auctions/second-price", "auctions/optimal-auctions", "auctions/ironing",
+  var routes = ["auction-equilibria/first-price", "auction-equilibria/second-price", "auction-design/optimal-auctions", "auction-design/ironing",
     "general-topics/envelope-theorem", "bilateral-trade/myerson-satterthwaite-theorem", "bilateral-trade/bargaining-mechanism-sandbox"];
   function border(svg) { return svg.querySelector("rect.plot-frame, rect.diagnostic-frame, rect.axis-line"); }
   function check(doc, win) {
@@ -38,6 +38,19 @@
     T.assert(doc.documentElement.scrollWidth <= doc.documentElement.clientWidth + 1, "No horizontal overflow");
     T.assert(!doc.querySelector("merror, .chart-plot-viewport mjx-merror"), "Valid mathematics");
   }
+  async function waitForLayout(doc, win, label) {
+    var lastError;
+    try {
+      await T.waitFor(function () {
+        try { check(doc, win); return true; }
+        catch (error) { lastError = error; return false; }
+      }, 5000);
+    } catch (error) {
+      throw new Error(label + ": " + (lastError || error).message);
+    }
+    await T.nextAnimationFrames(win, 2);
+    check(doc, win);
+  }
   var tests = routes.map(function (route) {
     return { name: route + " shares chart spacing at every responsive width", run: async function () {
       frame.style.width = "1280px";
@@ -50,16 +63,17 @@
       var doc = frame.contentDocument, win = frame.contentWindow;
       for (var width of [320, 375, 640, 768, 1280]) {
         frame.style.width = width + "px";
-        await new Promise(function (resolve) { win.setTimeout(resolve, 160); });
-        await T.nextAnimationFrames(win, 4);
-        check(doc, win);
+        // Auction redraws debounce resize; observe completed geometry instead
+        // of assuming a timer ran before a fixed delay under aggregate load.
+        await T.nextAnimationFrames(win, 2);
+        await waitForLayout(doc, win, route + " at " + width + "px");
       }
       var before = Array.from(doc.querySelectorAll(".chart-figure .chart-canvas-frame > svg")).map(function (svg) {
         var b = border(svg).getBoundingClientRect(); return [b.x + win.scrollX, b.y + win.scrollY, b.width, b.height];
       });
       var interactive = doc.querySelector(".chart-figure svg[tabindex='0']");
       if (interactive) {
-        interactive.focus();
+        interactive.focus({ preventScroll: true });
         T.dispatch(interactive, "keydown", win, { key: "ArrowRight" });
         await T.nextAnimationFrames(win, 3);
         Array.from(doc.querySelectorAll(".chart-figure .chart-canvas-frame > svg")).forEach(function (svg, i) {
@@ -72,7 +86,7 @@
           var label = interactive.closest(".chart-plot-viewport").querySelector(".chart-x-axis-label");
           T.assert(coordinate.getBoundingClientRect().bottom < label.getBoundingClientRect().top, "Probe coordinate clears the axis label");
         }
-        check(doc, win);
+        await waitForLayout(doc, win, route + " with keyboard inspection");
       }
     } };
   });

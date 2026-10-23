@@ -13,6 +13,8 @@
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
@@ -39,56 +41,11 @@
   <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">Bargaining Mechanism Sandbox</h1>
+      
+
       <p>
-        A seller has an object that she may sell to a buyer. The seller and buyer
-        have independent private values \(C\sim F_S\) and \(V\sim F_B\),
-        respectively. We assume that \(F_S\) has a continuous, strictly positive
-        density \(f_S\) on its support \([\underline{c},\overline{c}]\), and that
-        \(F_B\) has a continuous, strictly positive density \(f_B\) on its support
-        \([\underline{v},\overline{v}]\). These distributions are common knowledge.
-        We also assume that the supports overlap on an interval of positive
-        length. The buyer and seller observe their respective values, \(v\) and
-        \(c\), but not the other's.
-      </p>
-      <p>
-        We consider a <em>direct bargaining mechanism</em> consisting of an
-        allocation rule \(q:T\to[0,1]\), a payment rule for the buyer
-        \(p_B:T\to\mathbb{R}\), and a payment rule for the seller
-        \(p_S:T\to\mathbb{R}\), where
-        \(T=[\underline{v},\overline{v}]\times[\underline{c},\overline{c}]\).
-        As functions of the reported values, the allocation rule specifies the
-        probability that trade occurs, the buyer's payment rule specifies the
-        expected payment from the buyer, and the seller's payment rule specifies
-        the expected payment to the seller.
-      </p>
-      <p>We evaluate the mechanism by the following properties:</p>
-      <ol>
-        <li>
-          <strong>Incentive Compatibility (IC):</strong>
-          Truthful reporting by the buyer and seller is an equilibrium. This
-          has two forms: Bayesian IC (BIC), where truthful reporting is a
-          Bayesian Nash equilibrium, and dominant strategy IC (DSIC), where
-          truthful reporting is a dominant strategy equilibrium.
-        </li>
-        <li>
-          <strong>Individual Rationality (IR):</strong>
-          Under truthful reporting, both the buyer and seller have a weakly
-          positive payoff at the relevant stage. This is evaluated at three
-          stages: ex ante, interim, and ex post.
-        </li>
-        <li>
-          <strong>(Weak) Budget Balance (BB):</strong>
-          Under truthful reporting, trade does not need to be subsidized. This is
-          evaluated at two stages: ex ante and ex post.
-        </li>
-        <li>
-          <strong>Efficiency:</strong>
-          Under truthful reporting, the mechanism maximizes welfare. This is
-          evaluated at two stages: ex ante and ex post.
-        </li>
-      </ol>
-      <p>
-        In the interactive demo, browse through a set of mechanisms and
+        In the interactive demo, browse through a set of mechanisms for the
+        <a class="environment-link" href="../../bilateral-trade/environment/index.html">bilateral trade environment</a> and
         observe their strengths and weaknesses. Here,
         \(V,C\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Uniform}[0,1]\).
       </p>
@@ -282,7 +239,7 @@
         <p id="formula-validation-status" class="control-status" role="status" aria-live="polite"></p>
       </aside>
 
-      <p id="formula-probe-help" class="sr-only">Hover or focus a chart to inspect its exact value. Arrow keys move the keyboard probe. In Custom mode they select triangles without skipping either half; L and R select a triangle side, Enter or Space applies the brush, and holding either key while navigating paints continuously.</p>
+      <p id="formula-probe-help" class="sr-only">Hover or focus a chart to inspect its exact value. Arrow keys move the keyboard probe. In Custom mode they select triangles without skipping either half; L selects the top-left (T-L) triangle and R selects the bottom-right (B-R) triangle. Enter or Space applies the brush, and holding either key while navigating paints continuously.</p>
       <p id="formula-probe-status" class="sr-only" role="status" aria-live="polite"></p>
 
       <div class="color-legends" role="group" aria-label="Plot color scales">
@@ -377,15 +334,15 @@
       <div class="chart-grid diagnostic-panel-grid sandbox-diagnostic-grid">
         <div class="diagnostic-panel">
           <figure class="chart-figure diagnostic-figure math-chart-figure">
-            <figcaption>Buyer interim-deviation payoff, \(U_B(v,r)\)</figcaption>
+            <figcaption>Buyer interim-deviation payoff, \(U_B(v,v')\)</figcaption>
             <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="buyer-ic-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="buyer-ic-chart-title buyer-ic-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
-                <title id="buyer-ic-chart-title">Buyer interim-deviation payoff, U B(v,r)</title>
+                <title id="buyer-ic-chart-title">Buyer interim-deviation payoff, U B(v,v')</title>
                 <desc id="buyer-ic-chart-description">Buyer interim utility by true value and alternate report, with truthful and best-report traces.</desc>
               </svg>
 
-              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Alternate buyer report, \(r\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Alternate buyer report, \(v'\)</p>
             </div>
                 <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">True buyer value, \(v\)</p>
               </div>
@@ -395,15 +352,15 @@
 
         <div class="diagnostic-panel">
           <figure class="chart-figure diagnostic-figure math-chart-figure">
-            <figcaption>Seller interim-deviation payoff, \(U_S(c,s)\)</figcaption>
+            <figcaption>Seller interim-deviation payoff, \(U_S(c,c')\)</figcaption>
             <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="seller-ic-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="seller-ic-chart-title seller-ic-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
-                <title id="seller-ic-chart-title">Seller interim-deviation payoff, U S(c,s)</title>
+                <title id="seller-ic-chart-title">Seller interim-deviation payoff, U S(c,c')</title>
                 <desc id="seller-ic-chart-description">Seller interim utility by true cost and alternate report, with truthful and best-report traces.</desc>
               </svg>
 
-              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Alternate seller report, \(s\)</p>
+              <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Alternate seller report, \(c'\)</p>
             </div>
                 <p class="chart-x-axis-label math-chart-axis-label math-chart-x-axis-label chart-480x520-x-axis-label">True seller value, \(c\)</p>
               </div>
@@ -413,11 +370,11 @@
 
         <div class="diagnostic-panel">
           <figure class="chart-figure diagnostic-figure math-chart-figure">
-            <figcaption>Net revenue, \(R(v,c)\)</figcaption>
+            <figcaption>Budget Balance, \(R(v,c)\)</figcaption>
             <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="revenue-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="revenue-chart-title revenue-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
-                <title id="revenue-chart-title">Net revenue, R(v,c)</title>
+                <title id="revenue-chart-title">Budget Balance, R(v,c)</title>
                 <desc id="revenue-chart-description">Intermediary net revenue by buyer-value and seller-value report.</desc>
               </svg>
 
@@ -593,5 +550,10 @@
   <footer class="site-footer">
     <page-footer></page-footer>
   </footer>
+  <learning-sidebar page="bargaining-mechanism-sandbox" environment="bilateral-trade">
+    <template data-insights>
+      <!-- User-authored Insights go here. -->
+    </template>
+  </learning-sidebar>
 </body>
 </html>

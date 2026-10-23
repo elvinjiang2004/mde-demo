@@ -1,0 +1,19 @@
+.module-category-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.module-category-heading h2 {
+  margin: 0;
+}
+
+.module-category-heading .environment-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--blue);
+  text-decoration: underline;
+}

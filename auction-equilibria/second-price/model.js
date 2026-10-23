@@ -42,7 +42,7 @@
     var errors = [];
 
     if (!Number.isInteger(n) || n < 2) {
-      errors.push("The number of bidders must be an integer of at least 2.");
+      errors.push("The number of buyers must be an integer of at least 2.");
     }
 
     if (!isFiniteNumber(a) || !isFiniteNumber(b)) {
@@ -70,11 +70,11 @@
     var errors = result.errors.slice();
 
     if (!isFiniteNumber(value) || value < a - EPSILON || value > b + EPSILON) {
-      errors.push("Bidder 1's value must lie in [a, b].");
+      errors.push("Buyer 1's value must lie in [a, b].");
     }
 
     if (!isFiniteNumber(bid) || bid < a - EPSILON || bid > b + EPSILON) {
-      errors.push("Bidder 1's bid must lie in [a, b].");
+      errors.push("Buyer 1's bid must lie in [a, b].");
     }
 
     return {

@@ -203,41 +203,72 @@
         }
       },
       {
-        name: "General Topics, Auctions, and Bilateral Trade are the only categories",
+        name: "The menu separates auction equilibria and auction design into four groups",
         run: function () {
           var categories = menuDocument.querySelectorAll(".module-category");
-          assert(categories.length === 3,
-            "The menu should contain exactly three categories.");
+          assert(categories.length === 4,
+            "The menu should contain exactly four groups.");
           var titles = Array.from(categories).map(function (category) {
             return category.querySelector("h2").textContent;
           });
-          assert(titles[0] === "General Topics" && titles[1] === "Auctions" &&
-            titles[2] === "Bilateral Trade",
-          "The categories should be General Topics, Auctions, and Bilateral Trade, in order.");
+          assert(titles.join("|") === "General Topics|Auction Equilibria|Auction Design|Bilateral Trade",
+            "The four groups should appear in their established order.");
         }
       },
       {
         name: "Modules are arranged in category rows",
         run: function () {
           var rows = menuDocument.querySelectorAll(".module-row");
-          assert(rows.length === 3 &&
+          assert(rows.length === 4 &&
             Array.from(rows).every(function (row) {
               return menuWindow.getComputedStyle(row).display === "flex";
             }),
           "Each category should arrange its modules in a row.");
-          assert(rows[0].querySelectorAll(":scope > li").length === 2,
-            "The General Topics row should contain two working modules.");
-          assert(rows[1].querySelectorAll(":scope > li").length === 4,
-            "The Auctions row should contain four module entries.");
-          assert(rows[2].querySelectorAll(":scope > li").length === 2,
-            "The Bilateral Trade row should contain two module entries.");
+          rows.forEach(function (row, index) {
+            var count = index === 0 ? 3 : 2;
+            assert(row.querySelectorAll(":scope > li").length === count &&
+              row.querySelectorAll("a.module-link").length === count &&
+              !row.querySelector("a.environment-link"),
+            "General Topics should contain its reading and two demos; other rows keep two demos.");
+            var category = row.closest("section");
+            var environment = category.querySelector("a.environment-link");
+            if (index === 0) {
+              assert(!environment, "General Topics should have no Environment page.");
+              var introduction = row.querySelector("li:first-child a.module-link");
+              assert(introduction.getAttribute("href") === "general-topics/what-is-mechanism-design/index.html" &&
+                introduction.querySelector(".module-title").textContent === "What is Mechanism Design?",
+              "The introductory reading should come first in General Topics.");
+              return;
+            }
+            assert(environment && environment.textContent.trim() === "Environment" &&
+              environment.getAttribute("href") === category.id + "/environment/index.html" &&
+              environment.previousElementSibling === category.querySelector("h2") &&
+              !environment.classList.contains("module-tile"),
+            "Each Environment link should sit beside its group title and retain its explicit route.");
+            var style = menuWindow.getComputedStyle(environment);
+            var probe = menuDocument.createElement("span");
+            probe.style.color = "var(--blue)";
+            category.appendChild(probe);
+            assert(style.textDecorationLine.indexOf("underline") !== -1 &&
+              style.color === menuWindow.getComputedStyle(probe).color,
+            "Environment links should be underlined blue text.");
+            probe.remove();
+          });
+          assert(Array.from(rows[1].querySelectorAll("a.module-link")).map(function (a) {
+            return a.getAttribute("href");
+          }).join("|") === "auction-equilibria/first-price/index.html|auction-equilibria/second-price/index.html",
+          "Auction Equilibria should contain first-price and second-price auctions.");
+          assert(Array.from(rows[2].querySelectorAll("a.module-link")).map(function (a) {
+            return a.getAttribute("href");
+          }).join("|") === "auction-design/optimal-auctions/index.html|auction-design/ironing/index.html",
+          "Auction Design should contain Optimal Auctions and Ironing.");
         }
       },
       {
         name: "The first-price module is selectable",
         run: function () {
           var link = menuDocument.querySelector(
-            'a.module-link[href="auctions/first-price/index.html"]'
+            'a.module-link[href="auction-equilibria/first-price/index.html"]'
           );
           assert(link,
             "The first-price module should use its explicit index.html route.");
@@ -249,7 +280,7 @@
       {
         name: "The optimal-auctions module is selectable",
         run: function () {
-          var link = menuDocument.querySelector('a.module-link[href="auctions/optimal-auctions/index.html"]');
+          var link = menuDocument.querySelector('a.module-link[href="auction-design/optimal-auctions/index.html"]');
           assert(link && link.querySelector(".module-title").textContent === "Optimal Auctions",
             "The optimal-auctions editor should have an explicit working route.");
         }
@@ -258,16 +289,15 @@
         name: "The second-price module is selectable",
         run: function () {
           var link = menuDocument.querySelector(
-            'a.module-link[href="auctions/second-price/index.html"]'
+            'a.module-link[href="auction-equilibria/second-price/index.html"]'
           );
           assert(link,
             "The second-price module should use its explicit index.html route.");
           assert(link.querySelector(".module-title").textContent ===
             "Second-Price Auction Equilibrium",
           "The second-price module title is incorrect.");
-          assert(menuDocument.querySelectorAll(".module-link").length === 8,
-            "All four auction modules, both bilateral-trade modules, and both " +
-            "General Topics modules should be links.");
+          assert(menuDocument.querySelectorAll(".module-link").length === 9,
+            "All eight interactive modules and the introductory reading should be links.");
           assert(!menuDocument.querySelector('.module-link[aria-disabled="true"]') &&
             !menuDocument.querySelector("a.module-pending"),
           "No implemented module should remain disabled.");
@@ -313,10 +343,10 @@
         }
       },
       {
-        name: "Ironing is selectable under Auctions as a separate module",
+        name: "Ironing is selectable under Auction Design as a separate module",
         run: function () {
           var link = menuDocument.querySelector(
-            '#auctions a.module-link[href="auctions/ironing/index.html"]'
+            '#auction-design a.module-link[href="auction-design/ironing/index.html"]'
           );
           assert(link,
             "Ironing should use its own explicit auction route.");

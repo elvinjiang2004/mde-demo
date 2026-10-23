@@ -6,15 +6,19 @@
   <meta name="description" content="Drag a family of lines -- either endpoint anywhere along the plot's own edge, including onto a genuinely vertical, infinite-slope line -- and watch their exact upper envelope and active slope update live: Milgrom and Segal's envelope theorem for arbitrary choice sets.">
   <title>The Envelope Theorem | Mechanism Design Explorer</title>
   <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="module.css">
   <script defer src="../../js/components.js"></script>
   <script defer src="../../js/bibliography.js"></script>
   <script defer src="../../js/references.js"></script>
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
+  <script defer src="../../js/equation-chain.js"></script>
   <script defer src="model.js"></script>
   <script defer src="app.js"></script>
 </head>
@@ -28,10 +32,11 @@
   <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">The Envelope Theorem</h1>
-
       <p>
         A single agent wishes to maximize a real-valued function \(f(x,t)\)
-        by choosing \(x\in X\), for a given parameter \(t\in T=[0,1]\).
+        by choosing \(x\in X\), for a given parameter \(t\in T=[0,1]\)<sup><a id="parameter-space-note-ref"
+          href="#parameter-space-note" role="doc-noteref"
+          aria-label="Note 1 on the parameter space">1</a></sup>.
         We call \(f:X\times T\to\mathbb{R}\) the <em>objective function</em>,
         \(t\) a <em>parameter</em>, and \(x\) the <em>choice variable</em>.
         Define the following:
@@ -52,6 +57,8 @@
           maximizer when \(X^*(t)\) is nonempty.
         </li>
       </ul>
+
+
 
       <p>
         Envelope theorems characterize how \(V(t)\) behaves as the parameter
@@ -178,121 +185,183 @@
       <p id="live-summary" class="sr-only" aria-live="polite"></p>
     </section>
 
-    <section class="derivation" aria-labelledby="derivation-title">
-      <h2 id="derivation-title">The Envelope Theorem for mechanisms</h2>
+    <section id="myerson-lemma" class="derivation" aria-labelledby="derivation-title">
+      <h2 id="derivation-title">Myerson's Lemma</h2>
 
       <p>
-        We will use a simple problem that carries many important features in
-        its analysis to exemplify the envelope theorem's application in
-        mechanism design. There is one monopoly seller and one buyer. The
-        seller has value \(0\) for the object, while the buyer has value
-        \(V\sim F\), where \(F\) has support \([0,1]\). The seller does not know the buyer's value,
-        so chooses a direct mechanism ahead of time with allocation rule
-        \(q(v)\) and payment rule \(p(v)\). Given the buyer reports \(v'\),
-        the allocation rule specifies the probability of sale \(q(v')\) and the
-        payment rule specifies the amount the buyer must pay \(p(v')\). Then, the buyer's utility function is
-        \(u(v,v')=vq(v')-p(v')\), where \(v\) is his value and \(v'\) is his
-        reported value.
+        We will use the Envelope Theorem (specifically, Theorem 2) to prove an important result in mechanism design.
+        Consider the <a href="../../auction-design/environment/index.html">single-item auction environment</a>.
+        Myerson (1981) gives the following result about what allocation rules are implementable.
       </p>
-
       <p>
-        Now let's connect some of the abstract terms in Milgrom and Segal
-        (2002) to this specific problem. From the buyer's perspective,
+        <strong>Theorem (Myerson's Lemma):</strong>
+        An allocation rule \(q\) is BIC (respectively, DSIC) implementable
+        if and only if for \(i=1,\ldots,n\),
       </p>
-
-      <ul>
+      <ol>
         <li>
-          Objective function: \(u(v,v')=vq(v')-p(v')\), the buyer's utility.
+          \(Q_i(v_i)\) is weakly increasing (respectively,
+          \(q_i(v_i,v_{-i})\) is weakly increasing in
+          \(v_i\) for every fixed \(v_{-i}\)).
         </li>
         <li>
-          Choice variable: \(v'\in[0,1]\), the buyer's reported value.
-        </li>
-        <li>
-          Parameter: \(v\in[0,1]\), the buyer's true value.
-        </li>
-      </ul>
+          <div id="myerson-payment-conditions" class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Interim BIC payment condition and, respectively, ex-post DSIC payment condition with the other buyers' reports held fixed">
+            <span class="equation-step-connector"></span>
+            <span class="equation-step-lhs">\(\displaystyle P_i(v_i)\)</span>
+            <span class="equation-step-relation">\(\displaystyle =\)</span>
+            <span class="equation-step-rhs">
+              \(\displaystyle v_iQ_i(v_i)-\int_{\underline{v}_i}^{v_i}Q_i(t)\,dt-U_i(\underline{v}_i)\)
+            </span>
 
-      <p>
-        We assume \(p(v')\) is finite for all \(v'\in[0,1]\), so that
-        \(u(v,v')\) is finite for all \(v,v'\in[0,1]\).
-      </p>
-
-      <p>
-        In equilibrium, the buyer maximizes his utility by choosing the best
-        report \(v'\) given his value \(v\). Then,
-      </p>
-
-      <ul>
-        <li>
-          Value function: \(U(v)=\sup\{u(v,v')\mid v'\in[0,1]\}\),
-          the buyer's equilibrium utility.
-        </li>
-        <li>
-          Family of functions: \(\{u(\cdot,v')\mid v'\in[0,1]\}\),
-          the buyer's utility functions indexed by reports.
-        </li>
-        <li>
-          Set of maximizers: \(V^*(v)=\operatorname*{arg\,max}\{u(v,v')\mid v'\in[0,1]\}\),
-          the set of optimal reports at \(v\).
-        </li>
-        <li>
-          Selection from the set of maximizers: \(v^*(v)\in V^*(v)\), an optimal report
-          selected from non-empty \(V^*(v)\).
-        </li>
-      </ul>
-        
-
-      <p>
-        In many cases, and certainly in this case, we will restrict our attention to
-        <em>incentive-compatible</em> mechanisms. These mechanisms, by definition, are such that reporting
-        truthfully (that is, reporting \(v\) when your value is \(v\))
-        maximizes utility. Then, in an incentive-compatible mechanism, for every \(v\in[0,1]\), \(v\in V^*(v)\).
-        Theorem 1 says that, if \(U\) is differentiable at \(v\in (0,1)\), \(U'(v)=u_v(v,v^*(v))=q(v^*(v))\).
-        In an incentive-compatible mechanism, we can select \(v^*(v)=v\), so \(U'(v)=q(v)\).
-        
-      </p>
-
-      <p>
-        Now, look at the conditions of Theorem 2. Are they satisfied? Clearly,
-        condition 1 is satisfied: with \(v'\) fixed, \(u\) is affine in
-        \(v\). For condition 2, as we stated earlier, \(u_v(v,v')=q(v')\), and
-        \(q(v')\in[0,1]\) by definition. So, we can choose our bounding
-        function \(b\) as \(b(v)=1\), which is clearly integrable. Theorem 2
-        now states that \(U\) is absolutely continuous and, thus,
-        differentiable almost everywhere.
-      </p>
-
-      <p>
-        Condition 3 is also clearly satisfied because \(u\) is affine in
-        \(v\) with \(v'\) fixed. Condition 4 is satisfied automatically by incentive compatibility, since
-        \(v\in V^*(v)\) for all \(v\in[0,1]\). Theorem 2 then says that, for an incentive-compatible
-        mechanism,
-      </p>
-      <div class="equation-display" aria-label="U of v equals U of zero plus the integral from zero to v of q of t d t">
-        \[
-          U(v)=U(0)+\int_0^v q(t)\,dt.
-        \]
-      </div>
-      <p>
-        A consequence of this is that, given an implementable<sup><a
-          id="implementability-note-ref" href="#implementability-note" role="doc-noteref"
-          aria-label="Note 1 on implementability">1</a></sup> allocation rule \(q\),
-        incentive compatibility pins down the shape of \(U\) and, thus, the shape of the payment rule \(p\).
-        This fact is important for results like the Revenue Equivalence Theorem or the
-        Myerson-Satterthwaite Theorem.
-      </p>
-    </section>
-
-    <section class="notes" aria-labelledby="notes-title">
-      <h2 id="notes-title">Notes</h2>
-      <ol class="notes-list">
-        <li id="implementability-note" tabindex="-1">
-          In the single-parameter setting considered here, an allocation rule is
-          implementable if and only if it is weakly increasing.
-          <a href="#implementability-note-ref" role="doc-backlink"
-            aria-label="Return to the word implementable">↩</a>
+            <span class="equation-step-connector">(respectively,</span>
+            <span class="equation-step-lhs">\(\displaystyle p_i(v_i,v_{-i})\)</span>
+            <span class="equation-step-relation">\(\displaystyle =\)</span>
+            <span class="equation-step-rhs">
+              \(\displaystyle v_iq_i(v_i,v_{-i})-\int_{\underline{v}_i}^{v_i}q_i(t,v_{-i})\,dt-u_i(\underline{v}_i,v_{-i})\)).
+            </span>
+          </div>
         </li>
       </ol>
+
+      <div id="myerson-bic-proof">
+      <p>
+        <em>Proof (BIC version):</em> 
+        Start with the forward direction. Fix a buyer \(i\in\{1,\ldots,n\}\).
+        Suppose \(q\) is BIC implementable with payment rule \(p\), so \((q,p)\) is BIC.
+        For all \(v_i^1,v_i^2\in[\underline{v}_i,\overline{v}_i]\) with \(v_i^1\lt v_i^2\), BIC gives
+      </p>
+
+      <div id="myerson-bic-monotonicity-proof" class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Buyer incentive compatibility inequalities for truthful reports at both values">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle U_i(v_i^1)\geq U_i(v_i^1,v_i^2)\)</span>
+        <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle U_i(v_i^2)\geq U_i(v_i^2,v_i^1)\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \iff v_i^1Q_i(v_i^1)-P_i(v_i^1)\geq v_i^1Q_i(v_i^2)-P_i(v_i^2)\)</span>
+        <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_i^2Q_i(v_i^2)-P_i(v_i^2)\geq v_i^2Q_i(v_i^1)-P_i(v_i^1)\)</span>
+
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false"
+          aria-label="Show or hide intermediate monotonicity steps" hidden><span
+            class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+        <span class="equation-step-connector equation-step-extra" hidden></span>
+        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle \iff v_i^1Q_i(v_i^1)-v_i^1Q_i(v_i^2)\geq P_i(v_i^1)-P_i(v_i^2)\)</span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \text{and}\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_i^2Q_i(v_i^2)-v_i^2Q_i(v_i^1)\geq P_i(v_i^2)-P_i(v_i^1)\)</span>
+
+        <span class="equation-step-connector equation-step-extra" hidden></span>
+        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle \iff v_i^1(Q_i(v_i^1)-Q_i(v_i^2))\geq P_i(v_i^1)-P_i(v_i^2)\)</span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \text{and}\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_i^2(Q_i(v_i^2)-Q_i(v_i^1))\geq P_i(v_i^2)-P_i(v_i^1).\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \iff -v_i^1(Q_i(v_i^2)-Q_i(v_i^1))\geq P_i(v_i^1)-P_i(v_i^2)\)</span>
+        <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_i^2(Q_i(v_i^2)-Q_i(v_i^1))\geq P_i(v_i^2)-P_i(v_i^1)\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \implies (v_i^2-v_i^1)(Q_i(v_i^2)-Q_i(v_i^1))\)</span>
+        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
+        <span class="equation-step-rhs">\(\displaystyle 0.\)</span>
+      </div>
+
+      <p>
+        Then, since \(v_i^2>v_i^1\), we have \(Q_i(v_i^2)-Q_i(v_i^1)\geq 0\),
+        so \(Q_i\) is weakly increasing.
+        Additionally, for all \(v_i\in[\underline{v}_i,\overline{v}_i]\), BIC gives
+      </p>
+      <div id="myerson-bic-envelope-condition" class="equation-chain-steps equation-chain-wide-rhs" tabindex="0" role="region" aria-label="Truthful interim utility is the maximum payoff over reports">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle U_i(v_i)\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \sup\left\{v_iQ_i(v_i')-P_i(v_i')\mid v_i'\in[\underline{v}_i,\overline{v}_i]\right\}.\)</span>
+      </div>
+      <p>
+        Then, interim truthful utility is the upper envelope of a family of affine functions in \(v_i\).
+        For each fixed report \(v_i'\), the slope is \(Q_i(v_i')\in[0,1]\),
+        and BIC ensures the maximum is attained at the truthful report.
+        Theorem 2 gives the following integral condition.
+      </p>
+      <div id="myerson-bic-utility-integral" class="equation-chain-steps equation-chain-wide-rhs" tabindex="0" role="region" aria-label="The BIC envelope identity for buyer i's interim utility">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle U_i(v_i)\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle U_i(\underline{v}_i)+\int_{\underline{v}_i}^{v_i}Q_i(t)\,dt.\)</span>
+      </div>
+      <p>
+        Then solving for the interim expected payment,
+      </p>
+      <div id="myerson-bic-payment-rule-construction" class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Solving the envelope identity for buyer i's interim expected payment">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle U_i(\underline{v}_i)+\int_{\underline{v}_i}^{v_i}Q_i(t)\,dt\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_iQ_i(v_i)-P_i(v_i)\)</span>
+
+        <span class="equation-step-connector">\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs">\(\displaystyle P_i(v_i)\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_iQ_i(v_i)-U_i(\underline{v}_i)-\int_{\underline{v}_i}^{v_i}Q_i(t)\,dt.\)</span>
+      </div>
+      <p>
+        For the reverse direction, suppose \(Q_i\) is weakly increasing for every buyer \(i\).
+        Define \(P_i\) as above, and set the payment rule as \(p_i(v_i,v_{-i})=P_i(v_i)\).
+        Let's verify that this mechanism is BIC. For a buyer with value \(v_i\),
+        for all \(v_i'\in[\underline{v}_i,\overline{v}_i]\), the difference between the
+        expected payoff from truthfully reporting \(v_i\) and misreporting \(v_i'\) is
+      </p>
+
+      <div id="myerson-bic-verification" class="equation-chain-steps equation-chain-wide-rhs" tabindex="0" role="region" aria-label="Truthful minus misreported interim payoff under the constructed payment rule">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle U_i(v_i) - U_i(v_i,v_i') \)</span>
+        <span class="equation-step-relation">\(\displaystyle =  \)</span>
+        <span class="equation-step-rhs">\(\displaystyle \left[v_i Q_i(v_i)-P_i(v_i)\right] - \left[v_i Q_i(v_i')-P_i(v_i')\right] \)</span>
+
+        <span class="equation-step-connector">\(\displaystyle  \)</span>
+        <span class="equation-step-lhs">\(\displaystyle  \) </span>
+        <span class="equation-step-relation">\(\displaystyle = \)</span>
+        <span class="equation-step-rhs">\(\displaystyle \left[v_i Q_i(v_i)-\left(v_i Q_i(v_i)-U_i(\underline{v}_i)-\int_{\underline{v}_i}^{v_i} Q_i(t)\, dt\right)\right] - \left[v_i Q_i(v_i')-\left(v_i'Q_i(v_i')-U_i(\underline{v}_i)-\int_{\underline{v}_i}^{v_i'} Q_i(t)\, dt\right)\right] \)</span>
+
+        <span class="equation-step-connector">\(\displaystyle  \)</span>
+        <span class="equation-step-lhs">\(\displaystyle  \) </span>
+        <span class="equation-step-relation">\(\displaystyle = \)</span>
+        <span class="equation-step-rhs">\(\displaystyle U_i(\underline{v}_i) - U_i(\underline{v}_i) + \int_{\underline{v}_i}^{v_i} Q_i(t)\, dt - v_i Q_i(v_i')+v_i'Q_i(v_i')-\int_{\underline{v}_i}^{v_i'} Q_i(t)\, dt \)</span>
+
+        <span class="equation-step-connector">\(\displaystyle  \)</span>
+        <span class="equation-step-lhs">\(\displaystyle  \) </span>
+        <span class="equation-step-relation">\(\displaystyle = \)</span>
+        <span class="equation-step-rhs">\(\displaystyle Q_i(v_i')(v_i'-v_i) + \int_{v_i'}^{v_i} Q_i(t)\, dt \)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{v_i'}^{v_i}\left[Q_i(t)-Q_i(v_i')\right]\,dt.\)</span>
+      </div>
+      <p class="has-qed">
+        Because \(Q_i\) is weakly increasing, this difference is weakly positive for all
+        \(v_i,v_i'\in[\underline{v}_i,\overline{v}_i]\).
+        If \(v_i'\leq v_i\), the integrand is weakly positive, and the limits are in increasing order;
+        if \(v_i'>v_i\), the integrand is weakly negative, and the limits are in decreasing order.
+        The argument applies to every buyer, so the mechanism is BIC.
+        <span class="qed">\(\blacksquare\)</span>
+      </p>
+      </div>
+    </section>
+
+
+    <section id="notes" class="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title">Notes</h2>
+      <ol class="notes-list">
+        <li id="parameter-space-note" tabindex="-1">
+          It is not important that the parameter space be exactly \([0,1]\). Milgrom and Segal (2002)
+          state that their results hold in any normed vector space for that space's directional derivatives
+          and path derivatives. Importantly for our purposes,
+          the results hold for any \([a,b]\subset\mathbb{R}\).
+          <a href="#parameter-space-note-ref" role="doc-backlink"
+            aria-label="Return to the parameter space in the introduction">↩</a>
+        </li>
+      </ol>
+
     </section>
 
     <section class="references" aria-labelledby="references-title">
@@ -300,6 +369,7 @@
       <ul class="reference-list">
         <li data-reference="borgers-2015"></li>
         <li data-reference="milgrom-segal-2002"></li>
+        <li data-reference="myerson-1981" data-locator="Lemma 2, pp. 63–64"></li>
       </ul>
     </section>
   </main>
@@ -307,5 +377,84 @@
   <footer class="site-footer">
     <page-footer></page-footer>
   </footer>
+  <learning-sidebar page="envelope-theorem" environment="auction-design">
+    <template data-insights>
+      <p>
+        To see how Theorem 2 is applied to this setting,
+        let's connect some of the abstract terms in Milgrom and Segal
+        (2002) to this specific problem. From buyer \(i\)'s perspective, after learning his value \(v_i\),
+        given the other buyers report truthfully,
+        he chooses a report \(v_i'\) to maximize his interim expected utility. Then,
+      </p>
+
+      <ul>
+        <li>
+          Objective function: \(U_i(v_i,v_i')=v_i Q_i(v_i')-P_i(v_i')\),
+          the buyer's interim utility from reporting \(v_i'\).
+        </li>
+        <li>
+          Choice variable: \(v_i'\in[\underline{v}_i,\overline{v}_i]\), the buyer's chosen report.
+        </li>
+        <li>
+          Parameter: \(v_i\in[\underline{v}_i,\overline{v}_i]\), the buyer's true value.
+        </li>
+      </ul>
+
+      <p>
+        We assume \(P_i(v_i')\) is finite for all \(v_i'\in[\underline{v}_i,\overline{v}_i]\), so that
+        \(U_i(v_i,v_i')\) is finite for all \(v_i,v_i'\in[\underline{v}_i,\overline{v}_i]\).
+      </p>
+
+      <p>
+        In a BIC mechanism, reporting truthfully is optimal for buyer \(i\). Then,
+      </p>
+
+      <ul>
+        <li>
+          Value function: \(U_i(v_i)=\sup\{U_i(v_i,v_i')=v_iQ_i(v_i')-P_i(v_i')\mid v_i'\in[\underline{v}_i,\overline{v}_i]\}\),
+          the buyer's truthful equilibrium utility.
+        </li>
+        <li>
+          Family of functions: \(\{U_i(\cdot,v_i')\mid v_i'\in[\underline{v}_i,\overline{v}_i]\}\),
+          the buyer's interim utility functions indexed by reports.
+        </li>
+        <li>
+          Set of maximizers: \(V^*(v_i)=\operatorname*{arg\,max}\{U_i(v_i,v_i')\mid v_i'\in[\underline{v}_i,\overline{v}_i]\}\),
+          the set of optimal reports at \(v_i\).
+        </li>
+        <li>
+          Selection from the set of maximizers: \(v^*(v_i)\in V^*(v_i)\), an optimal report
+          selected from non-empty \(V^*(v_i)\).
+        </li>
+      </ul>
+
+      <p>
+        Now, look at the conditions of Theorem 2. Are they satisfied? Clearly,
+        condition 1 is satisfied: with \(v_i'\) fixed, \(U_i\) is affine in
+        \(v_i\). For condition 2, the partial derivative with respect to
+        \(v_i\) is
+        \[
+          U_{i,v_i}(v_i,v_i')=Q_i(v_i').
+        \]
+        Since \(Q_i(v_i')\in[0,1]\), we can define our bounding
+        function \(b\) by \(b(v_i)=1\) which is clearly integrable. Theorem 2
+        now states that \(U_i\) is absolutely continuous and, thus,
+        differentiable almost everywhere.
+      </p>
+
+      <p>
+        Condition 3 is also clearly satisfied because, again, \(U_i\) is affine in
+        \(v_i\) with \(v_i'\) fixed. Condition 4 is also clearly satisfied by BIC, since
+        \(v_i\in V^*(v_i)\) for all \(v_i\in[\underline{v}_i,\overline{v}_i]\), so \(V^*(v_i)\) is never empty.
+        Theorem 2 then says that, for a BIC mechanism,
+      </p>
+      <div class="equation-display" aria-label="U of v_i equals U of lower underline v_i plus the integral from zero to v_i of q of t d t">
+        \[
+          U_i(v_i)=U_i(\underline{v}_i)+\int_{\underline{v}_i}^{v_i} Q_i(t)\,dt.
+        \]
+      </div>
+
+    </template>
+  </learning-sidebar>
 </body>
 </html>

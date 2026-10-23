@@ -339,9 +339,12 @@
       report: result.report,
       utility: result.utility,
       truthfulUtility: result.truthfulUtility,
-      maximumUtility: result.utility,
-      maximumGain: result.gain,
-      truthfulTie: result.gain <= tolerance
+      maximumUtility: result.maximumUtility,
+      maximumGain: result.maximumGain,
+      truthfulTie: result.truthfulTie,
+      attained: result.attained,
+      approachFrom: result.approachFrom,
+      approachSide: result.approachSide
     };
   }
 
@@ -713,7 +716,10 @@
     return Object.freeze(responses.map(function (response) {
       return Object.freeze({
         trueValue: response.trueType,
-        report: response.report
+        report: response.report,
+        attained: response.attained,
+        approachFrom: response.approachFrom,
+        approachSide: response.approachSide
       });
     }));
   }

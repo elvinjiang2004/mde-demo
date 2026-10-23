@@ -13,12 +13,13 @@ installation, local server, or internet connection.
 
 The available modules are located at:
 
+    general-topics/what-is-mechanism-design/index.html
     general-topics/envelope-theorem/index.html
     general-topics/revelation-principle/index.html
-    auctions/first-price/index.html
-    auctions/second-price/index.html
-    auctions/optimal-auctions/index.html
-    auctions/ironing/index.html
+    auction-equilibria/first-price/index.html
+    auction-equilibria/second-price/index.html
+    auction-design/optimal-auctions/index.html
+    auction-design/ironing/index.html
     bilateral-trade/bargaining-mechanism-sandbox/index.html
     bilateral-trade/myerson-satterthwaite-theorem/index.html
 
@@ -26,19 +27,36 @@ Explicit `index.html` paths are used so navigation works through `file://`.
 
 ## Current menu
 
-The menu contains three categories:
+The menu contains four groups. Auction Equilibria, Auction Design and Bilateral
+Trade link to shared Environment pages beside their group titles. General Topics
+keeps its definitions on the individual module pages:
 
 - **General Topics**
+  - What is Mechanism Design?
   - The Envelope Theorem
   - The Revelation Principle
-- **Auctions**
+- **Auction Equilibria**
+  - [Environment](auction-equilibria/environment/index.html)
   - First-Price Auction Equilibrium
   - Second-Price Auction Equilibrium
+- **Auction Design**
+  - [Environment](auction-design/environment/index.html)
   - Optimal Auctions
   - Ironing
 - **Bilateral Trade**
+  - [Environment](bilateral-trade/environment/index.html)
   - Bargaining Mechanism Sandbox
   - Myerson-Satterthwaite Theorem
+
+Auction module folders now match their menu groups: `auction-design/` and
+`auction-equilibria/`. Each module links to its group's
+Environment page where present. Environments have no subsections. Auction Design
+shares the Optimal Auctions setup, including its Revelation Principle passage
+and IC/IR conditions. Bilateral Trade uses the sandbox's condition definitions
+and the direct-mechanism passage from Myerson-Satterthwaite. Both Environments
+also define interim allocation, payment, payoff and virtual-value notation and
+BIC/DSIC implementability; Auction Design defines regularity. Existing results
+and demo instructions remain on the module pages.
 
 ## Browser checks
 
@@ -50,6 +68,7 @@ Open these files in a browser to run the test suites:
   `http://localhost:8000/tests/all.html`. Opened directly as a file it says
   so rather than reporting failures.
 - `tests/menu-tests.html` — menu structure, categories, routes, and availability.
+- `tests/environment-tests.html` — group Environment navigation, local math, and responsive layout.
 - `tests/distribution-tests.html` — shared Uniform/Beta kernel checks.
 - `tests/components-tests.html` — shared page-component checks.
 - `tests/model-tests.html` — first-price economic model checks.
@@ -78,10 +97,10 @@ affect ordinary use of the menu or module pages.
 
 - `index.html` — module menu.
 - `about.html` — About page, linked from the menu header.
-- `auctions/first-price/` — first-price module page, model, and controls.
-- `auctions/optimal-auctions/` - two-bidder allocation editor and revenue diagnostics.
-- `auctions/ironing/` — symmetric interim-allocation editor, feasibility, revenue, and ironing.
-- `auctions/second-price/` — second-price module page, model, and controls.
+- `auction-equilibria/first-price/` — first-price module page, model, and controls.
+- `auction-design/optimal-auctions/` - two-bidder allocation editor and revenue diagnostics.
+- `auction-design/ironing/` — symmetric interim-allocation editor, feasibility, revenue, and ironing.
+- `auction-equilibria/second-price/` — second-price module page, model, and controls.
 - `bilateral-trade/myerson-satterthwaite-theorem/` — bilateral-trade module.
 - `bilateral-trade/bargaining-mechanism-sandbox/` — direct bargaining-mechanism editor.
 - `general-topics/envelope-theorem/` — envelope-theorem module.
@@ -91,6 +110,7 @@ affect ordinary use of the menu or module pages.
 - `assets/mathjax/` — vendored MathJax 4 TeX-to-SVG build and offline assets.
 - `js/mathjax-config.js` — shared local MathJax configuration.
 - `js/mathjax-runtime.js` — shared initial and dynamic MathJax lifecycle.
+- `js/environment.js` — initial math rendering for the three shared Environment pages.
 - `js/distributions.js` — shared auction distribution functions.
 - `js/math-utils.js` — shared pure-number helpers for every model layer.
 - `js/svg-utils.js` — shared SVG chart-drawing helpers for every app layer.

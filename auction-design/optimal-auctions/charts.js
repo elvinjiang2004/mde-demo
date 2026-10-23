@@ -78,7 +78,7 @@ window.OptimalAuctionsCharts = (function () {
         if (prior) { prior.remove(); }
         function range(k) { return "[" + (k / 20).toFixed(2) + ", " + ((k + 1) / 20).toFixed(2) + "]"; }
         visuals.drawCellLabel(overlay, layout, mesh.cellRect(cell.i, cell.j, layout),
-          range(cell.i) + " × " + range(cell.j) + " " + (cell.half === "lower" ? "R" : "L"));
+          range(cell.i) + " × " + range(cell.j) + " " + (cell.half === "lower" ? "B-R" : "T-L"));
       },
       probe: function (position, current) {
         var prior = svg.querySelector(".allocation-probe");

@@ -63,12 +63,15 @@
     window.MechanismTest.dispatch(element, "keyup", appWindow, { key: key });
   }
 
-  function firePointer(element, type, clientX, clientY, pointerId, appWindow) {
-    window.MechanismTest.dispatch(element, type, appWindow, {
+  function firePointer(element, type, clientX, clientY, pointerId, appWindow, options) {
+    element.dispatchEvent(new appWindow.PointerEvent(type, Object.assign({
+      bubbles: true,
+      cancelable: true,
       clientX: clientX || 0,
       clientY: clientY || 0,
-      pointerId: pointerId || 1
-    });
+      pointerId: pointerId || 1,
+      isPrimary: true
+    }, options)));
   }
 
   function clientPoint(chart, svgX, svgY) {
@@ -410,9 +413,10 @@
           var introduction = appDocument.querySelector(".introduction");
           assert(introduction.querySelector("h1").textContent === "Bargaining Mechanism Sandbox" &&
             introduction.querySelectorAll(":scope > p").length > 0 &&
-            introduction.querySelectorAll(":scope > ol > li").length === 4 &&
-            /^direct bargaining mechanisms?$/.test(introduction.querySelector("em").textContent),
-          "The introduction should retain the supplied prose and four criteria.");
+            introduction.querySelectorAll(":scope > ol > li").length === 0 &&
+            introduction.querySelector('a.environment-link[href="../../bilateral-trade/environment/index.html"]') &&
+            introduction.textContent.includes("In the interactive demo, browse through a set of mechanisms"),
+          "The introduction should retain the demo task and link to the shared mechanism and condition definitions.");
           assert(introduction.querySelectorAll('mjx-container[jax="SVG"]').length > 0 &&
             !/\\\(|\\\[/.test(introduction.textContent) &&
             !introduction.querySelector("mjx-merror"),
@@ -559,7 +563,7 @@
           await selectPreset("chatterjee-samuelson");
           ["buyer-ic-text", "seller-ic-text"].forEach(function (id) {
             assert(lines(id).join("|") ===
-              "BIC: passes (best-response path (orange points) lies on " +
+              "BIC: passes (best-response points (orange) lie on " +
                 (id === "buyer-ic-text" ? "v′ = v" : "c′ = c") +
                 ")|DSIC: fails (maximum deviation gain = 0.2500)",
             "The DSIC line must use the ex-post gain even when BIC passes.");
@@ -569,7 +573,7 @@
           "Balanced transfers should show precisely the two requested BB lines.");
           await selectPreset("vcg");
           assert(lines("buyer-ic-text").join("|") ===
-            "BIC: passes (best-response path (orange points) lies on v′ = v)|DSIC: passes (maximum deviation gain = 0)",
+            "BIC: passes (best-response points (orange) lie on v′ = v)|DSIC: passes (maximum deviation gain = 0)",
           "VCG should report zero profitable deviations.");
           assert(lines("revenue-text").join("|") ===
             "Ex-ante BB: fails (expected revenue = -0.1667)|Ex-post BB: fails (largest deficit = 1.0000)",
@@ -650,6 +654,21 @@
               !chart.querySelector(".best-report-line") &&
               chart.dataset.maxDeviationGain === "not-computed",
             id + " should show optimized point marks without implying an exact joined trace.");
+            Array.from(chart.querySelectorAll("[data-best-report-point]"))
+              .forEach(function (point) {
+                var attained = point.dataset.bestReportAttained === "true";
+                assert(point.dataset.bestReportAttained === "true" ||
+                  point.dataset.bestReportAttained === "false",
+                "Every optimized mark must expose its attainment state.");
+                assert(point.getAttribute("fill") ===
+                  (attained ? "var(--orange)" : "none"),
+                "Only attained reports should receive filled marks.");
+                assert(attained || /^(above|below)$/.test(
+                  point.dataset.bestReportApproachSide),
+                "A hollow limit must identify its approach side.");
+              });
+            assert(chart.querySelector("desc").textContent.includes("hollow"),
+              "Accessible descriptions must explain the limiting marks.");
           });
           assert(root.dataset.qualityStatus === "complete",
             "Custom surfaces should not schedule a second raster-quality pass.");
@@ -854,6 +873,45 @@
             sellerChart, "pointerup", restoredSellerPoint.x,
             restoredSellerPoint.y, 44, appWindow
           );
+          await resetDefaults();
+        }
+      },
+      {
+        name: "Custom painting ignores other pointers and commits once when capture is lost",
+        run: async function () {
+          await selectPreset("custom");
+          var chart = appDocument.getElementById("allocation-chart");
+          var number = appDocument.getElementById("allocation-value-number");
+          number.value = "0";
+          dispatchChange(number, appWindow);
+          var point = clientPoint(chart, 374, 344);
+          var other = clientPoint(chart, 336, 344);
+          function revision() {
+            return appWindow.BargainingSandboxApp.snapshot().custom.qRevision;
+          }
+          var initial = revision();
+          var baseline = liveRenderCount();
+          for (var options of [{ button: 2 }, { isPrimary: false }]) {
+            firePointer(chart, "pointerdown", point.x, point.y, 45, appWindow, options);
+            firePointer(chart, "pointerup", point.x, point.y, 45, appWindow);
+            assert(revision() === initial && liveRenderCount() === baseline,
+              "Secondary buttons and non-primary contacts must not edit Custom allocations.");
+          }
+          firePointer(chart, "pointerdown", point.x, point.y, 46, appWindow);
+          assert(revision() === initial + 1 && liveRenderCount() === baseline,
+            "The primary pointer should edit a triangle before refreshing diagnostics.");
+          firePointer(chart, "pointerdown", other.x, other.y, 47, appWindow);
+          firePointer(chart, "pointermove", other.x, other.y, 47, appWindow);
+          firePointer(chart, "pointerup", other.x, other.y, 47, appWindow);
+          assert(revision() === initial + 1 && liveRenderCount() === baseline,
+            "A different pointer must neither replace the stroke nor commit its diagnostics.");
+          firePointer(chart, "lostpointercapture", point.x, point.y, 46, appWindow);
+          await waitForLiveCount(baseline + 1);
+          firePointer(chart, "pointermove", other.x, other.y, 46, appWindow);
+          firePointer(chart, "pointerup", point.x, point.y, 46, appWindow);
+          await nextAppFrames(appWindow, 2);
+          assert(revision() === initial + 1 && liveRenderCount() === baseline + 1,
+            "Capture loss must commit once and prevent later movement from extending the stroke.");
           await resetDefaults();
         }
       },

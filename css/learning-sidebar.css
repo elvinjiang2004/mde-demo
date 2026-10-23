@@ -1,0 +1,164 @@
+learning-sidebar {
+  --learning-sidebar-width: min(40rem, 100%);
+}
+
+.learning-sidebar-toggle {
+  position: fixed;
+  z-index: 40;
+  top: 35%;
+  right: 0;
+  writing-mode: vertical-rl;
+  min-width: 44px;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid var(--line);
+  border-right: 0;
+  background: var(--page-background);
+  font-size: 0.9rem;
+}
+
+learning-sidebar.is-open .learning-sidebar-toggle {
+  visibility: hidden;
+}
+
+.learning-sidebar-panel {
+  position: fixed;
+  z-index: 41;
+  inset: 0 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  width: var(--learning-sidebar-width);
+  height: 100vh;
+  height: 100dvh;
+  box-sizing: border-box;
+  border-left: 1px solid var(--line);
+  background: var(--page-background);
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.5;
+  animation: learning-sidebar-enter 160ms ease-out;
+}
+
+.learning-sidebar-header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem 0;
+}
+
+.learning-sidebar-header h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.learning-sidebar-close {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+.learning-sidebar-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 0.65fr;
+  flex-shrink: 0;
+  gap: 0.5rem;
+  padding: 0.25rem 1rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.learning-sidebar-tab {
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 0.4rem 0.15rem;
+  border-bottom: 2px solid transparent;
+  font-size: 0.9rem;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.learning-sidebar-tab[aria-selected="true"] {
+  color: var(--ink);
+  border-bottom-color: currentColor;
+  font-weight: 700;
+}
+
+.learning-sidebar-tab:disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.learning-sidebar-content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  overflow-wrap: anywhere;
+}
+
+.learning-sidebar-tabpanel:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.learning-sidebar-tabpanel {
+  min-height: 44px;
+}
+
+.learning-sidebar-status {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+}
+
+.learning-sidebar-status p {
+  margin: 0;
+}
+
+.learning-sidebar-retry {
+  min-height: 44px;
+}
+
+/* Hide direct text nodes too, while retaining MathJax's layout measurements. */
+.learning-sidebar-tabpanel[aria-busy="true"],
+.learning-sidebar-tabpanel[data-render-error] {
+  visibility: hidden;
+}
+
+.notation-group {
+  margin: 0;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--line-light);
+}
+
+.notation-entry {
+  padding: 0.35rem 0;
+}
+
+.notation-entry dt {
+  max-width: 100%;
+  padding: 0.15rem 0;
+}
+
+.notation-entry dd {
+  margin: 0.15rem 0 0;
+}
+
+.learning-sidebar-insights > :last-child {
+  margin-bottom: 0;
+}
+
+@keyframes learning-sidebar-enter {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .learning-sidebar-panel { animation: none; }
+}
+
+@media print {
+  learning-sidebar { display: none; }
+}

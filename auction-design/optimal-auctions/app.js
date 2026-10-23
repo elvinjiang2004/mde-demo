@@ -23,7 +23,7 @@
     view.probe(probe, grid);
     var q = grid[selected.half][selected.i][selected.j];
     var label = "Cell " + (selected.i + 1) + ", " + (selected.j + 1) + "; " +
-      (selected.half === "lower" ? "right" : "left") + " triangle. " +
+      (selected.half === "lower" ? "bottom-right (B-R)" : "top-left (T-L)") + " triangle. " +
       "q₁ = " + q[0].toFixed(3) + ", q₂ = " + q[1].toFixed(3) + ", no sale = " + (1 - q[0] - q[1]).toFixed(3) + ".";
     byId("selected-cell").textContent = label;
     byId("selected-cell").dataset.q1 = q[0];
@@ -119,7 +119,7 @@
   }
 
   svg.addEventListener("pointerdown", function (event) {
-    if (event.button !== 0 || (stroke && stroke.kind === "pointer")) { return; }
+    if (!event.isPrimary || event.button !== 0 || (stroke && stroke.kind === "pointer")) { return; }
     var p = C.reportPoint(svg, event);
     if (!p || !p.inside) { return; }
     finishStroke();
@@ -193,7 +193,7 @@
     byId(id).addEventListener("change", function () { if (!brushValid) { updateBrush(); } });
   });
   lotterySvg.addEventListener("pointerdown", function (event) {
-    if (event.button !== 0 || lotteryPointer !== null) { return; }
+    if (!event.isPrimary || event.button !== 0 || lotteryPointer !== null) { return; }
     event.preventDefault(); lotterySvg.focus({ preventScroll: true });
     lotteryPointer = event.pointerId;
     lotterySvg.setPointerCapture(event.pointerId);

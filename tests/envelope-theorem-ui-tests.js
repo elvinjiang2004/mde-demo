@@ -100,17 +100,18 @@
       }));
     }
 
-    function firePointer(chart, type, viewX, viewY, pointerId) {
+    function firePointer(chart, type, viewX, viewY, pointerId, options) {
       var rect = chart.getBoundingClientRect();
       chart.setPointerCapture = function () {};
       chart.hasPointerCapture = function () { return false; };
       chart.releasePointerCapture = function () {};
-      chart.dispatchEvent(new appWindow.PointerEvent(type, {
+      chart.dispatchEvent(new appWindow.PointerEvent(type, Object.assign({
         bubbles: true,
         clientX: rect.left + (viewX / 660) * rect.width,
         clientY: rect.top + (viewY / 450) * rect.height,
-        pointerId: pointerId
-      }));
+        pointerId: pointerId,
+        isPrimary: true
+      }, options)));
     }
 
     var tests = [
@@ -143,6 +144,7 @@
             "../../js/mathjax-runtime.js",
             "../../js/math-utils.js",
             "../../js/svg-utils.js",
+            "../../js/equation-chain.js",
             "model.js",
             "app.js"
           ]);
@@ -186,6 +188,116 @@
         }
       },
       {
+        name: "Myerson's Lemma links scroll forward once and keep the rendered theorem visible",
+        run: async function () {
+          var arrival = document.createElement("iframe");
+          arrival.title = "Myerson's Lemma link destination";
+          arrival.style.height = "900px";
+          document.body.appendChild(arrival);
+          try {
+            for (var width of [375, 1280]) {
+              arrival.style.width = width + "px";
+              var positions = [];
+              await new Promise(function (resolve) {
+                arrival.onload = function () {
+                  var win = arrival.contentWindow;
+                  positions.push(win.scrollY);
+                  win.addEventListener("scroll", function () {
+                    positions.push(win.scrollY);
+                  });
+                  resolve();
+                };
+                arrival.src = "../general-topics/envelope-theorem/index.html?arrival=" + width + "#myerson-lemma";
+              });
+              await arrival.contentWindow.mechanismMathReady;
+              positions.push(arrival.contentWindow.scrollY);
+              await window.MechanismTest.waitFor(function () {
+                var target = arrival.contentDocument.getElementById("myerson-lemma");
+                return target && Math.abs(target.getBoundingClientRect().top) <= 2;
+              }, 3000, "The lemma link must reach its rendered destination.");
+              await nextFrames(arrival.contentWindow, 3);
+              positions.push(arrival.contentWindow.scrollY);
+              assert(positions.every(function (position, index) {
+                return index === 0 || position >= positions[index - 1] - 2;
+              }), "The arrival scroll must not reverse during math rendering at " + width + "px.");
+              var doc = arrival.contentDocument;
+              var lemma = doc.getElementById("myerson-lemma");
+              var heading = doc.getElementById("derivation-title").getBoundingClientRect();
+              var statement = lemma.querySelector("strong").getBoundingClientRect();
+              assert(Math.abs(lemma.getBoundingClientRect().top) <= 2 && heading.top >= 0 &&
+                statement.top >= 0 && statement.bottom <= arrival.contentWindow.innerHeight,
+              "The heading and theorem statement must remain visible after navigation at " + width + "px.");
+            }
+          } finally {
+            arrival.remove();
+          }
+        }
+      },
+      {
+        name: "Myerson's Lemma contains the BIC proof and its disclosure stays usable at narrow widths",
+        run: async function () {
+          var lemma = appDocument.getElementById("myerson-lemma");
+          var proof = appDocument.getElementById("myerson-bic-proof");
+          assert(lemma && lemma.contains(proof) && proof.querySelector("p em").textContent === "Proof (BIC version):",
+            "The moved proof must follow the lemma and identify its BIC scope.");
+          var tex = Array.from(proof.querySelectorAll('[data-mml-node="math"]')).map(function (node) {
+            return node.getAttribute("data-latex") || "";
+          }).join(" ");
+          assert(tex.includes("Q_i") && tex.includes("P_i") && tex.includes("U_i") &&
+            tex.includes("\\underline{v}_i") && !/Q_B|P_B|U_B|Q_S|P_S|U_S/.test(tex),
+          "The proof must use the auction's indexed interim quantities and general lower support.");
+          assert(tex.includes("p_i(v_i,v_{-i})=P_i(v_i)") && tex.includes("Q_i(t)-Q_i(v_i')"),
+            "Sufficiency must construct payments and compare truthful utility against every report.");
+          var chain = appDocument.getElementById("myerson-bic-monotonicity-proof");
+          var toggle = chain.querySelector(".equation-chain-divider-toggle");
+          var extras = Array.from(chain.querySelectorAll(".equation-step-extra"));
+          assert(!toggle.hidden && extras.length > 0 && extras.every(function (node) { return node.hidden; }),
+            "The moved intermediate algebra should initially be collapsed.");
+          toggle.click();
+          assert(toggle.getAttribute("aria-expanded") === "true" && extras.every(function (node) { return !node.hidden; }),
+            "The moved disclosure must reveal its intermediate steps.");
+          var priorWidth = frame.style.width;
+          try {
+            for (var width of [320, 375, 640, 768, 1280]) {
+              frame.style.width = width + "px";
+              await nextFrames(appWindow, 2);
+              assert(appDocument.documentElement.scrollWidth <= appDocument.documentElement.clientWidth + 1,
+                "The moved proof must not widen the page at " + width + "px.");
+              chain.scrollLeft = chain.scrollWidth;
+              await nextFrames(appWindow, 1);
+              var button = toggle.getBoundingClientRect(), bounds = chain.getBoundingClientRect();
+              assert(button.right > bounds.left && button.left < bounds.right,
+                "The disclosure must remain reachable while the equation chain scrolls.");
+              chain.scrollLeft = 0;
+            }
+          } finally {
+            frame.style.width = priorWidth;
+            toggle.click();
+            await nextFrames(appWindow, 2);
+          }
+        }
+      },
+      {
+        name: "Authored Insights remains in its template and renders when selected",
+        run: async function () {
+          var host = appDocument.querySelector("learning-sidebar");
+          var template = host.querySelector("template[data-insights]");
+          assert(template && template.content.querySelectorAll("p").length > 0 &&
+            !host.querySelector(".learning-sidebar-insights mjx-container"),
+          "Authored Insights should remain inert until its tab is selected.");
+          host.querySelector(".learning-sidebar-toggle").click();
+          host.querySelectorAll('[role="tab"]')[2].click();
+          var panel = host.querySelector(".learning-sidebar-insights");
+          await window.MechanismTest.waitFor(function () {
+            return !panel.hasAttribute("aria-busy") && panel.querySelector("mjx-container");
+          }, 15000);
+          assert(panel.querySelectorAll("p").length === template.content.querySelectorAll("p").length &&
+            !panel.querySelector("mjx-merror, merror") && !/\\\(|\\\[/.test(panel.textContent),
+            "The complete authored Insights should display rendered mathematics.");
+          host.querySelector(".learning-sidebar-close").click();
+        }
+      },
+      {
         name: "The two desktop plots have equal 660-by-450 geometry and fill the demo width",
         run: function () {
           var layout = appDocument.querySelector(".two-panel-layout");
@@ -207,6 +319,46 @@
             "At the 1400px test viewport each plot should reach approximately 660px.");
           assert(slopeRect.right - mainRect.left >= layoutRect.width * 0.99,
             "The two plots together should use essentially the full demo width.");
+        }
+      },
+      {
+        name: "Endpoint dragging ignores other pointers and stops when capture is lost",
+        run: async function () {
+          var main = appDocument.getElementById("main-chart");
+          function endpointY() {
+            return Number(main.querySelector(
+              '.family-line[stroke="var(--envelope-line-a)"]'
+            ).getAttribute("y2"));
+          }
+          var initial = endpointY();
+          for (var options of [{ button: 2 }, { isPrimary: false }]) {
+            firePointer(main, "pointerdown", 630, initial, 45, options);
+            firePointer(main, "pointermove", 630, 138.8, 45);
+            firePointer(main, "pointerup", 630, 138.8, 45);
+            await nextFrames(appWindow, 2);
+            assertClose(endpointY(), initial,
+              "Secondary buttons and non-primary contacts must leave endpoints unchanged.");
+          }
+          firePointer(main, "pointerdown", 630, initial, 46);
+          firePointer(main, "pointerdown", 630, initial, 47);
+          firePointer(main, "pointermove", 630, 174.4, 47);
+          firePointer(main, "pointerup", 630, 174.4, 47);
+          await nextFrames(appWindow, 2);
+          assertClose(endpointY(), initial,
+            "A different pointer must neither replace nor move the active drag.");
+          firePointer(main, "pointermove", 630, 138.8, 46);
+          await nextFrames(appWindow, 2);
+          assertClose(endpointY(), 138.8,
+            "The original pointer must continue after another pointer releases.");
+          firePointer(main, "lostpointercapture", 630, 138.8, 46);
+          firePointer(main, "pointermove", 630, 174.4, 46);
+          await nextFrames(appWindow, 2);
+          assertClose(endpointY(), 138.8,
+            "Capture loss must stop endpoint movement before the next pointer event.");
+          firePointer(main, "pointerdown", 630, 138.8, 48);
+          firePointer(main, "pointermove", 630, initial, 48);
+          firePointer(main, "pointerup", 630, initial, 48);
+          await nextFrames(appWindow, 2);
         }
       },
       {

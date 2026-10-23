@@ -55,7 +55,7 @@
     '  aria-label="Beta value-distribution parameters"',
     '>',
     '  <label class="parameter-control" for="bidder-count">',
-    '    <span>Number of bidders, \\(n\\)</span>',
+    '    <span>Number of buyers, \\(n\\)</span>',
     '    <select id="bidder-count">',
     '      <option value="2">2</option>',
     '      <option value="3">3</option>',

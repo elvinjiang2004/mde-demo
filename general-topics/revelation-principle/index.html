@@ -13,6 +13,8 @@
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="model.js"></script>
   <script defer src="ranking-control.js"></script>
@@ -47,11 +49,12 @@
           the outcome and all agents' types, \(U_i(y,\theta)\), where \(y\in Y\).
         </li>
       </ul>
+
       <p>
         
       </p>
       <p>
-        A <em>mechanism</em> maps actions to outcomes. Then, we write it as an ordered
+        A <em>mechanism</em> maps actions to outcomes. We write it as an ordered
         pair \((A,f)\), consisting of an action space \(A=\prod_{i=1}^n A_i\)
         and an outcome function \(f:A\to Y\). It induces a game in which each
         agent \(i\) learns their type \(\theta_i\), chooses an action in \(A_i\),
@@ -65,7 +68,7 @@
         <em>implements</em> this outcome rule in BNE (respectively, DSE).
       </p>
       <p>
-        The designer may have an objective, for example, to maximize expected revenue among all feasible mechanisms.
+        The designer may have an objective, for example, to maximize expected revenue.
         However, the space of mechanisms the designer must search for an optimal one is vast because there is
         no limit on how large the action space \(A\) can be. The revelation
         principle reduces this space considerably. It shows that, without loss of generality, we can consider only
@@ -303,7 +306,7 @@
       <h2 id="references-title">References</h2>
       <ul class="reference-list">
         <li data-reference="borgers-2015"></li>
-        <li data-reference="stole-contracts-2017" data-locator="especially section 3.1, pp. 45–48"></li>
+        <li data-reference="stole-contracts-2017"></li>
       </ul>
     </section>
   </main>
@@ -311,5 +314,10 @@
   <footer class="site-footer">
     <page-footer></page-footer>
   </footer>
+  <learning-sidebar page="revelation-principle">
+    <template data-insights>
+      <!-- User-authored Insights go here. -->
+    </template>
+  </learning-sidebar>
 </body>
 </html>

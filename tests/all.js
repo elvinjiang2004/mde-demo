@@ -67,12 +67,21 @@
     var status = doc.body.dataset.status ||
       doc.body.getAttribute("data-status");
     if (status === "passed" || status === "failed" || status === "blocked") {
+      var failed = doc.querySelectorAll("#results li.fail").length;
+      var details = Array.from(doc.querySelectorAll("#results li.fail"))
+        .map(function (item) { return item.textContent; });
+      // A suite can fail before it creates individual result rows.
+      if (status === "failed" && failed === 0) {
+        failed = 1;
+        var suiteSummary = doc.getElementById("summary");
+        details.push(suiteSummary && suiteSummary.textContent.trim() ||
+          "Suite reported failure without individual check results.");
+      }
       return {
-        state: status,
+        state: failed > 0 ? "failed" : status,
         passed: doc.querySelectorAll("#results li.pass").length,
-        failed: doc.querySelectorAll("#results li.fail").length,
-        failureDetails: Array.from(doc.querySelectorAll("#results li.fail"))
-          .map(function (item) { return item.textContent; })
+        failed: failed,
+        failureDetails: details
       };
     }
     return { state: "pending" };

@@ -119,6 +119,9 @@
     });
 
     elements.paintChart.addEventListener("pointerdown", function (event) {
+      if (dragActive || event.button !== 0 || event.isPrimary === false) {
+        return;
+      }
       finishKeyboardPaint();
       var point = plotPointFromEvent(elements.paintChart, event, MAIN_LAYOUT);
       if (point) {
@@ -140,7 +143,7 @@
       if (point) {
         setAllocationProbe(point.x, point.y, false);
       }
-      if (!dragActive) {
+      if (!dragActive || event.pointerId !== dragPointerId) {
         return;
       }
       var triangle = pointerToTriangle(event);
@@ -152,6 +155,7 @@
 
     elements.paintChart.addEventListener("pointerup", endPaintStroke);
     elements.paintChart.addEventListener("pointercancel", endPaintStroke);
+    elements.paintChart.addEventListener("lostpointercapture", endPaintStroke);
     elements.paintChart.addEventListener("pointerleave", function () {
       if (!dragActive && document.activeElement !== elements.paintChart) {
         hideAllocationProbe();
@@ -318,7 +322,7 @@
   }
 
   function endPaintStroke(event) {
-    if (!dragActive) {
+    if (!dragActive || event.pointerId !== dragPointerId) {
       return;
     }
     dragActive = false;
@@ -687,17 +691,19 @@
         cx: svgXOf(response.trueType, DIAG_LAYOUT),
         cy: svgYOf(response.report, DIAG_LAYOUT),
         r: 1.2,
-        fill: "var(--orange)",
-        stroke: "var(--annotation-halo)",
+        fill: response.attained ? "var(--orange)" : "none",
+        stroke: response.attained ? "var(--annotation-halo)" : "var(--orange)",
         "stroke-width": 0.5,
         "vector-effect": "non-scaling-stroke",
         "pointer-events": "none",
-        "data-best-report-point": index
+        "data-best-report-point": index,
+        "data-best-report-attained": String(response.attained),
+        "data-best-report-approach-side": response.approachSide || ""
       });
     });
     svg.dataset.maxDeviationGain = String(
       diagnostic.bestResponses.reduce(function (maximum, response) {
-        return Math.max(maximum, response.gain);
+        return Math.max(maximum, response.maximumGain);
       }, 0)
     );
     svg.dataset.colorLow = "blue";
@@ -777,7 +783,7 @@
     var svg = elements.revenueChart;
     var extent = visuals.SIGNED_COLOR_EXTENT;
     svg.replaceChildren();
-    appendSvg(svg, "title", { id: "revenue-chart-title" }, "Net revenue");
+    appendSvg(svg, "title", { id: "revenue-chart-title" }, "Budget Balance");
     appendSvg(svg, "desc", { id: "revenue-chart-description" }, revenueChartDescription(summary));
 
     appendSvg(svg, "image", {
@@ -889,10 +895,10 @@
       return { symbol: "u", subscript: "S", value: formatSigned(value), width: 70 };
     }
     if (key === "revenue") {
-      return { symbol: "Rev", value: formatSigned(value), width: 76 };
+      return { symbol: "R", value: formatSigned(value), width: 76 };
     }
     return {
-      label: "Loss",
+      symbol: "L",
       value: formatProbe(value.over + value.under),
       width: 70
     };
@@ -965,9 +971,9 @@
       } else if (key === "sellerPayoff") {
         result = "u S equals " + formatSigned(value);
       } else if (key === "revenue") {
-        result = "Rev equals " + formatSigned(value);
+        result = "R equals " + formatSigned(value);
       } else {
-        result = "allocation loss " + formatProbe(value.over + value.under);
+        result = "allocation loss L equals " + formatProbe(value.over + value.under);
       }
     }
     elements.diagnosticProbeStatus.textContent = coordinates + ", " + result + ".";
@@ -1004,12 +1010,12 @@
     elements.efficiencyChart.dataset.efficiencyLoss = String(v.efficiencyLoss);
 
     renderDiagnosticLine(elements.buyerIcText, "BIC", v.buyerBic,
-      "best-response path (orange points) " +
-        (v.buyerBic ? "lies on" : "does not lie entirely on") +
+      "best-response points (orange) " +
+        (v.buyerBic ? "lie on" : "do not lie entirely on") +
         " v′ = v");
     renderDiagnosticLine(elements.sellerIcText, "BIC", v.sellerBic,
-      "best-response path (orange points) " +
-        (v.sellerBic ? "lies on" : "does not lie entirely on") +
+      "best-response points (orange) " +
+        (v.sellerBic ? "lie on" : "do not lie entirely on") +
         " c′ = c");
     renderDiagnosticLine(elements.buyerPayoffText, "Interim IR", v.interimBuyerIr,
       "minimum = " + formatSigned(v.minBuyerPayoff));
@@ -1026,10 +1032,10 @@
     var v = summary.verdicts;
     elements.liveSummary.textContent =
       "Buyer BIC " + (v.buyerBic ? "passes" : "fails") +
-        " (best-response path (orange points) " + (v.buyerBic ? "lies on" : "does not lie entirely on") +
+        " (best-response points (orange) " + (v.buyerBic ? "lie on" : "do not lie entirely on") +
         " v′ = v)" +
       ". Seller BIC " + (v.sellerBic ? "passes" : "fails") +
-        " (best-response path (orange points) " + (v.sellerBic ? "lies on" : "does not lie entirely on") +
+        " (best-response points (orange) " + (v.sellerBic ? "lie on" : "do not lie entirely on") +
         " c′ = c)" +
       ". Buyer interim IR " + (v.interimBuyerIr ? "passes" : "fails") +
       " (minimum = " + formatSigned(v.minBuyerPayoff) + ")" +
@@ -1056,12 +1062,16 @@
   function buyerIcChartDescription(summary) {
     return "Exact buyer interim payoff by true value and alternate report. " +
       "Unjoined marks show optimized reports for 61 sampled true values. " +
+      "Filled marks select reports; hollow marks are one-sided payoff limits " +
+      "not attained at that report. " +
       "Buyer BIC " + (summary.verdicts.buyerBic ? "passes." : "fails.");
   }
 
   function sellerIcChartDescription(summary) {
     return "Exact seller interim payoff by true value and alternate report. " +
       "Unjoined marks show optimized reports for 61 sampled true values. " +
+      "Filled marks select reports; hollow marks are one-sided payoff limits " +
+      "not attained at that report. " +
       "Seller BIC " + (summary.verdicts.sellerBic ? "passes." : "fails.");
   }
 
@@ -1090,7 +1100,7 @@
   }
 
   function formatSelectionSide() {
-    return state.selected.isLower ? "R" : "L";
+    return state.selected.isLower ? "B-R" : "T-L";
   }
 
   function formatSelectionDescription() {

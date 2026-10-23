@@ -12,7 +12,7 @@
   async function fresh() {
     frame.style.width = "1280px";
     var loaded = new Promise(function (resolve) { frame.onload = resolve; });
-    frame.src = "../auctions/optimal-auctions/index.html?style-test=" + (++serial);
+    frame.src = "../auction-design/optimal-auctions/index.html?style-test=" + (++serial);
     await loaded;
     doc = frame.contentDocument; win = frame.contentWindow;
     await T.waitFor(function () { return doc.body.dataset.ready === "true" && !!doc.querySelector("mjx-container"); }, 12000, "Page and MathJax readiness");
@@ -23,8 +23,8 @@
     var screen = p.matrixTransform(svg.getScreenCTM());
     return { clientX: screen.x, clientY: screen.y };
   }
-  function pointer(svg, type, x, y, id) {
-    T.dispatch(svg, type, win, Object.assign({ pointerId: id || 11, button: 0, buttons: type === "pointerup" ? 0 : 1 }, coordinates(svg, x, y)));
+  function pointer(svg, type, x, y, id, options) {
+    T.dispatch(svg, type, win, Object.assign({ pointerId: id || 11, isPrimary: true, button: 0, buttons: type === "pointerup" ? 0 : 1 }, coordinates(svg, x, y), options));
   }
   function simulateCapture(svg) {
     var captured = null;
@@ -294,6 +294,20 @@
     await T.nextAnimationFrames(win, 4);
     assert(doc.documentElement.scrollWidth <= doc.documentElement.clientWidth + 1, "200% scale overflow");
     doc.body.style.zoom = "";
+  });
+  test("Secondary pointers and right clicks cannot paint or change the lottery brush", function () {
+    var svg = el("allocation-chart"), lottery = el("lottery-chart");
+    [{ isPrimary: false }, { button: 2 }].forEach(function (options) {
+      pointer(svg, "pointerdown", 130, 120, 41, options);
+      pointer(svg, "pointermove", 140, 130, 41);
+      pointer(svg, "pointerup", 140, 130, 41);
+      close(totalPayments(), 1 / 3, 1e-9, "Invalid starts preserve the allocation");
+      pointer(lottery, "pointerdown", 244, 18, 41, options);
+      pointer(lottery, "pointermove", 244, 18, 41);
+      pointer(lottery, "pointerup", 244, 18, 41);
+      close(Number(el("brush-q1").value), 0);
+      close(Number(el("brush-q2").value), 0);
+    });
   });
   test("Reset restores the efficient allocation and cancels an active stroke", async function () {
     var chart=el("allocation-chart"), initial=chart.querySelector(".allocation-layer").innerHTML;

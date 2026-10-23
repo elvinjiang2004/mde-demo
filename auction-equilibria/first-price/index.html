@@ -12,6 +12,8 @@
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
   <script defer src="../../js/distributions.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
@@ -30,32 +32,27 @@
   <a class="skip-link" href="#main-content">Skip to the main text</a>
 
   <header class="site-header">
-    <page-header category="Auctions" home="../../index.html"></page-header>
+    <page-header category="Auction Equilibria" home="../../index.html"></page-header>
   </header>
 
 <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">The IPV First-Price Auction Equilibrium</h1>
+      
       <p>
-        One indivisible object is to be sold. There are \(n\geq 2\)
-        risk-neutral bidders. Bidders have independent private values
-        \(V_i\sim F\), \(i=1,\ldots,n\). We assume that \(F\) has a continuous,
-        strictly positive density \(f\) on its support
-        \([\underline{v},\overline{v}]\). The distribution \(F\) is common knowledge.
-      </p>
-      <p>
-        We consider a <em>first-price sealed-bid auction</em> with no reserve
-        price. Each bidder \(i\) privately observes his realized value \(v_i\),
-        and then all bidders simultaneously submit their bids. The highest bidder
+        In the <a class="environment-link" href="../../auction-equilibria/environment/index.html">IPV environment</a>,
+        an object will be sold via a <em>first-price sealed-bid auction</em> with no reserve
+        price. Each buyer \(i\) privately observes his realized value \(v_i\),
+        and then all buyers simultaneously submit their bids. The highest buyer
         wins the object, receives his value for it, and pays his own bid, while
-        losing bidders receive nothing and pay zero. Ties are broken uniformly
+        losing buyers receive nothing and pay zero. Ties are broken uniformly
         at random.
       </p>
       <p>
-        Consider bidder 1 with value \(v_1\). Let
+        Consider buyer 1 with value \(v_1\). Let
         <span class="highest-value-definition" aria-label="Y subscript 1 equals the maximum of V subscript 2 through V subscript n">
           \(Y_1=\max\{V_2,\ldots,V_n\}\)
-        </span> denote the highest opposing value. Suppose bidders
+        </span> denote the highest opposing value. Suppose buyers
         \(2,\ldots,n\) use the following symmetric, increasing bidding strategy
         for \(v_i>\underline{v}\):
       </p>
@@ -71,12 +68,12 @@
       </p>
       <p>
         <strong>Proposition:</strong>
-        It is also optimal for bidder 1 to use \(\beta^{\mathrm{I}}\). Thus, all
-        bidders using this strategy is a Bayesian Nash equilibrium.
+        It is also optimal for buyer 1 to use \(\beta^{\mathrm{I}}\). Thus, all
+        buyers using this strategy is a Bayesian Nash equilibrium.
       </p>
       <p>
-        In the interactive demo, take the perspective of bidder 1 and consider
-        different bids in response to the other bidders using this strategy.
+        In the interactive demo, take the perspective of buyer 1 and consider
+        different bids in response to the other buyers using this strategy.
         Here, \(V_i=a+(b-a)Z_i\), where
         \(Z_i\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Beta}(\alpha,\beta)\),
         \(i=1,\ldots,n\). When \(\alpha=\beta=1\), values are
@@ -169,7 +166,7 @@
       <h2 id="derivation-title">Proof of the optimal bid for bidder 1</h2>
       <p>
         After playing with the bid slider for a few different parameter
-        settings, you may notice that the best bidder 1 can do, across all
+        settings, you may notice that the best buyer 1 can do, across all
         possible values he may have, is to follow the same bidding strategy as
         everyone else. This suggests that \(\beta^{\mathrm{I}}\) is indeed an equilibrium bidding strategy.
         Let us verify this more rigorously.
@@ -185,7 +182,7 @@
         remaining bid can be written as \(\beta^{\mathrm{I}}(z)\) for some
         \(z\in[a,b]\). Then, let's compare bidding
         \(\beta^{\mathrm{I}}(v_1)\) with bidding
-        \(\beta^{\mathrm{I}}(z)\). Denote bidder 1's expected payoff from bidding some amount
+        \(\beta^{\mathrm{I}}(z)\). Denote buyer 1's expected payoff from bidding some amount
         \(x_1\in[a,\beta^{\mathrm{I}}(b)]\) by \(U_1(v_1,x_1)\). We have
       </p>
       <div id="expected-payoff-proof" class="equation-chain-steps equation-chain-content-widths">
@@ -264,11 +261,19 @@
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
         <span class="equation-step-rhs">\(\displaystyle G(z)(z-v_1)+\int_z^{v_1}G(y)\,dy. \)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_z^{v_1}\left[ G(y)-G(z) \right]\,dy. \)</span>
+
       </div>
       <p>
         Because \(G\) is weakly increasing, this difference is weakly positive for
-        every \(z\in[a,b]\). Thus, given that bidders \(2,\ldots,n\) bid
-        according to \(\beta^{\mathrm{I}}\), it is optimal for bidder 1 to
+        every \(z\in[a,b]\). If \(z\leq v_1\), the integrand is weakly positive, and the limits are in increasing order;
+        if \(z>v_1\), the integrand is weakly negative, and the limits are in decreasing order.
+        Thus, given that buyers \(2,\ldots,n\) bid
+        according to \(\beta^{\mathrm{I}}\), it is optimal for buyer 1 to
         also bid according to \(\beta^{\mathrm{I}}\).
       </p>
       
@@ -299,5 +304,10 @@
   <footer class="site-footer">
     <page-footer></page-footer>
   </footer>
+  <learning-sidebar page="first-price" environment="auction-equilibria">
+    <template data-insights>
+      <!-- User-authored Insights go here. -->
+    </template>
+  </learning-sidebar>
 </body>
 </html>

@@ -134,16 +134,17 @@
       firePointer(chart, "pointerup", first.x, first.y, 91);
     }
 
-  function firePointer(chart, type, clientX, clientY, pointerId) {
+  function firePointer(chart, type, clientX, clientY, pointerId, options) {
     chart.setPointerCapture = function () {};
     chart.hasPointerCapture = function () { return false; };
     chart.releasePointerCapture = function () {};
-    chart.dispatchEvent(new appWindow.PointerEvent(type, {
+    chart.dispatchEvent(new appWindow.PointerEvent(type, Object.assign({
         bubbles: true,
         clientX: clientX,
         clientY: clientY,
-        pointerId: pointerId
-      }));
+        pointerId: pointerId,
+        isPrimary: true
+    }, options)));
     }
 
     var tests = [
@@ -245,9 +246,9 @@
 
           assert(Object.isFrozen(mesh), "The configured mesh API should be immutable.");
           assert(lower.i === 6 && lower.j === 5 && lower.isLower && lower.insidePlot,
-            "A lower-right centroid should select its R triangle.");
+            "A lower-right centroid should select its B-R triangle.");
           assert(upper.i === 6 && upper.j === 5 && !upper.isLower && upper.insidePlot,
-            "An upper-left centroid should select its L triangle.");
+            "An upper-left centroid should select its T-L triangle.");
           assert(diagonal.i === 0 && diagonal.j === 0 && diagonal.isLower,
             "An exact diagonal tie should select the lower-right triangle.");
           assert(outside.i === 19 && !outside.insidePlot,
@@ -288,9 +289,14 @@
             introduction.querySelector("h1").textContent ===
               "The Myerson-Satterthwaite Theorem",
           "The page should use the requested theorem title.");
-          assert(introduction.querySelectorAll(":scope > p").length > 0 &&
-            introduction.querySelectorAll(":scope > ol > li").length === 4,
-          "The supplied introduction should retain its explanatory prose and four conditions.");
+          var introductionCopy = introduction.cloneNode(true);
+          Array.from(introductionCopy.querySelectorAll('[role="doc-noteref"]')).forEach(function (reference) {
+            reference.remove();
+          });
+          var theoremText = introductionCopy.textContent.replace(/\s+/g, " ");
+          assert(introduction.querySelectorAll(":scope > ol > li").length === 0 &&
+            theoremText.includes("There is no mechanism that is Bayesian incentive compatible, interim individually rational, ex-ante budget balanced, and ex-post efficient."),
+          "The supplied theorem should retain all four conditions inline.");
           assert(introduction.querySelectorAll('mjx-container[jax="SVG"]').length > 0,
             "The introduction's mathematical notation should render with MathJax.");
           var paymentRuleMath = appDocument.getElementById("interim-payment-rules")
@@ -302,7 +308,14 @@
             paymentRuleTex.includes("+cQ_S(c)") &&
             !paymentRuleTex.includes("P_B(v,c)") &&
             !paymentRuleTex.includes("P_S(v,c)"),
-          "The theorem should state the corrected interim expected payment rules.");
+          "The linked lemma application should retain the bilateral interim payment identities.");
+          var lemmaLink = appDocument.querySelector(
+            'a[href="../../general-topics/envelope-theorem/index.html#myerson-lemma"]'
+          );
+          assert(lemmaLink && lemmaLink.closest(".derivation") &&
+            !appDocument.getElementById("buyer-monotonicity-proof") &&
+            !appDocument.getElementById("buyer-ic-verification"),
+          "The repeated implementability theorem and proof should be replaced by the Myerson's Lemma link.");
           var notes = Array.from(appDocument.querySelectorAll(".notes-list li"));
           assert(notes.length > 0, "The Notes list should carry its authored bullets.");
           assert(notes.every(function (note) {
@@ -363,7 +376,7 @@
           var plainTextCaptions = [
             { id: "buyer-ic-chart", text: "Buyer IC" },
             { id: "seller-ic-chart", text: "Seller IC" },
-            { id: "revenue-chart", text: "Net revenue" },
+            { id: "revenue-chart", text: "Budget Balance" },
             { id: "buyer-payoff-chart", text: "Buyer IR" },
             { id: "seller-payoff-chart", text: "Seller IR" },
             { id: "efficiency-chart", text: "Efficiency" }
@@ -537,10 +550,10 @@
           var entries = [
             { id: "buyer-ic-chart", symbol: "U", subscript: "B" },
             { id: "seller-ic-chart", symbol: "U", subscript: "S" },
-            { id: "revenue-chart", symbol: "Rev" },
+            { id: "revenue-chart", symbol: "R" },
             { id: "buyer-payoff-chart", symbol: "u", subscript: "B" },
             { id: "seller-payoff-chart", symbol: "u", subscript: "S" },
-            { id: "efficiency-chart", symbol: "Loss" }
+            { id: "efficiency-chart", symbol: "L" }
           ];
           entries.forEach(function (entry, index) {
             var chart = appDocument.getElementById(entry.id);
@@ -610,8 +623,8 @@
           var revenue = appDocument.getElementById("revenue-text");
           assert(revenue.dataset.expectedNoDeficit === "false",
             "The efficient benchmark should not be ex-ante budget balanced.");
-          assert(buyerIc.textContent === "BIC: passes (best-response path (orange points) lies on v′ = v)" &&
-            sellerIc.textContent === "BIC: passes (best-response path (orange points) lies on c′ = c)",
+          assert(buyerIc.textContent === "BIC: passes (best-response points (orange) lie on v′ = v)" &&
+            sellerIc.textContent === "BIC: passes (best-response points (orange) lie on c′ = c)",
           "IC panels should link the BIC verdict to the truthful diagonal.");
           assert(revenue.children.length === 1 &&
             revenue.textContent === "Ex-ante BB: fails (expected revenue = -0.167)",
@@ -700,7 +713,7 @@
               "buyer-payoff-chart", "seller-payoff-chart", "efficiency-chart"
             ]),
             "The diagnostics should run left-to-right, top-to-bottom as Buyer IC, " +
-              "Seller IC, Net revenue, Buyer IR, Seller IR, and Efficiency.");
+              "Seller IC, Budget Balance, Buyer IR, Seller IR, and Efficiency.");
 
             var grid = appDocument.querySelector(".diagnostic-panel-grid");
             var columns = appWindow.getComputedStyle(grid)
@@ -814,6 +827,41 @@
         }
       },
       {
+        name: "Unattained best-report limits use hollow marks with accessible descriptions",
+        run: function () {
+          paintEntireGrid(0);
+          var chart = appDocument.getElementById("paint-chart");
+          var slider = appDocument.getElementById("brush-value-slider");
+          var rect = chart.getBoundingClientRect();
+          slider.value = "1";
+          dispatchInput(slider, appWindow);
+          function point(i, j) {
+            return {
+              x: rect.left + (50 + (i + 2 / 3) * 20) / 480 * rect.width,
+              y: rect.top + (440 - (j + 1 / 3) * 20) / 520 * rect.height
+            };
+          }
+          var first = point(0, 0);
+          firePointer(chart, "pointerdown", first.x, first.y, 93);
+          for (var i = 9; i < 10; i += 1) {
+            for (var j = 0; j < 20; j += 1) {
+              var next = point(i, j);
+              firePointer(chart, "pointermove", next.x, next.y, 93);
+            }
+          }
+          firePointer(chart, "pointerup", first.x, first.y, 93);
+          var ic = appDocument.getElementById("buyer-ic-chart");
+          var limit = ic.querySelector('[data-best-report-point="48"]');
+          assert(limit.dataset.bestReportAttained === "false" &&
+            limit.dataset.bestReportApproachSide === "below" &&
+            limit.getAttribute("fill") === "none",
+          "The one-sided optimum must be drawn as a hollow lower-side limit.");
+          assert(ic.querySelector('[data-best-report-attained="true"]') &&
+            ic.querySelector("desc").textContent.includes("hollow"),
+          "Actual reports must remain filled and descriptions must explain the distinction.");
+        }
+      },
+      {
         name: "The allocation surface updates during a stroke and exact diagnostics wait for release",
         run: function () {
           return (async function () {
@@ -870,7 +918,57 @@
         }
       },
       {
-        name: "Horizontal keyboard movement visits L and R without skipping either triangle",
+        name: "Painting belongs to one primary pointer and capture loss commits its diagnostics",
+        run: async function () {
+          appDocument.getElementById("reset-button").click();
+          var chart = appDocument.getElementById("paint-chart");
+          var slider = appDocument.getElementById("brush-value-slider");
+          slider.value = "0";
+          dispatchInput(slider, appWindow);
+          var rect = chart.getBoundingClientRect();
+          var x = rect.left + 370 / 480 * rect.width;
+          var y = rect.top + 360 / 520 * rect.height;
+          function fills() {
+            return Array.from(chart.querySelectorAll("polygon[fill]"))
+              .map(function (polygon) { return polygon.getAttribute("fill"); }).join("|");
+          }
+          function diagnostic() {
+            return appDocument.querySelector("#efficiency-chart image");
+          }
+          var initial = fills();
+          for (var options of [{ button: 2 }, { isPrimary: false }]) {
+            firePointer(chart, "pointerdown", x, y, 52, options);
+            firePointer(chart, "pointerup", x, y, 52);
+            await window.MechanismTest.nextAnimationFrames(appWindow, 2);
+            assert(fills() === initial,
+              "Secondary buttons and non-primary contacts must not paint allocations.");
+          }
+          var beforeDiagnostic = diagnostic();
+          firePointer(chart, "pointerdown", x, y, 53);
+          await window.MechanismTest.nextAnimationFrames(appWindow, 2);
+          var painted = fills();
+          assert(painted !== initial && diagnostic() === beforeDiagnostic,
+            "The primary pointer should paint immediately and defer diagnostics.");
+          firePointer(chart, "pointerdown", x - rect.width / 8, y, 54);
+          firePointer(chart, "pointermove", x - rect.width / 8, y, 54);
+          firePointer(chart, "pointerup", x - rect.width / 8, y, 54);
+          await window.MechanismTest.nextAnimationFrames(appWindow, 2);
+          assert(fills() === painted && diagnostic() === beforeDiagnostic,
+            "Another pointer must neither paint nor prematurely commit the active stroke.");
+          firePointer(chart, "lostpointercapture", x, y, 53);
+          var committedDiagnostic = diagnostic();
+          assert(committedDiagnostic !== beforeDiagnostic,
+            "Capture loss should commit the pending exact diagnostics.");
+          firePointer(chart, "pointermove", x - rect.width / 8, y, 53);
+          firePointer(chart, "pointerup", x, y, 53);
+          await window.MechanismTest.nextAnimationFrames(appWindow, 2);
+          assert(fills() === painted && diagnostic() === committedDiagnostic,
+            "A completed stroke must neither resume painting nor recompute twice.");
+          appDocument.getElementById("reset-button").click();
+        }
+      },
+      {
+        name: "Horizontal keyboard movement visits T-L and B-R without skipping either triangle",
         run: function () {
           (function () {
             paintEntireGrid(0);
@@ -895,37 +993,37 @@
             press("Home");
             assert(chart.querySelector(".cell-label").textContent
               .startsWith("[0.00, 0.05)") &&
-              chart.querySelector(".cell-label").textContent.endsWith(" L"),
-            "Home should start on the leftmost cell's L triangle.");
+              chart.querySelector(".cell-label").textContent.endsWith(" T-L"),
+            "Home should start on the leftmost cell's T-L triangle.");
             press("ArrowRight");
             assert(chart.querySelector(".cell-label").textContent
               .startsWith("[0.00, 0.05)") &&
-              chart.querySelector(".cell-label").textContent.endsWith(" R"),
-            "The first ArrowRight should visit R in the same cell.");
+              chart.querySelector(".cell-label").textContent.endsWith(" B-R"),
+            "The first ArrowRight should visit B-R in the same cell.");
             press("ArrowRight");
             assert(chart.querySelector(".cell-label").textContent
               .startsWith("[0.05, 0.10)") &&
-              chart.querySelector(".cell-label").textContent.endsWith(" L"),
-            "The next ArrowRight should move to L in the next cell.");
+              chart.querySelector(".cell-label").textContent.endsWith(" T-L"),
+            "The next ArrowRight should move to T-L in the next cell.");
             var down;
             for (down = 0; down < 2 * model.CELL_RESOLUTION; down += 1) {
               press("ArrowDown");
             }
             assert(chart.querySelector(".cell-label").textContent
-              .includes("× [0.00, 0.05) R"),
-            "Repeated ArrowDown should reach the bottom row's R triangle.");
+              .includes("× [0.00, 0.05) B-R"),
+            "Repeated ArrowDown should reach the bottom row's B-R triangle.");
             press("ArrowUp");
             assert(chart.querySelector(".cell-label").textContent
-              .includes("× [0.00, 0.05) L"),
-            "The first ArrowUp should visit L in the same row.");
+              .includes("× [0.00, 0.05) T-L"),
+            "The first ArrowUp should visit T-L in the same row.");
             press("ArrowUp");
             assert(chart.querySelector(".cell-label").textContent
-              .includes("× [0.05, 0.10) R"),
-            "The next ArrowUp should move to R in the next row.");
+              .includes("× [0.05, 0.10) B-R"),
+            "The next ArrowUp should move to B-R in the next row.");
 
             press("Home");
             press("r");
-            assert(chart.querySelector(".cell-label").textContent.endsWith(" R"),
+            assert(chart.querySelector(".cell-label").textContent.endsWith(" B-R"),
               "Pressing r should select the right (lower) triangle.");
             slider.value = "0.8";
             dispatchInput(slider, appWindow);
@@ -933,14 +1031,14 @@
             release("Enter");
 
             press("l");
-            assert(chart.querySelector(".cell-label").textContent.endsWith(" L"),
+            assert(chart.querySelector(".cell-label").textContent.endsWith(" T-L"),
               "Pressing l should select the left (upper) triangle of the same cell.");
             assert(selectedOutput() === "q=0.000" && slider.value === "0.8",
-              "The L triangle should remain untouched while the brush stays at 0.8.");
+              "The T-L triangle should remain untouched while the brush stays at 0.8.");
 
             press("r");
             assert(selectedOutput() === "q=0.800" && slider.value === "0.8",
-              "Reselecting R should recover its painted value without changing the brush.");
+              "Reselecting B-R should recover its painted value without changing the brush.");
           }());
         }
       },
@@ -977,15 +1075,15 @@
           key("keydown", "Home");
           assert(chart.querySelector(".allocation-probe .plot-probe-text")
             .textContent === "q=0.600",
-          "The starting L triangle should receive the held-key brush.");
+          "The starting T-L triangle should receive the held-key brush.");
           key("keydown", "ArrowRight");
           assert(chart.querySelector(".allocation-probe .plot-probe-text")
             .textContent === "q=0.600",
-          "The same cell's R triangle should receive the held-key brush.");
+          "The same cell's B-R triangle should receive the held-key brush.");
           key("keydown", "ArrowRight");
           assert(chart.querySelector(".allocation-probe .plot-probe-text")
             .textContent === "q=0.600",
-          "The next cell's L triangle should receive the held-key brush.");
+          "The next cell's T-L triangle should receive the held-key brush.");
           key("keydown", "ArrowRight");
           assert(chart.querySelector(".allocation-probe .plot-probe-text")
             .textContent === "q=0.000",
@@ -1043,8 +1141,8 @@
             assert(buyerIc.dataset.icImplementable === "false" &&
               sellerIc.dataset.icImplementable === "false",
             "An isolated spike should violate Bayesian IC on both sides.");
-            assert(buyerIc.textContent === "BIC: fails (best-response path (orange points) does not lie entirely on v′ = v)" &&
-              sellerIc.textContent === "BIC: fails (best-response path (orange points) does not lie entirely on c′ = c)",
+            assert(buyerIc.textContent === "BIC: fails (best-response points (orange) do not lie entirely on v′ = v)" &&
+              sellerIc.textContent === "BIC: fails (best-response points (orange) do not lie entirely on c′ = c)",
             "Failed IC should use the requested BIC wording without monotonicity labels.");
             var efficiencyText = appDocument.getElementById("efficiency-text");
             var loss = Number(appDocument.getElementById("efficiency-chart").dataset.efficiencyLoss);

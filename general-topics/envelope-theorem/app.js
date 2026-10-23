@@ -6,6 +6,17 @@
   var appendSvg = window.SvgUtils.appendSvg;
   var formatTick = window.SvgUtils.formatTick;
 
+  var initialLemmaTarget = window.location.hash === "#myerson-lemma" ?
+    document.getElementById("myerson-lemma") : null;
+  if (initialLemmaTarget) {
+    // Defer the native fragment jump until typesetting has fixed the layout.
+    initialLemmaTarget.removeAttribute("id");
+  }
+  var pageLoaded = document.readyState === "complete" ? Promise.resolve() :
+    new Promise(function (resolve) {
+      window.addEventListener("load", resolve, { once: true });
+    });
+
   var MAIN_LAYOUT = { viewWidth: 660, viewHeight: 450, left: 60, right: 630, top: 32, bottom: 388 };
   var SLOPE_LAYOUT = MAIN_LAYOUT;
 
@@ -31,6 +42,7 @@
     lastSummary: null
   };
   var dragActive = false;
+  var dragPointerId = null;
   var dragFrameRequested = false;
 
   document.addEventListener("DOMContentLoaded", initialize);
@@ -48,7 +60,16 @@
     state.lines = model.defaultLines();
     state.selectedIndex = 0;
 
-    math.typesetInitial(".introduction, .explorable, .derivation, .notes, .references");
+    window.EquationChain.initDividers();
+    var initialMath = math.typesetInitial(".introduction, .explorable, .derivation, .notes, .references");
+    Promise.all([initialMath, pageLoaded]).then(function () {
+      if (initialLemmaTarget) {
+        initialLemmaTarget.id = "myerson-lemma";
+        if (window.location.hash === "#myerson-lemma") {
+          initialLemmaTarget.scrollIntoView({ block: "start" });
+        }
+      }
+    });
     bindEvents();
     syncInterface();
     recomputeAndDrawAll();
@@ -99,11 +120,15 @@
     });
 
     elements.mainChart.addEventListener("pointerdown", function (event) {
+      if (dragActive || event.button !== 0 || event.isPrimary === false) {
+        return;
+      }
       var index = pointerToPointIndex(event);
       if (index === -1) {
         return;
       }
       dragActive = true;
+      dragPointerId = event.pointerId;
       state.selectedIndex = index;
       elements.mainChart.setPointerCapture(event.pointerId);
       syncInterface();
@@ -111,21 +136,15 @@
     });
 
     elements.mainChart.addEventListener("pointermove", function (event) {
-      if (!dragActive) {
+      if (!dragActive || event.pointerId !== dragPointerId) {
         return;
       }
       dragSetPointFromPointer(event);
     });
 
-    elements.mainChart.addEventListener("pointerup", function (event) {
-      dragActive = false;
-      if (elements.mainChart.hasPointerCapture(event.pointerId)) {
-        elements.mainChart.releasePointerCapture(event.pointerId);
-      }
-    });
-    elements.mainChart.addEventListener("pointercancel", function () {
-      dragActive = false;
-    });
+    elements.mainChart.addEventListener("pointerup", endPointerDrag);
+    elements.mainChart.addEventListener("pointercancel", endPointerDrag);
+    elements.mainChart.addEventListener("lostpointercapture", endPointerDrag);
 
     elements.mainChart.addEventListener("keydown", function (event) {
       var handled = true;
@@ -153,6 +172,17 @@
         event.preventDefault();
       }
     });
+  }
+
+  function endPointerDrag(event) {
+    if (!dragActive || event.pointerId !== dragPointerId) {
+      return;
+    }
+    dragActive = false;
+    dragPointerId = null;
+    if (elements.mainChart.hasPointerCapture(event.pointerId)) {
+      elements.mainChart.releasePointerCapture(event.pointerId);
+    }
   }
 
   function svgPointFromEvent(event) {

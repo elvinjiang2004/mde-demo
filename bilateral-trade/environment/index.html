@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Environment | Bilateral Trade | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
+  <script defer src="../../js/environment.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to the main content</a>
+  <header class="site-header"><page-header category="Bilateral Trade" home="../../index.html"></page-header></header>
+  <main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">Environment</h1>
+      <p>
+        A seller has an object that she may sell to a buyer. The seller and buyer
+        have independent private values \(C\sim F_S\) and \(V\sim F_B\),
+        respectively. We assume that \(F_S\) has a continuous, strictly positive
+        density \(f_S\) on its support \([\underline{c},\overline{c}]\), and that
+        \(F_B\) has a continuous, strictly positive density \(f_B\) on its support
+        \([\underline{v},\overline{v}]\). These distributions are common knowledge.
+        We also assume that the supports overlap on an interval of positive
+        length. The buyer and seller observe their respective values, \(v\) and
+        \(c\), but not the other's.
+      </p>
+      <p>
+        By the <a href="../../general-topics/revelation-principle/index.html">Revelation Principle</a>,
+        to implement any desired outcome rule, we can consider only <em>direct bargaining mechanisms</em>
+        which consist of an allocation rule \(q:T\to[0,1]\), a payment rule for the buyer
+        \(p_B:T\to\mathbb{R}\), and a payment rule for the seller \(p_S:T\to\mathbb{R}\), where
+        \(T=[\underline{v},\overline{v}]\times[\underline{c},\overline{c}]\). As functions of the reported values, the allocation rule specifies the
+        probability that trade occurs, the buyer's payment rule specifies the
+        expected payment from the buyer, and the seller's payment rule specifies
+        the expected payment to the seller. 
+      </p>
+      <p>Define the following properties of a mechanism:</p>
+      <ol>
+        <li>
+          <strong>Incentive Compatibility (IC):</strong>
+          Truthful reporting by the buyer and seller is an equilibrium. This
+          has two forms: Bayesian IC (BIC), where truthful reporting is a
+          Bayesian Nash equilibrium, and dominant strategy IC (DSIC), where
+          truthful reporting is a dominant strategy equilibrium.
+        </li>
+        <li>
+          <strong>Individual Rationality (IR):</strong>
+          Under truthful reporting, both the buyer and seller have a weakly
+          positive payoff at the relevant stage. This is evaluated at three
+          stages: ex ante, interim, and ex post.
+        </li>
+        <li>
+          <strong>(Weak) Budget Balance (BB):</strong>
+          Under truthful reporting, trade does not need to be subsidized. This is
+          evaluated at two stages: ex ante and ex post.
+        </li>
+        <li>
+          <strong>Efficiency:</strong>
+          Under truthful reporting, the mechanism maximizes welfare. This is
+          evaluated at two stages: ex ante and ex post.
+        </li>
+      </ol>
+      <div class="mechanism-notation">
+      <p>
+        Denote for a buyer with value \(v\) who reports \(v'\), given the seller reports truthfully:
+      </p>
+      <ul>
+        <li>\(\displaystyle Q_B(v')=\int_{\underline{c}}^{\overline{c}} q(v',c)\,f_S(c)\,dc\), his interim probability of trade;</li>
+        <li>\(\displaystyle P_B(v')=\int_{\underline{c}}^{\overline{c}} p_B(v',c)\,f_S(c)\,dc\), his interim expected payment to the mechanism;</li>
+        <li>\(\displaystyle U_B(v,v')=v\,Q_B(v')-P_B(v')\), his interim expected payoff;</li>
+        <li>\(\displaystyle \phi_B(v)=v-\frac{1-F_B(v)}{f_B(v)}\), his virtual value.</li>
+      </ul>
+      <p>
+        Denote for a seller with value \(c\) who reports \(c'\), given the buyer reports truthfully:
+      </p>
+      <ul>
+        <li>\(\displaystyle Q_S(c')=\int_{\underline{v}}^{\overline{v}} q(v,c')\,f_B(v)\,dv\), her interim probability of trade;</li>
+        <li>\(\displaystyle P_S(c')=\int_{\underline{v}}^{\overline{v}} p_S(v,c')\,f_B(v)\,dv\), her interim expected payment from the mechanism;</li>
+        <li>\(\displaystyle U_S(c,c')=P_S(c')-c\,Q_S(c')\), her interim expected payoff;</li>
+        <li>\(\displaystyle \phi_S(c)=c+\frac{F_S(c)}{f_S(c)}\), her virtual value.</li>
+      </ul>
+      <p>
+        For compactness, we'll write \(U_B(v,v)\) as \(U_B(v)\) and \(U_S(c,c)\) as \(U_S(c)\).
+      </p>
+      <p>
+        We call an allocation rule \(q\) <em>BIC (respectively, DSIC) implementable</em> if and only if there exist payment rules
+        \(p_B\) and \(p_S\) such that the mechanism \((q,p_B,p_S)\) is BIC (respectively, DSIC).
+      </p>
+
+      </div>
+      <p class="environment-modules"><a href="../../bilateral-trade/bargaining-mechanism-sandbox/index.html">Bargaining Mechanism Sandbox</a> &middot; <a href="../../bilateral-trade/myerson-satterthwaite-theorem/index.html">The Myerson-Satterthwaite Theorem</a></p>
+    </section>
+  </main>
+  <footer class="site-footer"><page-footer></page-footer></footer>
+  <learning-sidebar environment="bilateral-trade">
+    <template data-insights>
+      <!-- User-authored Insights go here. -->
+    </template>
+  </learning-sidebar>
+</body>
+</html>

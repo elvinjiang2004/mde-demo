@@ -48,7 +48,8 @@
   function dispatch(element, type, frameWindow, init) {
     var options = Object.assign({ bubbles: true, cancelable: true }, init || {});
     var Constructor = type.indexOf("key") === 0 ? frameWindow.KeyboardEvent :
-      (type.indexOf("pointer") === 0 ? frameWindow.PointerEvent : frameWindow.Event);
+      (type.indexOf("pointer") === 0 || type === "gotpointercapture" ||
+        type === "lostpointercapture" ? frameWindow.PointerEvent : frameWindow.Event);
     element.dispatchEvent(new Constructor(type, options));
   }
 

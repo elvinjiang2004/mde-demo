@@ -14,6 +14,8 @@
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
@@ -34,53 +36,16 @@
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">The Myerson-Satterthwaite Theorem</h1>
       <p>
-        A seller has an object that she may sell to a buyer. The seller and buyer
-        have independent private values \(C\sim F_S\) and \(V\sim F_B\),
-        respectively. We assume that \(F_S\) has a continuous, strictly positive
-        density \(f_S\) on its support \([\underline{c},\overline{c}]\), and that
-        \(F_B\) has a continuous, strictly positive density \(f_B\) on its support
-        \([\underline{v},\overline{v}]\). These distributions are common knowledge.
-        We also assume that the supports overlap on an interval of positive
-        length. The buyer and seller observe their respective values, \(v\) and
-        \(c\), but not the other's.
+        In the <a class="environment-link" href="../../bilateral-trade/environment/index.html">bilteral trade environment</a>,
+        Myerson and Satterthwaite (1983) give the following result:
       </p>
-      <p>
-        We consider a <em>direct bargaining mechanism</em> consisting of an
-        allocation rule \(q:T\to[0,1]\), a payment rule for the buyer
-        \(p_B:T\to\mathbb{R}\), and a payment rule for the seller
-        \(p_S:T\to\mathbb{R}\), where
-        \(T=[\underline{v},\overline{v}]\times[\underline{c},\overline{c}]\).
-        As functions of the reported values, the allocation rule specifies the
-        probability that trade occurs, the buyer's payment rule specifies the
-        expected payment from the buyer, and the seller's payment rule specifies
-        the expected payment to the seller.
-      </p>
-      <p>We want a mechanism that satisfies the following properties:</p>
-      <ol>
-        <li>
-          <strong>(Bayesian) Incentive Compatibility (IC):</strong>
-          Truthful reporting by the buyer and seller is a Bayesian Nash equilibrium.
-        </li>
-        <li>
-          <strong>(Interim) Individual Rationality (IR):</strong>
-          In truthful equilibrium, after observing their values, both the buyer
-          and seller have a weakly positive expected payoff.
-        </li>
-        <li>
-          <strong>(Weak, ex-ante)<sup><a id="budget-balance-note-ref"
-            href="#budget-balance-note" role="doc-noteref"
-            aria-label="Note 1 on ex-ante and ex-post budget balance">1</a></sup> Budget Balance (BB):</strong>
-          In truthful equilibrium, trade does not need to be subsidized in expectation.
-        </li>
-        <li>
-          <strong>(Ex post) Efficiency:</strong>
-          In truthful equilibrium, the mechanism maximizes welfare at every
-          realized value profile.
-        </li>
-      </ol>
+
       <p>
         <strong>Theorem (The Myerson-Satterthwaite Theorem):</strong>
-        No mechanism satisfies all four properties.
+        There is no mechanism that is Bayesian incentive compatible, interim individually rational,
+        ex-ante budget balanced<sup><a id="budget-balance-note-ref"
+          href="#budget-balance-note" role="doc-noteref"
+          aria-label="Note 1 on ex-ante budget balance">1</a></sup>, and ex-post efficient.
       </p>
       <p>
         In the interactive demo, design a direct bargaining mechanism and see
@@ -147,7 +112,7 @@
           </aside>
         </div>
 
-        <p id="diagnostic-probe-help" class="sr-only">Hover or focus a plot to inspect its exact output. Arrow keys move the probe or selected allocation triangle without skipping either triangle half. L and R select either triangle in a cell. Enter or Space applies the brush; hold either key while navigating to paint continuously.</p>
+        <p id="diagnostic-probe-help" class="sr-only">Hover or focus a plot to inspect its exact output. Arrow keys move the probe or selected allocation triangle without skipping either triangle half. L selects the top-left (T-L) triangle and R selects the bottom-right (B-R) triangle in a cell. Enter or Space applies the brush; hold either key while navigating to paint continuously.</p>
         <p id="diagnostic-probe-status" class="sr-only" role="status" aria-live="polite"></p>
 
         <div class="chart-grid diagnostic-panel-grid">
@@ -167,7 +132,7 @@
                   aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
                 >
                   <title id="buyer-ic-chart-title">Buyer IC</title>
-                  <desc id="buyer-ic-chart-description">Exact buyer interim payoff by true value and alternate report, with truthful and exact best reports overlaid.</desc>
+                  <desc id="buyer-ic-chart-description">Exact buyer interim payoff by true value and alternate report. The diagonal is truthful reporting; filled marks select best reports and hollow marks indicate one-sided payoff limits not attained at that report.</desc>
                 </svg>
 
                 <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Alternate buyer report, \(v'\)</p>
@@ -194,7 +159,7 @@
                   aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
                 >
                   <title id="seller-ic-chart-title">Seller IC</title>
-                  <desc id="seller-ic-chart-description">Exact seller interim payoff by true value and alternate report, with truthful and exact best reports overlaid.</desc>
+                  <desc id="seller-ic-chart-description">Exact seller interim payoff by true value and alternate report. The diagonal is truthful reporting; filled marks select best reports and hollow marks indicate one-sided payoff limits not attained at that report.</desc>
                 </svg>
 
                 <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Alternate seller report, \(c'\)</p>
@@ -207,7 +172,7 @@
 
           <div class="diagnostic-panel">
             <figure class="chart-figure diagnostic-figure">
-              <figcaption>Net revenue</figcaption>
+              <figcaption>Budget Balance</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
@@ -220,7 +185,7 @@
                   aria-describedby="diagnostic-probe-help"
                   aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
                 >
-                  <title id="revenue-chart-title">Net revenue</title>
+                  <title id="revenue-chart-title">Budget Balance</title>
                   <desc id="revenue-chart-description">Intermediary net revenue at every buyer-value, seller-cost pair; green is a surplus, red is a deficit.</desc>
                 </svg>
 
@@ -322,48 +287,18 @@
       class="derivation"
       aria-labelledby="payment-rule-title"
     >
-      <h2 id="payment-rule-title">Incentive compatibility, individual rationality, and the payment rule</h2>
+      <h2 id="payment-rule-title">Incentive compatibility and individual rationality</h2>
       <p>
-        You may wonder why you do not need to specify the payment rules in
-        addition to your allocation rule, even though a direct bargaining
-        mechanism consists of all three. Before we can answer this fully, let's
-        specify the following quantities.
-      </p>
-      <p>
-        For a buyer with value \(v\) who reports \(v'\), given the seller reports truthfully:
-      </p>
-      <ul>
-        <li>\(\displaystyle Q_B(v')=\int_{\underline{c}}^{\overline{c}} q(v',c)\,f_S(c)\,dc\), his interim probability of trade;</li>
-        <li>\(\displaystyle P_B(v')=\int_{\underline{c}}^{\overline{c}} p_B(v',c)\,f_S(c)\,dc\), his interim expected payment to the mechanism;</li>
-        <li>\(\displaystyle U_B(v,v')=v\,Q_B(v')-P_B(v')\), his interim expected payoff;</li>
-        <li>\(\displaystyle \phi_B(v)=v-\frac{1-F_B(v)}{f_B(v)}\), his virtual value.</li>
-      </ul>
-      <p>
-        For a seller with value \(c\) who reports \(c'\), given the buyer reports truthfully:
-      </p>
-      <ul>
-        <li>\(\displaystyle Q_S(c')=\int_{\underline{v}}^{\overline{v}} q(v,c')\,f_B(v)\,dv\), her interim probability of trade;</li>
-        <li>\(\displaystyle P_S(c')=\int_{\underline{v}}^{\overline{v}} p_S(v,c')\,f_B(v)\,dv\), her interim expected payment from the mechanism;</li>
-        <li>\(\displaystyle U_S(c,c')=P_S(c')-c\,Q_S(c')\), her interim expected payoff;</li>
-        <li>\(\displaystyle \phi_S(c)=c+\frac{F_S(c)}{f_S(c)}\), her virtual value.</li>
-      </ul>
-      <p>
-        For compactness, we'll write \(U_B(v,v)\) as \(U_B(v)\) and \(U_S(c,c)\) as \(U_S(c)\). Now, we can rewrite the IC, IR conditions as
+        We can write the IC and IR conditions as the following inequalities.
       </p>
       <ul>
         <li>IC: \(\displaystyle U_B(v)\geq U_B(v,v')\), for all \(v'\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\geq U_S(c,c')\), for all \(c'\in[\underline{c},\overline{c}]\);</li>
         <li>IR: \(\displaystyle U_B(v)\geq 0\), for all \(v\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\geq 0\), for all \(c\in[\underline{c},\overline{c}]\).</li>
       </ul>
       <p>
-        We have the following theorem regarding the implementability<sup><a
-          id="implementability-note-ref" href="#implementability-note" role="doc-noteref"
-          aria-label="Note 2 on implementability">2</a></sup> of an allocation rule \(q\):
-      </p>
-      <p>
-        <strong>Theorem:</strong> 
-        An allocation rule \(q\) is implementable
-        if and only if \(Q_B\) is weakly increasing and \(Q_S\) is weakly decreasing. Furthermore, the payment
-        rules must set interim expected payments as
+        Applying <a href="../../general-topics/envelope-theorem/index.html#myerson-lemma">Myerson's Lemma</a>
+        to this environment gives that \(q\) is BIC implementable if and only if \(Q_B\) is weakly increasing, \(Q_S\) is weakly decreasing,
+        and the interim expected payments satisfy for all \(v\in[\underline{v},\overline{v}]\) and \(c\in[\underline{c},\overline{c}]\)
       </p>
       <div id="interim-payment-rules" class="equation-display" aria-label="IC implementable interim expected payment rules for the buyer and seller">
         \[
@@ -372,124 +307,16 @@
         \]
       </div>
       <p>
-        <em>Proof:</em> Start with the forward direction. Suppose \(q\) is implementable with \(p_B\) and \(p_S\).
-        For the buyer, for all \(v_1,v_2\in[\underline{v},\overline{v}]\) with \(v_1\lt v_2\), IC gives
+        These interim payments set truthful interim expected utilities for all \(v\in[\underline{v},\overline{v}]\) and \(c\in[\underline{c},\overline{c}]\) as
       </p>
-
-      <div id="buyer-monotonicity-proof" class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Buyer incentive compatibility inequalities for truthful reports at both values">
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle U_B(v_1)\geq U_B(v_1,v_2)\)</span>
-        <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
-        <span class="equation-step-rhs">\(\displaystyle U_B(v_2)\geq U_B(v_2,v_1)\)</span>
-
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle \iff v_1Q_B(v_1)-P_B(v_1)\geq v_1Q_B(v_2)-P_B(v_2)\)</span>
-        <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
-        <span class="equation-step-rhs">\(\displaystyle v_2Q_B(v_2)-P_B(v_2)\geq v_2Q_B(v_1)-P_B(v_1)\)</span>
-
-        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false"
-          aria-label="Show or hide intermediate monotonicity steps" hidden><span
-            class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
-        <span class="equation-step-connector equation-step-extra" hidden></span>
-        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle \iff v_1Q_B(v_1)-v_1Q_B(v_2)\geq P_B(v_1)-P_B(v_2)\)</span>
-        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \text{and}\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_2Q_B(v_2)-v_2Q_B(v_1)\geq P_B(v_2)-P_B(v_1)\)</span>
-
-        <span class="equation-step-connector equation-step-extra" hidden></span>
-        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle \iff v_1(Q_B(v_1)-Q_B(v_2))\geq P_B(v_1)-P_B(v_2)\)</span>
-        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \text{and}\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_2(Q_B(v_2)-Q_B(v_1))\geq P_B(v_2)-P_B(v_1).\)</span>
-
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle \iff -v_1(Q_B(v_2)-Q_B(v_1))\geq P_B(v_1)-P_B(v_2)\)</span>
-        <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
-        <span class="equation-step-rhs">\(\displaystyle v_2(Q_B(v_2)-Q_B(v_1))\geq P_B(v_2)-P_B(v_1)\)</span>
-
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle \implies (v_2-v_1)(Q_B(v_2)-Q_B(v_1))\)</span>
-        <span class="equation-step-relation">\(\displaystyle \geq\)</span>
-        <span class="equation-step-rhs">\(\displaystyle 0.\)</span>
-      </div>
-
-      <p>
-        Then, since \(v_2>v_1\), we have \(Q_B(v_2)-Q_B(v_1)\geq 0\), so \(Q_B\) is weakly
-        increasing. For the seller, a similar reasoning shows for all \(c_1,c_2\in[\underline{c},\overline{c}]\) with \(c_1\lt c_2\), IC gives
-        \(-(Q_S(c_2)-Q_S(c_1))\geq 0\), so \(Q_S\) is weakly decreasing.
-      </p>
-    <p>
-      Additionally, for all \(v\in[\underline{v},\overline{v}]\) and \(c\in[\underline{c},\overline{c}]\), IC gives
-    </p>
-      <div id="buyer-ic-integral" class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Buyer incentive compatibility inequalities for truthful reports at both values">
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle U_B(v)=\sup\{vQ_B(v')-P_B(v')|v'\in[\underline{v},\overline{v}]\}\)</span>
-        <span class="equation-step-relation">\(\displaystyle \text{and} \)</span>
-        <span class="equation-step-rhs">\(\displaystyle U_S(c)=\sup\{P_S(c')-cQ_S(c')|c'\in[\underline{c},\overline{c}]\}.\)</span>
-
-      </div>
-    <p>
-    Then, interim truthful utilities are the upper envelopes of a family of affine functions in \(v\) and in \(c\), respectively.
-    <a href="../../general-topics/envelope-theorem/index.html">The Envelope Theorem</a> gives the integral conditions:
-    </p>
-
-      <div id="IC integral conditions" class="equation-chain-steps">
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle U_B(v) = U_B(\underline{v}) + \int_{\underline{v}}^v Q_B(t) \, dt\)</span>
-        <span class="equation-step-relation">\(\displaystyle \text{and} \)</span>
-        <span class="equation-step-rhs">\(\displaystyle U_S(c) = U_S(\overline{c}) + \int_c^{\overline{c}} Q_S(t) \, dt. \)</span>
-
-      </div>
-      
-    <p>
-      Then solving for the interim expected payments,
-    </p>
-      <div id="payment-rule-construction" class="equation-chain-steps">
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle U_B(\underline{v}) + \int_{\underline{v}}^v Q_B(t)\, dt = v\,Q_B(v)-P_B(v)\)</span>
-        <span class="equation-step-relation">\(\displaystyle \text{and} \)</span>
-        <span class="equation-step-rhs">\(\displaystyle U_S(\overline{c}) + \int_c^{\overline{c}} Q_S(t)\, dt = P_S(c)-c\,Q_S(c) \)</span>
-        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
-
-        <span class="equation-step-connector" >\(\displaystyle \iff \)</span>
-        <span class="equation-step-lhs" >\(\displaystyle  P_B(v)= v\,Q_B(v)-U_B(\underline{v})-\int_{\underline{v}}^v Q_B(t)\, dt \) </span>
-        <span class="equation-step-relation" >\(\displaystyle \text{and} \)</span>
-        <span class="equation-step-rhs" >\(\displaystyle P_S(c) = U_S(\overline{c}) + \int_c^{\overline{c}} Q_S(t)\, dt+c\,Q_S(c). \)</span>
+      <div id="interim-utility-rules" class="equation-display" aria-label="IC implementable interim expected utility rules for the buyer and seller">
+        \[
+          U_B(v)=U_B(\underline{v})+\int_{\underline{v}}^v Q_B(t)\,dt,\text{ and }
+          U_S(c)=U_S(\overline{c})+\int_c^{\overline{c}} Q_S(t)\,dt.
+        \]
       </div>
       <p>
-      For the reverse direction, suppose \(q\) is such that \(Q_B\) is weakly increasing and \(Q_S\) is weakly decreasing.
-      Define \(P_B\) and \(P_S\) as above, and set ex-post payments as \(p_B(v,c)=P_B(v)\) and \(p_S(v,c)=P_S(c)\).
-      Let's verify that this mechanism is IC. For a buyer with value \(v\), for all \(v'\in[\underline{v},\overline{v}]\),
-      the difference between the expected payoff from truthfully reporting \(v\) and misreporting \(v'\) is
-      </p>
-
-      <div id="buyer-ic-verification" class="equation-chain-steps equation-chain-wide-rhs">
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle U_B(v) - U_B(v,v') \)</span>
-        <span class="equation-step-relation">\(\displaystyle =  \)</span>
-        <span class="equation-step-rhs">\(\displaystyle \left[vQ_B(v)-P_B(v)\right] - \left[vQ_B(v')-P_B(v')\right] \)</span>
-        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
-
-        <span class="equation-step-connector">\(\displaystyle  \)</span>
-        <span class="equation-step-lhs">\(\displaystyle  \) </span>
-        <span class="equation-step-relation">\(\displaystyle = \)</span>
-        <span class="equation-step-rhs">\(\displaystyle \left[vQ_B(v)-\left(vQ_B(v)-U_B(\underline{v})-\int_{\underline{v}}^v Q_B(t)\, dt\right)\right] - \left[vQ_B(v')-\left(v'Q_B(v')-U_B(\underline{v})-\int_{\underline{v}}^{v'} Q_B(t)\, dt\right)\right] \)</span>
-
-        <span class="equation-step-connector">\(\displaystyle  \)</span>
-        <span class="equation-step-lhs">\(\displaystyle  \) </span>
-        <span class="equation-step-relation">\(\displaystyle = \)</span>
-        <span class="equation-step-rhs">\(\displaystyle U_B(\underline{v}) - U_B(\underline{v}) + \int_{\underline{v}}^v Q_B(t)\, dt - vQ_B(v')+v'Q_B(v')-\int_{\underline{v}}^{v'} Q_B(t)\, dt \)</span>
-
-        <span class="equation-step-connector">\(\displaystyle  \)</span>
-        <span class="equation-step-lhs">\(\displaystyle  \) </span>
-        <span class="equation-step-relation">\(\displaystyle = \)</span>
-        <span class="equation-step-rhs">\(\displaystyle Q_B(v')(v'-v) + \int_{v'}^v Q_B(t)\, dt \).</span>
-      </div>
-      <p class="has-qed">
-        Because \(Q_B\) is weakly increasing, this difference is weakly positive for all \(v,v'\in[\underline{v},\overline{v}]\).
-        A similar argument gives IC for the seller. Thus, the mechanism is IC.
-        <span class="qed">\(\blacksquare\)</span>
-      </p>
-      <p>
-        Notice in the above payments we are free to choose \(U_B(\underline{v})\) and \(U_S(\overline{c})\)
+        Notice in the interim payments above we are free to choose \(U_B(\underline{v})\) and \(U_S(\overline{c})\)
         without affecting IC implementability. As long as we choose \(U_B(\underline{v})\geq 0\) and \(U_S(\overline{c})\geq 0\),
         the mechanism will also be IR, since \(Q_B(v)\geq 0\) and \(Q_S(c)\geq 0\).
       </p>
@@ -819,14 +646,7 @@
           <span data-citation="borgers-norman-2009"></span> show that the two problems are equivalent, that is,
           if a mechanism is ex-ante BB, then it can be modified to be ex-post BB while preserving IC and IR.
           <a href="#budget-balance-note-ref" role="doc-backlink"
-            aria-label="Return to Weak, ex-ante">↩</a>
-        </li>
-        <li id="implementability-note" tabindex="-1">
-          By definition, an allocation rule \(q\) is <em>implementable</em> if and
-          only if there exist payment rules \(p_B\) and \(p_S\) such that the
-          mechanism \((q,p_B,p_S)\) is IC.
-          <a href="#implementability-note-ref" role="doc-backlink"
-            aria-label="Return to the word implementability">↩</a>
+            aria-label="Return to ex-ante budget balanced in the theorem statement">↩</a>
         </li>
       </ol>
     </section>
@@ -844,5 +664,10 @@
   <footer class="site-footer">
     <page-footer></page-footer>
   </footer>
+  <learning-sidebar page="myerson-satterthwaite-theorem" environment="bilateral-trade">
+    <template data-insights>
+      <!-- User-authored Insights go here. -->
+    </template>
+  </learning-sidebar>
 </body>
 </html>

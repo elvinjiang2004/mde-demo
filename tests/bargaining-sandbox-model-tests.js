@@ -840,6 +840,26 @@
     "Custom IC should expose exact verdicts and discrete optimized display marks.");
   });
 
+  test("Custom best reports retain unattained payoff limits and point metadata", function () {
+    var q = model.createCustomAllocationGrid(0);
+    var p = model.createCustomPaymentGrid(0);
+    for (var i = model.CUSTOM_RESOLUTION / 2 - 1; i < model.CUSTOM_RESOLUTION / 2; i += 1) {
+      for (var j = 0; j < model.CUSTOM_RESOLUTION; j += 1) { q.lower[i][j] = 1; }
+    }
+    var rule = model.createCustomRule(q, p, p);
+    var response = model.buyerBestReport(rule, 0.8, 0);
+    assert(!response.attained && response.approachSide === "below" &&
+      response.approachFrom < response.report,
+    "The facade must identify a limiting report instead of claiming a maximum.");
+    assertClose(response.maximumUtility, 0.8, "Custom utility supremum");
+    assertClose(model.buyerInterimDeviationUtility(rule, 0.8, response.report),
+      0, "The literal boundary is owned by the other piece");
+    var point = model.buyerIcDiagnostics(rule).bestReportPoints[48];
+    assert(!point.attained && point.approachSide === "below" &&
+      point.approachFrom < point.report,
+    "Chart points must preserve the limit metadata from the exact optimizer.");
+  });
+
   test("Fix IC/IR preserves IR but does not repair nonmonotone allocation", function () {
     var q = model.createCustomAllocationGrid(0);
     var j;

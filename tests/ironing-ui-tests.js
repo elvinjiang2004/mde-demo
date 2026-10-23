@@ -15,7 +15,7 @@
   async function fresh() {
     frame.style.width = "1280px";
     var loaded = new Promise(function (resolve) { frame.onload = resolve; });
-    frame.src = "../auctions/ironing/index.html?test=" + Math.random();
+    frame.src = "../auction-design/ironing/index.html?test=" + Math.random();
     await loaded; doc = frame.contentDocument; win = frame.contentWindow;
     await T.waitFor(function () { return doc.body.dataset.ready === "true" && !!doc.querySelector("#distribution-controls mjx-container"); }, 15000);
   }
@@ -26,10 +26,10 @@
     svg.hasPointerCapture = function (id) { return id === captured; };
     svg.releasePointerCapture = function () { captured = null; };
   }
-  function pointer(target, type, v, q) {
+  function pointer(target, type, v, q, options) {
     var svg = el("allocation-chart"), p = svg.createSVGPoint();
     p.x = 54 + 560 * v; p.y = 316 - 292 * q; p = p.matrixTransform(svg.getScreenCTM());
-    T.dispatch(target, type, win, { pointerId: 17, button: 0, buttons: type === "pointerup" ? 0 : 1, clientX: p.x, clientY: p.y });
+    T.dispatch(target, type, win, Object.assign({ pointerId: 17, isPrimary: true, button: 0, buttons: type === "pointerup" ? 0 : 1, clientX: p.x, clientY: p.y }, options));
   }
   test("Local dependencies and interim editor replace the ex-post lottery grid", function () {
     T.assertScriptOrder(doc, ["../../js/components.js", "../../js/bibliography.js", "../../js/references.js", "../../js/mathjax-config.js",
@@ -37,7 +37,7 @@
     assert(!el("lottery-chart") && doc.querySelectorAll(".control-points [role=slider]").length === 11);
     assert(win.IroningModel && !win.OptimalAuctionsModel, "The two auction models have isolated namespaces");
     assert(doc.getElementById("page-title").textContent === "Ironing" &&
-      doc.querySelector("page-header").getAttribute("category") === "Auctions", "Independent auction title and category");
+      doc.querySelector("page-header").getAttribute("category") === "Auction Design", "Independent auction title and group");
     assert(el("bic-status").dataset.passed === "true" && el("feasibility-status").dataset.passed === "true");
     assert(el("bic-verdict").textContent === "BIC: passes" && el("bic-monotonicity").textContent === "is weakly increasing");
     assert(el("feasibility-status").textContent === "Feasibility: passes (all capacity constraints hold)");
@@ -139,6 +139,26 @@
     pointer(el("allocation-chart"), "pointermove", 2, -1);
     close(Number(el("value-number").value), 0.6, 1e-6); close(Number(el("allocation-number").value), 0, 1e-6);
     pointer(el("allocation-chart"), "pointerup", 2, -1); finiteGeometry();
+  });
+  test("Only one primary pointer can own an allocation drag", function () {
+    var svg = el("allocation-chart"); captureStub();
+    var original = Number(el("allocation-number").value);
+    pointer(handle(6), "pointerdown", 0.6, 0.8, { isPrimary: false, pointerId: 99 });
+    pointer(svg, "pointermove", 0.7, 0.9, { pointerId: 99 });
+    pointer(handle(6), "pointerdown", 0.6, 0.8, { button: 2 });
+    pointer(svg, "pointermove", 0.7, 0.9);
+    close(Number(el("allocation-number").value), original, 1e-9, "Secondary pointers and right clicks cannot edit or select a point");
+    assert(svg.dataset.selectedIndex === "5");
+
+    pointer(handle(5), "pointerdown", 0.5, original);
+    pointer(handle(6), "pointerdown", 0.6, 0.8, { pointerId: 99 });
+    pointer(svg, "pointercancel", 0.6, 0.8, { pointerId: 99 });
+    pointer(svg, "pointermove", 0.52, 0.6);
+    assert(svg.dataset.selectedIndex === "5", "Another pointer cannot replace the dragged point");
+    close(Number(el("allocation-number").value), 0.6, 1e-9, "The original pointer retains control after unrelated cancellation");
+    pointer(svg, "lostpointercapture", 0.52, 0.6);
+    pointer(svg, "pointermove", 0.8, 0.9);
+    close(Number(el("allocation-number").value), 0.6, 1e-9, "Capture loss ends dragging");
   });
   test("Pointer cancellation and Reset stop an active edit", function () {
     captureStub(); pointer(handle(5), "pointerdown", 0.5, 0.5);
@@ -472,7 +492,7 @@
     reference.style.cssText = "position:absolute;left:-10000px;width:1280px;height:1000px;";
     reference.title = "First-price shared-style reference";
     var loaded = new Promise(function (resolve) { reference.onload = resolve; });
-    reference.src = "../auctions/first-price/index.html"; document.body.appendChild(reference);
+    reference.src = "../auction-equilibria/first-price/index.html"; document.body.appendChild(reference);
     await loaded;
     var fpa = reference.contentDocument, fpaWindow = reference.contentWindow;
     await T.waitFor(function () { return fpa.querySelector("#value-pdf-preview .value-pdf-curve"); }, 15000);

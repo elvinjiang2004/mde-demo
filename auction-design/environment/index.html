@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Environment | Auction Design | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
+  <script defer src="../../js/environment.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to the main content</a>
+  <header class="site-header"><page-header category="Auction Design" home="../../index.html"></page-header></header>
+  <main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">Environment</h1>
+      <p>
+        A monopoly seller has an object for which she has no value. There are
+        \(n\geq 1\) risk-neutral potential buyers. The buyers have independent, private values
+        \(V_i\sim F_i\), \(i=1,\ldots,n\). We assume that each \(F_i\) has a
+        continuous, strictly positive density \(f_i\) on its support
+        \([\underline{v}_i,\overline{v}_i]\).
+      </p>
+      <p>
+        By the <a href="../../general-topics/revelation-principle/index.html">Revelation Principle</a>,
+        to implement any desired outcome rule, we can consider only <em>direct selling
+        mechanisms</em> which consist of an allocation rule \(q:T\to[0,1]^n\) and a
+        payment rule \(p:T\to\mathbb{R}^n\), where
+        \(T=\prod_{i=1}^n[\underline{v}_i,\overline{v}_i]\). As functions of the
+        reported values, for each buyer, the allocation rule specifies the
+        probability the object is sold to him, and the payment rule specifies
+        the expected payment from him. Writing \(q=(q_1,\ldots,q_n)\),
+        since there is only one object to be sold, we require that for all \(v\in T\),
+        \(\sum_{i=1}^n q_i(v)\leq 1.\)
+      </p>
+      <p>
+        Define the following properties of a mechanism:</p>
+      <ol>
+        <li>
+          <strong>(Bayesian, respectively, Dominant Strategy) Incentive Compatibility (IC):</strong>
+          Truthful reporting by all buyers is a Bayesian Nash (respectively, Dominant Strategy) equilibrium.
+        </li>
+        <li>
+          <strong>(Interim) Individual Rationality (IR):</strong>
+          In truthful equilibrium, after observing their values, all buyers have a weakly positive
+          expected payoff.
+        </li>
+      </ol>
+      <div class="mechanism-notation">
+      <p>
+        Write \(v_{-i}=(v_1,\ldots,v_{i-1},v_{i+1},\ldots,v_n)\),
+        \(T_{-i}=\prod_{j\ne i}[\underline{v}_j,\overline{v}_j]\),
+        and \(f_{-i}(v_{-i})=\prod_{j\ne i}f_j(v_j)\).
+      </p>
+      <p>
+        Denote for buyer \(i\), \(i=1,\ldots,n\), with value \(v_i\)
+        who reports \(v_i'\), given the other buyers report truthfully:
+      </p>
+      <ul>
+        <li>\(\displaystyle Q_i(v_i')=\int_{T_{-i}} q_i(v_i',v_{-i})\,f_{-i}(v_{-i})\,dv_{-i}\), his interim probability of receiving the object;</li>
+        <li>\(\displaystyle P_i(v_i')=\int_{T_{-i}} p_i(v_i',v_{-i})\,f_{-i}(v_{-i})\,dv_{-i}\), his interim expected payment to the mechanism;</li>
+        <li>\(\displaystyle U_i(v_i,v_i')=v_i\,Q_i(v_i')-P_i(v_i')\), his interim expected payoff;</li>
+        <li>\(\displaystyle \phi_i(v_i)=v_i-\frac{1-F_i(v_i)}{f_i(v_i)}\), his virtual value.</li>
+      </ul>
+      <p>
+        For compactness, we'll write \(U_i(v_i,v_i)\) as \(U_i(v_i)\).
+      </p>
+      <p>
+        We call an allocation rule \(q\) <em>BIC (respectively, DSIC) implementable</em> if and only if there exists a payment rule
+        \(p\) such that the mechanism \((q,p)\) is BIC (respectively, DSIC).
+      </p>
+      <p>
+        We call this environment
+        <em>regular</em> if and only if \(\phi_i\) is weakly increasing, \(i=1,\ldots,n\).
+      </p>
+
+      </div>
+      <p class="environment-modules"><a href="../../auction-design/optimal-auctions/index.html">Optimal Auctions</a> &middot; <a href="../../auction-design/ironing/index.html">Ironing</a></p>
+    </section>
+  </main>
+  <footer class="site-footer"><page-footer></page-footer></footer>
+  <learning-sidebar environment="auction-design">
+    <template data-insights>
+      <!-- User-authored Insights go here. -->
+    </template>
+  </learning-sidebar>
+</body>
+</html>

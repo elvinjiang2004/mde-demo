@@ -160,7 +160,7 @@
   });
   svg.addEventListener("pointerdown", function (event) {
     var handle = event.target.closest("[data-index]");
-    if (!handle || event.button !== 0) { return; }
+    if (!handle || !event.isPrimary || event.button !== 0 || state.drag !== null) { return; }
     event.preventDefault(); state.selected = Number(handle.dataset.index); handle.focus();
     state.drag = event.pointerId; svg.setPointerCapture(event.pointerId); render();
   });

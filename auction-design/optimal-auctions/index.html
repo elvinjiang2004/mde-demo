@@ -13,6 +13,8 @@
   <script defer src="../../js/mathjax-config.js"></script>
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
@@ -23,52 +25,32 @@
 </head>
 <body class="optimal-auctions-page">
   <a class="skip-link" href="#main-content">Skip to the main content</a>
-  <header class="site-header"><page-header category="Auctions" home="../../index.html"></page-header></header>
+  <header class="site-header"><page-header category="Auction Design" home="../../index.html"></page-header></header>
   <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">Optimal Auctions</h1>
-      <p>
-        A seller intends to sell an object for which she has no value. There are
-        \(n\geq 2\) risk-neutral bidders. Bidders have independent private values
-        \(V_i\sim F_i\), \(i=1,\ldots,n\). We assume that each \(F_i\) has a
-        continuous, strictly positive density \(f_i\) on its support
-        \([\underline{v}_i,\overline{v}_i]\). These distributions are common knowledge.
-      </p>
-      <p>
-        The seller wishes to maximize expected revenue with a <em>direct selling
-        mechanism</em> consisting of an allocation rule \(q:T\to[0,1]^n\) and a
-        payment rule \(p:T\to\mathbb{R}^n\), where
-        \(T=\prod_{i=1}^n[\underline{v}_i,\overline{v}_i]\). As functions of the
-        reported values, for each bidder, the allocation rule specifies the
-        probability the object is sold to him, and the payment rule specifies
-        the expected payment from him. Writing \(q=(q_1,\ldots,q_n)\),
-        since there is only one object to be sold, we require that for all \(v\in T\),
-        \(\sum_{i=1}^n q_i(v)\leq 1.\)
-      </p>
-      <p>We additionally require that the mechanism satisfies the following properties:</p>
-      <ol>
-        <li>
-          <strong>(Bayesian) Incentive Compatibility (IC):</strong>
-          All bidders truthfully reporting is a Bayesian Nash equilibrium.
-        </li>
-        <li>
-          <strong>(Interim) Individual Rationality (IR):</strong>
-          In truthful equilibrium, after observing their values, all bidders have a weakly positive
-          expected payoff.
-        </li>
-      </ol>
+      <p>In the <a class="environment-link" href="../../auction-design/environment/index.html">single-item auction environment</a>,
+      Myerson (1981) gives the following result:</p>
+
       <p>
         <strong>Theorem (<span data-citation="myerson-1981" data-citation-style="parenthetical"></span>):</strong>
-        When the design problem is <em>regular</em>,
-        meaning that each bidder's <em>virtual value</em>
-        \(\phi_i(v_i)=v_i-\frac{1-F_i(v_i)}{f_i(v_i)}\) is weakly increasing,
-        there is a revenue-maximizing auction that allocates the object to a
-        bidder with the highest positive virtual value. Otherwise, if no bidder has a
-        positive virtual value, the object is not sold.
+        When the environment is <em>regular</em>, an IC, IR, revenue-maximizing mechanism is
+        a second-price auction in <em>virtual values</em> with reserve prices \(r_i\) satisfying \(\phi_i(r_i)=0, i=1,\ldots,n\).
+        That is, \((q^*,p^*)\) is an optimal mechanism where for \(i=1,\ldots,n\),
       </p>
+      <div class="equation-display" role="region" tabindex="0" aria-label="Optimal allocation and payment rules">
+        \[
+          q_i^*(v)=\begin{cases}
+            1 & \text{if } \phi_i(v_i)\geq \max\{0,\phi_j(v_j)\mid j\ne i\}\\
+            0 & \text{otherwise}
+          \end{cases},
+          \qquad
+          p_i^*(v)= \inf\{v_i\mid \phi_i(v_i)\geq \max\{0,\phi_j(v_j)\mid j\ne i\}\} q_i^*(v).
+        \]
+      </div>
       <p>
         In the interactive demo, design a direct selling mechanism for two
-        bidders. Here, \(V_1,V_2\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Uniform}[0,1]\).
+        buyers. Notice when reducing allocation probability increases expected revenue. Here, \(V_1,V_2\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Uniform}[0,1]\).
       </p>
     </section>
     <section id="model-specifications" class="model-specifications" hidden></section>
@@ -91,7 +73,7 @@
               </div>
             </figure>
           </div>
-          <p id="paint-help" class="sr-only">Hover to inspect; click or drag to paint. Arrow keys visit both triangle halves. L and R select the left and right halves. Enter or Space paints; hold either key while navigating to paint continuously. Escape hides the probe and ends a stroke.</p>
+          <p id="paint-help" class="sr-only">Hover to inspect; click or drag to paint. Arrow keys visit both triangle halves. L selects the top-left (T-L) triangle and R selects the bottom-right (B-R) triangle. Enter or Space paints; hold either key while navigating to paint continuously. Escape hides the probe and ends a stroke.</p>
           <output id="selected-cell" class="sr-only"></output>
           <aside id="lottery-controls" class="choice-controls" aria-label="Allocation brush controls">
             <div class="range-group">
@@ -184,5 +166,10 @@
     </section>
   </main>
   <footer class="site-footer"><page-footer></page-footer></footer>
+  <learning-sidebar page="optimal-auctions" environment="auction-design">
+    <template data-insights>
+      <!-- User-authored Insights go here. -->
+    </template>
+  </learning-sidebar>
 </body>
 </html>

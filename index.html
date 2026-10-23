@@ -6,6 +6,7 @@
   <meta name="description" content="Mechanism Design Explorer module menu.">
   <title>Modules | Mechanism Design Explorer</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/catalog.css">
 </head>
 <body class="catalog-page">
   <a class="skip-link" href="#module-catalog">Skip to modules</a>
@@ -29,6 +30,11 @@
       <h2 id="general-topics-title">General Topics</h2>
       <ul class="module-row">
         <li>
+          <a class="module-tile module-link" href="general-topics/what-is-mechanism-design/index.html">
+            <span class="module-title">What is Mechanism Design?</span>
+          </a>
+        </li>
+        <li>
           <a class="module-tile module-link" href="general-topics/envelope-theorem/index.html">
             <span class="module-title">The Envelope Theorem</span>
           </a>
@@ -41,26 +47,38 @@
       </ul>
     </section>
 
-    <section id="auctions" class="module-category" aria-labelledby="auctions-title">
-      <h2 id="auctions-title">Auctions</h2>
+    <section id="auction-equilibria" class="module-category" aria-labelledby="auction-equilibria-title">
+      <div class="module-category-heading">
+        <h2 id="auction-equilibria-title">Auction Equilibria</h2>
+        <a class="environment-link" href="auction-equilibria/environment/index.html">Environment</a>
+      </div>
       <ul class="module-row">
         <li>
-          <a class="module-tile module-link" href="auctions/first-price/index.html">
+          <a class="module-tile module-link" href="auction-equilibria/first-price/index.html">
             <span class="module-title">First-Price Auction Equilibrium</span>
           </a>
         </li>
         <li>
-          <a class="module-tile module-link" href="auctions/second-price/index.html">
+          <a class="module-tile module-link" href="auction-equilibria/second-price/index.html">
             <span class="module-title">Second-Price Auction Equilibrium</span>
           </a>
         </li>
+      </ul>
+    </section>
+
+    <section id="auction-design" class="module-category" aria-labelledby="auction-design-title">
+      <div class="module-category-heading">
+        <h2 id="auction-design-title">Auction Design</h2>
+        <a class="environment-link" href="auction-design/environment/index.html">Environment</a>
+      </div>
+      <ul class="module-row">
         <li>
-          <a class="module-tile module-link" href="auctions/optimal-auctions/index.html">
+          <a class="module-tile module-link" href="auction-design/optimal-auctions/index.html">
             <span class="module-title">Optimal Auctions</span>
           </a>
         </li>
         <li>
-          <a class="module-tile module-link" href="auctions/ironing/index.html">
+          <a class="module-tile module-link" href="auction-design/ironing/index.html">
             <span class="module-title">Ironing</span>
           </a>
         </li>
@@ -68,7 +86,10 @@
     </section>
 
     <section id="bilateral-trade" class="module-category" aria-labelledby="bilateral-trade-title">
-      <h2 id="bilateral-trade-title">Bilateral Trade</h2>
+      <div class="module-category-heading">
+        <h2 id="bilateral-trade-title">Bilateral Trade</h2>
+        <a class="environment-link" href="bilateral-trade/environment/index.html">Environment</a>
+      </div>
       <ul class="module-row">
         <li>
           <a class="module-tile module-link" href="bilateral-trade/bargaining-mechanism-sandbox/index.html">
@@ -82,6 +103,7 @@
         </li>
       </ul>
     </section>
+
   </main>
 
   <footer class="site-footer">

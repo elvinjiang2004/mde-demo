@@ -390,12 +390,14 @@
             assert(derivation && !derivation.hidden &&
               !derivation.hasAttribute("data-distribution-specific") &&
               /optimal bid for bidder 1/i.test(derivation.querySelector("h2").textContent) &&
-              derivation.querySelectorAll(
-                "#expected-payoff-proof .equation-step-rhs:not(.equation-step-extra)"
-              ).length === 6 &&
-              derivation.querySelectorAll(
-                "#optimality-gap-proof .equation-step-rhs:not(.equation-step-extra)"
-              ).length === 2,
+              ["expected-payoff-proof", "optimality-gap-proof"].every(function (id) {
+                var steps = Array.from(derivation.querySelectorAll(
+                  "#" + id + " .equation-step-rhs:not(.equation-step-extra)"
+                ));
+                return steps.length > 0 && steps.every(function (step) {
+                  return !step.hidden && step.querySelector('mjx-container[jax="SVG"]');
+                });
+              }),
             "The general optimal-bid proof should be visible for Beta(1,1).");
             var expectedUtilitySource = Array.from(derivation.querySelectorAll(
               '#expected-payoff-proof [data-mml-node="math"]'
@@ -1371,6 +1373,7 @@
                 clientX: x,
                 clientY: chartRect.top + 50,
                 pointerId: 41,
+                isPrimary: true,
                 pointerType: "mouse",
                 buttons: buttons
               });
@@ -1412,6 +1415,70 @@
               chart.setPointerCapture = originalCapture;
             }
           } finally {
+            reset();
+          }
+        }
+      },
+      {
+        name: "Graph drags retain pointer ownership and end after cancellation, capture loss, or reset",
+        run: async function () {
+          reset();
+          var chart = appDocument.getElementById("tradeoff-chart");
+          var bid = appDocument.getElementById("bid-number");
+          var originalCapture = chart.setPointerCapture;
+          chart.setPointerCapture = function () {};
+          function fire(type, id, fraction, options) {
+            var panel = appDocument.querySelector(".panel-background");
+            var point = chart.createSVGPoint();
+            point.x = Number(panel.getAttribute("x")) + fraction * Number(panel.getAttribute("width"));
+            point.y = Number(panel.getAttribute("y")) + 30;
+            point = point.matrixTransform(chart.getScreenCTM());
+            chart.dispatchEvent(new appWindow.PointerEvent(type, Object.assign({
+              bubbles: true, clientX: point.x, clientY: point.y,
+              pointerId: id, pointerType: "touch", isPrimary: true, button: 0
+            }, options)));
+          }
+          async function settled(expected, message) {
+            await window.MechanismTest.nextAnimationFrames(appWindow, 1);
+            assert(Math.abs(Number(bid.value) - expected) < 1e-9, message);
+          }
+          try {
+            fire("pointerdown", 60, 0.8, { button: 2 });
+            fire("pointermove", 60, 0.9);
+            fire("pointerdown", 60, 0.8, { isPrimary: false });
+            fire("pointermove", 60, 0.9);
+            await settled(30, "Secondary pointers and right clicks must not begin a drag.");
+
+            fire("pointerdown", 61, 0.4);
+            await settled(40, "The primary pointer should begin a drag.");
+            fire("pointerdown", 62, 0.9);
+            fire("pointermove", 62, 0.9);
+            fire("pointerup", 62, 0.9);
+            fire("pointercancel", 62, 0.9);
+            fire("lostpointercapture", 62, 0.9);
+            await settled(40, "Unrelated pointer events must not change the selected bid.");
+            fire("pointermove", 61, 0.6);
+            await settled(60, "An unrelated release must not end the owning pointer's drag.");
+            fire("lostpointercapture", 61, 0.6);
+            fire("pointermove", 61, 0.9);
+            fire("pointerup", 61, 0.9);
+            await settled(60, "Capture loss must end dragging before later movement or release.");
+
+            fire("pointerdown", 63, 0.25);
+            fire("pointerup", 63, 0.75);
+            await settled(75, "The owning pointer's release should commit its final position.");
+            fire("pointerdown", 64, 0.2);
+            await settled(20, "A subsequent gesture should start normally.");
+            appDocument.getElementById("reset-button").click();
+            fire("pointermove", 64, 0.9);
+            await settled(20, "Reset must cancel the active drag while preserving the accepted bid.");
+            fire("pointerdown", 65, 0.45);
+            fire("pointercancel", 65, 0.45);
+            fire("pointermove", 65, 0.9);
+            await settled(45, "Cancellation must finish pending edits and ignore later movement.");
+          } finally {
+            chart.dispatchEvent(new appWindow.PointerEvent("pointercancel", { pointerId: 65 }));
+            chart.setPointerCapture = originalCapture;
             reset();
           }
         }

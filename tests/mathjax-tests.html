@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local MathJax rendering tests</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script defer src="../js/mathjax-config.js"></script>
+  <script defer src="../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../js/mathjax-runtime.js"></script>
+  <script defer src="../js/notation-catalog.js"></script>
+  <script defer src="../js/learning-sidebar.js"></script>
+  <script defer src="test-harness.js"></script>
+  <script defer src="mathjax-tests.js"></script>
+</head>
+<body data-status="running">
+  <main class="page-width">
+    <h1>Local MathJax rendering tests</h1>
+    <p id="summary">Running…</p>
+    <ol id="results"></ol>
+    <p id="static-math">\(\phi_B(v)=v-\frac{1-F_B(v)}{f_B(v)}\)</p>
+    <p><span id="dynamic-math"></span></p>
+  </main>
+  <learning-sidebar page="bargaining-mechanism-sandbox" environment="bilateral-trade">
+    <template data-insights></template>
+  </learning-sidebar>
+</body>
+</html>

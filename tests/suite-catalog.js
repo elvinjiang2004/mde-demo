@@ -155,5 +155,25 @@ window.MechanismTestCatalog = [
     "file": "numeric-controls-tests.html",
     "name": "Shared numeric controls",
     "kind": "interface"
+  },
+  {
+    "file": "environment-tests.html",
+    "name": "Group environments",
+    "kind": "interface"
+  },
+  {
+    "file": "learning-sidebar-tests.html",
+    "name": "Page Appendix sidebar",
+    "kind": "interface"
+  },
+  {
+    "file": "mathjax-tests.html",
+    "name": "MathJax initialization and local-file rendering",
+    "kind": "interface"
+  },
+  {
+    "file": "aggregate-tests.html",
+    "name": "Test aggregate verdicts",
+    "kind": "interface"
   }
 ];
