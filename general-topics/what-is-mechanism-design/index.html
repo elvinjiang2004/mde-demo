@@ -16,14 +16,44 @@
   <main id="main-content" class="page-width">
     <section id="body-text" class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">What is Mechanism Design?</h1>
-      <!-- User-authored introductory body text goes here. -->
-       
+      <p>
+        If we want people to behave in a certain way, we must construct rules that encourage them to do so.
+        Then, what is the best way to accomplish this? This is broadly what the study of mechanism design aims to answer.
+      </p>
+      <p>
+        Suppose a king needs to provision food for a famished population. He prefers to give more food to those who
+        are hungrier, and decides that the time since someone has last ate is a good enough proxy for their hunger.
+        Should he just ask people when they last ate, and give more to those who say it has been longer? A person
+        who anticipates this may lie about his time in order to receive more provisions. In this case, without
+        additional structure, the king cannot really achieve his desired outcome.
+      </p>
+      <p>
+        We can see the main obstruction in the previous example: <em>private information</em>. If the king knew
+        exactly when everyone last ate, his problem would be easily solved. Although we could not remedy the king's
+        situation, some scenarios have more structure that can be manipulated to elicit people's private information.
+        For example, imagine having a painting you need to sell, but you have no idea how much your potential buyers
+        may value it. How should you sell it? A popular method is via a first price auction where everyone submits
+        a bid simultaneously, and the highest bidder wins and pays his bid. We can imagine this as us asking each
+        potential buyer "What is your value for this painting?" and choosing the person who claims he has the highest
+        value to win. Notice how people's incentives change in answering the auction's question vs. in answering
+        the king's question. The key difference is that lying too much to the auction is costly while lying any amount to the king is
+        not. Claiming to have a value too low makes you lose too much, despite paying very little. Claiming to have
+        a value too high makes you pay too much, despite winning very often. There is a perfect middle-ground a
+        bidder has to find for his specific value, allowing his claim/bid to serve as a proxy for his value.
+      </p>
+      <p>
+        Private information is the central obstacle in mechanism design. It is safe to say that it is the point of
+        mechanism design, in that without it, all of the problems in mechanism design become trivial. In addition
+        to overcoming this obstacle, much of mechanism design tries to figure out how to do it in a desirable way.
+        For example, conducting an auction that generates as much revenue as possible or getting two people to
+        trade an object that generates as much social welfare as possible.
+      </p>
     </section>
 
     <section class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>
       <ul class="reference-list">
-        <!-- Add selected bibliography entries with data-reference attributes. -->
+        <li data-reference="borgers-2015"></li>
       </ul>
     </section>
   </main>

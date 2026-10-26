@@ -46,7 +46,7 @@
         </li>
         <li>
           <strong>Expected utility:</strong> The expected utility conditional on
-          the outcome and all agents' types, \(U_i(y,\theta)\), where \(y\in Y\).
+          the outcome and all agents' types, \(u_i(y,\theta)\), where \(y\in Y\).
         </li>
       </ul>
 
@@ -58,7 +58,7 @@
         pair \((A,f)\), consisting of an action space \(A=\prod_{i=1}^n A_i\)
         and an outcome function \(f:A\to Y\). It induces a game in which each
         agent \(i\) learns their type \(\theta_i\), chooses an action in \(A_i\),
-        and receives payoffs based on \(U_i\).
+        and receives payoffs based on \(u_i\).
       </p>
       <p>
         We use two solution concepts: <strong>Bayesian Nash Equilibrium (BNE)</strong>
@@ -199,13 +199,13 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">
           \(\displaystyle \mathbb{E}_{\theta_{-i}}\!\left[
-            U_i\!\left(f^I\bigl(s_i^*(\theta_i),s_{-i}^*(\theta_{-i})\bigr),
+            u_i\!\left(f^I\bigl(s_i^*(\theta_i),s_{-i}^*(\theta_{-i})\bigr),
             (\theta_i,\theta_{-i})\right)\mid\theta_i\right]\)
         </span>
         <span class="equation-step-relation">\(\displaystyle \geq\)</span>
         <span class="equation-step-rhs">
           \(\displaystyle \mathbb{E}_{\theta_{-i}}\!\left[
-            U_i\!\left(f^I\bigl(a_i,s_{-i}^*(\theta_{-i})\bigr),
+            u_i\!\left(f^I\bigl(a_i,s_{-i}^*(\theta_{-i})\bigr),
             (\theta_i,\theta_{-i})\right)\mid\theta_i\right].\)
         </span>
       </div>
@@ -217,26 +217,26 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">
           \(\displaystyle \mathbb{E}_{\theta_{-i}}\!\left[
-            U_i\!\left(f^I\bigl(s_i^*(\theta_i),s_{-i}^*(\theta_{-i})\bigr),
+            u_i\!\left(f^I\bigl(s_i^*(\theta_i),s_{-i}^*(\theta_{-i})\bigr),
             (\theta_i,\theta_{-i})\right)\mid\theta_i\right]\)
         </span>
         <span class="equation-step-relation">\(\displaystyle \geq\)</span>
         <span class="equation-step-rhs">
           \(\displaystyle \mathbb{E}_{\theta_{-i}}\!\left[
-            U_i\!\left(f^I\bigl(s_i^*(\hat{\theta}_i),s_{-i}^*(\theta_{-i})\bigr),
+            u_i\!\left(f^I\bigl(s_i^*(\hat{\theta}_i),s_{-i}^*(\theta_{-i})\bigr),
             (\theta_i,\theta_{-i})\right)\mid\theta_i\right]\)
         </span>
 
         <span class="equation-step-connector">\(\displaystyle \iff\)</span>
         <span class="equation-step-lhs">
           \(\displaystyle \mathbb{E}_{\theta_{-i}}\!\left[
-            U_i\!\left(f^D\bigl((\theta_i,\theta_{-i})\bigr),
+            u_i\!\left(f^D\bigl((\theta_i,\theta_{-i})\bigr),
             (\theta_i,\theta_{-i})\right)\mid\theta_i\right]\)
         </span>
         <span class="equation-step-relation">\(\displaystyle \geq\)</span>
         <span class="equation-step-rhs">
           \(\displaystyle \mathbb{E}_{\theta_{-i}}\!\left[
-            U_i\!\left(f^D\bigl((\hat{\theta}_i,\theta_{-i})\bigr),
+            u_i\!\left(f^D\bigl((\hat{\theta}_i,\theta_{-i})\bigr),
             (\theta_i,\theta_{-i})\right)\mid\theta_i\right].\)
         </span>
       </div>
@@ -254,12 +254,12 @@
       <div class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Dominant strategy incentive inequality for every true type profile and opponents' actions">
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">
-          \(\displaystyle U_i\!\left(f^I\bigl(s_i^*(\theta_i),a_{-i}\bigr),
+          \(\displaystyle u_i\!\left(f^I\bigl(s_i^*(\theta_i),a_{-i}\bigr),
             \theta\right)\)
         </span>
         <span class="equation-step-relation">\(\displaystyle \geq\)</span>
         <span class="equation-step-rhs">
-          \(\displaystyle U_i\!\left(f^I(a_i,a_{-i}),
+          \(\displaystyle u_i\!\left(f^I(a_i,a_{-i}),
             \theta\right).\)
         </span>
       </div>
@@ -270,23 +270,23 @@
       <div class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Equivalent indirect and direct dominant strategy inequalities with arbitrary reports and the true type profile fixed">
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">
-          \(\displaystyle U_i\!\left(f^I\bigl(s^*(\theta_i,\hat{\theta}_{-i})\bigr),
+          \(\displaystyle u_i\!\left(f^I\bigl(s^*(\theta_i,\hat{\theta}_{-i})\bigr),
             \theta\right)\)
         </span>
         <span class="equation-step-relation">\(\displaystyle \geq\)</span>
         <span class="equation-step-rhs">
-          \(\displaystyle U_i\!\left(f^I\bigl(s^*(\hat{\theta}_i,\hat{\theta}_{-i})\bigr),
+          \(\displaystyle u_i\!\left(f^I\bigl(s^*(\hat{\theta}_i,\hat{\theta}_{-i})\bigr),
             \theta\right)\)
         </span>
 
         <span class="equation-step-connector">\(\displaystyle \iff\)</span>
         <span class="equation-step-lhs">
-          \(\displaystyle U_i\!\left(f^D(\theta_i,\hat{\theta}_{-i}),
+          \(\displaystyle u_i\!\left(f^D(\theta_i,\hat{\theta}_{-i}),
             \theta\right)\)
         </span>
         <span class="equation-step-relation">\(\displaystyle \geq\)</span>
         <span class="equation-step-rhs">
-          \(\displaystyle U_i\!\left(f^D(\hat{\theta}_i,\hat{\theta}_{-i}),
+          \(\displaystyle u_i\!\left(f^D(\hat{\theta}_i,\hat{\theta}_{-i}),
             \theta\right).\)
         </span>
       </div>

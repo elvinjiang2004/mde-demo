@@ -241,13 +241,13 @@
           ["f_i", "Buyer \\(i\\)'s value PDF."]
         ],
         [
-          ["T_i=[\\underline v_i,\\overline v_i]", "Value space and support of buyer \\(i\\)'s value distribution."],
+          ["T_i=[\\underline v_i,\\overline v_i]\\ni v_i", "Value space and support of buyer \\(i\\)'s value distribution."],
           ["T=\\prod_{i=1}^n T_i", "Joint value space."],
-          ["v=(v_1,\\ldots,v_n)", "A profile of values from the joint value space."]
+          ["v=(v_1,\\ldots,v_n)\\in T", "A profile of values."]
         ],
         [
           ["v_{-i}=(v_1,\\ldots,v_{i-1},v_{i+1},\\ldots,v_n)", "Other buyers' values."],
-          ["T_{-i}=\\prod_{j\\ne i} T_j", "Other buyers' joint value space."],
+          ["T_{-i}=\\prod_{j\\ne i} T_j\\ni v_{-i}", "Other buyers' joint value space."],
           ["f_{-i}(v_{-i})=\\prod_{j\\ne i} f_j(v_j)", "Other buyers' joint density."]
         ],
         [
@@ -286,11 +286,6 @@
       pageNotation: [
         [["\\succ", "Strict preference: the candidate on the left is preferred to the candidate on the right."]],
         [
-          ["a_i", "Agent \\(i\\)'s chosen action."],
-          ["a", "An action profile from the joint action space."],
-          ["a_{-i}", "Other agents' actions."]
-        ],
-        [
           ["s_i^*", "Agent \\(i\\)'s selected equilibrium strategy."],
           ["s^*", "Selected equilibrium strategy profile."],
           ["s_{-i}^*", "Other agents' selected equilibrium strategies."]
@@ -314,17 +309,22 @@
           ["y", "An outcome from the outcome space."]
         ],
         [
-          ["T_i", "Agent \\(i\\)'s type space."],
-          ["\\theta_i", "Agent \\(i\\)'s private type."],
-          ["T=\\prod_i T_i", "Joint type space."],
-          ["\\theta", "A profile of types from the joint type space."],
-          ["\\theta_{-i}", "Other agents' types."]
+          ["\\theta_i", "Agent \\(i\\)'s type."],
+          ["\\theta = (\\theta_1, \\ldots, \\theta_n)", "A profile of types."],
+          ["\\theta_{-i}=(\\theta_1, \\ldots, \\theta_{i-1}, \\theta_{i+1}, \\ldots, \\theta_n)", "Other agents' types."]
+        ],
+        [
+          ["T_i\\ni \\theta_i", "Agent \\(i\\)'s type space."],
+          ["T=\\prod_{i=1}^n T_i\\ni \\theta", "Joint type space."],
         ],
         [["p_i(\\theta_{-i}\\mid\\theta_i)", "Agent \\(i\\)'s conditional belief about the other agents' types; here \\(p\\) is a belief."]],
-        [["U_i(y,\\theta)", "Agent \\(i\\)'s payoff from outcome \\(y\\) at type profile \\(\\theta\\)."]],
+        [["u_i(y,\\theta)", "Agent \\(i\\)'s payoff from outcome \\(y\\) at type profile \\(\\theta\\)."]],
         [
           ["A_i", "Agent \\(i\\)'s action space."],
-          ["A", "Joint action space."]
+          ["A=\\prod_{i=1}^n A_i", "Joint action space."],
+          ["a_i", "Agent \\(i\\)'s chosen action."],
+          ["a=(a_1,\\ldots,a_n)", "An action profile from the joint action space."],
+          ["a_{-i}", "Other agents' actions."]
         ],
         [
           ["f:A\\to Y", "Mechanism's outcome function mapping actions to outcomes."],
