@@ -37,10 +37,12 @@
       [
         ["T_i=[\\underline v_i,\\overline v_i]", "Value space and support of buyer \\(i\\)'s value distribution."],
         ["T=\\prod_{i=1}^n T_i", "Joint value space."],
-        ["v=(v_1,\\ldots,v_n)", "A profile of values from the joint value space."]
+        ["V=(V_1,\\ldots,V_n)", "An unrealized profile of values from the joint value space."],
+        ["v=(v_1,\\ldots,v_n)", "A realized profile of values from the joint value space."]
       ],
       [
         ["v_{-i}=(v_1,\\ldots,v_{i-1},v_{i+1},\\ldots,v_n)", "Other buyers' values."],
+        ["v_{-i}'=(v_1',\\ldots,v_{i-1}',v_{i+1}',\\ldots,v_n')", "Other buyers' reported values."],
         ["T_{-i}=\\prod_{j\\ne i} T_j", "Other buyers' joint value space."],
         ["f_{-i}(v_{-i})=\\prod_{j\\ne i} f_j(v_j)", "Other buyers' joint density."]
       ],
@@ -149,7 +151,17 @@
     },
     "optimal-auctions": {
       pageNotation: [
-        [["r", "A reserve price that the winning bid must exceed."]],
+        [["x_i(v_{-i})=\\inf\\{t\\in T_i\\mid\\phi_i(t)\\geq 0\\}", "Buyer \\(i\\)'s lowest value that makes his virtual value at least as high as every other buyer's and weakly positive."]],
+        [["r_i=\\inf\\{t\\in T_i\\mid\\phi_i(t)\\geq 0\\}", "Buyer \\(i\\)'s reserve price that he must beat to participate."]],
+        [
+          ["(q^*,p^*)", "The optimal mechanism."],
+          ["q^*_i(v)", "The optimal mechanism's allocation rule for buyer \\(i\\)."],
+          ["p^*_i(v)", "The optimal mechanism's payment rule for buyer \\(i\\)."]
+        ],
+        [
+          ["Q^*_i(v_i)", "The optimal mechanism's interim allocation probability for buyer \\(i\\), given the other buyers report truthfully."],
+          ["P^*_i(v_i)", "The optimal mechanism's interim expected payment for buyer \\(i\\), given the other buyers report truthfully."]
+        ]
       ],
       environmentNotation: sharedEnvironmentNotation["auction-design"]
     },
@@ -211,23 +223,6 @@
     "envelope-theorem": {
       pageNotation: [
         [
-          ["v", "Buyer's realized value in the mechanism-design application."],
-          ["v'", "Buyer's reported value in the mechanism-design application."]
-        ],
-        [
-          ["q(v')", "Allocation probability from reporting \\(v'\\) in the mechanism-design application."],
-          ["p(v')", "Expected payment from reporting \\(v'\\) in the mechanism-design application."]
-        ],
-        [
-          ["u(v,v')=v q(v')-p(v')", "Buyer's payoff from reporting \\(v'\\) in the mechanism-design application."],
-          ["U(v)", "Maximum payoff over reports in the application; under IC it equals truthful payoff."]
-        ],
-        [
-          ["V^*(v)", "Set of optimal reports in the mechanism-design application."],
-          ["v^*(v)", "A selected optimal report in the mechanism-design application."]
-        ],
-        [["u_i(v_i,v_{-i})", "Truthful payoff with the other buyers' reports held fixed in the DSIC payment condition."]],
-        [
           ["n", "Number of buyers."],
           ["i", "A buyer's index."]
         ],
@@ -243,7 +238,8 @@
         [
           ["T_i=[\\underline v_i,\\overline v_i]\\ni v_i", "Value space and support of buyer \\(i\\)'s value distribution."],
           ["T=\\prod_{i=1}^n T_i", "Joint value space."],
-          ["v=(v_1,\\ldots,v_n)\\in T", "A profile of values."]
+          ["v=(v_1,\\ldots,v_n)\\in T", "A profile of values from the joint value space."],
+          ["v=(v_1',\\ldots,v_n')\\in T", "A profile of reported values from the joint value space."]
         ],
         [
           ["v_{-i}=(v_1,\\ldots,v_{i-1},v_{i+1},\\ldots,v_n)", "Other buyers' values."],
@@ -254,15 +250,16 @@
           ["q=(q_1,\\ldots,q_n):T\\to[0,1]^n", "Allocation rule specifying the probability of allocation to each buyer at each reported value profile."],
           ["q_i:T\\to[0,1]", "Buyer \\(i\\)'s allocation probability at each reported value profile."],
           ["p=(p_1,\\ldots,p_n):T\\to\\mathbb R^n", "Payment rule specifying the expected payment from each buyer at each reported value profile."],
-          ["p_i:T\\to\\mathbb R", "Buyer \\(i\\)'s expected payment at each reported value profile."]
+          ["p_i:T\\to\\mathbb R", "Buyer \\(i\\)'s expected payment at each reported value profile."],
+          ["u_i(v',v_i)=q_i(v')v_i-p_i(v')", "Buyer \\(i\\)'s ex-post payoff at a reported value profile."],
+          ["u_i(v)=u_i(v,v_i)", "Buyer \\(i\\)'s truthful ex-post payoff at a value profile."]
         ],
         [
           ["Q_i(v_i')=\\int_{T_{-i}} q_i(v_i',v_{-i})\\,f_{-i}(v_{-i})\\,dv_{-i}", "Buyer \\(i\\)'s interim allocation probability from reporting \\(v_i'\\), given the other buyers report truthfully."],
           ["P_i(v_i')=\\int_{T_{-i}} p_i(v_i',v_{-i})\\,f_{-i}(v_{-i})\\,dv_{-i}", "Buyer \\(i\\)'s interim expected payment from reporting \\(v_i'\\), given the other buyers report truthfully."],
           ["U_i(v_i,v_i')=v_i Q_i(v_i')-P_i(v_i')", "Buyer \\(i\\)'s interim expected payoff from reporting \\(v_i'\\), given the other buyers report truthfully."],
           ["U_i(v_i)=U_i(v_i,v_i)", "Buyer \\(i\\)'s truthful interim expected payoff."]
-        ],
-        [["\\phi_i(v_i)=v_i-\\frac{1-F_i(v_i)}{f_i(v_i)}", "Buyer \\(i\\)'s virtual value."]]
+        ]
       ],
       environmentNotation: [
         [

@@ -87,7 +87,7 @@
         between A and B, then the winner competes against C. Your
         preferences are private, while the other two voters' preferences are
         commonly known. Observe what the direct version of this mechanism does
-        based on your report. See <a href="#notes">Notes</a> for more details about the
+        based on your report. See <a id="voting-environment-link" href="#voting-environment-insight">Insights in the Page Appendix</a> for more details about the
         mechanism.
       </p>
     </section>
@@ -296,11 +296,12 @@
     </section>
     <section id="notes" class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
-      <!-- User-authored Notes. -->
-       <li>
-        The direct revelation implementation of a mechanism
-        is not necessarily strategically equivalent to the original mechanism.
-       </li>
+      <ol class="notes-list">
+        <li>
+          The direct revelation implementation of a mechanism
+          is not necessarily strategically equivalent to the original mechanism.
+        </li>
+      </ol>
     </section>
     <section id="references" class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>
@@ -316,7 +317,99 @@
   </footer>
   <learning-sidebar page="revelation-principle">
     <template data-insights>
-      <!-- User-authored Insights go here. -->
+      <section id="voting-environment-insight" tabindex="-1">
+        <p>
+          Although the voting game is meant to be a heuristic, and the details
+          are not super important to the main lesson, let's describe them here
+          anyway for completeness and to connect the voting setting to the
+          abstract terms used in the general environment.
+        </p>
+        <p>
+          The agents are the three voters and the outcomes are the three candidates.
+          Then, \(n=3\) and \(Y=\{A,B,C\}\). For each voter \(i=1,2,3\),
+        </p>
+        <ul>
+          <li>
+            <strong>Type:</strong> \(\theta_i\), her true, strict preference ranking
+            over the candidates. \(T_1\) contains all six possible rankings, while
+            \(T_2\) and \(T_3\) each contain only one. Then, the type space
+            \(T=T_1\times T_2\times T_3\) is the set of possible preference profiles.
+          </li>
+          <li>
+            <strong>Belief:</strong> Voter 1 is certain of the other voters'
+            rankings (each can only have one). Voters 2 and 3 also know each other's rankings and assign
+            uniform probabilities to each of Voter 1's six possible rankings.
+          </li>
+          <li>
+            <strong>Expected utility:</strong> \(u_i(y,\theta)\) equals 2 for
+            the voter's first choice, 1 for her second, and 0 for her last.
+            Expected payoffs under uncertainty use these utilities and the
+            stated beliefs.
+          </li>
+        </ul>
+        <p>
+          Notably, all voters are aware of Voters 2 and 3's preferences, and
+          only Voter 1's preferences are private. This is mainly done for
+          simplicity.
+        </p>
+        <p>
+          The indirect mechanism has voters vote simultaneously between candidates A and B
+          first, moving the candidate with more votes on against C. They vote simultaneously again,
+          and the candidate with more votes in the second round wins, and voters
+          receive payoffs based on their preferences.
+        </p>
+        <p>
+          To connect this game to the abstract mechanism, let \(A_i\) be the
+          set of voting plans describing what voter \(i\) votes for in each
+          round, contingent on the first-round winner. Then, the joint action space
+          is \(A=A_1\times A_2\times A_3\). For example, we can denote
+          \(\mathrm{AAC}\in A_i\) as a plan specifying to vote for A in the
+          first round, A in the second round if A wins the first, and C in the
+          second round if B wins the first. A strategy for voter \(i\) is a function \(s_i:T_i\to A_i\)
+          that assigns one of these actions to each possible type. We exclude mixed
+          strategies from our consideration here for simplicity as well.
+        </p>
+        <p>
+          We make a natural restriction on the set of equilibria we consider by only considering
+          equilibria where voters vote sincerely in the final round
+          after either possible first-round winner. This is a weakly dominant action,
+          but an equilibrium can be maintained while a voter does not perform this action
+          when that voter's vote does not matter anyways (when the other two voters will already vote
+          for that candidate). We also do this for simplicity and because
+          it is especially uninteresting to consider these equilibria anyway.
+        </p>
+        <p>
+          For the direct implementation, we select a BNE from this class by
+          the following procedure:
+        </p>
+        <ol>
+          <li>
+            Prefer the greatest total expected welfare over Voter 1's six equally likely
+            rankings.
+          </li>
+          <li>
+            Among ties, prefer Voter 2 choosing the alphabetically lower
+            candidate in the first round, with A before B.
+          </li>
+          <li>
+            Among remaining ties, prefer Voter 3 choosing the alphabetically
+            lower candidate in the first round.
+          </li>
+          <li>
+            Resolve any remaining ties alphabetically by Voter 1's first-round
+            votes for rankings ABC, ACB, BAC, BCA, CAB, and CBA, in that order.
+          </li>
+        </ol>
+        <p>
+          The selected equilibrium is fixed before observing Voter 1's true
+          ranking or report. Formally, the direct mechanism asks each voter
+          to report her preferences. Since Voters 2 and 3's rankings are
+          public, only Voter 1 has a meaningful reporting choice. The direct
+          mechanism is constructed so that it essentially plays the selected
+          equilibrium strategies for each voter based on her reported preferences
+          in the indirect game to get its rule for selecting a candidate.
+        </p>
+      </section>
     </template>
   </learning-sidebar>
 </body>

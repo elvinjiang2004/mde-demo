@@ -16,9 +16,9 @@
   function snapshot() { return app.snapshot(); }
   function vote(value) { doc.querySelector('[data-first="' + value + '"]').click(); }
   function direct() { el("direct-mode").click(); }
-  async function fresh() {
+  async function fresh(fragment) {
     frame.style.width = "1280px";
-    frame.src = "../general-topics/revelation-principle/index.html?test=" + (++serial);
+    frame.src = "../general-topics/revelation-principle/index.html?test=" + (++serial) + (fragment || "");
     await new Promise(function (resolve) { frame.onload = resolve; });
     win = frame.contentWindow;
     doc = frame.contentDocument;
@@ -50,6 +50,47 @@
       assert(el("vote-c").disabled && el("vote-survivor").disabled, "Final round disabled");
       assert(Array.from(doc.querySelectorAll(".ballot-list dd")).every(function (node) { return node.textContent === "—"; }), "No early ballot reveal");
       T.assertScriptOrder(doc, ["../../js/components.js", "../../js/math-utils.js", "model.js", "ranking-control.js", "app.js"]);
+    }),
+    test("Voting environment links open appendix Insights on click, reopen, and initial fragment arrival", async function () {
+      var before = JSON.stringify(snapshot());
+      var host = doc.querySelector("learning-sidebar");
+      var drawer = host.querySelector(".learning-sidebar-panel");
+      var insights = host.querySelector(".learning-sidebar-insights");
+      assert(!el("notes").querySelector("#voting-environment-insight"), "Description belongs only in Insights");
+      for (var width of [375, 1280]) {
+        frame.style.width = width + "px";
+        for (var opening = 0; opening < 3; opening += 1) {
+          el("voting-environment-link").click();
+          await T.nextAnimationFrames(win, 2);
+          await T.waitFor(function () {
+            return el("voting-environment-insight") && doc.activeElement === el("voting-environment-insight");
+          }, 6000, "Insights description receives focus");
+          assert(!drawer.hidden && !insights.hidden, "Link opens Insights");
+          var description = el("voting-environment-insight");
+          assert(description.querySelector('mjx-container[jax="SVG"]') &&
+            !description.querySelector('mjx-merror, merror, [data-mml-node="merror"]') &&
+            !/\\\(|\\\[/.test(description.textContent), "Insights mathematics renders before navigation finishes");
+          assert(host.querySelector(".learning-sidebar-content").scrollWidth <=
+            host.querySelector(".learning-sidebar-content").clientWidth + 1, "Insights fit the appendix width");
+          assert(win.location.hash === "#voting-environment-insight", "Link records a reusable fragment");
+          assert(doc.querySelectorAll("#voting-environment-insight").length === 1, "Reopening retains a single description");
+          assert(host.querySelector(".learning-sidebar-content").scrollTop === 0, "Link returns to the description's start");
+          if (opening === 0) {
+            host.querySelector(".learning-sidebar-content").scrollTop = 500;
+            host.querySelector('[role="tab"]:not(:disabled)').click();
+          } else {
+            T.dispatch(el("voting-environment-insight"), "keydown", win, { key: "Escape" });
+            assert(drawer.hidden, "Escape closes the linked appendix");
+          }
+        }
+      }
+      assert(JSON.stringify(snapshot()) === before, "Appendix navigation preserves the election");
+      await fresh("#voting-environment-insight");
+      await T.waitFor(function () {
+        return el("voting-environment-insight") && doc.activeElement === el("voting-environment-insight");
+      }, 6000, "An initial fragment opens Insights");
+      assert(!doc.querySelector(".learning-sidebar-panel").hidden && !doc.querySelector(".learning-sidebar-insights").hidden,
+        "Direct fragment arrival opens the correct appendix tab");
     }),
     test("Indirect round choices reveal ballots together, complete a result, and invalidate later history", function () {
       swap("ranking-2", 1, 2);

@@ -19,6 +19,7 @@
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
   <script defer src="../../js/bilateral-trade-visuals.js"></script>
+  <script defer src="../../js/equation-chain.js"></script>
   <script defer src="model.js"></script>
   <script defer src="charts.js"></script>
   <script defer src="app.js"></script>
@@ -34,18 +35,30 @@
 
       <p>
         <strong>Theorem (<span data-citation="myerson-1981" data-citation-style="parenthetical"></span>):</strong>
-        When the environment is <em>regular</em>, an IC, IR, revenue-maximizing mechanism is
-        a second-price auction in <em>virtual values</em> with reserve prices \(r_i\) satisfying \(\phi_i(r_i)=0, i=1,\ldots,n\).
-        That is, \((q^*,p^*)\) is an optimal mechanism where for \(i=1,\ldots,n\),
+        When the environment is <em>regular</em>, a BIC, IR, revenue-maximizing mechanism is
+        a second-price auction in <em>virtual values</em> with reserve values \(r_i=\inf\{t\in T_i\mid\phi_i(t)\geq 0\}\), \(i=1,\ldots,n\).
+      </p>
+      <p>
+        For each buyer \(i\) and fixed reports \(v_{-i}\), denote
+      </p>
+      <div id="optimal-critical-value" class="equation-display" role="region" tabindex="0" aria-label="Buyer i's critical winning value for fixed reports by the other buyers">
+        \[
+          x_i(v_{-i})=\inf\{t\in T_i\mid\phi_i(t)\geq\max\{0,\phi_j(v_j)\mid j\ne i\}\}.
+        \]
+      </div>
+      <p>
+        Then, equivalently, \((q^*,p^*)\)<sup><a id="optimal-mechanism-note-ref"
+          href="#optimal-mechanism-note" role="doc-noteref"
+          aria-label="Note 1 on ties and infinite cutoffs">1</a></sup> is an optimal mechanism where for \(i=1,\ldots,n\),
       </p>
       <div class="equation-display" role="region" tabindex="0" aria-label="Optimal allocation and payment rules">
         \[
           q_i^*(v)=\begin{cases}
-            1 & \text{if } \phi_i(v_i)\geq \max\{0,\phi_j(v_j)\mid j\ne i\}\\
+            1 & \text{if } \phi_i(v_i)\geq 0\\
             0 & \text{otherwise}
           \end{cases},
           \qquad
-          p_i^*(v)= \inf\{v_i\mid \phi_i(v_i)\geq \max\{0,\phi_j(v_j)\mid j\ne i\}\} q_i^*(v).
+          p_i^*(v)=q_i^*(v)x_i(v_{-i}).
         \]
       </div>
       <p>
@@ -156,8 +169,293 @@
       </div>
       <p id="live-summary" class="sr-only" aria-live="polite" aria-atomic="true"></p>
     </section>
-    <section id="derivation" hidden><!-- User-authored derivation. --></section>
-    <section id="notes" hidden><!-- User-authored notes. --></section>
+    <section id="derivation" class="derivation" aria-labelledby="payment-rule-title">
+      <h2 id="payment-rule-title">Incentive compatibility and individual rationality</h2>
+      <p>
+        We can write the BIC and interim IR conditions as the following inequalities
+        for every buyer \(i=1,\ldots,n\) and value \(v_i\in[\underline{v}_i,\overline{v}_i]\):
+      </p>
+      <ul>
+        <li>BIC: \(\displaystyle U_i(v_i)\geq U_i(v_i,v_i')\), for all \(v_i'\in[\underline{v}_i,\overline{v}_i]\);</li>
+        <li>IR: \(\displaystyle U_i(v_i)\geq 0\).</li>
+      </ul>
+      <p>
+        Applying <a href="../../general-topics/envelope-theorem/index.html#myerson-lemma">Myerson's Lemma</a>
+        to this environment gives that \((q,p)\) is BIC if and only if, for every buyer \(i\),
+        \(Q_i\) is weakly increasing and the interim expected payments satisfy
+        for all \(v_i\in[\underline{v}_i,\overline{v}_i]\)
+      </p>
+      <div id="interim-payment-rules" class="equation-display" role="region" tabindex="0" aria-label="BIC interim expected payment rule for buyer i">
+        \[
+          P_i(v_i)=v_iQ_i(v_i)-U_i(\underline{v}_i)-\int_{\underline{v}_i}^{v_i} Q_i(t)\,dt.
+        \]
+      </div>
+      <p>
+        These interim payments set truthful interim expected utilities
+        for all \(v_i\in[\underline{v}_i,\overline{v}_i]\) as
+      </p>
+      <div id="interim-utility-rules" class="equation-display" role="region" tabindex="0" aria-label="BIC truthful interim expected utility for buyer i">
+        \[
+          U_i(v_i)=U_i(\underline{v}_i)+\int_{\underline{v}_i}^{v_i} Q_i(t)\,dt.
+        \]
+      </div>
+      <p>
+        Notice in the interim payments above we are free to choose \(U_i(\underline{v}_i)\)
+        without affecting BIC implementability. As long as we choose \(U_i(\underline{v}_i)\geq 0\)
+        for every buyer \(i\), the mechanism will also be interim IR, since \(Q_i(v_i)\geq 0\).
+      </p>
+    </section>
+
+    <section class="derivation" aria-labelledby="expected-revenue-title">
+      <h2 id="expected-revenue-title">Expected revenue</h2>
+      <p>
+        Now that we have interim expected payments, we can calculate ex-ante
+        expected payments from each buyer directly, the sum of which is expected revenue. Write \(V=(V_1,\ldots,V_n)\)
+        for the vector of buyers' random values. From buyer \(i\), we can expect to receive
+      </p>
+
+      <div id="expected-buyer-payment" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Expected payment from buyer i">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[p_i(V)\right]\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[P_i(V_i)\right], \text{ by the law of iterated expectations}\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} P_i(v_i)\,f_i(v_i)\,dv_i\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} \left(v_iQ_i(v_i)-U_i(\underline{v}_i)-\int_{\underline{v}_i}^{v_i} Q_i(t)\,dt\right) f_i(v_i)\,dv_i\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} \left(v_iQ_i(v_i)-U_i(\underline{v}_i)\right) f_i(v_i)\,dv_i - \int_{\underline{v}_i}^{\overline{v}_i}\int_{\underline{v}_i}^{v_i} Q_i(t)\,dt\,f_i(v_i)\,dv_i.\)</span>
+      </div>
+
+      <p>
+        To compute this, we first simplify the final term.
+      </p>
+
+      <div id="fubini-simplification" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Changing integration order in buyer i's expected payment">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i}\int_{\underline{v}_i}^{v_i} Q_i(t)\,dt\,f_i(v_i)\,dv_i\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i}\int_{\underline{v}_i}^{v_i} Q_i(t)\,f_i(v_i)\,dt\,dv_i\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i}\int_{t}^{\overline{v}_i} Q_i(t)\,f_i(v_i)\,dv_i\,dt \text{, by Fubini's Theorem}\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} Q_i(t)\int_{t}^{\overline{v}_i} f_i(v_i)\,dv_i\,dt\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} Q_i(t)\left(\int_{\underline{v}_i}^{\overline{v}_i} f_i(v_i)\,dv_i-\int_{\underline{v}_i}^{t} f_i(v_i)\,dv_i\right)dt\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} Q_i(t)\left(1-F_i(t)\right)dt\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} Q_i(v_i)\left(1-F_i(v_i)\right)dv_i.\)</span>
+      </div>
+
+      <p>
+        Substituting back into the earlier expected payment calculation,
+      </p>
+
+      <div id="buyer-payment-virtual-value" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Expected payment expressed using buyer i's virtual value">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[p_i(V)\right]\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} v_iQ_i(v_i)\,f_i(v_i)\,dv_i - \int_{\underline{v}_i}^{\overline{v}_i} U_i(\underline{v}_i)\,f_i(v_i)\,dv_i - \int_{\underline{v}_i}^{\overline{v}_i} Q_i(v_i)\left(1-F_i(v_i)\right)dv_i\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} v_iQ_i(v_i)f_i(v_i)\,dv_i -U_i(\underline{v}_i) - \int_{\underline{v}_i}^{\overline{v}_i} Q_i(v_i)\frac{1-F_i(v_i)}{f_i(v_i)}f_i(v_i)\,dv_i\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle -U_i(\underline{v}_i) + \int_{\underline{v}_i}^{\overline{v}_i} Q_i(v_i)\left(v_i-\frac{1-F_i(v_i)}{f_i(v_i)}\right)f_i(v_i)\,dv_i\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle -U_i(\underline{v}_i) + \int_{\underline{v}_i}^{\overline{v}_i} Q_i(v_i)\,\phi_i(v_i)\,f_i(v_i)\,dv_i\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle -U_i(\underline{v}_i) + \mathbb{E}\!\left[Q_i(V_i)\,\phi_i(V_i)\right],\)</span>
+      </div>
+
+      <p>
+        recalling the earlier definition of buyer \(i\)'s virtual value
+        \(\phi_i(v_i)\).
+      </p>
+
+      <p>
+        For the step involving Fubini's Theorem, note that we assume \(f_i\) is
+        continuous on the compact interval \([\underline{v}_i,\overline{v}_i]\), and
+        is therefore bounded. Similarly \(Q_i\) is, by definition, bounded. Thus, the
+        integrand is absolutely integrable, permitting the change in integration
+        order.
+      </p>
+      <p>
+        Let's rewrite the expected value term to be more convenient for later calculations.
+      </p>
+      <div id="buyer-payment-virtual-value-rewrite" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Rewriting interim virtual surplus as ex-post virtual surplus">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[Q_i(V_i)\,\phi_i(V_i)\right]\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} Q_i(v_i)\,\phi_i(v_i)\,f_i(v_i)\,dv_i\)</span>
+
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+        <span class="equation-step-connector equation-step-extra" hidden></span>
+        <span class="equation-step-lhs equation-step-extra" hidden></span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} \int_{T_{-i}} q_i(v_i,v_{-i})\,f_{-i}(v_{-i})\,dv_{-i}\,\phi_i(v_i)\,f_i(v_i)\,dv_i, \text{ by the definition of } Q_i(v_i)\)</span>
+
+        <span class="equation-step-connector equation-step-extra" hidden></span>
+        <span class="equation-step-lhs equation-step-extra" hidden></span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i}\mathbb{E}\!\left[q_i(v_i,V_{-i})\right]\,\phi_i(v_i)\,f_i(v_i)\,dv_i\)</span>
+
+        <span class="equation-step-connector equation-step-extra" hidden></span>
+        <span class="equation-step-lhs equation-step-extra" hidden></span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}\!\left[\mathbb{E}\!\left[q_i(V)\mid V_i\right]\,\phi_i(V_i)\right]\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[q_i(V)\,\phi_i(V_i)\right], \text{ by the law of iterated expectations.}\)</span>
+
+      </div>
+
+      <p>
+        Expected revenue is the sum of the expected payments from the buyers.
+        Then, we can write expected revenue as
+      </p>
+      <div id="rewritten-budget-balance-condition" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Weak ex-ante budget balance expressed using the buyers' virtual values">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \sum_{i=1}^n \mathbb{E}\!\left[p_i(V)\right]\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle -\sum_{i=1}^n U_i(\underline{v}_i)+\mathbb{E}\!\left[\sum_{i=1}^n q_i(V)\,\phi_i(V_i)\right].\)</span>
+      </div>
+    </section>
+    <section id="optimal-mechanism" class="derivation" aria-labelledby="optimal-mechanism-title">
+      <h2 id="optimal-mechanism-title">The Optimal Mechanism</h2>
+      <p>
+        Now, we will verify that our proposed optimal mechanism is indeed BIC, IR, and optimal.
+        Recall that in a <em>regular</em> environment, \(\phi_i(v_i)\) is strictly increasing
+        in \(v_i\) for each buyer \(i\). Then, for buyer \(i\), fix any realization
+        of the other buyers' values \(v_{-i}\), given they report truthfully.
+        For values \(v_{i,1},v_{i,2}\in T_i\) with \(v_{i,1}\lt v_{i,2}\),
+      </p>
+      <div id="optimal-allocation-monotonicity" class="equation-display" role="region" tabindex="0" aria-label="The proposed allocation is weakly increasing in buyer i's report">
+        \[
+          q_i^*(v_{i,1},v_{-i})\leq q_i^*(v_{i,2},v_{-i}).
+        \]
+      </div>
+      <p>
+        Taking expectations gives \(Q_i^*(v_{i,1})\leq Q_i^*(v_{i,2})\).
+        Then, interim allocation probabilities for all buyers are weakly increasing,
+        satisfying one condition of <a href="../../general-topics/envelope-theorem/index.html#myerson-lemma">Myerson's Lemma</a>.
+      </p>
+      <p>
+        To verify that our payment rule satisfies the payment identity in
+        <a href="../../general-topics/envelope-theorem/index.html#myerson-lemma">Myerson's Lemma</a>, fix any
+        realization of the other buyers' values \(v_{-i}\) and suppose they report truthfully.
+        Since \(\phi_i\) is strictly increasing, buyer \(i\) wins above \(x_i(v_{-i})\)
+        and loses below it. Notice that for buyer \(i\),
+      </p>
+      <div id="optimal-allocation-integral" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Integrating buyer i's allocation above the critical winning value">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \int_{\underline{v}_i}^{v_i}q_i^*(t,v_{-i})\,dt\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \begin{cases}\int_{x_i(v_{-i})}^{v_i}1\,dt & \text{if }v_i\geq x_i(v_{-i}),\\0 & \text{otherwise}\end{cases}\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \begin{cases}v_i-x_i(v_{-i}) & \text{if }q_i^*(v)=1,\\0 & \text{otherwise}\end{cases}\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle (v_i-x_i(v_{-i}))q_i^*(v).\)</span>
+      </div>
+      <p>
+        Then, we can rewrite our payment rule for buyer \(i\) as
+      </p>
+      <div id="optimal-payment-identity" class="equation-display" role="region" tabindex="0" aria-label="The proposed ex-post payment satisfies the allocation integral identity">
+        \[
+          p_i^*(v_i,v_{-i})=v_iq_i^*(v_i,v_{-i})-\int_{\underline{v}_i}^{v_i}q_i^*(t,v_{-i})\,dt.
+        \]
+      </div>
+      <p>
+        Taking expectations gives
+      </p>
+      <div id="optimal-interim-payment-identity" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Averaging the proposed payment identity over the other buyers' values">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle P_i^*(v_i)\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}_{V_{-i}}\!\left[p_i^*(v_i,V_{-i})\right]\)</span>
+
+        <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show or hide intermediate expectation steps" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
+        <span class="equation-step-connector equation-step-extra" hidden></span>
+        <span class="equation-step-lhs equation-step-extra" hidden></span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}_{V_{-i}}\!\left[v_iq_i^*(v_i,V_{-i})-\int_{\underline{v}_i}^{v_i}q_i^*(t,V_{-i})\,dt\right]\)</span>
+
+        <span class="equation-step-connector equation-step-extra" hidden></span>
+        <span class="equation-step-lhs equation-step-extra" hidden></span>
+        <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}_{V_{-i}}\!\left[v_iq_i^*(v_i,V_{-i})\right]-\mathbb{E}_{V_{-i}}\!\left[\int_{\underline{v}_i}^{v_i}q_i^*(t,V_{-i})\,dt\right]\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_iQ_i^*(v_i)-\int_{\underline{v}_i}^{v_i}\mathbb{E}_{V_{-i}}\!\left[q_i^*(t,V_{-i})\right]\,dt,\text{ by Fubini's theorem}\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_iQ_i^*(v_i)-\int_{\underline{v}_i}^{v_i}Q_i^*(t)\,dt.\)</span>
+      </div>
+      <p>
+        Then, this mechanism is BIC and IR. Notice that it sets \(U_i(\underline{v}_i)=0\)
+        for each buyer \(i\) in the payment identity.
+      </p>
+    </section>
+    <section id="notes" class="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title">Notes</h2>
+      <ol class="notes-list">
+        <li id="optimal-mechanism-note" tabindex="-1">
+          Virtual-value ties occur with probability zero; any such ties are broken
+          in favor of the buyer with the smallest index.
+          The payment is zero whenever \(q_i^*(v)=0\); this is also the convention
+          for the displayed product when \(x_i(v_{-i})=+\infty\).
+          <a href="#optimal-mechanism-note-ref" role="doc-backlink"
+            aria-label="Return to the proposed optimal mechanism">↩</a>
+        </li>
+      </ol>
+    </section>
     <section id="references" class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>
       <ul class="reference-list">

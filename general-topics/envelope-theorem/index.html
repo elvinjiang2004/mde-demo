@@ -228,46 +228,46 @@
         <em>Proof (BIC version):</em> 
         Start with the forward direction. Fix a buyer \(i\in\{1,\ldots,n\}\).
         Suppose \(q\) is BIC implementable with payment rule \(p\), so \((q,p)\) is BIC.
-        For all \(v_i^1,v_i^2\in[\underline{v}_i,\overline{v}_i]\) with \(v_i^1\lt v_i^2\), BIC gives
+        For all \(v_{i,1},v_{i,2}\in[\underline{v}_i,\overline{v}_i]\) with \(v_{i,1}\lt v_{i,2}\), BIC gives
       </p>
 
       <div id="myerson-bic-monotonicity-proof" class="equation-chain-steps equation-chain-content-widths" tabindex="0" role="region" aria-label="Buyer incentive compatibility inequalities for truthful reports at both values">
         <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle U_i(v_i^1)\geq U_i(v_i^1,v_i^2)\)</span>
+        <span class="equation-step-lhs">\(\displaystyle U_i(v_{i,1})\geq U_i(v_{i,1},v_{i,2})\)</span>
         <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
-        <span class="equation-step-rhs">\(\displaystyle U_i(v_i^2)\geq U_i(v_i^2,v_i^1)\)</span>
+        <span class="equation-step-rhs">\(\displaystyle U_i(v_{i,2})\geq U_i(v_{i,2},v_{i,1})\)</span>
 
         <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle \iff v_i^1Q_i(v_i^1)-P_i(v_i^1)\geq v_i^1Q_i(v_i^2)-P_i(v_i^2)\)</span>
+        <span class="equation-step-lhs">\(\displaystyle \iff v_{i,1}Q_i(v_{i,1})-P_i(v_{i,1})\geq v_{i,1}Q_i(v_{i,2})-P_i(v_{i,2})\)</span>
         <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
-        <span class="equation-step-rhs">\(\displaystyle v_i^2Q_i(v_i^2)-P_i(v_i^2)\geq v_i^2Q_i(v_i^1)-P_i(v_i^1)\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_{i,2}Q_i(v_{i,2})-P_i(v_{i,2})\geq v_{i,2}Q_i(v_{i,1})-P_i(v_{i,1})\)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false"
           aria-label="Show or hide intermediate monotonicity steps" hidden><span
             class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
         <span class="equation-step-connector equation-step-extra" hidden></span>
-        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle \iff v_i^1Q_i(v_i^1)-v_i^1Q_i(v_i^2)\geq P_i(v_i^1)-P_i(v_i^2)\)</span>
+        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle \iff v_{i,1}Q_i(v_{i,1})-v_{i,1}Q_i(v_{i,2})\geq P_i(v_{i,1})-P_i(v_{i,2})\)</span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \text{and}\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_i^2Q_i(v_i^2)-v_i^2Q_i(v_i^1)\geq P_i(v_i^2)-P_i(v_i^1)\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_{i,2}Q_i(v_{i,2})-v_{i,2}Q_i(v_{i,1})\geq P_i(v_{i,2})-P_i(v_{i,1})\)</span>
 
         <span class="equation-step-connector equation-step-extra" hidden></span>
-        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle \iff v_i^1(Q_i(v_i^1)-Q_i(v_i^2))\geq P_i(v_i^1)-P_i(v_i^2)\)</span>
+        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle \iff v_{i,1}(Q_i(v_{i,1})-Q_i(v_{i,2}))\geq P_i(v_{i,1})-P_i(v_{i,2})\)</span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \text{and}\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_i^2(Q_i(v_i^2)-Q_i(v_i^1))\geq P_i(v_i^2)-P_i(v_i^1).\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_{i,2}(Q_i(v_{i,2})-Q_i(v_{i,1}))\geq P_i(v_{i,2})-P_i(v_{i,1}).\)</span>
 
         <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle \iff -v_i^1(Q_i(v_i^2)-Q_i(v_i^1))\geq P_i(v_i^1)-P_i(v_i^2)\)</span>
+        <span class="equation-step-lhs">\(\displaystyle \iff -v_{i,1}(Q_i(v_{i,2})-Q_i(v_{i,1}))\geq P_i(v_{i,1})-P_i(v_{i,2})\)</span>
         <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
-        <span class="equation-step-rhs">\(\displaystyle v_i^2(Q_i(v_i^2)-Q_i(v_i^1))\geq P_i(v_i^2)-P_i(v_i^1)\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_{i,2}(Q_i(v_{i,2})-Q_i(v_{i,1}))\geq P_i(v_{i,2})-P_i(v_{i,1})\)</span>
 
         <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle \implies (v_i^2-v_i^1)(Q_i(v_i^2)-Q_i(v_i^1))\)</span>
+        <span class="equation-step-lhs">\(\displaystyle \implies (v_{i,2}-v_{i,1})(Q_i(v_{i,2})-Q_i(v_{i,1}))\)</span>
         <span class="equation-step-relation">\(\displaystyle \geq\)</span>
         <span class="equation-step-rhs">\(\displaystyle 0.\)</span>
       </div>
 
       <p>
-        Then, since \(v_i^2>v_i^1\), we have \(Q_i(v_i^2)-Q_i(v_i^1)\geq 0\),
+        Then, since \(v_{i,2}>v_{i,1}\), we have \(Q_i(v_{i,2})-Q_i(v_{i,1})\geq 0\),
         so \(Q_i\) is weakly increasing.
         Additionally, for all \(v_i\in[\underline{v}_i,\overline{v}_i]\), BIC gives
       </p>

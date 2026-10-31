@@ -244,6 +244,7 @@
   });
   var theme = window.matchMedia("(prefers-color-scheme: dark)");
   theme.addEventListener("change", function () { view.update(grid); C.lottery(lotterySvg, brush); });
+  EquationChain.initDividers();
   MechanismMath.typesetInitial("main");
   updateBrush();
   render();
