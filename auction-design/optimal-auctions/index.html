@@ -49,16 +49,19 @@
       <p>
         Then, equivalently, \((q^*,p^*)\)<sup><a id="optimal-mechanism-note-ref"
           href="#optimal-mechanism-note" role="doc-noteref"
-          aria-label="Note 1 on ties and infinite cutoffs">1</a></sup> is an optimal mechanism where for \(i=1,\ldots,n\),
+          aria-label="Note 1 with the exact allocation rule">1</a></sup> is an optimal mechanism where for \(i=1,\ldots,n\),
       </p>
       <div class="equation-display" role="region" tabindex="0" aria-label="Optimal allocation and payment rules">
         \[
           q_i^*(v)=\begin{cases}
-            1 & \text{if } \phi_i(v_i)\geq 0\\
+            1 & \text{if } v_i\geq x_i(v_{-i})\\
             0 & \text{otherwise}
           \end{cases},
           \qquad
-          p_i^*(v)=q_i^*(v)x_i(v_{-i}).
+          p_i^*(v)=\begin{cases}
+            x_i(v_{-i}) & \text{if } q_i^*(v)=1\\
+            0 & \text{if } q_i^*(v)=0
+          \end{cases}.
         \]
       </div>
       <p>
@@ -211,7 +214,7 @@
       <p>
         Now that we have interim expected payments, we can calculate ex-ante
         expected payments from each buyer directly, the sum of which is expected revenue. Write \(V=(V_1,\ldots,V_n)\)
-        for the vector of buyers' random values. From buyer \(i\), we can expect to receive
+        for the unrealized profile of buyers' random values. From buyer \(i\), we can expect to receive
       </p>
 
       <div id="expected-buyer-payment" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Expected payment from buyer i">
@@ -348,12 +351,17 @@
       </div>
 
       <p>
-        Expected revenue is the sum of the expected payments from the buyers.
+        Expected revenue is the expected sum of payments from the buyers.
         Then, we can write expected revenue as
       </p>
       <div id="rewritten-budget-balance-condition" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Weak ex-ante budget balance expressed using the buyers' virtual values">
         <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle \sum_{i=1}^n \mathbb{E}\!\left[p_i(V)\right]\)</span>
+        <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[\sum_{i=1}^n p_i(V)\right]\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \sum_{i=1}^n \mathbb{E}\!\left[p_i(V)\right]\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \)</span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
         <span class="equation-step-rhs">\(\displaystyle -\sum_{i=1}^n U_i(\underline{v}_i)+\mathbb{E}\!\left[\sum_{i=1}^n q_i(V)\,\phi_i(V_i)\right].\)</span>
       </div>
@@ -363,9 +371,9 @@
       <p>
         Now, we will verify that our proposed optimal mechanism is indeed BIC, IR, and optimal.
         Recall that in a <em>regular</em> environment, \(\phi_i(v_i)\) is strictly increasing
-        in \(v_i\) for each buyer \(i\). Then, for buyer \(i\), fix any realization
-        of the other buyers' values \(v_{-i}\), given they report truthfully.
-        For values \(v_{i,1},v_{i,2}\in T_i\) with \(v_{i,1}\lt v_{i,2}\),
+        in \(v_i\) for each buyer \(i\). Fix any realization
+        of the other buyers' values \(v_{-i}\) and suppose they report truthfully.
+        Then, for buyer \(i\), for values \(v_{i,1},v_{i,2}\in T_i\) with \(v_{i,1}\lt v_{i,2}\),
       </p>
       <div id="optimal-allocation-monotonicity" class="equation-display" role="region" tabindex="0" aria-label="The proposed allocation is weakly increasing in buyer i's report">
         \[
@@ -393,7 +401,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \begin{cases}v_i-x_i(v_{-i}) & \text{if }q_i^*(v)=1,\\0 & \text{otherwise}\end{cases}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \begin{cases}v_i-x_i(v_{-i}) & \text{if }q_i^*(v)=1,\\0 & \text{if }q_i^*(v)=0\end{cases}\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
@@ -442,15 +450,45 @@
         Then, this mechanism is BIC and IR. Notice that it sets \(U_i(\underline{v}_i)=0\)
         for each buyer \(i\) in the payment identity.
       </p>
+      <p>
+        For optimality, we can look at the expected revenue expression we derived earlier.
+      </p>
+      <div id="expected-revenue" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Expected revenue expression">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \sum_{i=1}^n \mathbb{E}\!\left[p_i(V)\right]\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle -\sum_{i=1}^n U_i(\underline{v}_i)+\mathbb{E}\!\left[\sum_{i=1}^n q_i(V)\,\phi_i(V_i)\right].\)</span>
+      </div>
+      <p>
+        We've maximized the first term under IR by setting it to zero.
+        We've also maximized the second term because we give the maximum allocation possible
+        only to the highest weakly positive virtual value buyer. This also implies that the maximum
+        expected revenue from any BIC, IR mechanism is
+      </p>
+      <div id="maximum-expected-revenue" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Maximum expected revenue">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle \max\{\mathbb{E}\!\left[\sum_{i=1}^n p_i(V)\right] | (q,p)\text{ is BIC and IR}\}\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[\max\{0, \phi_1(V_1), \ldots, \phi_n(V_n)\}\right].\)</span>
+      </div>
     </section>
     <section id="notes" class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
       <ol class="notes-list">
         <li id="optimal-mechanism-note" tabindex="-1">
-          Virtual-value ties occur with probability zero; any such ties are broken
-          in favor of the buyer with the smallest index.
-          The payment is zero whenever \(q_i^*(v)=0\); this is also the convention
-          for the displayed product when \(x_i(v_{-i})=+\infty\).
+          The allocation rule is most accurately given by
+          <div class="equation-display" role="region" tabindex="0" aria-label="Optimal allocation rule including virtual-value ties">
+            \[
+              q_i^*(v)=\begin{cases}
+                1 & \text{if }\phi_i(v_i)\geq 0\text{ and }i=\min\arg\max_{1\leq j\leq n}\phi_j(v_j),\\
+                0 & \text{otherwise},
+              \end{cases}
+              \qquad i=1,\ldots,n.
+            \]
+          </div>
+          This rule resolves ties by allocating the object to the buyer with the lowest index.
+          When \(\{t\in T_i\mid\phi_i(t)\geq 0\}=\varnothing\), we use the convention that
+          \(\inf\{\varnothing\}=+\infty\).
           <a href="#optimal-mechanism-note-ref" role="doc-backlink"
             aria-label="Return to the proposed optimal mechanism">↩</a>
         </li>
@@ -460,6 +498,7 @@
       <h2 id="references-title">References</h2>
       <ul class="reference-list">
         <li data-reference="myerson-1981"></li>
+        <li data-reference="krishna-2009" data-locator="sec. 5.2, pp. 67-74"></li>
       </ul>
     </section>
   </main>

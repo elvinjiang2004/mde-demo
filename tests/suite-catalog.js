@@ -47,14 +47,14 @@ window.MechanismTestCatalog = [
     "name": "Ironing model",
     "kind": "model",
     "module": "ironing",
-    "status": "complete"
+    "status": "in-progress"
   },
   {
     "file": "ironing-ui-tests.html",
     "name": "Ironing interface",
     "kind": "interface",
     "module": "ironing",
-    "status": "complete"
+    "status": "in-progress"
   },
   {
     "file": "bargaining-sandbox-model-tests.html",

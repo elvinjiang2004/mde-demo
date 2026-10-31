@@ -353,6 +353,8 @@
           assert(link.querySelector(".module-title").textContent ===
             "Ironing",
           "The Ironing module title is incorrect.");
+          assert(link.querySelector(".module-status").textContent === "In progress",
+            "Ironing should remain accessible while clearly marked in progress.");
           assert(!menuDocument.querySelector('a[href="general-topics/payments-from-allocation-rule/index.html"]'),
             "The repurposed draft should no longer appear under General Topics.");
         }

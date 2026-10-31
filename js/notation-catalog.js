@@ -152,7 +152,7 @@
     "optimal-auctions": {
       pageNotation: [
         [["x_i(v_{-i})=\\inf\\{t\\in T_i\\mid\\phi_i(t)\\geq 0\\}", "Buyer \\(i\\)'s lowest value that makes his virtual value at least as high as every other buyer's and weakly positive."]],
-        [["r_i=\\inf\\{t\\in T_i\\mid\\phi_i(t)\\geq 0\\}", "Buyer \\(i\\)'s reserve price that he must beat to participate."]],
+        [["r_i=\\inf\\{t\\in T_i\\mid\\phi_i(t)\\geq 0\\}", "Buyer \\(i\\)'s reserve value that he must beat to participate."]],
         [
           ["(q^*,p^*)", "The optimal mechanism."],
           ["q^*_i(v)", "The optimal mechanism's allocation rule for buyer \\(i\\)."],

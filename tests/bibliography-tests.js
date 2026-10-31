@@ -109,7 +109,7 @@
   var lessons = [
     { path: "auction-equilibria/first-price", ids: ["krishna-2009"], locator: "pp. 14–16" },
     { path: "auction-equilibria/second-price", ids: ["krishna-2009"], locator: "p. 13" },
-    { path: "auction-design/optimal-auctions", ids: ["myerson-1981"] },
+    { path: "auction-design/optimal-auctions", ids: ["myerson-1981", "krishna-2009"], locator: "sec. 5.2" },
     { path: "auction-design/ironing", ids: ["myerson-1981", "border-1991"] },
     { path: "bilateral-trade/myerson-satterthwaite-theorem", ids: ["borgers-2015", "borgers-norman-2009", "myerson-satterthwaite-1983"], locator: "pp. 63–71" },
     { path: "bilateral-trade/bargaining-mechanism-sandbox", ids: ["groves-1973", "daspremont-gerard-varet-1979", "chatterjee-samuelson-1983", "myerson-satterthwaite-1983", "leininger-linhart-radner-1989"] },
