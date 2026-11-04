@@ -3,7 +3,7 @@
   var T = MechanismTest, frame = document.getElementById("environment-frame");
   var groups = [
     { id: "auction-equilibria", title: "Auction Equilibria", modules: ["auction-equilibria/first-price", "auction-equilibria/second-price"], conditions: 0 },
-    { id: "auction-design", title: "Auction Design", modules: ["auction-design/optimal-auctions", "auction-design/ironing"], conditions: 2 },
+    { id: "auction-design", title: "Auction Design", modules: ["auction-design/regular-optimal-auctions", "auction-design/general-optimal-auctions"], conditions: 2 },
     { id: "bilateral-trade", title: "Bilateral Trade", modules: ["bilateral-trade/bargaining-mechanism-sandbox", "bilateral-trade/myerson-satterthwaite-theorem"], conditions: 4 }
   ];
   T.run(groups.map(function (group) {
@@ -44,7 +44,7 @@
       if (group.id === "auction-design") {
         T.assert(doc.querySelector(".introduction").textContent.includes("A monopoly seller") &&
           !doc.querySelector(".introduction").textContent.includes("A seller intends to sell"),
-        "Ironing should share the Optimal Auctions environment.");
+        "General Optimal Auctions should share the Regular Optimal Auctions environment.");
       }
       if (group.id === "bilateral-trade") {
         var conditions = doc.querySelector(".introduction > ol").textContent;

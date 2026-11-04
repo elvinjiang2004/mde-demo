@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Paint a bilateral-trade allocation rule q(v,c) and see its Bayesian IC, ex-post IR, budget-balance, and efficiency properties update live.">
+  <meta name="description" content="Paint a bilateral-trade allocation rule q(v,c) and see its BIC, ex-post IR, budget-balance, and efficiency properties update live.">
   <title>The Myerson-Satterthwaite Theorem | Mechanism Design Explorer</title>
   <link rel="stylesheet" href="../../styles.css">
   <link rel="stylesheet" href="../../css/trade-demo.css">
@@ -42,8 +42,8 @@
 
       <p>
         <strong>Theorem (The Myerson-Satterthwaite Theorem):</strong>
-        There is no mechanism that is Bayesian incentive compatible, interim individually rational,
-        ex-ante budget balanced<sup><a id="budget-balance-note-ref"
+        There is no mechanism that is Bayesian incentive compatible (BIC), interim individually rational (IR),
+        ex-ante budget balanced (BB)<sup><a id="budget-balance-note-ref"
           href="#budget-balance-note" role="doc-noteref"
           aria-label="Note 1 on ex-ante budget balance">1</a></sup>, and ex-post efficient.
       </p>
@@ -118,7 +118,7 @@
         <div class="chart-grid diagnostic-panel-grid">
           <div class="diagnostic-panel">
             <figure class="chart-figure diagnostic-figure">
-              <figcaption>Buyer IC</figcaption>
+              <figcaption>Buyer BIC</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
@@ -131,7 +131,7 @@
                   aria-describedby="diagnostic-probe-help"
                   aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
                 >
-                  <title id="buyer-ic-chart-title">Buyer IC</title>
+                  <title id="buyer-ic-chart-title">Buyer BIC</title>
                   <desc id="buyer-ic-chart-description">Exact buyer interim payoff by true value and alternate report. The diagonal is truthful reporting; filled marks select best reports and hollow marks indicate one-sided payoff limits not attained at that report.</desc>
                 </svg>
 
@@ -145,7 +145,7 @@
 
           <div class="diagnostic-panel">
             <figure class="chart-figure diagnostic-figure">
-              <figcaption>Seller IC</figcaption>
+              <figcaption>Seller BIC</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
@@ -158,7 +158,7 @@
                   aria-describedby="diagnostic-probe-help"
                   aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
                 >
-                  <title id="seller-ic-chart-title">Seller IC</title>
+                  <title id="seller-ic-chart-title">Seller BIC</title>
                   <desc id="seller-ic-chart-description">Exact seller interim payoff by true value and alternate report. The diagonal is truthful reporting; filled marks select best reports and hollow marks indicate one-sided payoff limits not attained at that report.</desc>
                 </svg>
 
@@ -289,10 +289,10 @@
     >
       <h2 id="payment-rule-title">Incentive compatibility and individual rationality</h2>
       <p>
-        We can write the IC and IR conditions as the following inequalities:
+        We can write the BIC and IR conditions as the following inequalities:
       </p>
       <ul>
-        <li>IC: \(\displaystyle U_B(v)\geq U_B(v,v')\), for all \(v'\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\geq U_S(c,c')\), for all \(c'\in[\underline{c},\overline{c}]\);</li>
+        <li>BIC: \(\displaystyle U_B(v)\geq U_B(v,v')\), for all \(v'\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\geq U_S(c,c')\), for all \(c'\in[\underline{c},\overline{c}]\);</li>
         <li>IR: \(\displaystyle U_B(v)\geq 0\), for all \(v\in[\underline{v},\overline{v}]\), and \(\displaystyle U_S(c)\geq 0\), for all \(c\in[\underline{c},\overline{c}]\).</li>
       </ul>
       <p>
@@ -300,7 +300,7 @@
         to this environment gives that \(q\) is BIC implementable if and only if \(Q_B\) is weakly increasing, \(Q_S\) is weakly decreasing,
         and the interim expected payments satisfy for all \(v\in[\underline{v},\overline{v}]\) and \(c\in[\underline{c},\overline{c}]\)
       </p>
-      <div id="interim-payment-rules" class="equation-display" aria-label="IC implementable interim expected payment rules for the buyer and seller">
+      <div id="interim-payment-rules" class="equation-display" aria-label="BIC implementable interim expected payment rules for the buyer and seller">
         \[
           P_B(v)=vQ_B(v)-U_B(\underline{v})-\int_{\underline{v}}^v Q_B(t)\,dt,\text{ and }
           P_S(c)=U_S(\overline{c})+\int_c^{\overline{c}} Q_S(t)\,dt+cQ_S(c).
@@ -309,7 +309,7 @@
       <p>
         These interim payments set truthful interim expected utilities for all \(v\in[\underline{v},\overline{v}]\) and \(c\in[\underline{c},\overline{c}]\) as
       </p>
-      <div id="interim-utility-rules" class="equation-display" aria-label="IC implementable interim expected utility rules for the buyer and seller">
+      <div id="interim-utility-rules" class="equation-display" aria-label="BIC implementable interim expected utility rules for the buyer and seller">
         \[
           U_B(v)=U_B(\underline{v})+\int_{\underline{v}}^v Q_B(t)\,dt,\text{ and }
           U_S(c)=U_S(\overline{c})+\int_c^{\overline{c}} Q_S(t)\,dt.
@@ -317,7 +317,7 @@
       </div>
       <p>
         Notice in the interim payments above we are free to choose \(U_B(\underline{v})\) and \(U_S(\overline{c})\)
-        without affecting IC implementability. As long as we choose \(U_B(\underline{v})\geq 0\) and \(U_S(\overline{c})\geq 0\),
+        without affecting BIC implementability. As long as we choose \(U_B(\underline{v})\geq 0\) and \(U_S(\overline{c})\geq 0\),
         the mechanism will also be IR, since \(Q_B(v)\geq 0\) and \(Q_S(c)\geq 0\).
       </p>
 
@@ -423,8 +423,8 @@
       </div>
 
       <p>
-        recalling the earlier definition of the buyer's virtual value
-        \(\phi_B(v)\).
+        recalling that the buyer's virtual value is
+        \(\phi_B(v)=v-\frac{1-F_B(v)}{f_B(v)}\).
       </p>
 
       <p>
@@ -435,7 +435,7 @@
         order.
       </p>
       <p>
-        Let's rewrite the expected value term to be more convenient for later calculations.
+        We can rewrite the expected value term as follows:
       </p>
       <div id="buyer-payment-virtual-value-rewrite" class="equation-chain-steps equation-chain-wide-rhs">
         <span class="equation-step-connector"></span>
@@ -510,7 +510,7 @@
 
       <p>
         These are weakly monotone in the right directions, so this allocation
-        rule is IC with the previously derived payment rules. For the best chance of budget balance while preserving IR, let's
+        rule is BIC with the previously derived payment rules. For the best chance of budget balance while preserving IR, let's
         assign \(U_B(\underline{v})=0\) and \(U_S(\overline{c})=0\). Now it remains to check, is this BB?
       </p>
 
@@ -633,7 +633,7 @@
       <p>
         Since we assumed strictly positive density on both supports which intersect at an
         interval of positive length, this remaining term is strictly negative.
-        Thus, the efficient allocation rule is not implementable with IC, IR, and BB.
+        Thus, the efficient allocation rule is not implementable with BIC, IR, and BB.
       </p>
     </section>
 
@@ -642,9 +642,11 @@
       <h2 id="notes-title">Notes</h2>
       <ol class="notes-list">
         <li id="budget-balance-note" tabindex="-1">
-          Most of the times, the Myerson-Satterthwaite theorem is stated for ex-post BB.
+          Most of the times, the Myerson-Satterthwaite theorem is stated for ex-post, weak budget balance.
           <span data-citation="borgers-norman-2009"></span> show that the two problems are equivalent, that is,
-          if a mechanism is ex-ante BB, then it can be modified to be ex-post BB while preserving IC and IR.
+          if a mechanism is only ex-ante, weakly budget balanced, then it can be modified to be ex-post,
+          weakly budget balanced while preserving BIC and IR. Clearly an ex-post,
+          weakly budget balanced mechanism is already ex-ante, weakly budget balanced.
           <a href="#budget-balance-note-ref" role="doc-backlink"
             aria-label="Return to ex-ante budget balanced in the theorem statement">↩</a>
         </li>

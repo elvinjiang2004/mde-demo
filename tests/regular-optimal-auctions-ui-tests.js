@@ -12,7 +12,7 @@
   async function fresh() {
     frame.style.width = "1280px";
     var loaded = new Promise(function (resolve) { frame.onload = resolve; });
-    frame.src = "../auction-design/optimal-auctions/index.html?style-test=" + (++serial);
+    frame.src = "../auction-design/regular-optimal-auctions/index.html?style-test=" + (++serial);
     await loaded;
     doc = frame.contentDocument; win = frame.contentWindow;
     await T.waitFor(function () { return doc.body.dataset.ready === "true" && !!doc.querySelector("mjx-container"); }, 12000, "Page and MathJax readiness");
@@ -46,6 +46,33 @@
   }
   var tests = [];
   function test(name, run) { tests.push({ name: name, run: async function () { await fresh(); await run(); } }); }
+
+  test("Appendix equations fit the drawer at responsive widths", async function () {
+    await T.waitFor(function () {
+      return !/\\\(|\\\[/.test(doc.querySelector("main").textContent);
+    }, 15000, "Initial lesson mathematics readiness");
+    var host = doc.querySelector("learning-sidebar");
+    host.querySelector(".learning-sidebar-toggle").click();
+    host.querySelectorAll('[role="tab"]')[2].click();
+    var panel = host.querySelector(".learning-sidebar-insights");
+    await T.waitFor(function () {
+      assert(!panel.hasAttribute("data-render-error"), "Insights mathematics must render successfully");
+      return !panel.hasAttribute("aria-busy") && !!panel.querySelector("mjx-container");
+    }, 45000, "Insights mathematics readiness");
+    assert(!panel.querySelector("mjx-merror, merror"), "Insights equations render without errors");
+    for (var width of [320, 375, 768, 1280]) {
+      frame.style.width = width + "px";
+      await T.nextAnimationFrames(win, 2);
+      panel.querySelectorAll(".equation-display, .equation-chain-steps").forEach(function (equation) {
+        assert(equation.scrollWidth <= equation.clientWidth + 1,
+          "No horizontal equation scrollbar at " + width + "px");
+      });
+      var chain = panel.querySelector(".equation-chain-steps");
+      close(parseFloat(win.getComputedStyle(chain).fontSize), parseFloat(win.getComputedStyle(panel).fontSize));
+      var content = host.querySelector(".learning-sidebar-content");
+      assert(content.scrollWidth <= content.clientWidth + 1, "The drawer should not scroll horizontally");
+    }
+  });
 
   test("M-S geometry and always-visible brush replace presets and mode controls", function () {
     T.assertScriptOrder(doc, ["../../js/components.js", "../../js/mathjax-config.js", "../../assets/mathjax/tex-svg.js", "../../js/mathjax-runtime.js", "../../js/math-utils.js", "../../js/svg-utils.js", "../../js/bilateral-trade-visuals.js", "model.js", "charts.js", "app.js"]);

@@ -29,31 +29,31 @@ window.MechanismTestCatalog = [
     "status": "complete"
   },
   {
-    "file": "optimal-auctions-model-tests.html",
-    "name": "Optimal auctions model",
+    "file": "regular-optimal-auctions-model-tests.html",
+    "name": "Regular optimal auctions model",
     "kind": "model",
-    "module": "optimal-auctions",
+    "module": "regular-optimal-auctions",
     "status": "complete"
   },
   {
-    "file": "optimal-auctions-ui-tests.html",
-    "name": "Optimal auctions interface",
+    "file": "regular-optimal-auctions-ui-tests.html",
+    "name": "Regular optimal auctions interface",
     "kind": "interface",
-    "module": "optimal-auctions",
+    "module": "regular-optimal-auctions",
     "status": "complete"
   },
   {
-    "file": "ironing-model-tests.html",
-    "name": "Ironing model",
+    "file": "general-optimal-auctions-model-tests.html",
+    "name": "General Optimal Auctions model",
     "kind": "model",
-    "module": "ironing",
+    "module": "general-optimal-auctions",
     "status": "in-progress"
   },
   {
-    "file": "ironing-ui-tests.html",
-    "name": "Ironing interface",
+    "file": "general-optimal-auctions-ui-tests.html",
+    "name": "General Optimal Auctions interface",
     "kind": "interface",
-    "module": "ironing",
+    "module": "general-optimal-auctions",
     "status": "in-progress"
   },
   {

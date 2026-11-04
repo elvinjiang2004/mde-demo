@@ -15,7 +15,7 @@
   async function fresh() {
     frame.style.width = "1280px";
     var loaded = new Promise(function (resolve) { frame.onload = resolve; });
-    frame.src = "../auction-design/ironing/index.html?test=" + Math.random();
+    frame.src = "../auction-design/general-optimal-auctions/index.html?test=" + Math.random();
     await loaded; doc = frame.contentDocument; win = frame.contentWindow;
     await T.waitFor(function () { return doc.body.dataset.ready === "true" && !!doc.querySelector("#distribution-controls mjx-container"); }, 15000);
   }
@@ -36,7 +36,7 @@
       "../../assets/mathjax/tex-svg.js", "../../js/mathjax-runtime.js", "../../js/math-utils.js", "../../js/svg-utils.js", "model.js", "charts.js", "app.js"]);
     assert(!el("lottery-chart") && doc.querySelectorAll(".control-points [role=slider]").length === 11);
     assert(win.IroningModel && !win.OptimalAuctionsModel, "The two auction models have isolated namespaces");
-    assert(doc.getElementById("page-title").textContent === "Ironing" &&
+    assert(doc.getElementById("page-title").textContent === "General Optimal Auctions" &&
       doc.querySelector("page-header").getAttribute("category") === "Auction Design", "Independent auction title and group");
     assert(el("bic-status").dataset.passed === "true" && el("feasibility-status").dataset.passed === "true");
     assert(el("bic-verdict").textContent === "BIC: passes" && el("bic-monotonicity").textContent === "is weakly increasing");
@@ -532,5 +532,5 @@
       }
     } finally { reference.remove(); }
   });
-  T.run(tests, { title: "Ironing interface tests" });
+  T.run(tests, { title: "General Optimal Auctions interface tests" });
 })();

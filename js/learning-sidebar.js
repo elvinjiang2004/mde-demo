@@ -90,7 +90,7 @@
       var tabs = [
         { id: "page", label: "Page notation", entries: pageEntries, disabled: !pageEntries.length },
         { id: "environment", label: "Environment notation", entries: environmentEntries, disabled: !environmentEntries.length },
-        { id: "insights", label: "Insights", entries: null, disabled: false }
+        { id: "insights", label: "Author Insights", entries: null, disabled: false }
       ];
       var active = tabs.findIndex(function (tab) { return !tab.disabled; });
       var renderVersion = 0;

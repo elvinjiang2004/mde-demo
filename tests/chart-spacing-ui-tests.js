@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   var T = MechanismTest, frame = document.getElementById("app-frame");
-  var routes = ["auction-equilibria/first-price", "auction-equilibria/second-price", "auction-design/optimal-auctions", "auction-design/ironing",
+  var routes = ["auction-equilibria/first-price", "auction-equilibria/second-price", "auction-design/regular-optimal-auctions", "auction-design/general-optimal-auctions",
     "general-topics/envelope-theorem", "bilateral-trade/myerson-satterthwaite-theorem", "bilateral-trade/bargaining-mechanism-sandbox"];
   function border(svg) { return svg.querySelector("rect.plot-frame, rect.diagnostic-frame, rect.axis-line"); }
   function check(doc, win) {

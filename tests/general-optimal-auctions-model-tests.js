@@ -281,5 +281,5 @@
       });
     });
   });
-  T.run(tests, { title: "Ironing model tests" });
+  T.run(tests, { title: "General Optimal Auctions model tests" });
 })();

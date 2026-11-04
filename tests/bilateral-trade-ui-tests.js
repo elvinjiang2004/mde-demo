@@ -295,7 +295,7 @@
           });
           var theoremText = introductionCopy.textContent.replace(/\s+/g, " ");
           assert(introduction.querySelectorAll(":scope > ol > li").length === 0 &&
-            theoremText.includes("There is no mechanism that is Bayesian incentive compatible, interim individually rational, ex-ante budget balanced, and ex-post efficient."),
+            /There is no mechanism that is Bayesian incentive compatible(?: \(BIC\))?, interim individually rational(?: \(IR\))?, ex-ante budget balanced(?: \(BB\))?, and ex-post efficient\./.test(theoremText),
           "The supplied theorem should retain all four conditions inline.");
           assert(introduction.querySelectorAll('mjx-container[jax="SVG"]').length > 0,
             "The introduction's mathematical notation should render with MathJax.");
@@ -374,8 +374,8 @@
               "Every mixed plot label should render its notation with MathJax.");
           });
           var plainTextCaptions = [
-            { id: "buyer-ic-chart", text: "Buyer IC" },
-            { id: "seller-ic-chart", text: "Seller IC" },
+            { id: "buyer-ic-chart", text: "Buyer BIC" },
+            { id: "seller-ic-chart", text: "Seller BIC" },
             { id: "revenue-chart", text: "Budget Balance" },
             { id: "buyer-payoff-chart", text: "Buyer IR" },
             { id: "seller-payoff-chart", text: "Seller IR" },
@@ -712,8 +712,8 @@
               "buyer-ic-chart", "seller-ic-chart", "revenue-chart",
               "buyer-payoff-chart", "seller-payoff-chart", "efficiency-chart"
             ]),
-            "The diagnostics should run left-to-right, top-to-bottom as Buyer IC, " +
-              "Seller IC, Budget Balance, Buyer IR, Seller IR, and Efficiency.");
+            "The diagnostics should run left-to-right, top-to-bottom as Buyer BIC, " +
+              "Seller BIC, Budget Balance, Buyer IR, Seller IR, and Efficiency.");
 
             var grid = appDocument.querySelector(".diagnostic-panel-grid");
             var columns = appWindow.getComputedStyle(grid)

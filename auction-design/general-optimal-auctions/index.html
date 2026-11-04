@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Shape a symmetric interim allocation rule and explore feasibility, payments, revenue, and Myerson ironing.">
-  <title>Ironing | Mechanism Design Explorer</title>
+  <title>General Optimal Auctions | Mechanism Design Explorer</title>
   <link rel="stylesheet" href="../../styles.css">
   <link rel="stylesheet" href="module.css">
   <script defer src="../../js/components.js"></script>
@@ -24,13 +24,70 @@
   <script defer src="charts.js"></script>
   <script defer src="app.js"></script>
 </head>
-<body class="ironing-page">
+<body class="general-optimal-auctions-page">
   <a class="skip-link" href="#main-content">Skip to the main content</a>
   <header class="site-header"><page-header category="Auction Design" home="../../index.html"></page-header></header>
   <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
-      <h1 id="page-title">Ironing</h1>
-      <p><a class="environment-link" href="../../auction-design/environment/index.html">Environment</a></p>
+      <h1 id="page-title">General Optimal Auctions</h1>
+      <p>
+        <em>
+          This is the second page of a two-page overview of Myerson (1981)'s "Optimal Auction Design." This
+          page will use results discussed in <a href="../regular-optimal-auctions/index.html">Regular Optimal Auctions</a>, so it is recommended to
+          read that page first.
+        </em>
+      </p>
+      <p>In the <a class="environment-link" href="../../auction-design/environment/index.html">single-item auction environment</a>,
+      Myerson (1981) gives the following result:</p>
+
+      <p>
+        <strong>Theorem (<span data-citation="myerson-1981" data-citation-style="parenthetical"></span>):</strong>
+        In general, a BIC, IR, revenue-maximizing mechanism is
+        a second-price auction in <em>ironed virtual values</em> \(\bar{\phi}_i\) with reserve values \(r_i=\inf\{t\in T_i\mid\bar{\phi}_i(t)\geq 0\}\), \(i=1,\ldots,n\).
+      </p>
+      <p>
+        For each buyer \(i\) and fixed reports \(v_{-i}\), denote his "second price" as
+      </p>
+      <div id="ironing-critical-value" class="equation-display" role="region" tabindex="0" aria-label="Buyer i's critical winning value for fixed reports by the other buyers">
+        \[
+          x_i(v_{-i})=\inf\left\{t\in T_i\ \middle|
+          \begin{array}{l}
+            \bar{\phi}_i(t)\geq 0,\\
+            \bar{\phi}_i(t)>\bar{\phi}_j(v_j)\quad\text{for every }j\lt i,\\
+            \bar{\phi}_i(t)\geq\bar{\phi}_j(v_j)\quad\text{for every }j\gt i
+          \end{array}
+          \right\}.
+        \]
+      </div>
+      <p>
+        Denote the set of potential winners as
+      </p>
+      <div id="ironing-potential-winners" class="equation-display" role="region" tabindex="0" aria-label="Set of potential winners">
+        \[
+          W(v)=\left\{i\in\{1,\ldots,n\}\ \middle|
+          \begin{array}{l}
+            \bar{\phi}_i(v_i)\geq 0,\\
+            \bar{\phi}_i(v_i)=\max\{\bar{\phi}_j(v_j)\mid j\in\{1,\ldots,n\}\}
+          \end{array}
+          \right\}.
+        \]
+      </div>
+      <p>
+        Then, equivalently, \((q^*,p^*)\) is an optimal mechanism where for \(i=1,\ldots,n\),
+      </p>
+      <div class="equation-display" role="region" tabindex="0" aria-label="Optimal allocation and payment rules">
+        \[
+          q_i^*(v)=\begin{cases}
+            1 & \text{if }W(v)\neq\varnothing\text{ and }i=\min W(v),\\
+            0 & \text{otherwise}
+          \end{cases},
+          \qquad
+          p_i^*(v)=\begin{cases}
+            x_i(v_{-i}) & \text{if }q_i^*(v)=1,\\
+            0 & \text{if }q_i^*(v)=0
+          \end{cases}.
+        \]
+      </div>
     </section>
     <section id="distribution-controls" class="model-specifications" aria-label="Auction and distribution parameters">
       <div class="parameter-grid distribution-parameter-grid">
@@ -156,7 +213,7 @@
     </section>
   </main>
   <footer class="site-footer"><page-footer></page-footer></footer>
-  <learning-sidebar page="ironing" environment="auction-design">
+  <learning-sidebar page="general-optimal-auctions" environment="auction-design">
     <template data-insights>
       <!-- User-authored Insights go here. -->
     </template>

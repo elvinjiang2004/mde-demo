@@ -149,10 +149,11 @@
       ],
       environmentNotation: sharedEnvironmentNotation["auction-equilibria"]
     },
-    "optimal-auctions": {
+    "regular-optimal-auctions": {
       pageNotation: [
-        [["x_i(v_{-i})=\\inf\\{t\\in T_i\\mid\\phi_i(t)\\geq 0\\}", "Buyer \\(i\\)'s lowest value that makes his virtual value at least as high as every other buyer's and weakly positive."]],
         [["r_i=\\inf\\{t\\in T_i\\mid\\phi_i(t)\\geq 0\\}", "Buyer \\(i\\)'s reserve value that he must beat to participate."]],
+        [["x_i(v_{-i})=\\inf\\left\\{t\\in T_i\\ \\middle| \\begin{array}{l} \\phi_i(t)\\geq 0,\\\\ \\phi_i(t)>\\phi_j(v_j)\\quad\\text{for every }j\\lt i,\\\\ \\phi_i(t)\\geq\\phi_j(v_j)\\quad\\text{for every }j\\gt i \\end{array} \\right\\}", "Buyer \\(i\\)'s critical winning value under lowest-index priority for fixed opposing reports."]],
+        [["W(v)=\\left\\{i\\in\\{1,\\ldots,n\\}\\ \\middle| \\begin{array}{l} \\phi_i(v_i)\\geq 0,\\\\ \\phi_i(v_i)=\\max\\{\\phi_j(v_j)\\mid j\\in\\{1,\\ldots,n\\}\\} \\end{array} \\right\\}", "Buyers with the highest weakly positive virtual value."]],
         [
           ["(q^*,p^*)", "The optimal mechanism."],
           ["q^*_i(v)", "The optimal mechanism's allocation rule for buyer \\(i\\)."],
@@ -165,8 +166,10 @@
       ],
       environmentNotation: sharedEnvironmentNotation["auction-design"]
     },
-    "ironing": {
+    "general-optimal-auctions": {
       pageNotation: [
+        [["x_i(v_{-i})=\\inf\\left\\{t\\in T_i\\ \\middle| \\begin{array}{l} \\bar{\\phi}_i(t)\\geq 0,\\\\ \\bar{\\phi}_i(t)>\\bar{\\phi}_j(v_j)\\quad\\text{for every }j\\lt i,\\\\ \\bar{\\phi}_i(t)\\geq\\bar{\\phi}_j(v_j)\\quad\\text{for every }j\\gt i \\end{array} \\right\\}", "Buyer \\(i\\)'s critical winning value under lowest-index priority for fixed opposing reports."]],
+        [["W(v)=\\left\\{i\\in\\{1,\\ldots,n\\}\\ \\middle| \\begin{array}{l} \\bar{\\phi}_i(v_i)\\geq 0,\\\\ \\bar{\\phi}_i(v_i)=\\max\\{\\bar{\\phi}_j(v_j)\\mid j\\in\\{1,\\ldots,n\\}\\} \\end{array} \\right\\}", "Buyers with the highest weakly positive ironed virtual value."]],
         [
           ["c", "Distribution breakpoint."],
           ["\\pi", "Probability that a value lies in the lower interval \\([0,c]\\)."]

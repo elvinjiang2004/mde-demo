@@ -644,7 +644,7 @@
   function drawDeviationChart(svg, agent, summary, extent) {
     var diagnostic = summary.deviation[agent];
     var buyer = agent === "buyer";
-    var titleText = buyer ? "Buyer IC" : "Seller IC";
+    var titleText = buyer ? "Buyer BIC" : "Seller BIC";
     svg.replaceChildren();
     appendSvg(svg, "title", { id: svg.id + "-title" }, titleText);
     appendSvg(svg, "desc", { id: svg.id + "-description" },

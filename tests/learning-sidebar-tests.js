@@ -41,8 +41,8 @@
     ["general-topics/revelation-principle", true],
     ["auction-equilibria/first-price", true],
     ["auction-equilibria/second-price", true],
-    ["auction-design/optimal-auctions", true],
-    ["auction-design/ironing", true],
+    ["auction-design/regular-optimal-auctions", true],
+    ["auction-design/general-optimal-auctions", true],
     ["bilateral-trade/bargaining-mechanism-sandbox", true],
     ["bilateral-trade/myerson-satterthwaite-theorem", true],
     ["auction-equilibria/environment", false],
@@ -69,7 +69,7 @@
       var panels = Array.from(host.querySelectorAll('[role="tabpanel"]'));
       T.assert(drawer.hidden && toggle.getAttribute("aria-expanded") === "false", "The drawer must start closed.");
       T.assert(!drawer.querySelector("dt") && !hasUnrenderedMath(host), "Closed references must not add raw math to the lesson.");
-      T.assert(tabs.map(function (tab) { return tab.textContent; }).join("|") === "Page notation|Environment notation|Insights",
+      T.assert(tabs.map(function (tab) { return tab.textContent; }).join("|") === "Page notation|Environment notation|Author Insights",
         "All three groups need separate tabs with the requested labels.");
       T.assert(host.querySelector('[role="tablist"]') && panels.length === 3, "The drawer needs an accessible tablist and three panels.");
       tabs.forEach(function (tab, index) {

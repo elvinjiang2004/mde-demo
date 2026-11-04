@@ -260,8 +260,8 @@
           "Auction Equilibria should contain first-price and second-price auctions.");
           assert(Array.from(rows[2].querySelectorAll("a.module-link")).map(function (a) {
             return a.getAttribute("href");
-          }).join("|") === "auction-design/optimal-auctions/index.html|auction-design/ironing/index.html",
-          "Auction Design should contain Optimal Auctions and Ironing.");
+          }).join("|") === "auction-design/regular-optimal-auctions/index.html|auction-design/general-optimal-auctions/index.html",
+          "Auction Design should contain Regular Optimal Auctions and General Optimal Auctions.");
         }
       },
       {
@@ -278,11 +278,11 @@
         }
       },
       {
-        name: "The optimal-auctions module is selectable",
+        name: "The regular-optimal-auctions module is selectable",
         run: function () {
-          var link = menuDocument.querySelector('a.module-link[href="auction-design/optimal-auctions/index.html"]');
-          assert(link && link.querySelector(".module-title").textContent === "Optimal Auctions",
-            "The optimal-auctions editor should have an explicit working route.");
+          var link = menuDocument.querySelector('a.module-link[href="auction-design/regular-optimal-auctions/index.html"]');
+          assert(link && link.querySelector(".module-title").textContent === "Regular Optimal Auctions",
+            "The regular-optimal-auctions editor should have an explicit working route.");
         }
       },
       {
@@ -343,18 +343,18 @@
         }
       },
       {
-        name: "Ironing is selectable under Auction Design as a separate module",
+        name: "General Optimal Auctions is selectable under Auction Design as a separate module",
         run: function () {
           var link = menuDocument.querySelector(
-            '#auction-design a.module-link[href="auction-design/ironing/index.html"]'
+            '#auction-design a.module-link[href="auction-design/general-optimal-auctions/index.html"]'
           );
           assert(link,
-            "Ironing should use its own explicit auction route.");
+            "General Optimal Auctions should use its own explicit auction route.");
           assert(link.querySelector(".module-title").textContent ===
-            "Ironing",
-          "The Ironing module title is incorrect.");
+            "General Optimal Auctions",
+          "The General Optimal Auctions module title is incorrect.");
           assert(link.querySelector(".module-status").textContent === "In progress",
-            "Ironing should remain accessible while clearly marked in progress.");
+            "General Optimal Auctions should remain accessible while clearly marked in progress.");
           assert(!menuDocument.querySelector('a[href="general-topics/payments-from-allocation-rule/index.html"]'),
             "The repurposed draft should no longer appear under General Topics.");
         }

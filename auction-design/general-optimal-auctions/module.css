@@ -1,0 +1,65 @@
+.general-optimal-auctions-page .introduction .equation-display {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+}
+.general-optimal-auctions-page .introduction .equation-display > mjx-container[jax="SVG"][display="true"] {
+  flex: 0 0 auto;
+  margin-inline: auto;
+}
+.general-optimal-auctions-page .introduction .equation-display:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.general-optimal-auctions-page #distribution-controls, .general-optimal-auctions-page #auction-demo { font-size: 0.86rem; }
+.general-optimal-auctions-page .ironing-plots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.general-optimal-auctions-page .ironing-plots figure { margin: 0; min-width: 0; }
+.general-optimal-auctions-page .chart-640x360 { display: block; width: 100%; height: auto; overflow: visible; }
+.general-optimal-auctions-page svg text { font-family: var(--text-font); fill: var(--ink); font-size: var(--chart-font-size, 13.76px); }
+.general-optimal-auctions-page .plot-frame { fill: none; stroke: var(--axis); stroke-width: 1; }
+.general-optimal-auctions-page .zero-line { stroke: var(--zero-line); stroke-width: 1; }
+.general-optimal-auctions-page .learner-curve { stroke: var(--blue); fill: none; stroke-width: 2.8; }
+.general-optimal-auctions-page .raw-curve { stroke: var(--muted); fill: none; stroke-width: 1.8; stroke-dasharray: 5 4; }
+.general-optimal-auctions-page .integrated-curve { stroke: var(--ink); fill: none; stroke-width: 2.4; }
+.general-optimal-auctions-page .hull-curve, .general-optimal-auctions-page .ironed-virtual-curve { stroke: var(--orange); fill: none; stroke-width: 2.4; stroke-dasharray: 2 4; stroke-linecap: round; }
+.general-optimal-auctions-page .virtual-value-label, .general-optimal-auctions-page .secondary-axis text { fill: var(--muted); }
+.general-optimal-auctions-page .ironing-diagnostic { color: var(--orange); }
+.general-optimal-auctions-page .secondary-zero-line { stroke: var(--muted); stroke-width: 0.8; stroke-dasharray: 3 5; opacity: 0.5; }
+.general-optimal-auctions-page .capacity-curve { stroke: var(--ink); fill: none; stroke-width: 2; stroke-dasharray: 3 4; }
+.general-optimal-auctions-page .jump-line { stroke: var(--blue); stroke-dasharray: 2 3; }
+.general-optimal-auctions-page .pool-shade { fill: var(--orange); opacity: 0.1; }
+.general-optimal-auctions-page .density-area { fill: var(--blue-fill-subtle); }
+.general-optimal-auctions-page .violation-dot { fill: var(--red); }
+.general-optimal-auctions-page .annotation-halo { paint-order: stroke; stroke: var(--page-background); stroke-width: 5px; stroke-linejoin: round; }
+.general-optimal-auctions-page .control-points { touch-action: none; }
+.general-optimal-auctions-page .handle-target { fill: transparent; cursor: move; }
+.general-optimal-auctions-page .handle-dot { fill: var(--page-background); stroke: var(--blue); stroke-width: 2; pointer-events: none; }
+.general-optimal-auctions-page .selected .handle-dot { fill: var(--blue); }
+.general-optimal-auctions-page .control-points g:focus { outline: none; }
+.general-optimal-auctions-page .control-points g:focus-visible .handle-dot { stroke: var(--focus); stroke-width: 5; }
+.general-optimal-auctions-page .editor-buttons, .general-optimal-auctions-page .ironing-actions { display: flex; flex-wrap: wrap; gap: 0 0.8rem; align-items: center; }
+.general-optimal-auctions-page button:disabled { opacity: 0.55; cursor: default; }
+.general-optimal-auctions-page [data-passed="true"] { color: var(--green); }
+.general-optimal-auctions-page [data-passed="false"] { color: var(--red); }
+.general-optimal-auctions-page .validation-text { display: none; color: var(--error-text); font-size: inherit; grid-column: 1 / -1; }
+.general-optimal-auctions-page .validation-text:not(:empty) { display: block; }
+.general-optimal-auctions-page .distribution-parameter-grid { grid-template-columns: minmax(0, 0.7fr) repeat(2, minmax(0, 1fr)); }
+.general-optimal-auctions-page .ironing-controls .slider-grid { grid-template-columns: 1fr; gap: 1.25rem; }
+.general-optimal-auctions-page #value-pdf-preview text { font-size: 10px; }
+.general-optimal-auctions-page .limit-open { fill: var(--page-background); stroke: var(--muted); stroke-width: 1.5; }
+.general-optimal-auctions-page .limit-closed { fill: var(--muted); }
+.general-optimal-auctions-page .jump-limit { stroke: var(--blue); stroke-width: 2; }
+.general-optimal-auctions-page .jump-limit.limit-closed { fill: var(--blue); }
+@media (max-width: 1050px) {
+  .general-optimal-auctions-page .ironing-controls { max-width: 320px; }
+}
+@media (max-width: 700px) {
+  .general-optimal-auctions-page .ironing-plots { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) {
+  .general-optimal-auctions-page .distribution-parameter-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media print { .general-optimal-auctions-page .ironing-controls { display: none; } }
+.general-optimal-auctions-page button:hover { color: var(--blue); }
+.general-optimal-auctions-page #reset-parameters { margin-top: 0; }

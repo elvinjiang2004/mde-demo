@@ -18,7 +18,7 @@ so navigation works through `file://`.
 
 - **General Topics:** [What is Mechanism Design?](general-topics/what-is-mechanism-design/index.html), [The Envelope Theorem](general-topics/envelope-theorem/index.html), [The Revelation Principle](general-topics/revelation-principle/index.html).
 - **Auction Equilibria:** [Environment](auction-equilibria/environment/index.html), [First-Price Auction Equilibrium](auction-equilibria/first-price/index.html), [Second-Price Auction Equilibrium](auction-equilibria/second-price/index.html).
-- **Auction Design:** [Environment](auction-design/environment/index.html), [Optimal Auctions](auction-design/optimal-auctions/index.html), [Ironing](auction-design/ironing/index.html) (in progress).
+- **Auction Design:** [Environment](auction-design/environment/index.html), [Regular Optimal Auctions](auction-design/regular-optimal-auctions/index.html), [General Optimal Auctions](auction-design/general-optimal-auctions/index.html) (in progress).
 - **Bilateral Trade:** [Environment](bilateral-trade/environment/index.html), [Bargaining Mechanism Sandbox](bilateral-trade/bargaining-mechanism-sandbox/index.html), [Myerson-Satterthwaite Theorem](bilateral-trade/myerson-satterthwaite-theorem/index.html).
 
 ## Browser checks
