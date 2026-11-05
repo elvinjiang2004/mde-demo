@@ -281,5 +281,29 @@
       });
     });
   });
+  test("The efficient mechanism serves the highest value and has exact second-price payments for every n", function () {
+    settings.forEach(function (values) {
+      var d = M.distribution(values[0], values[1]);
+      for (var n = 2; n <= 5; n += 1) {
+        var chosen = M.efficient(n, d), rule = M.adoptedRule(chosen, n, d);
+        assert(rule.valid && rule.monotone && rule.feasibility.feasible);
+        close(rule.feasibility.saleProbability, 1, 1e-10);
+        [0, 0.137, d.split, 0.713, 1].forEach(function (v) {
+          var point = M.evaluate(rule, v), probability = Math.pow(M.cdf(v, d), n - 1);
+          var utility = simpson(function (t) { return Math.pow(M.cdf(t, d), n - 1); }, 0, Math.min(v, d.split), 1000);
+          if (v > d.split) { utility += simpson(function (t) { return Math.pow(M.cdf(t, d), n - 1); }, d.split, v, 1000); }
+          close(point.q, probability, 1e-10);
+          close(point.payment, v * probability - utility, 1e-10);
+        });
+        // Expected second-highest value, independently integrated by its survival probability.
+        function survival(v) { var u = M.cdf(v, d); return 1 - Math.pow(u, n) - n * (1 - u) * Math.pow(u, n - 1); }
+        var expected = simpson(survival, 0, d.split, 1000) + simpson(survival, d.split, 1, 1000);
+        close(rule.revenue, expected, 1e-10); close(rule.paymentRevenue, expected, 1e-10);
+      }
+    });
+    [2,3,4,5].forEach(function (n) {
+      close(M.adoptedRule(M.efficient(n, uniform), n, uniform).revenue, (n - 1) / (n + 1), 1e-10);
+    });
+  });
   T.run(tests, { title: "General Optimal Auctions model tests" });
 })();

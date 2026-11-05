@@ -43,6 +43,8 @@
     assert(el("feasibility-status").textContent === "Feasibility: passes (all capacity constraints hold)");
     assert(el("feasibility-chart").closest("figure").querySelector("figcaption").textContent.includes("allocation demand and capacity"));
     assert(revenue() > 0 && !el("benchmark-summary"));
+    var green = doc.createElement("span"); green.style.color = "var(--green)"; doc.body.appendChild(green);
+    assert(win.getComputedStyle(el("revenue-value").closest("p")).color === win.getComputedStyle(green).color, "Expected revenue text is green"); green.remove();
     assert(doc.querySelectorAll("merror").length === 0);
     assert(doc.querySelector('[data-reference="border-1991"]').textContent.includes("1991"));
   });
@@ -246,13 +248,29 @@
     var orange = doc.createElement("span"); orange.style.color = "var(--orange)"; doc.body.appendChild(orange);
     assert(win.getComputedStyle(diagnostic).color === win.getComputedStyle(orange).color); orange.remove();
   });
-  test("Bidder changes preserve the chosen Q and update capacity and the optimum", function () {
-    input("bidder-number", "4");
-    assert(Number(el("bidder-number").value) === 4);
-    assert(el("feasibility-status").dataset.passed === "false", "The former two-bidder allocation is infeasible with four bidders");
-    assert(el("feasibility-status").textContent === "Feasibility: fails (allocation exceeds capacity)");
-    el("reset-button").click();
-    assert(el("bic-status").dataset.passed === "true" && el("feasibility-status").dataset.passed === "true");
+  test("Bidder changes load the exact efficient mechanism for the current distribution", function () {
+    var M = win.IroningModel;
+    [[0.5,0.75], [0.37,0.81]].forEach(function (values) {
+      input("split-number", String(values[0])); input("mass-number", String(values[1]));
+      var d = M.distribution(values[0], values[1]);
+      [3,5,2,4].forEach(function (n) {
+        ["edited", "optimal"].forEach(function (previous) {
+          input("bidder-number", n === 2 ? "3" : "2");
+          if (previous === "optimal") { el("use-optimum").click(); }
+          else { choose(5); input("allocation-number", "0.95"); }
+          input("bidder-number", String(n));
+          var expected = M.adoptedRule(M.efficient(n,d), n, d);
+          close(Number(el("bidder-number").value), n); close(revenue(), expected.revenue, 1e-10);
+          close(Number(el("split-number").value), values[0]); close(Number(el("mass-number").value), values[1]);
+          assert(el("bic-status").dataset.passed === "true" && el("feasibility-status").dataset.passed === "true");
+          assert(el("interpolation-kind").textContent.includes("Exact efficient curves"));
+          [0.137,0.713,1].forEach(function (v) {
+            close(sampleChart("allocation-chart", v), Math.pow(M.cdf(v,d),n-1), 4e-5);
+            close(sampleChart("payment-chart", v), M.evaluate(expected,v).payment, 4e-5);
+          });
+        });
+      });
+    });
   });
   test("Supply-infeasible rules retain candidate revenue labels with ironing shown", function () {
     for (var i = 0; i < 11; i += 1) { choose(i); input("allocation-number", "1"); }
@@ -531,6 +549,53 @@
         });
       }
     } finally { reference.remove(); }
+  });
+  test("Use efficient mechanism loads exact highest-value allocations for 2 through 5 buyers", function () {
+    var M = win.IroningModel;
+    assert(el("reset-button").textContent === "Use efficient mechanism");
+    [[0.5,0.75], [0.37,0.81], [0.6,0.6]].forEach(function (values) {
+      input("split-number", String(values[0])); input("mass-number", String(values[1]));
+      var d = M.distribution(values[0], values[1]);
+      for (var n = 2; n <= 5; n += 1) {
+        input("bidder-number", String(n)); el("use-optimum").click(); el("reset-button").click();
+        assert(el("bic-status").dataset.passed === "true" && el("feasibility-status").dataset.passed === "true", "Efficient rule is implementable");
+        assert(el("interpolation-kind").textContent.includes("Exact efficient curves"));
+        [0,0.137,0.713,1].forEach(function (v) {
+          close(sampleChart("allocation-chart", v), Math.pow(M.cdf(v,d), n - 1), 4e-5, "Efficient curve remains exact between handles");
+        });
+        var rule = M.adoptedRule(M.efficient(n,d),n,d); close(revenue(), rule.revenue, 1e-10);
+        close(Number(el("split-number").value), values[0]); close(Number(el("mass-number").value), values[1]);
+        choose(el("allocation-chart").querySelectorAll('.control-points [data-index]').length - 1);
+        close(Number(el("allocation-number").value), 1, 1e-10, "Highest type wins with probability one");
+      }
+    });
+  });
+  test("Revenue uses the same diagnostic spacing as the other plots", async function () {
+    for (var width of [320,375,768,1280]) {
+      frame.style.width = width + "px"; await T.nextAnimationFrames(win,3);
+      var figure = el("payment-chart").closest("figure"), axis = figure.querySelector(".chart-x-axis-label"), diagnostic = el("revenue-value").closest("p");
+      close(diagnostic.getBoundingClientRect().top - axis.getBoundingClientRect().bottom, 14, 0.2, "Shared revenue spacing at " + width);
+      assert(win.getComputedStyle(diagnostic).lineHeight === win.getComputedStyle(el("bic-status")).lineHeight);
+    }
+  });
+  test("Selection reuses curves, and allocation edits preserve distribution-only charts", function () {
+    function nodes() {
+      return [el("allocation-chart").querySelector(".learner-curve"), el("payment-chart").querySelector(".learner-curve"),
+        el("feasibility-chart").querySelector(".learner-curve"), el("integrated-chart").querySelector(".integrated-curve"),
+        el("value-pdf-preview").querySelector(".value-pdf-curve")];
+    }
+    var before = nodes(); choose(2); choose(0);
+    T.dispatch(handle(0), "keydown", win, { key: "ArrowLeft" });
+    nodes().forEach(function (node,i) { assert(node === before[i], "Selection and clamped edits retain existing chart nodes"); });
+    choose(5); input("allocation-number", "0.4");
+    var edited = nodes();
+    [0,1,2].forEach(function (i) { assert(edited[i] !== before[i], "Allocation-dependent curves update after editing"); });
+    [3,4].forEach(function (i) { assert(edited[i] === before[i], "Irregularity and density depend only on the distribution"); });
+    input("bidder-number", "4");
+    assert(nodes()[3] === before[3] && nodes()[4] === before[4], "Bidder changes also preserve distribution-only charts");
+    input("mass-number", "0.6");
+    assert(nodes()[3] !== before[3] && nodes()[4] !== before[4], "Distribution changes refresh both charts");
+    finiteGeometry();
   });
   T.run(tests, { title: "General Optimal Auctions interface tests" });
 })();

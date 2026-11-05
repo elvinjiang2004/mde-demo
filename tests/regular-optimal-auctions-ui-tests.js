@@ -80,14 +80,15 @@
     var frameBox = el("allocation-chart").querySelector("rect.axis-line");
     assert(frameBox.getAttribute("x") === "50" && frameBox.getAttribute("y") === "40" && frameBox.getAttribute("width") === "400" && frameBox.getAttribute("height") === "400", "Same 400px plot and margins");
     assert(el("allocation-chart").querySelectorAll(".allocation-layer > polygon").length === 800, "Same exact 800 triangles");
-    assert(!doc.querySelector("[data-preset], [data-brush], #interaction-mode, #paint-selected, #other-half, details"), "No presets, brush shortcut buttons, modes, or collapsed brush");
+    assert(!doc.querySelector("[data-preset], [data-brush], #interaction-mode, #paint-selected, #other-half, details"), "No unrelated presets, brush shortcuts, Paint/Inspect mode, or collapsed brush");
     assert(el("lottery-controls").closest(".main-column") && el("lottery-chart").getBoundingClientRect().height > 0, "Visible triangle brush under the grid");
     close(totalPayments(), 1 / 3);
     [1, 2].forEach(function (bidder) {
       assert(el("interim-" + bidder + "-chart").querySelectorAll(".interim-curve").length === 20, "Separate allocation pieces");
       assert(el("payment-" + bidder + "-chart").querySelectorAll(".payment-area").length === 20, "Separate payment pieces");
     });
-    assert(!doc.querySelector(".assumption-line, .formula-label, .diagnostic-key, .payment-key, #optimal-revenue, #bic-details, #brush-summary, #bidder-revenues, .revenue-output, #revenue-label, #revenue-value"), "Only requested diagnostic and control labels remain");
+    assert(!doc.querySelector(".assumption-line, .formula-label, .diagnostic-key, .payment-key, #optimal-revenue, #bic-details, #brush-summary, #bidder-revenues"), "Only requested diagnostic and control labels remain");
+    assert(el("optimal-button").textContent === "Use optimal mechanism" && el("distribution-controls"), "Distribution controls and an optimal mechanism button are available");
   });
   test("Each bidder has directly labeled allocation and payment plots with diagnostics below", function () {
     [1, 2].forEach(function (bidder) {
@@ -113,8 +114,7 @@
       assert(!Array.from(interim.querySelectorAll("text")).some(function (n) { return /^Q[₁₂]$/.test(n.textContent); }), "No duplicate Q labels inside the plots");
       var value = el("expected-payment-" + bidder), label = value.closest("p");
       close(Number(value.dataset.value), 1 / 6);
-      assert(label.textContent === "Expected payment from bidder " + bidder + ": 0.1667", "Requested expected-payment label");
-      assert(label.closest("figure") === payment.closest("figure") && label.previousElementSibling === payment.closest(".chart-viewport"), "Expected payment directly follows its graph");
+      assert(label === el("revenue-diagnostic"), "Both payment amounts share the revenue diagnostic");
       assert(label.getBoundingClientRect().top >= payment.closest(".chart-viewport").getBoundingClientRect().bottom, "Expected payment is below the graph");
       assert(win.getComputedStyle(label).textAlign === "left", "Expected payment is left aligned");
       assert(!payment.querySelector(".expected-payment-label"), "Expected payment is outside the plot");
@@ -122,6 +122,10 @@
       var paymentNumbers = payment.querySelector(".payment-curve:last-child").getAttribute("d").match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/g).map(Number);
       close(paymentNumbers[paymentNumbers.length - 1], 145);
     });
+    assert(el("revenue-diagnostic").textContent === "Expected revenue = expected payment from buyer 1 (0.1667) + expected payment from buyer 2 (0.1667) = 0.3333", "Requested combined revenue text");
+    close(Number(el("revenue-value").dataset.value), 1 / 3);
+    var green = doc.createElement("span"); green.style.color = "var(--green)"; doc.body.appendChild(green);
+    assert(win.getComputedStyle(el("revenue-diagnostic")).color === win.getComputedStyle(green).color, "Revenue text is green"); green.remove();
   });
   test("Fixed payment axes preserve signed integrals for zero, negative, and asymmetric candidates", function () {
     var M = win.OptimalAuctionsModel, C = win.OptimalAuctionsCharts;
@@ -274,7 +278,7 @@
     assert(el("payment-status-1").textContent === " (candidate)" && el("payment-caption-1").textContent === "Payment candidate", "Candidate labels preserved below and above the payment graph");
     assert(el("bic-status-2").dataset.bic === "true" && el("payment-caption-2").textContent === "Interim payment", "Unaffected bidder keeps a valid label");
     assert(el("payment-status-2").textContent === "", "Valid expected payment has no candidate warning");
-    assert(el("live-summary").textContent.indexOf("Expected payment from bidder 1:") !== -1 && !/revenue/i.test(el("live-summary").textContent), "Live summary announces expected payments without revenue");
+    assert(el("revenue-status").textContent === " (candidate)" && /Expected revenue/.test(el("live-summary").textContent), "Combined revenue and live summary retain candidate warnings");
     assert(el("bic-monotonicity-1").textContent === "is not weakly increasing", "Failing monotonicity explanation");
     var status = el("bic-status-1"), probe = doc.createElement("span");
     probe.style.color = "var(--red)"; doc.body.appendChild(probe);
@@ -316,6 +320,9 @@
         assert(border && border.getAttribute("width") === "300" && border.getAttribute("height") === "250", "Boxed diagnostic plotting edges");
       });
       assert(el("lottery-controls").getBoundingClientRect().top >= el("allocation-chart").getBoundingClientRect().top, "Brush remains below grid");
+      var revenue = el("revenue-diagnostic"), lastAxis = el("payment-2-chart").closest("figure").querySelector(".chart-x-axis-label");
+      close(revenue.getBoundingClientRect().top - lastAxis.getBoundingClientRect().bottom, 14, 0.2, "Revenue uses the shared diagnostic spacing at " + width);
+      assert(win.getComputedStyle(revenue).lineHeight === win.getComputedStyle(el("bic-status-1")).lineHeight, "Revenue uses the shared diagnostic line height");
     }
     doc.body.style.zoom = "2";
     await T.nextAnimationFrames(win, 4);
@@ -337,6 +344,7 @@
     });
   });
   test("Reset restores the efficient allocation and cancels an active stroke", async function () {
+    assert(el("reset-button").textContent === "Use efficient mechanism", "Efficient mechanism button label");
     var chart=el("allocation-chart"), initial=chart.querySelector(".allocation-layer").innerHTML;
     brush(0.2,0.3);
     pointer(chart,"pointerdown",353,326);
@@ -388,6 +396,101 @@
       assert(!/NaN|Infinity|undefined/.test(chart.innerHTML), "Finite geometry " + id);
     });
     assert(!doc.querySelector("mjx-merror, svg mjx-container"), "HTML math remains valid");
+  });
+  test("Distribution bar synchronizes tenths, actual value axes, and dynamic math", async function () {
+    assert(el("distribution-controls").querySelectorAll('.shape-parameter').length === 2, "Separate buyer controls");
+    input("shift-1-number", "0.34"); input("shift-2-range", "0.6");
+    await win.mechanismMathReady;
+    assert(el("shift-1-number").value === "0.3" && el("shift-1-range").value === "0.3", "Inputs round to the allowed lattice");
+    assert(el("shift-2-number").value === "0.6" && el("shift-2-range").getAttribute("aria-valuetext") === "0.6", "Slider and number synchronize");
+    [1,2].forEach(function (i) {
+      assert(el("shift-" + i + "-number").step === "0.1" && el("shift-" + i + "-range").step === "0.1", "Both controls use tenths");
+      assert(el("distribution-support-" + i).querySelector("mjx-container"), "Distribution formula is typeset");
+      assert(!/\\[(]/.test(el("distribution-support-" + i).textContent), "No raw dynamic delimiters");
+    });
+    assert(el("payment-1-chart").dataset.xMin === "0.3" && el("payment-1-chart").dataset.xMax === "1.3", "Payment x axis follows buyer 1");
+    assert(el("interim-2-chart").dataset.xMin === "0.6" && el("interim-2-chart").dataset.xMax === "1.6", "Allocation x axis follows buyer 2");
+    assert(el("payment-2-chart").dataset.yMax === "1.6", "Payment scale covers the shifted support");
+    var ticks = Array.from(el("allocation-chart").querySelectorAll(".axis-text")).map(function (n) { return Number(n.textContent); });
+    close(ticks[0], 0.3); close(ticks[1], 0.6); close(ticks[8], 1.3); close(ticks[9], 1.6);
+    var total = totalPayments(); input("shift-1-number", ""); close(totalPayments(), total);
+    assert(el("distribution-error").textContent && el("shift-1-number").getAttribute("aria-invalid") === "true", "Blank input preserves the last valid calculation");
+    T.dispatch(el("shift-1-number"), "change", win); assert(el("shift-1-number").value === "0.3" && !el("distribution-error").textContent, "Invalid value restores on commit");
+    input("shift-1-number", "-1"); close(Number(el("shift-1-range").value), 0);
+    input("shift-2-number", "2"); close(Number(el("shift-2-range").value), 1);
+  });
+  test("Use optimal mechanism replaces the painted grid and leaves painting available", function () {
+    var chart = el("allocation-chart"), first = chart.querySelector(".allocation-layer > polygon");
+    input("shift-1-number", "0.2"); input("shift-2-number", "0.6");
+    pointer(chart, "pointerdown", 353, 326);
+    el("optimal-button").click();
+    var expected = win.OptimalAuctionsModel.diagnose(win.OptimalAuctionsModel.preset("optimal", [0.2,0.6]), [0.2,0.6]);
+    close(totalPayments(), expected.revenue);
+    assert(!el("optimal-button").hasAttribute("aria-pressed") && !doc.querySelector('#auction-demo input[type="checkbox"]'), "Optimal control is an ordinary button");
+    assert(!el("reserve-controls") && !el("reserve-mode-button") && !chart.querySelector(".reserve-allocation-layer"), "Reserve mode is removed");
+    assert(first === chart.querySelector(".allocation-layer > polygon") && chart.querySelectorAll(".allocation-layer > polygon").length === 800, "Optimal allocation uses the persistent painted grid");
+    var optimal = chart.querySelector(".allocation-layer").innerHTML;
+    pointer(chart, "pointermove", 393, 306); pointer(chart, "pointerup", 393, 306);
+    assert(chart.querySelector(".allocation-layer").innerHTML === optimal, "Loading the optimum cancels the prior stroke");
+    pointer(chart, "pointerdown", 353, 326); pointer(chart, "pointerup", 353, 326);
+    assert(chart.querySelector(".allocation-layer").innerHTML !== optimal && totalPayments() !== expected.revenue, "Painting works immediately after loading the optimum");
+    el("optimal-button").click(); assert(chart.querySelector(".allocation-layer").innerHTML === optimal, "Button restores the exact optimum");
+    input("shift-1-number", "0.8");
+    assert(chart.querySelector(".allocation-layer").innerHTML === optimal, "Later distribution changes preserve the chosen painted rule");
+  });
+  test("Distribution and allocation resets preserve their respective controls and brush", function () {
+    var chart = el("allocation-chart"); brush(0.2,0.3);
+    input("shift-1-number", "0.4"); input("shift-2-number", "0.9"); el("optimal-button").click();
+    var painted = chart.querySelector(".allocation-layer").innerHTML;
+    el("reset-parameters").click();
+    assert(chart.querySelector(".allocation-layer").innerHTML === painted, "Parameter reset preserves the painted rule");
+    close(Number(el("shift-1-number").value), 0); close(Number(el("shift-2-number").value), 0);
+    input("shift-1-number", "1"); input("shift-2-number", "1"); el("reset-button").click();
+    close(totalPayments(), 4 / 3); close(Number(el("shift-1-number").value), 1);
+    close(Number(el("brush-q1").value), 0.2); close(Number(el("brush-q2").value), 0.3);
+    pointer(chart, "pointermove", 350, 340);
+    assert(Array.from(chart.querySelectorAll(".plot-probe-coordinate")).map(function (n) { return n.textContent; }).join() === "1.750,1.250", "Probe shows actual rather than relative values");
+  });
+  test("Shifted charts and distribution controls fit responsive widths with stable frames", async function () {
+    input("shift-1-number", "1"); input("shift-2-number", "0.9"); el("optimal-button").click();
+    await win.mechanismMathReady;
+    for (var width of [320,375,768,1280]) {
+      frame.style.width = width + "px"; await T.nextAnimationFrames(win, 4);
+      assert(doc.documentElement.scrollWidth <= doc.documentElement.clientWidth + 1, "No shifted-mode overflow at " + width);
+      assert(el("shift-2-range").getBoundingClientRect().right <= doc.documentElement.clientWidth, "Distribution controls fit");
+      var chart = el("allocation-chart"), before = chart.getBoundingClientRect();
+      pointer(chart, "pointermove", 450, 40); el("optimal-button").click(); await T.nextAnimationFrames(win, 2);
+      var after = chart.getBoundingClientRect(); close(after.width, before.width); close(after.height, before.height); close(after.top, before.top);
+      ["allocation-chart","interim-1-chart","interim-2-chart","payment-1-chart","payment-2-chart","lottery-chart"].forEach(function (id) {
+        assert(padding(el(id)).every(function (gap) { return gap >= 13; }), "Shifted chart padding at " + width);
+        assert(!/NaN|Infinity|undefined/.test(el(id).innerHTML), "Finite shifted chart geometry");
+      });
+      assert(!doc.querySelector("mjx-merror, svg mjx-container"), "Shifted mathematics renders correctly");
+    }
+  });
+  test("The efficient button uses actual values for asymmetric supports", function () {
+    input("shift-1-number", "0"); input("shift-2-number", "1"); el("optimal-button").click();
+    el("reset-button").click();
+    close(totalPayments(), 1, 1e-10);
+    var chart = el("allocation-chart"); pointer(chart, "pointermove", 410, 356);
+    assert(Array.from(chart.querySelectorAll(".plot-probe-text")).map(function (n) { return n.textContent; }).join() === "q1 = 0.000,q2 = 1.000", "Buyer with the higher actual value wins");
+    close(Number(el("shift-2-number").value), 1);
+  });
+  test("Resizing and unchanged shifts reuse diagnostics; painting and changed shifts invalidate them", async function () {
+    await T.nextAnimationFrames(win, 3);
+    var numeric = win.NumberUtils, checks = 0;
+    win.NumberUtils = Object.assign({}, numeric, { isFiniteNumber: function (value) { checks += 1; return numeric.isFiniteNumber(value); } });
+    try {
+      frame.style.width = "1040px"; await T.nextAnimationFrames(win, 4);
+      assert(checks < 10, "Resizing does not revalidate all 800 lotteries");
+      checks = 0; input("shift-1-number", "0.0");
+      assert(checks < 10, "Unchanged shifts reuse the cached model result");
+      checks = 0; var chart = el("allocation-chart");
+      pointer(chart, "pointerdown", 353, 326); pointer(chart, "pointerup", 353, 326);
+      assert(checks >= 1600 && Math.abs(totalPayments() - 1 / 3) > 1e-6, "Painting recalculates the changed grid");
+      checks = 0; input("shift-1-number", "0.4");
+      assert(checks >= 1600, "A changed distribution recalculates payments");
+    } finally { win.NumberUtils = numeric; }
   });
   T.run(tests);
 }());

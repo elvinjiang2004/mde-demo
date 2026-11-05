@@ -61,26 +61,38 @@ window.OptimalAuctionsCharts = (function () {
     var colors = palette();
     var nodes = mesh.drawTriangleMesh(g, grid, layout, function (q) { return color(q, colors); });
     visuals.drawFrame(svg, layout, mesh, false);
+    var ticks = svg.querySelectorAll(".axis-text");
     var overlay = append(svg, "g", { "pointer-events": "none" });
     var selected = append(overlay, "polygon", { class: "cell-cursor" });
     return {
-      update: function (current) {
-            var colorsNow = palette();
+      update: function (current, shifts) {
+        shifts = shifts || [0, 0];
+        var colorsNow = palette();
         ["lower", "upper"].forEach(function (half) {
           current[half].forEach(function (row, i) { row.forEach(function (q, j) {
             nodes[half][i][j].setAttribute("fill", color(q, colorsNow));
           }); });
         });
+        ticks.forEach(function (tick, i) {
+          tick.textContent = S.formatTick(Math.floor(i / 2) / 4 + shifts[i % 2]);
+        });
+        var difference = shifts[0] - shifts[1], guide = svg.querySelector(".diagonal-guide");
+        guide.setAttribute("x1", mesh.svgXOf(Math.max(0, -difference), layout));
+        guide.setAttribute("y1", mesh.svgYOf(Math.max(0, difference), layout));
+        guide.setAttribute("x2", mesh.svgXOf(Math.min(1, 1 - difference), layout));
+        guide.setAttribute("y2", mesh.svgYOf(Math.min(1, 1 + difference), layout));
       },
-      select: function (cell) {
+      select: function (cell, shifts) {
+        shifts = shifts || [0, 0];
         selected.setAttribute("points", mesh.trianglePoints(mesh.cellCorners(cell.i, cell.j, layout), cell.half === "lower"));
         var prior = overlay.querySelector(".cell-label");
         if (prior) { prior.remove(); }
-        function range(k) { return "[" + (k / 20).toFixed(2) + ", " + ((k + 1) / 20).toFixed(2) + "]"; }
+        function range(k, shift) { return "[" + (shift + k / 20).toFixed(2) + ", " + (shift + (k + 1) / 20).toFixed(2) + "]"; }
         visuals.drawCellLabel(overlay, layout, mesh.cellRect(cell.i, cell.j, layout),
-          range(cell.i) + " × " + range(cell.j) + " " + (cell.half === "lower" ? "B-R" : "T-L"));
+          range(cell.i, shifts[0]) + " × " + range(cell.j, shifts[1]) + " " + (cell.half === "lower" ? "B-R" : "T-L"));
       },
-      probe: function (position, current) {
+      probe: function (position, current, shifts) {
+        shifts = shifts || [0, 0];
         var prior = svg.querySelector(".allocation-probe");
         if (prior) { prior.remove(); }
         if (!position.visible) { return; }
@@ -89,7 +101,7 @@ window.OptimalAuctionsCharts = (function () {
         var scaffold = visuals.drawProbeScaffold(svg, {
           layout: layout, x: mesh.svgXOf(position.x, layout), y: mesh.svgYOf(position.y, layout),
           boxWidth: boxWidth, groupClass: "allocation-probe chart-480x520-probe", radius: 3.5,
-          xValue: visuals.formatProbe(position.x), yValue: visuals.formatProbe(position.y)
+          xValue: visuals.formatProbe(position.x + shifts[0]), yValue: visuals.formatProbe(position.y + shifts[1])
         });
         visuals.appendProbeValueText(scaffold.group, scaffold.textX, scaffold.textY,
           { symbol: "q", subscript: "1", value: visuals.formatProbe(q[0]) });
@@ -143,17 +155,20 @@ window.OptimalAuctionsCharts = (function () {
     append(g, "circle", { cx: x, cy: y, r: 5, fill: color(q, palette()), stroke: "var(--ink)", "stroke-width": 2 });
   }
 
-  function axes(g, box, low, high) {
+  function axes(g, box, low, high, shift) {
+    shift = shift || 0;
     ChartLayout.setTextSize(g.ownerSVGElement);
-    function x(v) { return box.left + v * (box.right - box.left); }
+    function x(v) { return box.left + (v - shift) * (box.right - box.left); }
     function y(v) { return box.bottom - (v - low) / (high - low) * (box.bottom - box.top); }
     append(g, "rect", { class: "diagnostic-frame axis-line", x: box.left, y: box.top,
       width: box.right - box.left, height: box.bottom - box.top, fill: "none" });
     line(g, box.left, y(0), box.right, y(0), { class: "zero-line" });
-    [0, 0.5, 1].forEach(function (v) {
+    [shift, shift + 0.5, shift + 1].forEach(function (v) {
       line(g, x(v), box.bottom, x(v), box.bottom + 4);
       append(g, "text", { x: x(v), y: box.bottom + 20, "text-anchor": "middle" }, Number.isInteger(v) ? String(v) : S.formatTick(v));
     });
+    g.ownerSVGElement.dataset.xMin = shift;
+    g.ownerSVGElement.dataset.xMax = shift + 1;
     [low, 0, high].filter(function (v, i, arr) { return arr.indexOf(v) === i; }).forEach(function (v) {
       append(g, "text", { x: box.left - 7, y: y(v) + 5, "text-anchor": "end" }, Number.isInteger(v) ? String(v) : S.formatTick(v));
     });
@@ -177,25 +192,26 @@ window.OptimalAuctionsCharts = (function () {
   function interim(svg, agent, bidder) {
     clear(svg);
     var g = append(svg, "g", {});
-    var scale = axes(g, diagnosticBox, -1, 1);
+    var shift = agent.shift || 0, high = 1 + shift;
+    var scale = axes(g, diagnosticBox, -1, high, shift);
     var suffix = bidder === 1 ? "₁" : "₂";
-    line(g, scale.x(0), scale.y(-1), scale.x(1), scale.y(1), { class: "virtual-value-curve" });
+    line(g, scale.x(shift), scale.y(shift - 1), scale.x(shift + 1), scale.y(high), { class: "virtual-value-curve" });
     agent.pieces.forEach(function (piece) {
       var c = curve(piece, "allocation", scale);
       append(g, "path", { d: "M" + c.start + c.segment, class: "interim-curve curve-" + (bidder === 1 ? "one" : "two") });
     });
-    append(g, "text", { x: scale.x(0.2), y: scale.y(-0.6) + 17, class: "annotation-halo" }, "φ" + suffix);
+    append(g, "text", { x: scale.x(shift + 0.2), y: scale.y(shift - 0.6) + 17, class: "annotation-halo" }, "φ" + suffix);
     svg.querySelector("desc").textContent = "Bidder " + bidder + ": solid interim allocation Q" + suffix +
-      "; dashed virtual value φ" + suffix + " = 2v − 1. Vertical scale −1 to 1.";
+      "; dashed virtual value φ" + suffix + " = 2v − " + fixed(shift + 1) + ". Value support " + fixed(shift) + " to " + fixed(shift + 1) + "; vertical scale −1 to " + fixed(high) + ".";
   }
 
   // Payment pieces are monotone because P'(v) = v Q'(v). Restrict their
-  // geometry to [0,1] before drawing, so invisible negatives cannot enlarge
+  // geometry to the fixed-for-distribution scale before drawing, so negatives cannot enlarge
   // the reserved plotting area. Model values and integrals stay signed.
-  function visiblePaymentInterval(piece) {
+  function visiblePaymentInterval(piece, high) {
     var first = M.evaluatePiece(piece, piece.a).payment;
     var last = M.evaluatePiece(piece, piece.b).payment;
-    if (Math.max(first, last) < 0 || Math.min(first, last) > 1) { return null; }
+    if (Math.max(first, last) < 0 || Math.min(first, last) > high) { return null; }
     function crossing(target) {
       var a = piece.a, b = piece.b;
       for (var k = 0; k < 45; k += 1) {
@@ -205,15 +221,16 @@ window.OptimalAuctionsCharts = (function () {
       }
       return (a + b) / 2;
     }
-    return [first < 0 ? crossing(0) : first > 1 ? crossing(1) : piece.a,
-      last < 0 ? crossing(0) : last > 1 ? crossing(1) : piece.b];
+    return [first < 0 ? crossing(0) : first > high ? crossing(high) : piece.a,
+      last < 0 ? crossing(0) : last > high ? crossing(high) : piece.b];
   }
 
   function payment(svg, agent, bidder) {
     clear(svg);
     var g = append(svg, "g", {});
-    var scale = axes(g, diagnosticBox, 0, 1);
-    svg.dataset.yMin = "0"; svg.dataset.yMax = "1";
+    var shift = agent.shift || 0, high = 1 + shift;
+    var scale = axes(g, diagnosticBox, 0, high, shift);
+    svg.dataset.yMin = "0"; svg.dataset.yMax = high;
     var defs = append(svg, "defs", {});
     var clipId = svg.id + "-clip";
     var clip = append(defs, "clipPath", { id: clipId });
@@ -221,7 +238,7 @@ window.OptimalAuctionsCharts = (function () {
       width: diagnosticBox.right - diagnosticBox.left, height: diagnosticBox.bottom - diagnosticBox.top });
     var plot = append(g, "g", { "clip-path": "url(#" + clipId + ")" });
     agent.pieces.forEach(function (piece) {
-      var interval = visiblePaymentInterval(piece);
+      var interval = visiblePaymentInterval(piece, high);
       if (!interval) { return; }
       var c = curve(piece, "payment", scale, interval[0], interval[1]);
       append(plot, "path", { class: "payment-area", d: "M" + scale.x(interval[0]) + "," + scale.y(0) + "L" + c.start + c.segment + "L" + scale.x(interval[1]) + "," + scale.y(0) + "Z",
@@ -229,7 +246,8 @@ window.OptimalAuctionsCharts = (function () {
       append(plot, "path", { d: "M" + c.start + c.segment, class: "payment-curve curve-" + (bidder === 1 ? "one" : "two") });
     });
     svg.querySelector("desc").textContent = "Bidder " + bidder + (agent.bic ? " interim payment. " : " envelope payment candidate; BIC fails. ") +
-      "Expected payment " + fixed(agent.expectedPayment) + ". Fixed vertical scale 0 to 1; values outside this range are clipped. The diagnostic below uses the full signed integral, including any clipped part.";
+      "Expected payment " + fixed(agent.expectedPayment) + ". Value support " + fixed(shift) + " to " + fixed(shift + 1) +
+      ". Vertical scale 0 to " + fixed(high) + "; fixed for these distribution parameters. Values outside this range are clipped. The diagnostic below uses the full signed integral, including any clipped part.";
   }
 
   return Object.freeze({ allocation: allocation, lottery: lottery, interim: interim,

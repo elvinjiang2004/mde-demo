@@ -40,6 +40,26 @@
     pointer(source, cancel === "pointer" ? "pointercancel" : "pointerup", to);
   }
   function test(name, run) { return { name: name, run: async function () { await fresh(); await run(); } }; }
+  function waitForInsightsFocus(message) {
+    var renderError = false;
+    return T.waitFor(function () {
+      var insights = doc.querySelector(".learning-sidebar-insights");
+      if (!insights) { return false; }
+      if (insights.hasAttribute("data-render-error")) { renderError = true; return true; }
+      var description = el("voting-environment-insight");
+      return description && !insights.hasAttribute("aria-busy") && doc.activeElement === description;
+    }, 45000, message).then(function () {
+      assert(!renderError, "Insights mathematics must render successfully");
+    }).catch(function (error) {
+      var insights = doc.querySelector(".learning-sidebar-insights"), target = el("voting-environment-insight");
+      throw new Error(error.message + " " + JSON.stringify({
+        target: !!target, busy: insights && insights.hasAttribute("aria-busy"),
+        active: doc.activeElement && (doc.activeElement.id || doc.activeElement.tagName),
+        focused: doc.hasFocus(), hidden: insights && insights.hidden,
+        math: target && !!target.querySelector("mjx-container"), hash: win.location.hash
+      }));
+    });
+  }
 
   T.run([
     test("Initial state has four stages, a read-only true ranking, and hidden simultaneous ballots", function () {
@@ -62,9 +82,7 @@
         for (var opening = 0; opening < 3; opening += 1) {
           el("voting-environment-link").click();
           await T.nextAnimationFrames(win, 2);
-          await T.waitFor(function () {
-            return el("voting-environment-insight") && doc.activeElement === el("voting-environment-insight");
-          }, 6000, "Insights description receives focus");
+          await waitForInsightsFocus("Insights description receives focus");
           assert(!drawer.hidden && !insights.hidden, "Link opens Insights");
           var description = el("voting-environment-insight");
           assert(description.querySelector('mjx-container[jax="SVG"]') &&
@@ -86,9 +104,7 @@
       }
       assert(JSON.stringify(snapshot()) === before, "Appendix navigation preserves the election");
       await fresh("#voting-environment-insight");
-      await T.waitFor(function () {
-        return el("voting-environment-insight") && doc.activeElement === el("voting-environment-insight");
-      }, 6000, "An initial fragment opens Insights");
+      await waitForInsightsFocus("An initial fragment opens Insights");
       assert(!doc.querySelector(".learning-sidebar-panel").hidden && !doc.querySelector(".learning-sidebar-insights").hidden,
         "Direct fragment arrival opens the correct appendix tab");
     }),

@@ -7,6 +7,7 @@
   var svg = byId("allocation-chart");
   var lotterySvg = byId("lottery-chart");
   var grid = M.preset("efficient");
+  var shifts = [0, 0];
   var brush = [0, 0];
   var brushValid = true;
   var selected = { i: 0, j: 0, half: "lower" };
@@ -16,11 +17,12 @@
   var lotteryPointer = null;
   var frame = null;
   var result;
+  var calculationDirty = true;
   var view = C.allocation(svg, grid);
 
   function selection() {
-    view.select(selected);
-    view.probe(probe, grid);
+    view.select(selected, shifts);
+    view.probe(probe, grid, shifts);
     var q = grid[selected.half][selected.i][selected.j];
     var label = "Cell " + (selected.i + 1) + ", " + (selected.j + 1) + "; " +
       (selected.half === "lower" ? "bottom-right (B-R)" : "top-left (T-L)") + " triangle. " +
@@ -29,7 +31,8 @@
     byId("selected-cell").dataset.q1 = q[0];
     byId("selected-cell").dataset.q2 = q[1];
     byId("selected-cell").dataset.cell = [selected.i, selected.j, selected.half].join(",");
-    byId("allocation-description").textContent = "800 editable triangles. Blue allocates to bidder 1, orange to bidder 2, and the background means no sale; mixtures are lotteries. " + label;
+    byId("allocation-description").textContent = "800 editable triangles. Independent uniform value supports: buyer 1 [" + shifts[0] + ", " + (shifts[0] + 1) +
+      "], buyer 2 [" + shifts[1] + ", " + (shifts[1] + 1) + "]. Blue allocates to bidder 1, orange to bidder 2, and the background means no sale; mixtures are lotteries. " + label;
   }
 
   function selectProbe() {
@@ -40,8 +43,8 @@
 
   function render() {
     if (frame !== null) { cancelAnimationFrame(frame); frame = null; }
-    result = M.diagnose(grid);
-    view.update(grid);
+    if (calculationDirty) { result = M.diagnose(grid, shifts); calculationDirty = false; }
+    view.update(grid, shifts);
     selection();
     result.bidders.forEach(function (agent, index) {
       var bidder = index + 1;
@@ -55,6 +58,9 @@
       byId("expected-payment-" + bidder).dataset.value = agent.expectedPayment;
       byId("payment-status-" + bidder).textContent = agent.bic ? "" : " (candidate)";
     });
+    byId("revenue-value").textContent = C.fixed(result.revenue);
+    byId("revenue-value").dataset.value = result.revenue;
+    byId("revenue-status").textContent = result.bic ? "" : " (candidate)";
     document.body.dataset.ready = "true";
   }
 
@@ -65,9 +71,8 @@
   function announce() {
     byId("live-summary").textContent = result.bidders.map(function (agent, index) {
       var bidder = index + 1;
-      return "Bidder " + bidder + ": " + byId("bic-status-" + bidder).textContent + ". " +
-        byId("expected-payment-" + bidder).closest("p").textContent;
-    }).join(". ") + ". " + byId("selected-cell").textContent;
+      return "Bidder " + bidder + ": " + byId("bic-status-" + bidder).textContent;
+    }).join(". ") + ". " + byId("revenue-diagnostic").textContent + ". " + byId("selected-cell").textContent;
   }
 
   function updateBrush() {
@@ -86,13 +91,14 @@
     if (old[0] === brush[0] && old[1] === brush[1]) { return false; }
     stroke.changed = true;
     grid[cell.half][cell.i][cell.j] = brush.slice();
+    calculationDirty = true;
     return true;
   }
 
   function visit(p) {
     if (!p || !p.inside) {
       if (stroke) { stroke.last = null; }
-      probe.visible = false; view.probe(probe, grid); return;
+      probe.visible = false; view.probe(probe, grid, shifts); return;
     }
     probe = { x: p.x, y: p.y, visible: true };
     if (stroke && stroke.kind === "pointer") {
@@ -106,7 +112,7 @@
       stroke.last = p;
       if (stroke.changed) { schedule(); }
       selection();
-    } else { view.probe(probe, grid); }
+    } else { view.probe(probe, grid, shifts); }
   }
 
   function finishStroke() {
@@ -137,12 +143,12 @@
     svg.addEventListener(name, function (event) { if (stroke && stroke.kind === "pointer" && event.pointerId === stroke.id) { finishStroke(); } });
   });
   svg.addEventListener("pointerleave", function () {
-    if (!stroke && document.activeElement !== svg) { probe.visible = false; view.probe(probe, grid); }
+    if (!stroke && document.activeElement !== svg) { probe.visible = false; view.probe(probe, grid, shifts); }
   });
   svg.addEventListener("focus", function () { selectProbe(); announce(); });
   svg.addEventListener("blur", function () {
     if (stroke && stroke.kind === "keyboard") { finishStroke(); }
-    probe.visible = false; view.probe(probe, grid);
+    probe.visible = false; view.probe(probe, grid, shifts);
   });
   svg.addEventListener("keydown", function (event) {
     if (stroke && stroke.kind === "pointer") { return; }
@@ -163,7 +169,7 @@
       heldKeys[key] = true;
       if (!stroke) { stroke = { kind: "keyboard", changed: false }; }
     } else if (key === "escape") {
-      finishStroke(); probe.visible = false; view.probe(probe, grid); event.preventDefault(); return;
+      finishStroke(); probe.visible = false; view.probe(probe, grid, shifts); event.preventDefault(); return;
     } else { moved = false; }
     if (moved) {
       event.preventDefault();
@@ -220,15 +226,62 @@
     } else { return; }
     event.preventDefault(); updateBrush();
   });
-  // Native chart dimensions are reserved in HTML/CSS. Only a genuine change
-  // in available width requires responsive text placement, never new content.
-  byId("reset-button").addEventListener("click", function () {
+  function cancelEditing() {
     var active = stroke;
     stroke = null; heldKeys = {};
     if (active && active.kind === "pointer" && svg.hasPointerCapture(active.id)) { svg.releasePointerCapture(active.id); }
-    grid = M.preset("efficient");
+    var activeLottery = lotteryPointer;
+    lotteryPointer = null;
+    if (activeLottery !== null && lotterySvg.hasPointerCapture(activeLottery)) { lotterySvg.releasePointerCapture(activeLottery); }
+  }
+
+  function syncDistributions() {
+    shifts.forEach(function (shift, i) {
+      byId("shift-" + (i + 1) + "-number").value = shift.toFixed(1);
+      byId("shift-" + (i + 1) + "-number").removeAttribute("aria-invalid");
+      var slider = byId("shift-" + (i + 1) + "-range");
+      slider.value = shift;
+      slider.setAttribute("aria-valuetext", shift.toFixed(1));
+      MechanismMath.setText(byId("distribution-support-" + (i + 1)),
+        "\\(V_" + (i + 1) + "\\sim\\mathrm{Uniform}[" + shift.toFixed(1) + "," + (shift + 1).toFixed(1) + "]\\)");
+    });
+    byId("distribution-error").textContent = "";
+  }
+
+  [1, 2].forEach(function (bidder) {
+    ["number", "range"].forEach(function (kind) {
+      var field = byId("shift-" + bidder + "-" + kind);
+      field.addEventListener("input", function () {
+        if (!Number.isFinite(field.valueAsNumber)) {
+          field.setAttribute("aria-invalid", "true");
+          byId("distribution-error").textContent = "Enter a shift in [0,1] in steps of 0.1.";
+          return;
+        }
+        cancelEditing();
+        var next = Math.round(NumberUtils.clamp(field.valueAsNumber, 0, 1) * 10) / 10;
+        if (shifts[bidder - 1] !== next) { shifts[bidder - 1] = next; calculationDirty = true; }
+        syncDistributions(); render(); announce();
+      });
+      field.addEventListener("change", syncDistributions);
+    });
+  });
+  byId("reset-parameters").addEventListener("click", function () {
+    if (shifts[0] !== 0 || shifts[1] !== 0) { calculationDirty = true; }
+    cancelEditing(); shifts = [0, 0];
+    syncDistributions(); render(); announce();
+  });
+  byId("optimal-button").addEventListener("click", function () {
+    cancelEditing(); grid = M.preset("optimal", shifts);
+    calculationDirty = true;
     render(); announce();
   });
+  byId("reset-button").addEventListener("click", function () {
+    cancelEditing(); grid = M.preset("efficient", shifts);
+    calculationDirty = true;
+    render(); announce();
+  });
+  // Native chart dimensions are reserved in HTML/CSS. Only a genuine change
+  // in available width requires responsive text placement, never new content.
   var widths = new WeakMap();
   var resize = new ResizeObserver(function (entries) {
     var changed = false;
@@ -243,9 +296,10 @@
     resize.observe(chart);
   });
   var theme = window.matchMedia("(prefers-color-scheme: dark)");
-  theme.addEventListener("change", function () { view.update(grid); C.lottery(lotterySvg, brush); });
+  theme.addEventListener("change", function () { render(); C.lottery(lotterySvg, brush); });
   EquationChain.initDividers();
   MechanismMath.typesetInitial("main");
   updateBrush();
+  syncDistributions();
   render();
 }());

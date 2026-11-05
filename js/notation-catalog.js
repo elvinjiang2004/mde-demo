@@ -151,6 +151,7 @@
     },
     "regular-optimal-auctions": {
       pageNotation: [
+        [["\\epsilon_i", "Buyer \\(i\\)'s distribution shift in the demo: \\(V_i\\sim\\mathrm{Uniform}[\\epsilon_i,\\epsilon_i+1]\\), with \\(\\epsilon_i\\in\\{0,0.1,\\ldots,1\\}\\)."]],
         [["r_i=\\inf\\{t\\in T_i\\mid\\phi_i(t)\\geq 0\\}", "Buyer \\(i\\)'s reserve value that he must beat to participate."]],
         [["x_i(v_{-i})=\\inf\\left\\{t\\in T_i\\ \\middle| \\begin{array}{l} \\phi_i(t)\\geq 0,\\\\ \\phi_i(t)>\\phi_j(v_j)\\quad\\text{for every }j\\lt i,\\\\ \\phi_i(t)\\geq\\phi_j(v_j)\\quad\\text{for every }j\\gt i \\end{array} \\right\\}", "Buyer \\(i\\)'s critical winning value under lowest-index priority for fixed opposing reports."]],
         [["W(v)=\\left\\{i\\in\\{1,\\ldots,n\\}\\ \\middle| \\begin{array}{l} \\phi_i(v_i)\\geq 0,\\\\ \\phi_i(v_i)=\\max\\{\\phi_j(v_j)\\mid j\\in\\{1,\\ldots,n\\}\\} \\end{array} \\right\\}", "Buyers with the highest weakly positive virtual value."]],

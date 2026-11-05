@@ -53,13 +53,16 @@
       }
     });
   }
-  function initial(n, d) {
-    d = d || DEFAULT;
+  function controlValues(d) {
     var values = [d.split];
     for (var i = 0; i <= 10; i += 1) { values.push(i / 10); }
     return values.sort(function (a, b) { return a - b; }).filter(function (v, j, all) {
       return !j || v !== all[j - 1];
-    }).map(function (v) { return { v: v, q: 2 * cdf(v, d) / n }; });
+    });
+  }
+  function initial(n, d) {
+    d = d || DEFAULT;
+    return controlValues(d).map(function (v) { return { v: v, q: 2 * cdf(v, d) / n }; });
   }
   function pieces(points, d) {
     d = d || DEFAULT;
@@ -265,7 +268,14 @@
     });
     return points;
   }
-  // Preserve the exact chosen optimal rule when the evaluation environment
+  function efficient(n, d) {
+    validate([{ v: 0, q: 0 }, { v: 1, q: 1 }], n);
+    d = d ? distribution(d.split, d.mass) : DEFAULT;
+    return { n: n, distribution: d, kind: "efficient",
+      parts: [{ a: 0, b: d.split, kind: "rank" }, { a: d.split, b: 1, kind: "rank" }],
+      points: controlValues(d).map(function (v) { return { v: v, q: Math.pow(cdf(v, d), n - 1) }; }) };
+  }
+  // Preserve the exact chosen analytic rule when the evaluation environment
   // changes. Its monotone polynomial pieces need no allocation rearrangement.
   function adoptedRule(chosen, n, d) {
     d = d || DEFAULT;
@@ -349,5 +359,5 @@
     quantile: quantile, primitive: primitive, initial: initial, validate: validate, pieces: pieces, evaluate: evaluate,
     evaluatePiece: evaluatePiece, diagnose: diagnose, tailAt: tailAt, ironing: ironing, ironedPhi: ironedPhi,
     integratedVirtual: integratedVirtual, convexIntegrated: convexIntegrated, benchmark: benchmark,
-    adoptedRule: adoptedRule, optimalPoints: optimalPoints, tolerance: TOL });
+    adoptedRule: adoptedRule, optimalPoints: optimalPoints, efficient: efficient, tolerance: TOL });
 })(window);

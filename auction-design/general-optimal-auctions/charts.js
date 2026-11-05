@@ -55,9 +55,53 @@
     });
     S(chart.secondary, "line", { x1: chart.frame.left, x2: chart.frame.right, y1: y(0, domain), y2: y(0, domain), "class": "secondary-zero-line" });
   }
+  function renderIntegrated(chart, d, solution) {
+    if (chart.distribution && chart.distribution.split === d.split && chart.distribution.mass === d.mass) { return; }
+    chart.layer.replaceChildren();
+    var lower = Math.min(-1, Math.floor(-d.split / d.mass));
+    var cuts = [0, d.mass, 1];
+    // The minimum of H is at a branch virtual zero or a density boundary.
+    var peak = Math.max.apply(null, [0, d.split, 1, d.split / (2 * d.mass), 0.5].map(function (v) {
+      return -M.integratedVirtual(M.cdf(Math.min(1, v), d), d);
+    }));
+    var depth = Math.ceil(peak * 10) / 10, virtualDomain = [lower, 1];
+    setDomain(chart, [-depth, 0], [-depth, -depth / 2, 0]);
+    secondaryAxis(chart, virtualDomain);
+    function rawVirtual(u, side) { return M.phi(u === d.mass ? d.split : M.quantile(u, d), d, side); }
+    solution.intervals.forEach(function (p) {
+      cuts.push(p.lower, p.upper);
+      S(chart.layer, "rect", { x: x(p.lower, chart), y: frame.top, width: x(p.upper, chart) - x(p.lower, chart),
+        height: frame.bottom - frame.top, "class": "pool-shade" });
+    });
+    cuts.sort(function (a, b) { return a - b; });
+    cuts.slice(1).forEach(function (b, i) {
+      var a = cuts[i];
+      if (b <= a) { return; }
+      path(chart, function (u) { return M.integratedVirtual(u, d); }, a, b, "integrated-curve");
+    });
+    solution.intervals.forEach(function (p) {
+      path(chart, function (u) { return M.convexIntegrated(u, solution); }, p.lower, p.upper, "hull-curve", 1);
+      path(chart, function () { return p.virtual; }, p.lower, p.upper, "ironed-virtual-curve", 1, virtualDomain);
+    });
+    path(chart, function (u) { return rawVirtual(u, "left"); }, 0, d.mass, "raw-curve", 1, virtualDomain);
+    path(chart, function (u) { return rawVirtual(u, "right"); }, d.mass, 1, "raw-curve", 1, virtualDomain);
+    if (d.mass !== d.split) {
+      ["left", "right"].forEach(function (side) {
+        S(chart.layer, "circle", { cx: x(d.mass, chart), cy: y(M.phi(d.split, d, side), virtualDomain),
+          r: 4, "class": side === "left" ? "limit-open" : "limit-closed" });
+      });
+    }
+    S(chart.layer, "text", { x: x(0.2, chart), y: Math.min(frame.bottom - 10, y(rawVirtual(0.2, "right"), virtualDomain) + 17),
+      "class": "virtual-value-label annotation-halo" }, "φ ∘ F⁻¹");
+    chart.distribution = d;
+  }
+  function select(chart, selected) {
+    for (var i = 0; i < chart.handles.children.length; i += 1) {
+      chart.handles.children[i].classList.toggle("selected", i === selected);
+    }
+  }
   function render(charts, rule, benchmark, selected) {
-    Object.keys(charts).forEach(function (key) { charts[key].layer.replaceChildren(); });
-    var d = rule.distribution, lower = Math.min(-1, Math.floor(-d.split / d.mass));
+    ["allocation", "payment", "feasibility"].forEach(function (key) { charts[key].layer.replaceChildren(); });
     setDomain(charts.allocation, [0, 1], [0, 0.5, 1]);
     shade(charts.allocation, benchmark);
     rule.pieces.forEach(function (p) {
@@ -78,40 +122,7 @@
         }
       }
     });
-    var chart = charts.integrated, cuts = [0, d.mass, 1];
-    // The minimum of H is at a branch virtual zero or a density boundary.
-    var peak = Math.max.apply(null, [0, d.split, 1, d.split / (2 * d.mass), 0.5].map(function (v) {
-      return -M.integratedVirtual(M.cdf(Math.min(1, v), d), d);
-    }));
-    var depth = Math.ceil(peak * 10) / 10, virtualDomain = [lower, 1];
-    setDomain(chart, [-depth, 0], [-depth, -depth / 2, 0]);
-    secondaryAxis(chart, virtualDomain);
-    function rawVirtual(u, side) { return M.phi(u === d.mass ? d.split : M.quantile(u, d), d, side); }
-    benchmark.ironing.intervals.forEach(function (p) {
-      cuts.push(p.lower, p.upper);
-      S(chart.layer, "rect", { x: x(p.lower, chart), y: frame.top, width: x(p.upper, chart) - x(p.lower, chart),
-        height: frame.bottom - frame.top, "class": "pool-shade" });
-    });
-    cuts.sort(function (a, b) { return a - b; });
-    cuts.slice(1).forEach(function (b, i) {
-      var a = cuts[i];
-      if (b <= a) { return; }
-      path(chart, function (u) { return M.integratedVirtual(u, d); }, a, b, "integrated-curve");
-    });
-    benchmark.ironing.intervals.forEach(function (p) {
-      path(chart, function (u) { return M.convexIntegrated(u, benchmark.ironing); }, p.lower, p.upper, "hull-curve", 1);
-      path(chart, function () { return p.virtual; }, p.lower, p.upper, "ironed-virtual-curve", 1, virtualDomain);
-    });
-    path(chart, function (u) { return rawVirtual(u, "left"); }, 0, d.mass, "raw-curve", 1, virtualDomain);
-    path(chart, function (u) { return rawVirtual(u, "right"); }, d.mass, 1, "raw-curve", 1, virtualDomain);
-    if (d.mass !== d.split) {
-      ["left", "right"].forEach(function (side) {
-        S(chart.layer, "circle", { cx: x(d.mass, chart), cy: y(M.phi(d.split, d, side), virtualDomain),
-          r: 4, "class": side === "left" ? "limit-open" : "limit-closed" });
-      });
-    }
-    S(chart.layer, "text", { x: x(0.2, chart), y: Math.min(frame.bottom - 10, y(rawVirtual(0.2, "right"), virtualDomain) + 17),
-      "class": "virtual-value-label annotation-halo" }, "φ ∘ F⁻¹");
+    renderIntegrated(charts.integrated, rule.distribution, benchmark.ironing);
     var feasibility = rule.feasibility;
     setDomain(charts.feasibility, [0, rule.n], [0, rule.n / 2, rule.n]);
     var masses = [0, 1, 1 - feasibility.witness.u];
@@ -142,8 +153,8 @@
       var side = i < rule.points.length - 1 && p.v === rule.points[i + 1].v ? "; left limit" :
         (i > 0 && p.v === rule.points[i - 1].v ? "; right-continuous value" : "");
       handle.setAttribute("aria-valuetext", "Value " + p.v.toFixed(3) + ", allocation " + p.q.toFixed(3) + side);
-      handle.classList.toggle("selected", i === selected);
     });
+    select(charts.allocation, selected);
   }
   function pointer(svg, event) {
     var point = svg.createSVGPoint(); point.x = event.clientX; point.y = event.clientY;
@@ -173,5 +184,5 @@
     document.getElementById("value-pdf-preview-description").textContent = "Piecewise-uniform density " + d.lowerDensity.toFixed(4) + " below value " +
       d.split.toFixed(4) + ", and " + d.upperDensity.toFixed(4) + " above it. Lower-interval probability " + d.mass.toFixed(4) + ".";
   }
-  global.IroningCharts = Object.freeze({ create: create, render: render, density: density, pointer: pointer, frame: frame });
+  global.IroningCharts = Object.freeze({ create: create, render: render, select: select, density: density, pointer: pointer, frame: frame });
 })(window);

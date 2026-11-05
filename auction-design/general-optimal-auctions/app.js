@@ -10,6 +10,7 @@
     feasibility: C.create(el("feasibility-chart"), [0, 2], [0, 1, 2])
   };
   var benchmark = M.benchmark(state.n, state.distribution), announceTimer = null;
+  var cachedRule = null, drawnRule = null, drawnBenchmark = null, drawnDistribution = null;
   function fixed(x) { return (Math.abs(x) < 0.0000005 ? 0 : x).toFixed(6); }
   function cancelDrag() {
     var pointerId = state.drag, svg = el("allocation-chart");
@@ -50,14 +51,20 @@
     el("distribution-error").textContent = "";
   }
   function currentRule() {
-    var rule = state.chosen ? M.adoptedRule(state.chosen, state.n, state.distribution) : M.diagnose(state.points, state.n, state.distribution);
-    rule.points = state.points;
-    return rule;
+    if (!cachedRule) {
+      cachedRule = state.chosen ? M.adoptedRule(state.chosen, state.n, state.distribution) : M.diagnose(state.points, state.n, state.distribution);
+    }
+    cachedRule.points = state.points;
+    return cachedRule;
   }
   function render() {
     var rule = currentRule();
-    C.render(charts, rule, benchmark, state.selected);
-    C.density(el("value-pdf-preview"), state.distribution);
+    if (rule !== drawnRule || benchmark !== drawnBenchmark) {
+      C.render(charts, rule, benchmark, state.selected); drawnRule = rule; drawnBenchmark = benchmark;
+    } else { C.select(charts.allocation, state.selected); }
+    if (drawnDistribution !== state.distribution) {
+      C.density(el("value-pdf-preview"), state.distribution); drawnDistribution = state.distribution;
+    }
     el("distribution-status").textContent = benchmark.ironing.intervals.length ? "Irregular distribution" : "Regular distribution";
     syncControls();
     var ic = el("bic-status"), feasible = el("feasibility-status");
@@ -71,7 +78,8 @@
     el("payment-kind").textContent = rule.valid ? "Zero lowest-type utility" : "Envelope candidate; truthful implementation fails";
     el("revenue-value").textContent = fixed(rule.revenue);
     el("revenue-value").dataset.value = rule.revenue;
-    el("interpolation-kind").textContent = state.chosen ? "Exact optimal curves; editing connects displayed points linearly in value." : "Interpolation: linear in value.";
+    el("interpolation-kind").textContent = state.chosen ? "Exact " + (state.chosen.kind === "efficient" ? "efficient" : "optimal") +
+      " curves; editing connects displayed points linearly in value." : "Interpolation: linear in value.";
     el("pool-summary").textContent = benchmark.ironing.intervals.length ? benchmark.ironing.intervals.map(function (p) {
       return "Optimal ironing quantile: [" + p.lower.toFixed(4) + ", " + p.upper.toFixed(4) + "] (corresponds to [" +
         p.a.toFixed(4) + ", " + p.b.toFixed(4) + "] on value axis)";
@@ -98,7 +106,7 @@
     q = clamp(q, 0, 1);
     // Clamping or moving an endpoint horizontally must not linearize an exact rule.
     if (v !== p.v || q !== p.q) {
-      state.chosen = null;
+      state.chosen = null; cachedRule = null;
       p.v = v; p.q = q;
     }
     render();
@@ -111,17 +119,22 @@
       afterCommit: syncControls
     });
   }
+  function loadEfficient() {
+    state.chosen = M.efficient(state.n, state.distribution); state.points = state.chosen.points;
+    state.selected = Math.floor(state.points.length / 2); cachedRule = null;
+    render();
+  }
 
   bindNumberPair("value", function (v) { edit(v, state.points[state.selected].q); });
   bindNumberPair("allocation", function (q) { edit(state.points[state.selected].v, q); });
   el("bidder-number").addEventListener("input", function () {
     cancelDrag(); state.n = clamp(Math.round(Number(this.value)), 2, 5); benchmark = M.benchmark(state.n, state.distribution);
-    render();
+    loadEfficient();
   });
   function changeDistribution(split, mass) {
     cancelDrag();
     var next = M.distribution(clamp(split, 0.1, 0.9), clamp(mass, 0.1, 0.9));
-    state.distribution = next; benchmark = M.benchmark(state.n, next);
+    state.distribution = next; benchmark = M.benchmark(state.n, next); cachedRule = null;
     render();
   }
   bindNumberPair("split", function (v) { changeDistribution(v, state.distribution.mass); }, "distribution-error");
@@ -130,12 +143,11 @@
     state.n = 2; changeDistribution(M.defaultDistribution.split, M.defaultDistribution.mass);
   });
   el("use-optimum").addEventListener("click", function () {
-    cancelDrag(); state.chosen = benchmark; state.points = M.optimalPoints(benchmark);
+    cancelDrag(); state.chosen = benchmark; state.points = M.optimalPoints(benchmark); cachedRule = null;
     state.selected = Math.floor(state.points.length / 2); render();
   });
   el("reset-button").addEventListener("click", function () {
-    cancelDrag(); state.chosen = null; state.points = M.initial(state.n, state.distribution); state.selected = Math.floor(state.points.length / 2);
-    render();
+    cancelDrag(); loadEfficient();
   });
   el("add-point").addEventListener("click", function () {
     cancelDrag();
@@ -147,11 +159,11 @@
     if (i < 0) { return; }
     var v = (state.points[i].v + state.points[i + 1].v) / 2;
     var q = M.evaluate(currentRule(), v).q;
-    state.points.splice(i + 1, 0, { v: v, q: q }); state.selected = i + 1; render();
+    state.points.splice(i + 1, 0, { v: v, q: q }); state.selected = i + 1; cachedRule = null; render();
   });
   el("remove-point").addEventListener("click", function () {
     if (limits().endpoint) { return; }
-    cancelDrag(); state.chosen = null; state.points.splice(state.selected, 1); state.selected = Math.min(state.selected, state.points.length - 1); render();
+    cancelDrag(); state.chosen = null; state.points.splice(state.selected, 1); state.selected = Math.min(state.selected, state.points.length - 1); cachedRule = null; render();
   });
   var svg = el("allocation-chart");
   svg.addEventListener("focusin", function (event) {

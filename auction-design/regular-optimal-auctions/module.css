@@ -35,6 +35,17 @@
 .regular-optimal-auctions-page .validation-text { color: var(--error-text); display: block; font-size: 0.86rem; }
 .regular-optimal-auctions-page .constraint-status { text-align: left; margin: 0; font-size: 0.86rem; }
 .regular-optimal-auctions-page .payment-output { margin: 0; text-align: left; font-size: 0.86rem; font-variant-numeric: tabular-nums; }
+.regular-optimal-auctions-page #revenue-diagnostic {
+  grid-column: 1 / -1;
+  color: var(--green);
+  margin-top: calc(-1 * var(--chart-row-gap));
+  min-height: 2.8em;
+  line-height: 1.4;
+}
+.regular-optimal-auctions-page .allocation-actions { display: flex; flex-wrap: wrap; gap: 0 1rem; }
+.regular-optimal-auctions-page .distribution-parameter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.regular-optimal-auctions-page .distribution-support { margin: 0.2rem 0 0; font-size: 0.86rem; }
+.regular-optimal-auctions-page #reset-parameters { margin-top: 0; }
 .regular-optimal-auctions-page [data-bic="false"] { color: var(--red); }
 .regular-optimal-auctions-page [data-bic="true"] { color: var(--green); }
 .regular-optimal-auctions-page .axis { fill: none; stroke: var(--axis); stroke-width: 1; }
@@ -46,6 +57,7 @@
 .regular-optimal-auctions-page .chart-360x300 .bidder-two { fill: var(--orange); }
 @media (max-width: 600px) {
   .regular-optimal-auctions-page .allocation-diagnostics { grid-template-columns: minmax(0, 1fr); }
+  .regular-optimal-auctions-page .distribution-parameter-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Appendix derivations use the drawer's text size and wrap explanations below each step. */

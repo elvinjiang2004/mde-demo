@@ -94,11 +94,31 @@
       </div>
       <p>
         In the interactive demo, design a direct selling mechanism for two
-        buyers. Notice when reducing allocation probability increases expected revenue. Here, \(V_1,V_2\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Uniform}[0,1]\).
+        buyers. Notice where reducing allocation probability increases expected revenue.
+        Here, \(V_i\overset{\mathrm{ind.}}{\sim}\mathrm{Uniform}[\epsilon_i,\epsilon_i+1]\), \(i=1,2\), with \(\epsilon_i\in\{0,0.1,\ldots,1\}\).
       </p>
     </section>
-    <section id="model-specifications" class="model-specifications" hidden></section>
-    <section id="auction-demo" class="explorable-divider" aria-label="Optimal auction allocation editor">
+    <section id="distribution-controls" class="model-specifications" aria-label="Buyer value distributions">
+      <div class="parameter-grid distribution-parameter-grid">
+        <div class="shape-parameter">
+          <div class="shape-label-row"><label for="shift-1-number">Buyer 1 shift, \(\epsilon_1\)</label>
+            <input id="shift-1-number" class="shape-number-input" type="number" min="0" max="1" step="0.1" value="0.0" aria-describedby="distribution-support-1"></div>
+          <input id="shift-1-range" type="range" min="0" max="1" step="0.1" value="0" aria-label="Buyer 1 distribution shift" aria-describedby="distribution-support-1">
+          <div class="range-endpoints" aria-hidden="true"><span>0</span><span>1</span></div>
+          <p id="distribution-support-1" class="distribution-support">\(V_1\sim\mathrm{Uniform}[0.0,1.0]\)</p>
+        </div>
+        <div class="shape-parameter">
+          <div class="shape-label-row"><label for="shift-2-number">Buyer 2 shift, \(\epsilon_2\)</label>
+            <input id="shift-2-number" class="shape-number-input" type="number" min="0" max="1" step="0.1" value="0.0" aria-describedby="distribution-support-2"></div>
+          <input id="shift-2-range" type="range" min="0" max="1" step="0.1" value="0" aria-label="Buyer 2 distribution shift" aria-describedby="distribution-support-2">
+          <div class="range-endpoints" aria-hidden="true"><span>0</span><span>1</span></div>
+          <p id="distribution-support-2" class="distribution-support">\(V_2\sim\mathrm{Uniform}[0.0,1.0]\)</p>
+        </div>
+      </div>
+      <button id="reset-parameters" class="text-button" type="button">Reset parameters</button>
+      <output id="distribution-error" class="validation-text" role="alert"></output>
+    </section>
+    <section id="auction-demo" aria-label="Optimal auction allocation editor">
       <div class="main-diagnostic-layout">
         <div class="main-column main-column-480">
           <div class="chart-column">
@@ -134,7 +154,10 @@
                   <div class="range-label-row"><label for="brush-q2">\(q_2\)</label><input id="brush-q2" class="range-number-input" type="number" min="0" max="1" step="0.01" value="0" inputmode="decimal"></div>
                 </div>
               </div>
-              <button id="reset-button" class="text-button" type="button" aria-label="Reset to the efficient allocation">Reset</button>
+              <div class="allocation-actions">
+                <button id="reset-button" class="text-button" type="button">Use efficient mechanism</button>
+                <button id="optimal-button" class="text-button" type="button">Use optimal mechanism</button>
+              </div>
               <output id="brush-error" class="validation-text" role="status"></output>
             </div>
           </aside>
@@ -180,7 +203,6 @@
               <p class="chart-x-axis-label diagnostic-axis-label">Bidder 1 value, \(v_1\)</p>
 
             </div>
-            <p class="chart-diagnostic payment-output">Expected payment from bidder 1: <output id="expected-payment-1"></output><span id="payment-status-1"></span></p>
           </figure>
           <figure class="chart-figure diagnostic-figure">
             <figcaption><span id="payment-caption-2">Interim payment</span>, \(P_2(v_2)\)</figcaption>
@@ -194,8 +216,8 @@
               <p class="chart-x-axis-label diagnostic-axis-label">Bidder 2 value, \(v_2\)</p>
 
             </div>
-            <p class="chart-diagnostic payment-output">Expected payment from bidder 2: <output id="expected-payment-2"></output><span id="payment-status-2"></span></p>
           </figure>
+          <p id="revenue-diagnostic" class="chart-diagnostic payment-output">Expected revenue = expected payment from buyer 1 (<output id="expected-payment-1"></output><span id="payment-status-1"></span>) + expected payment from buyer 2 (<output id="expected-payment-2"></output><span id="payment-status-2"></span>) = <output id="revenue-value"></output><span id="revenue-status"></span></p>
         </div>
       </div>
       <p id="live-summary" class="sr-only" aria-live="polite" aria-atomic="true"></p>
@@ -535,7 +557,7 @@
         Since he will accept the price when his value \(v_i\gt \rho_i\) and reject it when \(v_i\leq \rho_i\),
         it is just the probability his value is greater than the price \(1-F_i(\rho_i)\).
         We can interpret \(1-F_i(\rho_i)\) as the quantity demanded by a population at price \(\rho_i\),
-        \(\omicron_i(\rho_i)\); it answers, on average, how much of the object will buyer \(i\) purchase at price \(\rho_i\)?
+        \(\omicron_i(\rho_i)\); it answers "On average, how much of the object will buyer \(i\) purchase at price \(\rho_i\)?"
         The inverse demand curve is then \(\rho_i(\omicron_i)=F_i^{-1}(1-\omicron_i)\), making the revenue function \(R_i(\omicron_i)\)
       </p>
       <div class="equation-display" role="region" tabindex="0" aria-label="Revenue as price times quantity">
@@ -596,7 +618,7 @@
       <div class="equation-display" role="region" tabindex="0" aria-label="Marginal revenue as price minus the price decrease from selling more quantity">
         \[
           \begin{aligned}
-            \frac{dR_i}{d\omicron_i}&=\underbrace{\rho_i}_{\text{Extra-quantity effect}}\,-\underbrace{\frac{1-F_i(\rho_i)}{f_i(\rho_i)}}_{\text{Reduced-price effect}}.\\
+            \frac{dR_i}{d\omicron_i}=\phi_i(\rho_i)=\underbrace{\rho_i}_{\text{Extra-quantity effect}}\,-\underbrace{\frac{1-F_i(\rho_i)}{f_i(\rho_i)}}_{\text{Reduced-price effect}}.\\
           \end{aligned}
         \]
       </div>
