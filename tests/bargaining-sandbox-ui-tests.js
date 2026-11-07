@@ -437,8 +437,8 @@
               .getAttribute("data-latex");
           });
           assert(indicatorTex.length === 6 && indicatorTex.every(function (tex) {
-            return tex.includes("\\mathbb{1}(") && !tex.includes("\\mathbf{1}");
-          }), "Every table indicator should use blackboard-bold 1 with parentheses.");
+            return tex.includes("\\mathbb{1}\\{") && tex.includes("\\}") && !tex.includes("\\mathbf{1}");
+          }), "Every table indicator should use blackboard-bold 1 with event braces.");
           assert(details.tagName === "DETAILS" && !details.open,
             "Mechanism Details should start collapsed.");
           details.querySelector("summary").click();

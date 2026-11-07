@@ -203,7 +203,7 @@
             equation.getAttribute("aria-label").includes("conditional") &&
             equation.getAttribute("aria-label").includes("greater than") &&
             !equation.getAttribute("aria-label").includes("or equal") &&
-            equation.querySelector('[data-mml-node="math"][data-latex*="v_i > Y_1"]'),
+            /v_i\s*\\gt\s*Y_1/.test(equation.querySelector('[data-mml-node="math"]').getAttribute("data-latex")),
           "The rendered equilibrium equation should retain its accessible meaning.");
           var definition = introduction.querySelector(".highest-value-definition");
           assert(definition && definition.querySelector('mjx-container[jax="SVG"]') &&

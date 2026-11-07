@@ -88,7 +88,7 @@
         <li>
           There exists an integrable function
           \(b:T\to\mathbb{R}_{+}\) such that
-          \(\lvert f_t(x,t)\rvert\le b(t)\) for all \(x\in X\) and almost all
+          \(\lvert f_t(x,t)\rvert\leq b(t)\) for all \(x\in X\) and almost all
           \(t\in T\).
         </li>
       </ol>
@@ -237,37 +237,37 @@
         <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
         <span class="equation-step-rhs">\(\displaystyle U_i(v_{i,2})\geq U_i(v_{i,2},v_{i,1})\)</span>
 
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle \iff v_{i,1}Q_i(v_{i,1})-P_i(v_{i,1})\geq v_{i,1}Q_i(v_{i,2})-P_i(v_{i,2})\)</span>
+        <span class="equation-step-connector">\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs">\(\displaystyle v_{i,1}Q_i(v_{i,1})-P_i(v_{i,1})\geq v_{i,1}Q_i(v_{i,2})-P_i(v_{i,2})\)</span>
         <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
         <span class="equation-step-rhs">\(\displaystyle v_{i,2}Q_i(v_{i,2})-P_i(v_{i,2})\geq v_{i,2}Q_i(v_{i,1})-P_i(v_{i,1})\)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false"
           aria-label="Show or hide intermediate monotonicity steps" hidden><span
             class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
-        <span class="equation-step-connector equation-step-extra" hidden></span>
-        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle \iff v_{i,1}Q_i(v_{i,1})-v_{i,1}Q_i(v_{i,2})\geq P_i(v_{i,1})-P_i(v_{i,2})\)</span>
+        <span class="equation-step-connector equation-step-extra" hidden>\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle v_{i,1}Q_i(v_{i,1})-v_{i,1}Q_i(v_{i,2})\geq P_i(v_{i,1})-P_i(v_{i,2})\)</span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \text{and}\)</span>
         <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_{i,2}Q_i(v_{i,2})-v_{i,2}Q_i(v_{i,1})\geq P_i(v_{i,2})-P_i(v_{i,1})\)</span>
 
-        <span class="equation-step-connector equation-step-extra" hidden></span>
-        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle \iff v_{i,1}(Q_i(v_{i,1})-Q_i(v_{i,2}))\geq P_i(v_{i,1})-P_i(v_{i,2})\)</span>
+        <span class="equation-step-connector equation-step-extra" hidden>\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs equation-step-extra" hidden>\(\displaystyle v_{i,1}(Q_i(v_{i,1})-Q_i(v_{i,2}))\geq P_i(v_{i,1})-P_i(v_{i,2})\)</span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle \text{and}\)</span>
         <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle v_{i,2}(Q_i(v_{i,2})-Q_i(v_{i,1}))\geq P_i(v_{i,2})-P_i(v_{i,1}).\)</span>
 
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle \iff -v_{i,1}(Q_i(v_{i,2})-Q_i(v_{i,1}))\geq P_i(v_{i,1})-P_i(v_{i,2})\)</span>
+        <span class="equation-step-connector">\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs">\(\displaystyle -v_{i,1}(Q_i(v_{i,2})-Q_i(v_{i,1}))\geq P_i(v_{i,1})-P_i(v_{i,2})\)</span>
         <span class="equation-step-relation">\(\displaystyle \text{and}\)</span>
         <span class="equation-step-rhs">\(\displaystyle v_{i,2}(Q_i(v_{i,2})-Q_i(v_{i,1}))\geq P_i(v_{i,2})-P_i(v_{i,1})\)</span>
 
-        <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle \implies (v_{i,2}-v_{i,1})(Q_i(v_{i,2})-Q_i(v_{i,1}))\)</span>
+        <span class="equation-step-connector">\(\displaystyle \implies\)</span>
+        <span class="equation-step-lhs">\(\displaystyle (v_{i,2}-v_{i,1})(Q_i(v_{i,2})-Q_i(v_{i,1}))\)</span>
         <span class="equation-step-relation">\(\displaystyle \geq\)</span>
         <span class="equation-step-rhs">\(\displaystyle 0.\)</span>
       </div>
 
       <p>
-        Then, since \(v_{i,2}>v_{i,1}\), we have \(Q_i(v_{i,2})-Q_i(v_{i,1})\geq 0\),
+        Then, since \(v_{i,2}\gt v_{i,1}\), we have \(Q_i(v_{i,2})-Q_i(v_{i,1})\geq 0\),
         so \(Q_i\) is weakly increasing.
         Additionally, for all \(v_i\in[\underline{v}_i,\overline{v}_i]\), BIC gives
       </p>
@@ -315,33 +315,33 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle U_i(v_i) - U_i(v_i,v_i') \)</span>
         <span class="equation-step-relation">\(\displaystyle =  \)</span>
-        <span class="equation-step-rhs">\(\displaystyle \left[v_i Q_i(v_i)-P_i(v_i)\right] - \left[v_i Q_i(v_i')-P_i(v_i')\right] \)</span>
+        <span class="equation-step-rhs">\(\displaystyle \left(v_i Q_i(v_i)-P_i(v_i)\right) - \left(v_i Q_i(v_i')-P_i(v_i')\right) \)</span>
 
-        <span class="equation-step-connector">\(\displaystyle  \)</span>
-        <span class="equation-step-lhs">\(\displaystyle  \) </span>
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"> </span>
         <span class="equation-step-relation">\(\displaystyle = \)</span>
-        <span class="equation-step-rhs">\(\displaystyle \left[v_i Q_i(v_i)-\left(v_i Q_i(v_i)-U_i(\underline{v}_i)-\int_{\underline{v}_i}^{v_i} Q_i(t)\, dt\right)\right] - \left[v_i Q_i(v_i')-\left(v_i'Q_i(v_i')-U_i(\underline{v}_i)-\int_{\underline{v}_i}^{v_i'} Q_i(t)\, dt\right)\right] \)</span>
+        <span class="equation-step-rhs">\(\displaystyle \left[v_i Q_i(v_i)-\left(v_i Q_i(v_i)-U_i(\underline{v}_i)-\int_{\underline{v}_i}^{v_i} Q_i(t)\,dt\right)\right] - \left[v_i Q_i(v_i')-\left(v_i'Q_i(v_i')-U_i(\underline{v}_i)-\int_{\underline{v}_i}^{v_i'} Q_i(t)\,dt\right)\right] \)</span>
 
-        <span class="equation-step-connector">\(\displaystyle  \)</span>
-        <span class="equation-step-lhs">\(\displaystyle  \) </span>
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"> </span>
         <span class="equation-step-relation">\(\displaystyle = \)</span>
-        <span class="equation-step-rhs">\(\displaystyle U_i(\underline{v}_i) - U_i(\underline{v}_i) + \int_{\underline{v}_i}^{v_i} Q_i(t)\, dt - v_i Q_i(v_i')+v_i'Q_i(v_i')-\int_{\underline{v}_i}^{v_i'} Q_i(t)\, dt \)</span>
+        <span class="equation-step-rhs">\(\displaystyle U_i(\underline{v}_i) - U_i(\underline{v}_i) + \int_{\underline{v}_i}^{v_i} Q_i(t)\,dt - v_i Q_i(v_i')+v_i'Q_i(v_i')-\int_{\underline{v}_i}^{v_i'} Q_i(t)\,dt \)</span>
 
-        <span class="equation-step-connector">\(\displaystyle  \)</span>
-        <span class="equation-step-lhs">\(\displaystyle  \) </span>
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"> </span>
         <span class="equation-step-relation">\(\displaystyle = \)</span>
-        <span class="equation-step-rhs">\(\displaystyle Q_i(v_i')(v_i'-v_i) + \int_{v_i'}^{v_i} Q_i(t)\, dt \)</span>
+        <span class="equation-step-rhs">\(\displaystyle Q_i(v_i')(v_i'-v_i) + \int_{v_i'}^{v_i} Q_i(t)\,dt \)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{v_i'}^{v_i}\left[Q_i(t)-Q_i(v_i')\right]\,dt.\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{v_i'}^{v_i}\left(Q_i(t)-Q_i(v_i')\right)\,dt.\)</span>
       </div>
       <p class="has-qed">
         Because \(Q_i\) is weakly increasing, this difference is weakly positive for all
         \(v_i,v_i'\in[\underline{v}_i,\overline{v}_i]\).
         If \(v_i'\leq v_i\), the integrand is weakly positive, and the limits are in increasing order;
-        if \(v_i'>v_i\), the integrand is weakly negative, and the limits are in decreasing order.
+        if \(v_i'\gt v_i\), the integrand is weakly negative, and the limits are in decreasing order.
         The argument applies to every buyer, so the mechanism is BIC.
         <span class="qed">\(\blacksquare\)</span>
       </p>

@@ -127,10 +127,41 @@ learning-sidebar.is-open .learning-sidebar-toggle {
   visibility: hidden;
 }
 
+.notation-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0.85rem 0 0.15rem;
+  font-size: inherit;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.notation-section-heading::before,
+.notation-section-heading::after {
+  content: "";
+  flex: 1 0 1rem;
+  height: 1px;
+  background: var(--line-light);
+}
+
+.notation-section-label {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.notation-section-heading:first-child {
+  margin-top: 0;
+}
+
 .notation-group {
   margin: 0;
   padding: 0.5rem 0;
   border-bottom: 1px solid var(--line-light);
+}
+
+.notation-group-before-section {
+  border-bottom: 0;
 }
 
 .notation-entry {

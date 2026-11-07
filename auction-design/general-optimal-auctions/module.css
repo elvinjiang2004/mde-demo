@@ -1,13 +1,13 @@
-.general-optimal-auctions-page .introduction .equation-display {
+.general-optimal-auctions-page .equation-display {
   overflow-x: auto;
   flex-wrap: nowrap;
   justify-content: flex-start;
 }
-.general-optimal-auctions-page .introduction .equation-display > mjx-container[jax="SVG"][display="true"] {
+.general-optimal-auctions-page .equation-display > mjx-container[jax="SVG"][display="true"] {
   flex: 0 0 auto;
   margin-inline: auto;
 }
-.general-optimal-auctions-page .introduction .equation-display:focus-visible {
+.general-optimal-auctions-page .equation-display:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }

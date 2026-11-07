@@ -22,10 +22,23 @@
     return !!walker.nextNode();
   }
 
-  function notationList(groups) {
+  function notationList(groups, sections, prefix) {
     var list = document.createDocumentFragment();
-    groups.forEach(function (entries) {
+    var section = null;
+    var heading;
+    groups.forEach(function (entries, index) {
+      if (sections && sections[index] !== section) {
+        section = sections[index];
+        heading = element("h3", "notation-section-heading");
+        heading.appendChild(element("span", "notation-section-label", section));
+        heading.id = prefix + "-section-" + index;
+        list.appendChild(heading);
+      }
       var group = element("dl", "notation-group");
+      if (heading) { group.setAttribute("aria-labelledby", heading.id); }
+      if (sections && index + 1 < groups.length && sections[index] !== sections[index + 1]) {
+        group.classList.add("notation-group-before-section");
+      }
       entries.forEach(function (entry) {
         var row = element("div", "notation-entry");
         var term = element("dt");
@@ -88,7 +101,7 @@
       panel.appendChild(status);
       var content = element("div", "learning-sidebar-content");
       var tabs = [
-        { id: "page", label: "Page notation", entries: pageEntries, disabled: !pageEntries.length },
+        { id: "page", label: "Page notation", entries: pageEntries, sections: notation.pageNotationSections, disabled: !pageEntries.length },
         { id: "environment", label: "Environment notation", entries: environmentEntries, disabled: !environmentEntries.length },
         { id: "insights", label: "Author Insights", entries: null, disabled: false }
       ];
@@ -163,7 +176,7 @@
           tab.pending = Promise.resolve(needsMath ? window.mechanismMathReady : null).then(function () {
             if (!host.isConnected || panel.hidden || tab.panel.hidden) { return false; }
             if (!tab.prepared) {
-              if (tab.entries) { tab.panel.appendChild(notationList(tab.entries)); }
+              if (tab.entries) { tab.panel.appendChild(notationList(tab.entries, tab.sections, tab.panel.id)); }
               if (tab.id === "insights" && template) {
                 tab.panel.appendChild(template.content.cloneNode(true));
               }

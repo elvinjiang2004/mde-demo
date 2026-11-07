@@ -302,8 +302,10 @@
       </p>
       <div id="interim-payment-rules" class="equation-display" aria-label="BIC implementable interim expected payment rules for the buyer and seller">
         \[
-          P_B(v)=vQ_B(v)-U_B(\underline{v})-\int_{\underline{v}}^v Q_B(t)\,dt,\text{ and }
-          P_S(c)=U_S(\overline{c})+\int_c^{\overline{c}} Q_S(t)\,dt+cQ_S(c).
+          \begin{aligned}
+            P_B(v)&=vQ_B(v)-U_B(\underline{v})-\int_{\underline{v}}^v Q_B(t)\,dt,\quad\text{and}\\
+            P_S(c)&=U_S(\overline{c})+\int_c^{\overline{c}} Q_S(t)\,dt+cQ_S(c).
+          \end{aligned}
         \]
       </div>
       <p>
@@ -311,8 +313,10 @@
       </p>
       <div id="interim-utility-rules" class="equation-display" aria-label="BIC implementable interim expected utility rules for the buyer and seller">
         \[
-          U_B(v)=U_B(\underline{v})+\int_{\underline{v}}^v Q_B(t)\,dt,\text{ and }
-          U_S(c)=U_S(\overline{c})+\int_c^{\overline{c}} Q_S(t)\,dt.
+          \begin{aligned}
+            U_B(v)&=U_B(\underline{v})+\int_{\underline{v}}^v Q_B(t)\,dt,\quad\text{and}\\
+            U_S(c)&=U_S(\overline{c})+\int_c^{\overline{c}} Q_S(t)\,dt.
+          \end{aligned}
         \]
       </div>
       <p>
@@ -337,7 +341,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[p_B(V,C)\right]\)</span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[P_B(V)\right], \text{ by the law of iterated expectations}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[P_B(V)\right]\text{, by the law of iterated expectations}\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
@@ -368,7 +372,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}}\int_{t}^{\overline{v}} Q_B(t)\,f_B(v)\,dv\,dt \text{, by Fubini's Theorem}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}}\int_{t}^{\overline{v}} Q_B(t)\,f_B(v)\,dv\,dt\text{, by Fubini's Theorem}\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
@@ -378,17 +382,17 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} Q_B(t)\left(\int_{\underline{v}}^{\overline{v}} f_B(v)\,dv-\int_{\underline{v}}^{t} f_B(v)\,dv\right)dt\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} Q_B(t)\left(\int_{\underline{v}}^{\overline{v}} f_B(v)\,dv-\int_{\underline{v}}^{t} f_B(v)\,dv\right)\,dt\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} Q_B(t)\left(1-F_B(t)\right)dt\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} Q_B(t)\left(1-F_B(t)\right)\,dt\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} Q_B(v)\left(1-F_B(v)\right)dv.\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} Q_B(v)\left(1-F_B(v)\right)\,dv.\)</span>
       </div>
 
       <p>
@@ -399,7 +403,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[p_B(V,C)\right]\)</span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} vQ_B(v)\,f_B(v)\,dv - \int_{\underline{v}}^{\overline{v}} U_B(\underline{v})\,f_B(v)\,dv - \int_{\underline{v}}^{\overline{v}} Q_B(v)\left(1-F_B(v)\right)dv\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}}^{\overline{v}} vQ_B(v)\,f_B(v)\,dv - \int_{\underline{v}}^{\overline{v}} U_B(\underline{v})\,f_B(v)\,dv - \int_{\underline{v}}^{\overline{v}} Q_B(v)\left(1-F_B(v)\right)\,dv\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
@@ -447,7 +451,7 @@
         <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \int_{\underline{v}}^{\overline{v}} \int_{\underline{c}}^{\overline{c}} q(v,c)\,f_S(c)\,dc\,\phi_B(v)\,f_B(v)\,dv, \text{ by the definition of } Q_B(v)\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \int_{\underline{v}}^{\overline{v}} \int_{\underline{c}}^{\overline{c}} q(v,c)\,f_S(c)\,dc\,\phi_B(v)\,f_B(v)\,dv\text{, by the definition of } Q_B(v)\)</span>
 
         <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
@@ -462,7 +466,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[q(V,C)\,\phi_B(V)\right], \text{ by the law of iterated expectations.}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[q(V,C)\,\phi_B(V)\right]\text{, by the law of iterated expectations}.\)</span>
 
       </div>
 
@@ -496,7 +500,7 @@
       <h2 id="efficiency-title">Efficiency</h2>
       <p>
         The efficient allocation rule specifies trade when \(v\geq c\) and no trade
-        when \(v&lt;c\). That is, \(q^*(v,c)=\mathbb{1}(v\geq c)\) is the efficient
+        when \(v\lt c\). That is, \(q^*(v,c)=\mathbb{1}\{v\geq c\}\) is the efficient
         allocation rule. This has interim allocation probabilities
       </p>
 
@@ -527,33 +531,33 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[\mathbb{1}(V\geq C)\,(\phi_B(V)-\phi_S(C))\right]\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[\mathbb{1}\{V\geq C\}\,(\phi_B(V)-\phi_S(C))\right]\)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
         <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}\!\left[\mathbb{1}(V\geq C)\,\left(V-\frac{1-F_B(V)}{f_B(V)}-\left(C+\frac{F_S(C)}{f_S(C)}\right)\right)\right], \text{ by the definition of } \phi_B \text{ and } \phi_S\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}\!\left[\mathbb{1}\{V\geq C\}\,\left(V-\frac{1-F_B(V)}{f_B(V)}-\left(C+\frac{F_S(C)}{f_S(C)}\right)\right)\right]\text{, by the definition of } \phi_B \text{ and } \phi_S\)</span>
 
         <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}\!\left[\mathbb{1}(V\geq C)\,(V-C)\right]-\mathbb{E}\!\left[\mathbb{1}(V\geq C)\,\frac{1-F_B(V)}{f_B(V)}\right]-\mathbb{E}\!\left[\mathbb{1}(V\geq C)\,\frac{F_S(C)}{f_S(C)}\right]\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}\!\left[\mathbb{1}\{V\geq C\}\,(V-C)\right]-\mathbb{E}\!\left[\mathbb{1}\{V\geq C\}\,\frac{1-F_B(V)}{f_B(V)}\right]-\mathbb{E}\!\left[\mathbb{1}\{V\geq C\}\,\frac{F_S(C)}{f_S(C)}\right]\)</span>
 
         <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}\!\left[\mathbb{1}(V\geq C)\,(V-C)\right]-\int_{\underline{v}}^{\overline{v}} \int_{\underline{c}}^{\overline{c}} \mathbb{1}(v\geq c) \frac{1-F_B(v)}{f_B(v)}\,f_S(c)\,f_B(v)\,dc\,dv-\int_{\underline{c}}^{\overline{c}} \int_{\underline{v}}^{\overline{v}} \mathbb{1}(v\geq c) \frac{F_S(c)}{f_S(c)}\,f_B(v)\,f_S(c)\,dv\,dc\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}\!\left[\mathbb{1}\{V\geq C\}\,(V-C)\right]-\int_{\underline{v}}^{\overline{v}} \int_{\underline{c}}^{\overline{c}} \mathbb{1}\{v\geq c\} \frac{1-F_B(v)}{f_B(v)}\,f_S(c)\,f_B(v)\,dc\,dv-\int_{\underline{c}}^{\overline{c}} \int_{\underline{v}}^{\overline{v}} \mathbb{1}\{v\geq c\} \frac{F_S(c)}{f_S(c)}\,f_B(v)\,f_S(c)\,dv\,dc\)</span>
 
         <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}\!\left[\mathbb{1}(V\geq C)\,(V-C)\right]-\int_{\underline{v}}^{\overline{v}} \int_{\underline{c}}^{v} f_S(c)\,dc\,(1-F_B(v))\,dv-\int_{\underline{c}}^{\overline{c}} \int_{c}^{\overline{v}}f_B(v)\,dv\,F_S(c)\,dc\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \mathbb{E}\!\left[\mathbb{1}\{V\geq C\}\,(V-C)\right]-\int_{\underline{v}}^{\overline{v}} \int_{\underline{c}}^{v} f_S(c)\,dc\,(1-F_B(v))\,dv-\int_{\underline{c}}^{\overline{c}} \int_{c}^{\overline{v}}f_B(v)\,dv\,F_S(c)\,dc\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[\mathbb{1}(V\geq C)\,(V-C)\right]-\int_{\underline{v}}^{\overline{v}} F_S(v)\left(1-F_B(v)\right)\,dv-\int_{\underline{c}}^{\overline{c}} (1-F_B(c)) F_S(c)\,dc\geq 0\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[\mathbb{1}\{V\geq C\}\,(V-C)\right]-\int_{\underline{v}}^{\overline{v}} F_S(v)\left(1-F_B(v)\right)\,dv-\int_{\underline{c}}^{\overline{c}} (1-F_B(c)) F_S(c)\,dc\geq 0\)</span>
 
       </div>
 
@@ -565,32 +569,32 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation"></span>
-        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[\mathbb{1}(V\geq C)\,(V-C)\right]\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[\mathbb{1}\{V\geq C\}\,(V-C)\right]\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\!\!\int_{-\infty}^{\infty}\mathbb{1}(c\leq v)\,(v-c)\,f_B(v)f_S(c)\,dv\,dc\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\!\!\int_{-\infty}^{\infty}\mathbb{1}\{c\leq v\}\,(v-c)\,f_B(v)f_S(c)\,dv\,dc\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\!\!\int_{-\infty}^{\infty}\left(\int_{-\infty}^{\infty}\mathbb{1}(c\leq t)\,\mathbb{1}(t\leq v)\,dt\right)f_B(v)f_S(c)\,dv\,dc \text{, by the layer-cake representation}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\!\!\int_{-\infty}^{\infty}\left(\int_{-\infty}^{\infty}\mathbb{1}\{c\leq t\}\,\mathbb{1}\{t\leq v\}\,dt\right)f_B(v)f_S(c)\,dv\,dc\text{, by the layer-cake representation}\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\left(\int_{-\infty}^{\infty}\mathbb{1}(c\leq t)f_S(c)\,dc\right)\left(\int_{-\infty}^{\infty}\mathbb{1}(t\leq v)f_B(v)\,dv\right)dt \text{, by Fubini's Theorem}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\left(\int_{-\infty}^{\infty}\mathbb{1}\{c\leq t\}f_S(c)\,dc\right)\left(\int_{-\infty}^{\infty}\mathbb{1}\{t\leq v\}f_B(v)\,dv\right)\,dt\text{, by Fubini's Theorem}\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\left(\int_{-\infty}^{t}f_S(c)\,dc\right)\left(\int_{t}^{\infty}f_B(v)\,dv\right)dt\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty}\left(\int_{-\infty}^{t}f_S(c)\,dc\right)\left(\int_{t}^{\infty}f_B(v)\,dv\right)\,dt\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty} F_S(t)\left(1-F_B(t)\right)dt.\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{-\infty}^{\infty} F_S(t)\left(1-F_B(t)\right)\,dt.\)</span>
       </div>
 
       <p>
@@ -599,7 +603,7 @@
 
       <div class="equation-display" aria-label="v minus c equals the integral from c to v of d t, which equals the integral over the whole line of the indicator that c is at most t times the indicator that t is at most v, d t">
         \[
-          v-c=\int_c^v dt=\int_{-\infty}^{\infty}\mathbb{1}(c\leq t)\,\mathbb{1}(t\leq v)\,dt.
+          v-c=\int_c^v\,dt=\int_{-\infty}^{\infty}\mathbb{1}\{c\leq t\}\,\mathbb{1}\{t\leq v\}\,dt.
         \]
       </div>
 
@@ -622,12 +626,12 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{[\underline{v},\overline{v}]\cup[\underline{c},\overline{c}]}F_S(t)\left(1-F_B(t)\right)dt-\left(\int_{[\underline{v},\overline{v}]}F_S(t)\left(1-F_B(t)\right)dt+\int_{[\underline{c},\overline{c}]}F_S(t)\left(1-F_B(t)\right)dt\right)\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{[\underline{v},\overline{v}]\cup[\underline{c},\overline{c}]}F_S(t)\left(1-F_B(t)\right)\,dt-\left(\int_{[\underline{v},\overline{v}]}F_S(t)\left(1-F_B(t)\right)\,dt+\int_{[\underline{c},\overline{c}]}F_S(t)\left(1-F_B(t)\right)\,dt\right)\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle -\int_{[\underline{v},\overline{v}]\cap[\underline{c},\overline{c}]}F_S(t)\left(1-F_B(t)\right)dt, \text{ by the inclusion-exclusion principle.}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle -\int_{[\underline{v},\overline{v}]\cap[\underline{c},\overline{c}]}F_S(t)\left(1-F_B(t)\right)\,dt\text{, by the inclusion-exclusion principle}.\)</span>
     </div>
 
       <p>

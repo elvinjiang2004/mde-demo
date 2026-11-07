@@ -46,15 +46,15 @@
         a second-price auction in <em>virtual values</em> with reserve values \(r_i=\inf\{t\in T_i\mid\phi_i(t)\geq 0\}\), \(i=1,\ldots,n\).
       </p>
       <p>
-        For each buyer \(i\) and fixed reports \(v_{-i}\), denote his "second price" as
+        For each buyer \(i\), given other buyers' reports \(v_{-i}\), denote his "second price" as
       </p>
       <div id="optimal-critical-value" class="equation-display" role="region" tabindex="0" aria-label="Buyer i's critical winning value for fixed reports by the other buyers">
         \[
           x_i(v_{-i})=\inf\left\{t\in T_i\ \middle|
           \begin{array}{l}
             \phi_i(t)\geq 0,\\
-            \phi_i(t)>\phi_j(v_j)\quad\text{for every }j\lt i,\\
-            \phi_i(t)\geq\phi_j(v_j)\quad\text{for every }j\gt i
+            \phi_i(t)\gt \phi_j(v_j)\text{, for every }j\lt i,\\
+            \phi_i(t)\geq\phi_j(v_j)\text{, for every }j\gt i
           \end{array}
           \right\}.
         \]
@@ -82,7 +82,7 @@
       <div class="equation-display" role="region" tabindex="0" aria-label="Optimal allocation and payment rules">
         \[
           q_i^*(v)=\begin{cases}
-            1 & \text{if }W(v)\neq\varnothing\text{ and }i=\min W(v),\\
+            1 & \text{if }W(v)\ne\varnothing\text{ and }i=\min W(v),\\
             0 & \text{otherwise}
           \end{cases},
           \qquad
@@ -271,7 +271,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[p_i(V)\right]\)</span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[P_i(V_i)\right], \text{ by the law of iterated expectations}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[P_i(V_i)\right]\text{, by the law of iterated expectations}\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
@@ -302,7 +302,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i}\int_{t}^{\overline{v}_i} Q_i(t)\,f_i(v_i)\,dv_i\,dt \text{, by Fubini's Theorem}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i}\int_{t}^{\overline{v}_i} Q_i(t)\,f_i(v_i)\,dv_i\,dt\text{, by Fubini's Theorem}\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
@@ -312,12 +312,12 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} Q_i(t)\left(\int_{\underline{v}_i}^{\overline{v}_i} f_i(v_i)\,dv_i-\int_{\underline{v}_i}^{t} f_i(v_i)\,dv_i\right)dt\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} Q_i(t)\left(\int_{\underline{v}_i}^{\overline{v}_i} f_i(v_i)\,dv_i-\int_{\underline{v}_i}^{t} f_i(v_i)\,dv_i\right)\,dt\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} Q_i(t)\left(1-F_i(t)\right)dt\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} Q_i(t)\left(1-F_i(t)\right)\,dt\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
@@ -381,7 +381,7 @@
         <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} \int_{T_{-i}} q_i(v_i,v_{-i})\,f_{-i}(v_{-i})\,dv_{-i}\,\phi_i(v_i)\,f_i(v_i)\,dv_i, \text{ by the definition of } Q_i(v_i)\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} \int_{T_{-i}} q_i(v_i,v_{-i})\,f_{-i}(v_{-i})\,dv_{-i}\,\phi_i(v_i)\,f_i(v_i)\,dv_i\text{, by the definition of } Q_i(v_i)\)</span>
 
         <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
@@ -396,7 +396,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[q_i(V)\,\phi_i(V_i)\right], \text{ by the law of iterated expectations.}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[q_i(V)\,\phi_i(V_i)\right]\text{, by the law of iterated expectations}.\)</span>
 
       </div>
 
@@ -411,7 +411,7 @@
         <span class="equation-step-rhs">\(\displaystyle \sum_{i=1}^n \mathbb{E}\!\left[p_i(V)\right]\)</span>
 
         <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle \)</span>
+        <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
         <span class="equation-step-rhs">\(\displaystyle -\sum_{i=1}^n U_i(\underline{v}_i)+\mathbb{E}\!\left[\sum_{i=1}^n q_i(V)\,\phi_i(V_i)\right].\)</span>
       </div>
@@ -489,7 +489,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle v_iQ_i^*(v_i)-\int_{\underline{v}_i}^{v_i}\mathbb{E}_{V_{-i}}\!\left[q_i^*(t,V_{-i})\right]\,dt,\text{ by Fubini's theorem}\)</span>
+        <span class="equation-step-rhs">\(\displaystyle v_iQ_i^*(v_i)-\int_{\underline{v}_i}^{v_i}\mathbb{E}_{V_{-i}}\!\left[q_i^*(t,V_{-i})\right]\,dt\text{, by Fubini's theorem}\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
@@ -526,7 +526,7 @@
       <h2 id="notes-title">Notes</h2>
       <ol class="notes-list">
         <li id="optimal-critical-value-note" tabindex="-1">
-          When taking the infimum of an empty set, we use the convention that \(\inf\{\varnothing\}=+\infty\).
+          When taking the infimum of an empty set, we use the convention that \(\inf\varnothing=+\infty\).
           <a href="#optimal-critical-value-note-ref" role="doc-backlink"
             aria-label="Return to the critical winning value">↩</a>
         </li>
@@ -617,9 +617,7 @@
       </p>
       <div class="equation-display" role="region" tabindex="0" aria-label="Marginal revenue as price minus the price decrease from selling more quantity">
         \[
-          \begin{aligned}
-            \frac{dR_i}{d\omicron_i}=\phi_i(\rho_i)=\underbrace{\rho_i}_{\text{Extra-quantity effect}}\,-\underbrace{\frac{1-F_i(\rho_i)}{f_i(\rho_i)}}_{\text{Reduced-price effect}}.\\
-          \end{aligned}
+          \frac{dR_i}{d\omicron_i}=\phi_i(\rho_i)=\underbrace{\rho_i}_{\text{Extra-quantity effect}}-\underbrace{\frac{1-F_i(\rho_i)}{f_i(\rho_i)}}_{\text{Reduced-price effect}}.
         \]
       </div>
       <p>
@@ -630,10 +628,8 @@
       </p>
       <div class="equation-display" role="region" tabindex="0" aria-label="Reduced-price effect as the price decrease times the quantity that would have purchased at the original price">
         \[
-          \begin{aligned}
-            \frac{1-F_i(\rho_i)}{f_i(\rho_i)}&=\underbrace{\frac{1}{f_i(\rho_i)}}_{\text{Price decrease}}\times
-            \underbrace{\left(1-F_i(\rho_i)\right)}_{\text{Quantity affected}}.\\
-          \end{aligned}
+          \frac{1-F_i(\rho_i)}{f_i(\rho_i)}=\underbrace{\frac{1}{f_i(\rho_i)}}_{\text{Price decrease}}\times
+          \underbrace{\left(1-F_i(\rho_i)\right)}_{\text{Quantity affected}}.
         \]
     </template>
   </learning-sidebar>

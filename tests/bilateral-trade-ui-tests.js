@@ -301,7 +301,7 @@
             "The introduction's mathematical notation should render with MathJax.");
           var paymentRuleMath = appDocument.getElementById("interim-payment-rules")
             .querySelector('[data-mml-node="math"]');
-          var paymentRuleTex = paymentRuleMath.getAttribute("data-latex");
+          var paymentRuleTex = paymentRuleMath.getAttribute("data-latex").replace(/&/g, "");
           assert(paymentRuleTex.includes("P_B(v)=") &&
             paymentRuleTex.includes("-U_B(\\underline{v})") &&
             paymentRuleTex.includes("P_S(c)=U_S(\\overline{c})") &&

@@ -200,6 +200,43 @@
     else { return; }
     event.preventDefault(); cancelDrag(); state.selected = index; edit(v, q);
   });
+  var lipschitzLink = el("lipschitz-continuity-link");
+  function openLipschitzProof() {
+    var sidebar = document.querySelector('learning-sidebar[page="general-optimal-auctions"]');
+    var drawer = sidebar.querySelector(".learning-sidebar-panel");
+    var insights = sidebar.querySelector(".learning-sidebar-insights");
+    sidebar.querySelector('[aria-controls="' + insights.id + '"]').click();
+    if (drawer.hidden) { sidebar.querySelector(".learning-sidebar-toggle").click(); }
+    // Wait for lazy Insights and MathJax before focusing the proof.
+    var observer = new MutationObserver(focusProof);
+    function focusProof() {
+      if (drawer.hidden || insights.hidden || insights.hasAttribute("data-render-error")) {
+        observer.disconnect();
+        return;
+      }
+      var proof = el("lipschitz-continuity-insight");
+      if (proof && !insights.hasAttribute("aria-busy")) {
+        observer.disconnect();
+        sidebar.querySelector(".learning-sidebar-content").scrollTop = 0;
+        proof.focus({ preventScroll: true });
+      }
+    }
+    observer.observe(drawer, { attributes: true, childList: true, subtree: true });
+    focusProof();
+  }
+  lipschitzLink.addEventListener("click", function (event) {
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) { return; }
+    event.preventDefault();
+    if (window.location.hash !== lipschitzLink.hash) {
+      window.history.pushState(null, "", lipschitzLink.hash);
+    }
+    openLipschitzProof();
+  });
+  window.addEventListener("hashchange", function () {
+    if (window.location.hash === lipschitzLink.hash) { openLipschitzProof(); }
+  });
   render();
-  MechanismMath.typesetInitial(".introduction, #distribution-controls, #auction-demo");
+  EquationChain.initDividers();
+  MechanismMath.typesetInitial(".introduction, #distribution-controls, #auction-demo, #derivation, #expected-revenue");
+  if (window.location.hash === lipschitzLink.hash) { openLipschitzProof(); }
 })();

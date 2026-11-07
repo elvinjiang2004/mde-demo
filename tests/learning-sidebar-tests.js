@@ -98,6 +98,39 @@
       T.assert(selectedPanel(host).querySelectorAll("dt").length === initialNotation.reduce(function (sum, group) {
         return sum + group.length;
       }, 0), "The initial tab must include every entry from its catalog group.");
+      if (page[1]) {
+        var pageGroups = Array.from(panels[0].querySelectorAll(".notation-group"));
+        T.assert(Array.isArray(notation.pageNotationSections) &&
+          notation.pageNotationSections.length === notation.pageNotation.length,
+          "Every page notation group must identify its first-appearance section.");
+        T.assert(pageGroups.length === notation.pageNotation.length,
+          "Section headings must retain every original notation group.");
+        pageGroups.forEach(function (group, index) {
+          var heading = doc.getElementById(group.getAttribute("aria-labelledby"));
+          T.assert(heading && heading.tagName === "H3" &&
+            heading.textContent === notation.pageNotationSections[index] &&
+            (heading.compareDocumentPosition(group) & win.Node.DOCUMENT_POSITION_FOLLOWING),
+            "Each group must follow its small, accessible section heading.");
+          T.assert(group.querySelectorAll(".notation-entry").length === notation.pageNotation[index].length,
+            "A section heading must not split or combine notation groups.");
+          T.assertClose(parseFloat(win.getComputedStyle(heading).fontSize),
+            parseFloat(win.getComputedStyle(panels[0]).fontSize), 0.01,
+            "Notation section headings must use the drawer's text size.");
+        });
+        T.assert(panels[0].querySelectorAll(".notation-section-heading").length ===
+          notation.pageNotationSections.filter(function (label, index, labels) {
+            return index === 0 || label !== labels[index - 1];
+          }).length, "A section heading must be shared by its consecutive groups.");
+        T.assert(notation.pageNotationSections.indexOf("Additional notation") === -1,
+          "Unused page notation must be removed rather than kept in an Additional notation section.");
+        if (page[0].includes("envelope-theorem")) {
+          var symbols = notation.pageNotation.reduce(function (all, group) {
+            return all.concat(group.map(function (entry) { return entry[0]; }));
+          }, []);
+          T.assert(symbols.indexOf("V_i") === -1 && symbols.indexOf("v_i") >= 0 && symbols.indexOf("v_i'") >= 0,
+            "Removing the unused random value must retain the realized value and report used in Myerson's Lemma.");
+        }
+      }
       if (chart) {
         var after = chart.getBoundingClientRect();
         ["x", "y", "width", "height"].forEach(function (key) {
@@ -111,6 +144,8 @@
       T.assert(!panels[1].hidden && panels[0].hidden && panels[2].hidden, "Environment notation must replace the other groups.");
       T.assert(panels[1].querySelectorAll(".notation-group").length === notation.environmentNotation.length,
         "The environment tab must retain every group from its catalog entry.");
+      T.assert(!panels[1].querySelector(".notation-section-heading"),
+        "Page section headings must stay out of Environment notation.");
       T.assert(panels[1].querySelectorAll("dt").length === notation.environmentNotation.reduce(function (sum, group) {
         return sum + group.length;
       }, 0), "Environment notation must include every entry from the page's environment group.");
@@ -201,6 +236,33 @@
         var bounds = drawer.getBoundingClientRect();
         T.assert(bounds.left >= -1 && bounds.right <= doc.documentElement.clientWidth + 1, "The drawer must fit at " + width + "px.");
         T.assert(content.scrollWidth <= content.clientWidth + 1, "The selected notation must not overflow at " + width + "px.");
+        if (page[1]) {
+          tabs[0].click();
+          await assertMathReady(host);
+          panels[0].querySelectorAll(".notation-section-heading").forEach(function (heading) {
+            var label = heading.querySelector(".notation-section-label");
+            var headingBox = heading.getBoundingClientRect(), labelBox = label.getBoundingClientRect();
+            var contentBox = content.getBoundingClientRect();
+            T.assert(headingBox.left >= contentBox.left - 1 && headingBox.right <= contentBox.right + 1,
+              "The labeled separator must fit the drawer at " + width + "px.");
+            T.assertClose(labelBox.left + labelBox.width / 2, headingBox.left + headingBox.width / 2, 0.75,
+              "The section label must be centered in its separator at " + width + "px.");
+            var before = win.getComputedStyle(heading, "::before");
+            var after = win.getComputedStyle(heading, "::after");
+            T.assert(parseFloat(before.width) > 0 && parseFloat(after.width) > 0 &&
+              parseFloat(before.height) === 1 && parseFloat(after.height) === 1,
+              "Separator bars must remain visible on both sides of the label at " + width + "px.");
+            T.assertClose(parseFloat(before.width), parseFloat(after.width), 0.75,
+              "The separator bars must balance around the section label.");
+            var previous = heading.previousElementSibling;
+            if (previous && previous.classList.contains("notation-group")) {
+              T.assert(parseFloat(win.getComputedStyle(previous).borderBottomWidth) === 0,
+                "The labeled separator must replace the preceding group border.");
+            }
+          });
+          tabs[1].click();
+          await assertMathReady(host);
+        }
         tabs.forEach(function (tab) {
           var box = tab.getBoundingClientRect();
           T.assert(box.height >= 44 && box.left >= bounds.left && box.right <= bounds.right, "Tabs must remain reachable and touch-sized at " + width + "px.");

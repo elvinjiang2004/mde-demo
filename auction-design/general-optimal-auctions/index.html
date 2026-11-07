@@ -19,6 +19,7 @@
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
   <script defer src="../../js/numeric-controls.js"></script>
+  <script defer src="../../js/equation-chain.js"></script>
 
   <script defer src="model.js"></script>
   <script defer src="charts.js"></script>
@@ -53,8 +54,8 @@
           x_i(v_{-i})=\inf\left\{t\in T_i\ \middle|
           \begin{array}{l}
             \bar{\phi}_i(t)\geq 0,\\
-            \bar{\phi}_i(t)>\bar{\phi}_j(v_j)\quad\text{for every }j\lt i,\\
-            \bar{\phi}_i(t)\geq\bar{\phi}_j(v_j)\quad\text{for every }j\gt i
+            \bar{\phi}_i(t)\gt \bar{\phi}_j(v_j)\text{, for every }j\lt i,\\
+            \bar{\phi}_i(t)\geq\bar{\phi}_j(v_j)\text{, for every }j\gt i
           \end{array}
           \right\}.
         \]
@@ -78,13 +79,27 @@
       <div class="equation-display" role="region" tabindex="0" aria-label="Optimal allocation and payment rules">
         \[
           q_i^*(v)=\begin{cases}
-            1 & \text{if }W(v)\neq\varnothing\text{ and }i=\min W(v),\\
+            1 & \text{if }W(v)\ne\varnothing\text{ and }i=\min W(v),\\
             0 & \text{otherwise}
           \end{cases},
           \qquad
           p_i^*(v)=\begin{cases}
             x_i(v_{-i}) & \text{if }q_i^*(v)=1,\\
             0 & \text{if }q_i^*(v)=0
+          \end{cases}.
+        \]
+      </div>
+      <p>
+        In the interactive demo, design a mechanism for a group of symmetric buyers through its interim allocation rule \(Q(v)\).
+        Notice where reducing allocation probability increases expected revenue, and be careful not to
+        allocate too much to any group of values. Here, all buyers' value PDFs are
+      </p>
+      <div id="demo-value-density" class="equation-display" role="region" tabindex="0" aria-label="Probability density of buyers' values in the demo">
+        \[
+          f(v)=\begin{cases}
+            \dfrac{\pi}{c} & \text{if }v\in[0,c),\\
+            \dfrac{1-\pi}{1-c} & \text{if }v\in[c,1],\\
+            0 & \text{otherwise}
           \end{cases}.
         \]
       </div>
@@ -202,7 +217,127 @@
       <p id="live-summary" class="sr-only" aria-live="polite" aria-atomic="true"></p>
     </section>
 
-    <section id="derivation" hidden><!-- User-authored derivation. --></section>
+    <section id="derivation" class="derivation" aria-labelledby="ironed-virtual-values-title">
+      <h2 id="ironed-virtual-values-title">Ironed virtual values</h2>
+      <p>
+        For each buyer \(i\), denote his virtual value in quantiles as
+      </p>
+      <div class="equation-display" role="region" tabindex="0" aria-label="Buyer i's virtual value in quantiles">
+        \[
+          h_i(\rho)=\phi_i(F_i^{-1}(\rho))
+          =F_i^{-1}(\rho)-\frac{1-\rho}{f_i(F_i^{-1}(\rho))},
+          \qquad \rho\in[0,1].
+        \]
+      </div>
+      <p>
+        The inverse of \(F_i\) exists, because we assume \(f_i\) is continuous and strictly positive.
+        Next, define its integral
+      </p>
+      <div class="equation-display" role="region" tabindex="0" aria-label="Integrated virtual value in quantiles">
+        \[
+          H_i(\rho)\mathrel{:=}\int_0^\rho h_i(t)\,dt.
+        \]
+      </div>
+      <p>
+        Then, let \(G_i\) be the greatest convex lower bound of \(H_i\). That is,
+        \(G_i\) is the greatest convex function that lies below \(H_i\). Equivalently,
+      </p>
+      <div class="equation-display" role="region" tabindex="0" aria-label="Greatest convex lower bound of the integrated virtual value">
+        \[
+          G_i(\rho)=\min\left\{
+            \omega H_i(t_1)+(1-\omega)H_i(t_2)\ \middle|
+            \begin{array}{l}
+              \omega,t_1,t_2\in[0,1],\\
+              \omega t_1+(1-\omega)t_2=\rho
+            \end{array}
+          \right\}.
+        \]
+      </div>
+      <p>
+        We extend its derivative to the whole of \([0,1]\) using the right derivative at \(0\)
+        and at interior points, and the left derivative at \(1\), denoting this extension by
+      </p>
+      <div class="equation-display" role="region" tabindex="0" aria-label="One-sided derivative convention for the convex lower bound">
+        \[
+          g_i(\rho)\mathrel{:=}\begin{cases}
+            G'_{i,+}(\rho) & \text{if }\rho\in[0,1),\\
+            G'_{i,-}(1) & \text{if }\rho=1
+          \end{cases}.
+        \]
+      </div>
+      <p>
+        Finally, buyer \(i\)'s <em>ironed virtual value</em> is
+      </p>
+      <div class="equation-display" role="region" tabindex="0" aria-label="Buyer i's ironed virtual value">
+        \[
+          \bar{\phi}_i(v_i)=g_i(F_i(v_i)).
+        \]
+      </div>
+      <p>
+        Importantly, since \(G_i\) is convex, \(g_i\) is weakly increasing, and therefore
+        \(\bar{\phi}_i\) is also weakly increasing. If \(\phi_i\) is already weakly increasing,
+        then \(G_i=H_i\) and \(\bar{\phi}_i=\phi_i\). So, in a regular environment,
+        ironed virtual values are the same as the virtual values.
+      </p>
+    </section>
+    <section id="expected-revenue" class="derivation" aria-labelledby="expected-revenue-title">
+      <h2 id="expected-revenue-title">Expected revenue</h2>
+      <p>
+        Starting with our previous expression for expected revenue from a BIC, IR mechanism with allocation rule \(q\)
+        (see <a href="../regular-optimal-auctions/index.html#expected-revenue-title">Expected revenue on Regular Optimal Auctions</a>),
+        we can rewrite it to include our ironed virtual values:
+      </p>
+      <div class="equation-display" role="region" tabindex="0" aria-label="Expected revenue decomposed using ironed virtual values">
+        \[
+          \begin{aligned}
+            \mathbb{E}\!\left[\sum_{i=1}^n p_i(V)\right]
+            &=-\sum_{i=1}^n U_i(\underline{v}_i)
+              +\mathbb{E}\!\left[\sum_{i=1}^n q_i(V)\,\phi_i(V_i)\right]\\
+            &=-\sum_{i=1}^n U_i(\underline{v}_i)
+              +\mathbb{E}\!\left[\sum_{i=1}^n q_i(V)
+                \left(\bar{\phi}_i(V_i)+\left(\phi_i(V_i)-\bar{\phi}_i(V_i)\right)\right)\right]\\
+            &=-\sum_{i=1}^n U_i(\underline{v}_i)
+              +\mathbb{E}\!\left[\sum_{i=1}^n q_i(V)\,\bar{\phi}_i(V_i)\right]
+              +\sum_{i=1}^n\mathbb{E}\!\left[q_i(V)\left(\phi_i(V_i)-\bar{\phi}_i(V_i)\right)\right].
+          \end{aligned}
+        \]
+      </div>
+      <p>
+        Denoting \(D_i(v_i)=H_i(F_i(v_i))-G_i(F_i(v_i))\), we can rewrite buyer \(i\)'s term in the final summation as:
+      </p>
+      <div class="equation-display" role="region" tabindex="0" aria-label="Buyer i's virtual value correction expressed using the interim allocation">
+        \[
+          \begin{aligned}
+            \mathbb{E}\!\left[q_i(V)\left(\phi_i(V_i)-\bar{\phi}_i(V_i)\right)\right]
+            &=\mathbb{E}\!\left[Q_i(V_i)\left(\phi_i(V_i)-\bar{\phi}_i(V_i)\right)\right]
+              \text{, by the law of iterated expectations}\\
+            &=\int_{\underline{v}_i}^{\overline{v}_i}
+              Q_i(v_i)\left(\phi_i(v_i)-\bar{\phi}_i(v_i)\right)f_i(v_i)\,dv_i\\
+            &=\int_{\underline{v}_i}^{\overline{v}_i}
+              Q_i(v_i)\left(h_i(F_i(v_i))-g_i(F_i(v_i))\right)f_i(v_i)\,dv_i\\
+            &=\int_{\underline{v}_i}^{\overline{v}_i}Q_i(v_i)D_i'(v_i)\,dv_i\text{, by the Fundamental Theorem of Calculus}\\
+            &=\int_{\underline{v}_i}^{\overline{v}_i}Q_i(v_i)\,dD_i(v_i)\text{, by the absolute continuity of }D_i\\
+            &=\left[Q_i(v_i)D_i(v_i)\right]_{\underline{v}_i}^{\overline{v}_i}-\int_{\underline{v}_i}^{\overline{v}_i}D_i(v_i)\,dQ_i(v_i)\text{, by Stieltjes integration by parts}.
+          \end{aligned}
+        \]
+      </div>
+      <p>
+        For the fourth equality involving the FTC, note that
+        when \(D_i\) is differentiable at \(v_i\in[\underline{v}_i,\overline{v}_i]\), we have
+      </p>
+      <div class="equation-display" role="region" tabindex="0" aria-label="Buyer i's virtual value correction expressed using the integrated virtual value gap">
+        \[
+          \begin{aligned}
+            D_i'(v_i)
+            &=\frac{d}{dv_i}\left(H_i(F_i(v_i))-G_i(F_i(v_i))\right)\\
+            &=\left(h_i(F_i(v_i))-g_i(F_i(v_i))\right)f_i(v_i)\text{, by the chain rule}.
+          \end{aligned}
+        \]
+      </div>
+      <p>
+        We can use the FTC because \(D_i\) is absolutely continuous (see <a id="lipschitz-continuity-link" href="#lipschitz-continuity-insight">Author Insights</a> for justification).
+      </p>
+    </section>
     <section id="notes" hidden><!-- User-authored notes. --></section>
     <section id="references" class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>
@@ -215,7 +350,75 @@
   <footer class="site-footer"><page-footer></page-footer></footer>
   <learning-sidebar page="general-optimal-auctions" environment="auction-design">
     <template data-insights>
-      <!-- User-authored Insights go here. -->
+      <p id="lipschitz-continuity-insight" tabindex="-1">
+        We will show that \(D_i\) is Lipschitz continuous and, hence, absolutely continuous. Since \(f_i\) is continuous and strictly positive
+        on a compact interval, \(h_i\) is continuous on the compact interval \([0,1]\), and therefore bounded.
+        Then, \(H_i\) is differentiable with bounded derivative. Choose a bound \(M\geq 0\) such that
+        \(\lvert H_i'(\rho)\rvert=\lvert h_i(\rho)\rvert\leq M\) for all \(\rho\in[0,1]\).
+        By the Mean Value Theorem, for any \(0\leq a\lt b\leq 1\), there exists \(c\in(a,b)\) such that
+      </p>
+      <div class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Uniform Lipschitz bound for the integrated virtual value">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs">\(\displaystyle H_i(a)-H_i(b)\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle H_i'(c)(a-b)=h_i(c)(a-b)\)</span>
+
+        <span class="equation-step-connector">\(\displaystyle \implies\)</span>
+        <span class="equation-step-lhs">\(\displaystyle \left\lvert H_i(a)-H_i(b)\right\rvert\)</span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \left\lvert h_i(c)\right\rvert\left\lvert a-b\right\rvert\leq M\left\lvert a-b\right\rvert\)</span>
+
+      </div>
+      <p>
+        Thus, \(H_i\) is \(M\)-Lipschitz continuous on \([0,1]\). The same argument applies to \(F_i\),
+        since \(f_i\) is continuous on a compact interval.
+        For \(G_i\), notice that for all \(\rho\in[0,1]\),
+      </p>
+      <div class="equation-display" role="region" tabindex="0" aria-label="Affine lower bounds for the greatest convex minorant">
+        \[
+          G_i(0)-M\rho\leq G_i(\rho)
+          \quad\text{and}\quad
+          G_i(1)-M(1-\rho)\leq G_i(\rho),
+        \]
+      </div>
+      <p>
+        since \(H_i(0)-M\rho\) and \(H_i(1)-M(1-\rho)\) are convex functions that lie below \(H_i\),
+        and \(G_i(0)=H_i(0)\), \(G_i(1)=H_i(1)\), by construction.
+        Then, rearranging and dividing where the denominators are positive,
+      </p>
+      <div id="convex-bound-rearrangement" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Rearranging the affine lower bounds into secant slope bounds">
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation"></span>
+        <span class="equation-step-rhs">\(\displaystyle G_i(0)-M\rho\leq G_i(\rho)\quad\text{and}\quad G_i(1)-M(1-\rho)\leq G_i(\rho)\)</span>
+
+        <span class="equation-step-connector">\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation"></span>
+        <span class="equation-step-rhs">\(\displaystyle -M\rho\leq G_i(\rho)-G_i(0)\quad\text{and}\quad G_i(1)-G_i(\rho)\leq M(1-\rho)\)</span>
+
+        <span class="equation-step-connector">\(\displaystyle \iff\)</span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation"></span>
+        <span class="equation-step-rhs">\(\displaystyle -M\leq\frac{G_i(\rho)-G_i(0)}{\rho}\text{, for }\rho\in(0,1]\quad\text{and}\quad\frac{G_i(1)-G_i(\rho)}{1-\rho}\leq M\text{, for }\rho\in[0,1)\)</span>
+      </div>
+      <p>
+        Convex functions have increasing secant slopes. Therefore, for all \(0\leq a\lt b\leq 1\),
+        by the previous inequalities,
+      </p>
+      <div id="convex-envelope-secant-bound" class="equation-display" role="region" tabindex="0" aria-label="Secant slope bounds establish Lipschitz continuity of the convex lower bound">
+        \[
+          \begin{gathered}
+            -M\leq\frac{G_i(b)-G_i(0)}{b}
+            \leq\frac{G_i(b)-G_i(a)}{b-a}
+            \leq\frac{G_i(1)-G_i(a)}{1-a}\leq M\\
+            \implies \lvert G_i(b)-G_i(a)\rvert\leq M\lvert b-a\rvert.
+          \end{gathered}
+        \]
+      </div>
+      <p>
+        Thus, \(G_i\) is also \(M\)-Lipschitz continuous, making \(D_i=(H_i-G_i)\circ F_i\) Lipschitz continuous.
+      </p>
     </template>
   </learning-sidebar>
 </body>

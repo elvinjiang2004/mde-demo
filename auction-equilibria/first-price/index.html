@@ -54,12 +54,12 @@
           \(Y_1=\max\{V_2,\ldots,V_n\}\)
         </span> denote the highest opposing value. Suppose buyers
         \(2,\ldots,n\) use the following symmetric, increasing bidding strategy
-        for \(v_i>\underline{v}\):
+        for \(v_i\gt \underline{v}\):
       </p>
       <div class="equation-display" aria-label="beta superscript I of v equals the expected value of Y subscript 1 conditional on v being greater than Y subscript 1">
         \[
           \beta^{\mathrm{I}}(v_i)
-          =\mathbb{E}\!\left[Y_1\mid v_i > Y_1\right].
+          =\mathbb{E}\!\left[Y_1\mid v_i \gt Y_1\right].
         \]
       </div>
       <p>
@@ -203,21 +203,21 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle G(z)v_1-G(z)\mathbb{E}\!\left[Y_1\mid Y_1\le z\right] \)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(z)v_1-G(z)\mathbb{E}\!\left[Y_1\mid Y_1\leq z\right] \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
           <span class="equation-step-connector equation-step-extra" hidden></span>
           <span class="equation-step-lhs equation-step-extra" hidden></span>
           <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - G(z)\frac{\mathbb{E}\!\left[Y_1 \cdot \mathbb{1}(Y_1\leq z)\right]}{P(Y_1\leq z)} \)</span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - G(z)\frac{\mathbb{E}\!\left[Y_1 \cdot \mathbb{1}\{Y_1\leq z\}\right]}{\Pr(Y_1\leq z)} \)</span>
           <span class="equation-step-connector equation-step-extra" hidden></span>
           <span class="equation-step-lhs equation-step-extra" hidden></span>
           <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - G(z)\frac{\int_a^b y g(y) \cdot \mathbb{1}(y\leq z)\,dy}{G(z)} \)</span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - G(z)\frac{\int_a^b y g(y) \cdot \mathbb{1}\{y\leq z\}\,dy}{G(z)} \)</span>
           <span class="equation-step-connector equation-step-extra" hidden></span>
           <span class="equation-step-lhs equation-step-extra" hidden></span>
           <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - \int_a^b y g(y) \cdot \mathbb{1}(y\leq z)\,dy \)</span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - \int_a^b y g(y) \cdot \mathbb{1}\{y\leq z\}\,dy \)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
@@ -228,7 +228,7 @@
         <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - \left[ G(z)z - G(a)a - \int_a^z G(y)\,dy\right] \text{, by integration by parts}\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - \left(G(z)z - G(a)a - \int_a^z G(y)\,dy\right)\text{, by integration by parts}\)</span>
         <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
@@ -265,13 +265,13 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_z^{v_1}\left[ G(y)-G(z) \right]\,dy. \)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_z^{v_1}\left(G(y)-G(z)\right)\,dy. \)</span>
 
       </div>
       <p>
         Because \(G\) is weakly increasing, this difference is weakly positive for
         every \(z\in[a,b]\). If \(z\leq v_1\), the integrand is weakly positive, and the limits are in increasing order;
-        if \(z>v_1\), the integrand is weakly negative, and the limits are in decreasing order.
+        if \(z\gt v_1\), the integrand is weakly negative, and the limits are in decreasing order.
         Thus, given that buyers \(2,\ldots,n\) bid
         according to \(\beta^{\mathrm{I}}\), it is optimal for buyer 1 to
         also bid according to \(\beta^{\mathrm{I}}\).
