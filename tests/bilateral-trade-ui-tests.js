@@ -7,9 +7,9 @@
     waitFor(function () {
       var appDocument = frame.contentDocument;
       return appDocument && appDocument.querySelector(
-        "#buyer-ic-chart image[data-renderer='payoff-raster']"
+        "canvas[data-chart-for='buyer-ic-chart'][data-renderer='payoff-raster']"
       ) && appDocument.querySelector(
-        "#efficiency-chart image[data-renderer='diagnostic-raster']"
+        "canvas[data-chart-for='efficiency-chart'][data-renderer='diagnostic-raster']"
       ) && appDocument.querySelector(
         ".diagnostic-panel-grid .math-chart-axis-label mjx-container"
       );
@@ -76,6 +76,20 @@
     var appDocument = frame.contentDocument;
     var appWindow = frame.contentWindow;
     var model = appWindow.BilateralTradeModel;
+
+    function fieldCanvas(id) {
+      return appDocument.querySelector("canvas[data-chart-for='" + id + "']");
+    }
+
+    function fieldFingerprint(id) {
+      var canvas = fieldCanvas(id);
+      var pixels = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data;
+      var hash = 2166136261;
+      for (var index = 0; index < pixels.length; index += 1) {
+        hash = Math.imul(hash ^ pixels[index], 16777619);
+      }
+      return hash;
+    }
 
     function numericSvgAttributes(chart) {
       var names = [
@@ -484,13 +498,13 @@
       {
         name: "All six diagnostics render exact model-evaluated fields through compact rasters",
         run: function () {
-          assert(typeof appWindow.SvgUtils.createFieldRaster === "function",
+          assert(typeof appWindow.SvgUtils.paintFieldRaster === "function",
             "The exact field-raster helper should be shared through SvgUtils.");
           ["buyer-ic-chart", "seller-ic-chart"].forEach(function (id) {
             var chart = appDocument.getElementById(id);
-            var image = chart.querySelector("image[data-renderer='payoff-raster']");
-            assert(image && image.dataset.rasterSize === "330" &&
-              image.getAttribute("href").indexOf("data:image/png") === 0,
+            var canvas = fieldCanvas(id);
+            assert(canvas && canvas.dataset.rasterSize === "330" &&
+              canvas.width === 330 && canvas.height === 330,
             id + " should render exact interim deviation payoffs.");
             assert(chart.querySelector(".truthful-report-line") &&
               chart.querySelectorAll("circle[data-best-report-point]").length === 61 &&
@@ -501,9 +515,9 @@
             "efficiency-chart"]
             .forEach(function (id) {
               var chart = appDocument.getElementById(id);
-              var image = chart.querySelector("image[data-renderer='diagnostic-raster']");
-              assert(image && image.dataset.rasterSize === "330" &&
-                image.getAttribute("href").indexOf("data:image/png") === 0,
+              var canvas = fieldCanvas(id);
+              assert(canvas && canvas.dataset.rasterSize === "330" &&
+                canvas.width === 330 && canvas.height === 330,
               id + " should render one exact model-evaluated field raster.");
               assert(chart.querySelectorAll("polygon[fill]").length === 0,
                 id + " should not flatten its field to one value per triangle.");
@@ -522,6 +536,99 @@
             revenue.dataset.colorHigh === "green" &&
             revenue.querySelector("desc").textContent.includes("clear at zero"),
           "M-S revenue should use the sandbox red-clear-green scale.");
+        }
+      },
+      {
+        name: "Diagnostic canvases stay aligned and survive refreshes without PNG encoding",
+        run: function () {
+          var ids = ["buyer-ic-chart", "seller-ic-chart", "revenue-chart",
+            "buyer-payoff-chart", "seller-payoff-chart", "efficiency-chart"];
+          var canvases = ids.map(fieldCanvas);
+          var prototype = appWindow.HTMLCanvasElement.prototype;
+          var original = prototype.toDataURL;
+          var encodingCalls = 0;
+          prototype.toDataURL = function () {
+            encodingCalls += 1;
+            throw new Error("Diagnostic refreshes must not encode PNG images.");
+          };
+          try {
+            appDocument.getElementById("reset-button").click();
+          } finally {
+            prototype.toDataURL = original;
+          }
+          assert(encodingCalls === 0, "A refresh should paint its retained canvases directly.");
+          ids.forEach(function (id, index) {
+            var chart = appDocument.getElementById(id);
+            var canvas = fieldCanvas(id);
+            var pixels = canvas.getBoundingClientRect();
+            var plot = chart.querySelector("rect.axis-line").getBoundingClientRect();
+            assert(canvas === canvases[index] && !chart.querySelector("image"),
+              "Refreshes should retain the field canvas beneath its SVG overlays.");
+            assert(canvas.getAttribute("aria-hidden") === "true" &&
+              appWindow.getComputedStyle(canvas).pointerEvents === "none",
+            "The SVG should retain the accessible and pointer-inspection surface.");
+            ["left", "top", "width", "height"].forEach(function (dimension) {
+              assertClose(pixels[dimension], plot[dimension],
+                id + "'s canvas should align with its SVG plotting area", 1);
+            });
+          });
+        }
+      },
+      {
+        name: "Palette and print redraws preserve the last exact state during pointer and keyboard strokes",
+        run: async function () {
+          var root = appDocument.documentElement;
+          var property = "--heatmap-yellow-rgb";
+          var previous = root.style.getPropertyValue(property);
+          var chart = appDocument.getElementById("paint-chart");
+          var slider = appDocument.getElementById("brush-value-slider");
+          var reset = appDocument.getElementById("reset-button");
+          function key(type, value) {
+            chart.dispatchEvent(new appWindow.KeyboardEvent(type, {
+              key: value, bubbles: true, cancelable: true
+            }));
+          }
+          try {
+            for (var keyboard of [false, true]) {
+              reset.click();
+              slider.value = "0";
+              dispatchInput(slider, appWindow);
+              var committed = fieldFingerprint("efficiency-chart");
+              var oldColor = fieldFingerprint("buyer-payoff-chart");
+              var live = appDocument.getElementById("live-summary").textContent;
+              var rect = chart.getBoundingClientRect();
+              var x = rect.left + 370 / 480 * rect.width;
+              var y = rect.top + 360 / 520 * rect.height;
+              if (keyboard) {
+                key("keydown", "End");
+                key("keydown", "Enter");
+              } else {
+                firePointer(chart, "pointerdown", x, y, 144);
+              }
+              await window.MechanismTest.nextAnimationFrames(appWindow, 2);
+              root.style.setProperty(property, keyboard ? "73, 89, 101" : "17, 29, 41");
+              appWindow.dispatchEvent(new appWindow.Event("beforeprint"));
+              assert(fieldFingerprint("buyer-payoff-chart") !== oldColor,
+                "A print palette change should recolor the committed diagnostic fields.");
+              assert(fieldFingerprint("efficiency-chart") === committed &&
+                appDocument.getElementById("live-summary").textContent === live &&
+                Number(appDocument.getElementById("efficiency-chart").dataset.efficiencyLoss) === 0,
+              "Recoloring must preserve the exact fields and verdicts until the stroke ends.");
+              if (keyboard) {
+                key("keyup", "Enter");
+              } else {
+                firePointer(chart, "pointerup", x, y, 144);
+              }
+              assert(fieldFingerprint("efficiency-chart") !== committed &&
+                Number(appDocument.getElementById("efficiency-chart").dataset.efficiencyLoss) > 0,
+              "Release should commit the edited allocation and refresh its exact diagnostics.");
+            }
+          } finally {
+            if (previous) { root.style.setProperty(property, previous); }
+            else { root.style.removeProperty(property); }
+            appWindow.dispatchEvent(new appWindow.Event("afterprint"));
+            reset.click();
+          }
         }
       },
       {
@@ -872,9 +979,7 @@
             var beforeFills = Array.from(chart.querySelectorAll("polygon[fill]"))
               .map(function (polygon) { return polygon.getAttribute("fill"); })
               .join("|");
-            var beforeEfficiency = appDocument.querySelector(
-              "#efficiency-chart image"
-            ).getAttribute("href");
+            var beforeEfficiency = fieldFingerprint("efficiency-chart");
             slider.value = "1";
             dispatchInput(slider, appWindow);
             assert(Array.from(chart.querySelectorAll("polygon[fill]"))
@@ -895,14 +1000,12 @@
               .map(function (polygon) { return polygon.getAttribute("fill"); })
               .join("|") !== beforeFills,
             "The touched allocation triangle should repaint during the stroke.");
-            assert(appDocument.querySelector("#efficiency-chart image")
-              .getAttribute("href") === beforeEfficiency,
+            assert(fieldFingerprint("efficiency-chart") === beforeEfficiency,
             "Dependent diagnostic rasters should remain unchanged during the stroke.");
             await new Promise(function (resolve) {
               appWindow.setTimeout(resolve, 150);
             });
-            assert(appDocument.querySelector("#efficiency-chart image")
-              .getAttribute("href") === beforeEfficiency,
+            assert(fieldFingerprint("efficiency-chart") === beforeEfficiency,
             "A pause while the pointer is held should not trigger exact diagnostics.");
             firePointer(
               chart,
@@ -911,8 +1014,7 @@
               rect.top + 240 / 520 * rect.height,
               50
             );
-            assert(appDocument.querySelector("#efficiency-chart image")
-              .getAttribute("href") !== beforeEfficiency,
+            assert(fieldFingerprint("efficiency-chart") !== beforeEfficiency,
             "The exact diagnostics should refresh when the stroke is released.");
           }());
         }
@@ -933,7 +1035,7 @@
               .map(function (polygon) { return polygon.getAttribute("fill"); }).join("|");
           }
           function diagnostic() {
-            return appDocument.querySelector("#efficiency-chart image");
+            return fieldFingerprint("efficiency-chart");
           }
           var initial = fills();
           for (var options of [{ button: 2 }, { isPrimary: false }]) {
@@ -1048,9 +1150,7 @@
           paintEntireGrid(0);
           var chart = appDocument.getElementById("paint-chart");
           var slider = appDocument.getElementById("brush-value-slider");
-          var beforeEfficiency = appDocument.querySelector(
-            "#efficiency-chart image"
-          ).getAttribute("href");
+          var beforeEfficiency = fieldFingerprint("efficiency-chart");
 
           function key(type, value) {
             chart.dispatchEvent(new appWindow.KeyboardEvent(type, {
@@ -1064,12 +1164,10 @@
           key("keydown", "Enter");
           key("keydown", "ArrowRight");
           key("keydown", "ArrowRight");
-          assert(appDocument.querySelector("#efficiency-chart image")
-            .getAttribute("href") === beforeEfficiency,
+          assert(fieldFingerprint("efficiency-chart") === beforeEfficiency,
           "Exact diagnostics should remain unchanged while Enter is held.");
           key("keyup", "Enter");
-          assert(appDocument.querySelector("#efficiency-chart image")
-            .getAttribute("href") !== beforeEfficiency,
+          assert(fieldFingerprint("efficiency-chart") !== beforeEfficiency,
           "Releasing Enter should commit one exact diagnostic refresh.");
 
           key("keydown", "Home");
@@ -1157,9 +1255,7 @@
 
             ["buyer-ic-chart", "seller-ic-chart"].forEach(function (id) {
               var icChart = appDocument.getElementById(id);
-              assert(icChart.querySelector(
-                "image[data-renderer='payoff-raster']"
-              ), id + " should retain its exact payoff field after painting.");
+              assert(fieldCanvas(id).dataset.renderer === "payoff-raster", id + " should retain its exact payoff field after painting.");
               assert(Number(icChart.dataset.maxDeviationGain) > 0,
                 id + " should report a positive exact deviation gain.");
               var truthful = icChart.querySelector(".truthful-report-line");
@@ -1309,10 +1405,8 @@
             ["buyer-ic-chart", "seller-ic-chart", "buyer-payoff-chart",
               "seller-payoff-chart", "revenue-chart", "efficiency-chart"]
               .forEach(function (id) {
-                var image = appDocument.querySelector(
-                  "#" + id + " image"
-                );
-                assert(image && image.getAttribute("href").indexOf("data:image/png") === 0,
+                var canvas = fieldCanvas(id);
+                assert(canvas && canvas.width === 330 && canvas.height === 330,
                   id + " should retain its generated raster under a palette change.");
               });
             assert(appDocument.getElementById("buyer-ic-chart")

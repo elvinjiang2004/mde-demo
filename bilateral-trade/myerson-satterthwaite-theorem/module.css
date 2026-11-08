@@ -10,3 +10,15 @@
   margin-inline: auto;
 }
 
+/* Retain diagnostic pixels beneath the SVG frame and inspection overlays. */
+.chart-220x240-field-canvas {
+  position: absolute;
+  z-index: 0;
+  top: 6.25%;
+  left: 15.9090909091%;
+  width: 75%;
+  height: 68.75%;
+  display: block;
+  pointer-events: none;
+}
+

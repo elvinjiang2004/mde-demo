@@ -313,6 +313,38 @@
     assert(!model.validateChoice(2, 0, 1, 0.5, -0.1).valid, "Bid below support.");
   });
 
+  test("Equilibrium probabilities use the known value, including singular lower tails", function () {
+    var spec = { type: "beta", alpha: 0.2, beta: 10 };
+    [0.001, 1, 100, 1000000].forEach(function (span) {
+      [0, 1e-10, 1e-7, 0.01, 0.5, 1].forEach(function (position) {
+        var value = position * span;
+        var result = model.equilibriumOutcomes(value, 2, 0, span, spec);
+        var expected = distributions.cdf(value, 0, span, spec);
+        assertClose(result.opponentValueCutoff, value, "Known equilibrium cutoff", 0);
+        assertClose(result.winProbability, expected, "Equilibrium probability", 1e-12);
+        assertClose(result.expectedPayoff, (value - result.bid) * expected,
+          "Equilibrium payoff", 1e-12 * Math.max(1, span));
+      });
+    });
+  });
+
+  test("Inverse strategy probabilities are accurate across scales and independent of earlier bids", function () {
+    var spec = { type: "beta", alpha: 0.2, beta: 10 };
+    [[0, 0.001], [0, 1], [0, 100], [0, 1000000], [10, 100], [25, 1000]].forEach(function (support) {
+      var a = support[0], span = support[1], b = a + span;
+      var value = a + span * 1e-7;
+      var bid = model.equilibriumBid(value, 2, a, b, spec);
+      var expected = distributions.cdf(value, a, b, spec);
+      var original = model.winProbability(bid, 2, a, b, spec);
+      assertClose(original, expected, "Singular-tail inverse probability", 1e-9);
+      [0.1, 0.000001, 0.5].forEach(function (prime) {
+        model.winProbability(a + prime * (model.maximumEquilibriumBid(2, a, b, spec) - a), 2, a, b, spec);
+        assertClose(model.winProbability(bid, 2, a, b, spec), original,
+          "Earlier bids must not change the inverse", 0);
+      });
+    });
+  });
+
   run();
 
   function run() {

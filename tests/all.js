@@ -169,28 +169,29 @@
 
   function runAll() {
     var cells = SUITES.map(addRow);
-    var next = 0;
+    var next = 0, active = 0, exclusive = false;
     var results = [];
-
-    function startOne() {
-      if (next >= SUITES.length) {
-        return Promise.resolve();
+    return new Promise(function (resolve, reject) {
+      function schedule() {
+        if (exclusive) { return; }
+        if (next === SUITES.length && active === 0) { resolve(results); return; }
+        while (next < SUITES.length && active < CONCURRENCY) {
+          var suite = SUITES[next];
+          // Focus and repeated MathJax startup share browser resources across frames.
+          if (suite.exclusive === true && active > 0) { return; }
+          var index = next++;
+          active += 1;
+          exclusive = suite.exclusive === true;
+          runSuite(suite, cells[index]).then(function (result) {
+            results.push(result);
+            active -= 1;
+            if (result.suite.exclusive === true) { exclusive = false; }
+            schedule();
+          }, reject);
+          if (exclusive) { return; }
+        }
       }
-      var index = next;
-      next += 1;
-      return runSuite(SUITES[index], cells[index]).then(function (result) {
-        results.push(result);
-        return startOne();
-      });
-    }
-
-    var workers = [];
-    var worker;
-    for (worker = 0; worker < CONCURRENCY; worker += 1) {
-      workers.push(startOne());
-    }
-    return Promise.all(workers).then(function () {
-      return results;
+      schedule();
     });
   }
 

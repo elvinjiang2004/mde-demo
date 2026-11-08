@@ -99,6 +99,63 @@
 
     var tests = [
       {
+        name: "A burst of pointer moves redraws once and release commits its final position",
+        run: async function () {
+          reset();
+          var chart = appDocument.getElementById("second-price-chart");
+          var rect = chart.getBoundingClientRect(), viewWidth = chart.viewBox.baseVal.width;
+          var panel = chart.querySelector(".panel-background");
+          var left = Number(panel.getAttribute("x")), width = Number(panel.getAttribute("width"));
+          var redraws = 0;
+          var observer = new appWindow.MutationObserver(function (records) {
+            records.forEach(function (record) {
+              Array.from(record.addedNodes).forEach(function (node) { if (node.localName === "title") { redraws += 1; } });
+            });
+          });
+          function fire(type, fraction) {
+            chart.dispatchEvent(new appWindow.PointerEvent(type, {
+              bubbles: true, pointerId: 91, isPrimary: true, button: 0,
+              clientX: rect.left + (left + width * fraction) / viewWidth * rect.width,
+              clientY: rect.top + 100
+            }));
+          }
+          observer.observe(chart, { childList: true });
+          try {
+            fire("pointerdown", 0.2);
+            for (var i = 0; i <= 20; i += 1) { fire("pointermove", 0.3 + i * 0.02); }
+            await window.MechanismTest.nextAnimationFrames(appWindow, 2);
+            assert(redraws === 1, "A burst before one frame should produce one chart update.");
+            assertClose(Number(appDocument.getElementById("bid-number").value), 70, "Latest move wins");
+            fire("pointermove", 0.8);
+            fire("pointerup", 0.9);
+            assertClose(Number(appDocument.getElementById("bid-number").value), 90, "Release flushes its exact position");
+          } finally {
+            observer.disconnect(); fire("pointercancel", 0.9); reset();
+          }
+        }
+      },
+      {
+        name: "Bid and value edits reuse base curves while parameter changes invalidate them",
+        run: function () {
+          withReset(function () {
+            var chart = appDocument.getElementById("second-price-chart");
+            var key = chart.dataset.curveCacheKey;
+            var builds = Number(chart.dataset.curveCacheBuildCount);
+            var bid = appDocument.getElementById("bid-slider");
+            var value = appDocument.getElementById("value-slider");
+            bid.value = "45"; dispatchInput(bid, appWindow);
+            value.value = "65"; dispatchInput(value, appWindow);
+            assert(chart.dataset.curveCacheKey === key && Number(chart.dataset.curveCacheBuildCount) === builds,
+              "Selected choices should reuse the distribution curves.");
+            assertClose(Number(appDocument.querySelector(".expected-payoff-label").dataset.expectedPayoff),
+              appWindow.SPAModel.expectedPayoff(65, 45, 2, 0, 100), "Selected payoff must still update");
+            chooseBeta(2, 1);
+            assert(chart.dataset.curveCacheKey !== key && Number(chart.dataset.curveCacheBuildCount) === builds + 1,
+              "A new distribution must rebuild both base curves once.");
+          });
+        }
+      },
+      {
         name: "Parameter reset preserves choices and the preview sits with bidder controls",
         run: function () {
           withReset(function () {
@@ -1132,6 +1189,22 @@
             fire("pointercancel", 65, 0.45);
             fire("pointermove", 65, 0.9);
             await settled(45, "Cancellation must finish pending edits and ignore later movement.");
+
+            fire("pointerdown", 66, 0.2);
+            fire("pointermove", 66, 0.4);
+            var upper = appDocument.getElementById("upper-bound");
+            upper.value = "200"; dispatchChange(upper, appWindow);
+            fire("pointermove", 66, 0.9); fire("pointerup", 66, 0.9);
+            await settled(80, "A support edit must flush the old-support bid before rescaling and canceling the drag.");
+            upper.value = "100"; dispatchChange(upper, appWindow);
+            [["alpha-number", "2"], ["bidder-count", "5"]].forEach(function (choice, index) {
+              fire("pointerdown", 67 + index, 0.2);
+              fire("pointermove", 67 + index, 0.6);
+              var field = appDocument.getElementById(choice[0]);
+              field.value = choice[1]; dispatchChange(field, appWindow);
+              fire("pointermove", 67 + index, 0.9); fire("pointerup", 67 + index, 0.9);
+            });
+            await settled(60, "Shape and bidder-count edits must finish pending bids and end the owning drag.");
           } finally {
             chart.dispatchEvent(new appWindow.PointerEvent("pointercancel", { pointerId: 65 }));
             chart.setPointerCapture = originalCapture;

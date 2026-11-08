@@ -5,7 +5,7 @@
   var math = window.MechanismMath;
   var visuals = window.BilateralTradeVisuals;
   var appendSvg = window.SvgUtils.appendSvg;
-  var createFieldRaster = window.SvgUtils.createFieldRaster;
+  var paintFieldRaster = window.SvgUtils.paintFieldRaster;
   var plotPointFromEvent = visuals.plotPointFromEvent;
   var formatProbe = visuals.formatProbe;
   var R = model.CELL_RESOLUTION;
@@ -241,9 +241,7 @@
     if (typeof window.matchMedia === "function") {
       ["(prefers-color-scheme: dark)", "print"].forEach(function (queryText) {
         var mediaQuery = window.matchMedia(queryText);
-        var handlePaletteChange = function () {
-          recomputeAndDrawAll();
-        };
+        var handlePaletteChange = refreshPalette;
         if (typeof mediaQuery.addEventListener === "function") {
           mediaQuery.addEventListener("change", handlePaletteChange);
         } else if (typeof mediaQuery.addListener === "function") {
@@ -251,6 +249,8 @@
         }
       });
     }
+    window.addEventListener("beforeprint", refreshPalette);
+    window.addEventListener("afterprint", refreshPalette);
   }
 
   function bindDiagnosticChart(key, chart) {
@@ -492,19 +492,56 @@
     );
     var paletteChanged = paletteKey(nextPalette) !== paletteKey(state.heatmapPalette);
     state.heatmapPalette = nextPalette;
-    var summary = model.summarize(state.grid);
+    // Keep the committed field independent of allocation edits in the next stroke.
+    var summary = model.summarize(model.createCellGrid(
+      function (i, j) { return state.grid.lower[i][j]; },
+      function (i, j) { return state.grid.upper[i][j]; }
+    ));
     state.lastSummary = summary;
     if (redrawAllocation !== false || paletteChanged) {
       drawPaintChart(state.grid);
     }
+    drawDiagnostics(summary);
+    updateDiagnosticText(summary);
+    updateLiveSummary(summary);
+  }
+
+  function refreshPalette() {
+    if (!state.lastSummary) {
+      return;
+    }
+    var nextPalette = visuals.readHeatmapPalette(
+      window.getComputedStyle(document.documentElement)
+    );
+    if (paletteKey(nextPalette) === paletteKey(state.heatmapPalette)) {
+      return;
+    }
+    state.heatmapPalette = nextPalette;
+    drawPaintChart(state.grid);
+    drawDiagnostics(state.lastSummary);
+  }
+
+  function drawDiagnostics(summary) {
     drawBuyerIcChart(summary);
     drawSellerIcChart(summary);
     drawPayoffCharts(summary);
     drawRevenueChart(summary);
     drawEfficiencyChart(summary);
     drawDiagnosticProbes();
-    updateDiagnosticText(summary);
-    updateLiveSummary(summary);
+  }
+
+  function paintDiagnosticRaster(svg, renderer, valueAt, colorFn) {
+    var canvas = svg.parentNode.querySelector("canvas[data-chart-for='" + svg.id + "']");
+    if (!canvas) {
+      canvas = document.createElement("canvas");
+      canvas.className = "chart-220x240-field-canvas";
+      canvas.setAttribute("aria-hidden", "true");
+      canvas.dataset.chartFor = svg.id;
+      svg.parentNode.insertBefore(canvas, svg);
+    }
+    paintFieldRaster(canvas, DIAGNOSTIC_RASTER_SIZE, valueAt, colorFn);
+    canvas.dataset.renderer = renderer;
+    canvas.dataset.rasterSize = String(DIAGNOSTIC_RASTER_SIZE);
   }
 
   function paletteKey(palette) {
@@ -650,19 +687,13 @@
     appendSvg(svg, "desc", { id: svg.id + "-description" },
       buyer ? buyerIcChartDescription(summary) :
         sellerIcChartDescription(summary));
-    appendSvg(svg, "image", {
-      x: DIAG_LAYOUT.left,
-      y: DIAG_LAYOUT.top,
-      width: DIAG_LAYOUT.right - DIAG_LAYOUT.left,
-      height: DIAG_LAYOUT.bottom - DIAG_LAYOUT.top,
-      href: createFieldRaster(
-        DIAGNOSTIC_RASTER_SIZE,
-        function (trueType, report) {
-          return buyer ?
-            model.buyerInterimDeviationUtility(
-              summary.interim, trueType, report
-            ) : model.sellerInterimDeviationUtility(
-              summary.interim, trueType, report
+    paintDiagnosticRaster(svg, "payoff-raster",
+      function (trueType, report) {
+        return buyer ?
+          model.buyerInterimDeviationUtility(
+            summary.interim, trueType, report
+          ) : model.sellerInterimDeviationUtility(
+            summary.interim, trueType, report
             );
         },
         function (value) {
@@ -672,11 +703,7 @@
             state.heatmapPalette.yellow
           );
         }
-      ),
-      preserveAspectRatio: "none",
-      "data-renderer": "payoff-raster",
-      "data-raster-size": DIAGNOSTIC_RASTER_SIZE
-    });
+    );
     visuals.drawLineFrame(svg, DIAG_LAYOUT, triangleMesh);
     appendSvg(svg, "line", {
       x1: DIAG_LAYOUT.left,
@@ -766,16 +793,7 @@
     svg.replaceChildren();
     appendSvg(svg, "title", { id: idPrefix + "-title" }, titleText);
     appendSvg(svg, "desc", { id: idPrefix + "-description" }, descText);
-    appendSvg(svg, "image", {
-      x: DIAG_LAYOUT.left,
-      y: DIAG_LAYOUT.top,
-      width: DIAG_LAYOUT.right - DIAG_LAYOUT.left,
-      height: DIAG_LAYOUT.bottom - DIAG_LAYOUT.top,
-      href: createFieldRaster(DIAGNOSTIC_RASTER_SIZE, valueAt, colorFn),
-      preserveAspectRatio: "none",
-      "data-renderer": "diagnostic-raster",
-      "data-raster-size": DIAGNOSTIC_RASTER_SIZE
-    });
+    paintDiagnosticRaster(svg, "diagnostic-raster", valueAt, colorFn);
     visuals.drawFrame(svg, DIAG_LAYOUT, triangleMesh, true);
   }
 
@@ -786,22 +804,12 @@
     appendSvg(svg, "title", { id: "revenue-chart-title" }, "Budget Balance");
     appendSvg(svg, "desc", { id: "revenue-chart-description" }, revenueChartDescription(summary));
 
-    appendSvg(svg, "image", {
-      x: DIAG_LAYOUT.left,
-      y: DIAG_LAYOUT.top,
-      width: DIAG_LAYOUT.right - DIAG_LAYOUT.left,
-      height: DIAG_LAYOUT.bottom - DIAG_LAYOUT.top,
-      href: createFieldRaster(
-        DIAGNOSTIC_RASTER_SIZE,
-        function (v, c) {
-          return model.patchGridValueAt(summary.patches.revenue, v, c);
-        },
-        function (value) { return revenueChannels(value, extent); }
-      ),
-      preserveAspectRatio: "none",
-      "data-renderer": "diagnostic-raster",
-      "data-raster-size": DIAGNOSTIC_RASTER_SIZE
-    });
+    paintDiagnosticRaster(svg, "diagnostic-raster",
+      function (v, c) {
+        return model.patchGridValueAt(summary.patches.revenue, v, c);
+      },
+      function (value) { return revenueChannels(value, extent); }
+    );
     visuals.drawFrame(svg, DIAG_LAYOUT, triangleMesh, true);
     svg.dataset.colorLow = "red";
     svg.dataset.colorZero = "clear";
@@ -814,22 +822,12 @@
     appendSvg(svg, "title", { id: "efficiency-chart-title" }, "Efficiency comparison");
     appendSvg(svg, "desc", { id: "efficiency-chart-description" }, efficiencyChartDescription(summary));
 
-    appendSvg(svg, "image", {
-      x: DIAG_LAYOUT.left,
-      y: DIAG_LAYOUT.top,
-      width: DIAG_LAYOUT.right - DIAG_LAYOUT.left,
-      height: DIAG_LAYOUT.bottom - DIAG_LAYOUT.top,
-      href: createFieldRaster(
-        DIAGNOSTIC_RASTER_SIZE,
-        function (v, c) {
-          return model.allocationErrorAt(summary.grid, v, c);
-        },
-        efficiencyChannels
-      ),
-      preserveAspectRatio: "none",
-      "data-renderer": "diagnostic-raster",
-      "data-raster-size": DIAGNOSTIC_RASTER_SIZE
-    });
+    paintDiagnosticRaster(svg, "diagnostic-raster",
+      function (v, c) {
+        return model.allocationErrorAt(summary.grid, v, c);
+      },
+      efficiencyChannels
+    );
     visuals.drawFrame(svg, DIAG_LAYOUT, triangleMesh, true);
   }
 

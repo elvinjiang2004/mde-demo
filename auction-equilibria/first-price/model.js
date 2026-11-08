@@ -2,9 +2,9 @@
   "use strict";
 
   var EPSILON = 1e-12;
-  var ROOT_ITERATIONS = 20;
+  var ROOT_ITERATIONS = 100;
+  var PROBABILITY_TOLERANCE = 1e-10;
   var maximumBidCache = null;
-  var inverseCache = null;
 
   var isFiniteNumber = global.NumberUtils.isFiniteNumber;
   var clamp = global.NumberUtils.clamp;
@@ -132,7 +132,7 @@
     }
 
     var boundedValue = clamp(value, a, b);
-    if (boundedValue <= a + EPSILON) {
+    if (boundedValue === a) {
       return a;
     }
 
@@ -141,23 +141,20 @@
     }
 
     var exponent = n - 1;
-    var probability = Math.pow(
-      distributionCdf(boundedValue, a, b, spec),
-      exponent
-    );
-
-    if (probability <= Number.MIN_VALUE) {
+    var width = boundedValue - a;
+    var position = width / (b - a);
+    var percentile = distributionCdf(position, 0, 1, spec);
+    if (percentile === 0) {
       return a;
     }
 
-    var informationRent = integrate(function (candidate) {
-      return Math.pow(
-        distributionCdf(candidate, a, b, spec),
-        exponent
-      );
-    }, a, boundedValue);
+    // Scale both the interval and G by their endpoint values. An absolute
+    // quadrature tolerance on a tiny unscaled integral loses tail accuracy.
+    var rentFraction = integrate(function (fraction) {
+      return Math.pow(distributionCdf(position * fraction, 0, 1, spec) / percentile, exponent);
+    }, 0, 1);
 
-    return clamp(boundedValue - informationRent / probability, a, boundedValue);
+    return clamp(a + width * (1 - rentFraction), a, boundedValue);
   }
 
   function maximumEquilibriumBid(n, a, b, spec) {
@@ -177,12 +174,12 @@
       throw new TypeError("Bid must be a finite number.");
     }
 
-    if (bid <= a + EPSILON) {
+    if (bid <= a) {
       return a;
     }
 
     var highestBid = maximumEquilibriumBid(n, a, b, spec);
-    if (bid >= highestBid - EPSILON) {
+    if (bid >= highestBid) {
       return b;
     }
 
@@ -190,47 +187,32 @@
       return clamp(a + (n / (n - 1)) * (bid - a), a, b);
     }
 
-    var lower = a;
-    var upper = b;
-    var key = auctionKey(n, a, b, spec);
-    var candidate = 0.5 * (lower + upper);
-
-    if (inverseCache && inverseCache.key === key) {
-      if (bid > inverseCache.bid && inverseCache.bid < highestBid) {
-        candidate = inverseCache.value + (b - inverseCache.value) *
-          (bid - inverseCache.bid) / (highestBid - inverseCache.bid);
-      } else if (bid < inverseCache.bid && inverseCache.bid > a) {
-        candidate = a + (inverseCache.value - a) *
-          (bid - a) / (inverseCache.bid - a);
-      } else if (bid === inverseCache.bid) {
-        return inverseCache.value;
-      }
-    }
-
-    candidate = clamp(candidate, lower, upper);
-    if (candidate <= lower || candidate >= upper) {
-      candidate = 0.5 * (lower + upper);
-    }
-    var bidTolerance = 1e-8 * Math.max(1, b - a);
+    var span = b - a, target = (bid - a) / span;
+    var lower = 0, upper = 1, lowerProbability = 0, upperProbability = 1;
+    var candidate = (bid - a) / (highestBid - a);
     var iteration;
 
     for (iteration = 0; iteration < ROOT_ITERATIONS; iteration += 1) {
-      var candidateBid = equilibriumBid(candidate, n, a, b, spec);
-      var difference = candidateBid - bid;
+      var value = a + span * candidate;
+      var candidateBid = equilibriumBid(candidate, n, 0, 1, spec);
+      var difference = candidateBid - target;
+      var percentile = distributionCdf(candidate, 0, 1, spec);
+      var probability = Math.pow(percentile, n - 1);
 
-      if (Math.abs(difference) <= bidTolerance) {
-        inverseCache = { key: key, bid: bid, value: candidate };
-        return candidate;
-      }
+      if (difference === 0) { return value; }
 
       if (difference < 0) {
-        lower = candidate;
+        lower = candidate; lowerProbability = probability;
       } else {
-        upper = candidate;
+        upper = candidate; upperProbability = probability;
+      }
+      // A small bid residual alone is unsafe at singular Beta endpoints.
+      // The probability bracket controls the quantity used by the demo.
+      if (upperProbability - lowerProbability <= PROBABILITY_TOLERANCE) {
+        return a + span * (lower + upper) / 2;
       }
 
-      var percentile = distributionCdf(candidate, a, b, spec);
-      var density = distributionPdf(candidate, a, b, spec);
+      var density = distributionPdf(candidate, 0, 1, spec);
       var derivative = percentile > 0 ?
         (n - 1) * density / percentile * (candidate - candidateBid) :
         NaN;
@@ -240,12 +222,13 @@
           newtonCandidate > lower && newtonCandidate < upper) {
         candidate = newtonCandidate;
       } else {
-        candidate = 0.5 * (lower + upper);
+        var middle = 0.5 * (lower + upper);
+        if (middle === lower || middle === upper) { return value; }
+        candidate = middle;
       }
     }
 
-    inverseCache = { key: key, bid: bid, value: candidate };
-    return candidate;
+    return a + span * candidate;
   }
 
   function winProbability(bid, n, a, b, spec) {
@@ -318,6 +301,10 @@
     var boundedValue = clamp(value, a, b);
     var boundedBid = clamp(bid, a, b);
     var cutoff = opponentValueCutoff(boundedBid, n, a, b, spec);
+    return outcomesAtCutoff(boundedValue, boundedBid, cutoff, n, a, b, spec);
+  }
+
+  function outcomesAtCutoff(boundedValue, boundedBid, cutoff, n, a, b, spec) {
     var probability = clamp(Math.pow(
       distributionCdf(cutoff, a, b, spec), n - 1
     ), 0, 1);
@@ -343,7 +330,8 @@
 
   function equilibriumOutcomes(value, n, a, b, spec) {
     var bid = equilibriumBid(value, n, a, b, spec);
-    return outcomes(value, bid, n, a, b, spec);
+    var cutoff = clamp(value, a, b);
+    return outcomesAtCutoff(cutoff, bid, cutoff, n, a, b, spec);
   }
 
   global.FPAModel = Object.freeze({

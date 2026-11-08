@@ -18,6 +18,8 @@
   var frame = null;
   var result;
   var calculationDirty = true;
+  var layoutDirty = true;
+  var paintedCells = new Map();
   var view = C.allocation(svg, grid);
 
   function selection() {
@@ -43,9 +45,13 @@
 
   function render() {
     if (frame !== null) { cancelAnimationFrame(frame); frame = null; }
+    var modelChanged = calculationDirty;
     if (calculationDirty) { result = M.diagnose(grid, shifts); calculationDirty = false; }
-    view.update(grid, shifts);
+    view.update(grid, shifts, Array.from(paintedCells.values()));
+    paintedCells.clear();
     selection();
+    if (!modelChanged && !layoutDirty) { return; }
+    layoutDirty = false;
     result.bidders.forEach(function (agent, index) {
       var bidder = index + 1;
       C.interim(byId("interim-" + bidder + "-chart"), agent, bidder);
@@ -91,6 +97,8 @@
     if (old[0] === brush[0] && old[1] === brush[1]) { return false; }
     stroke.changed = true;
     grid[cell.half][cell.i][cell.j] = brush.slice();
+    paintedCells.set([cell.half, cell.i, cell.j].join(","),
+      { half: cell.half, i: cell.i, j: cell.j });
     calculationDirty = true;
     return true;
   }
@@ -289,7 +297,7 @@
       var width = entry.contentRect.width;
       if (widths.get(entry.target) !== width) { widths.set(entry.target, width); changed = true; }
     });
-    if (changed) { render(); C.lottery(lotterySvg, brush); }
+    if (changed) { layoutDirty = true; render(); C.lottery(lotterySvg, brush); }
   });
   document.querySelectorAll("#auction-demo svg[viewBox]").forEach(function (chart) {
     widths.set(chart, parseFloat(getComputedStyle(chart).width));

@@ -309,6 +309,36 @@
     return host;
   }
 
+  checks.push({ name: "Shared appendix navigation waits for math, handles cancellation, and reopens", run: async function () {
+    var win = frame.contentWindow, runtime = win.MechanismMath;
+    var host = fixture('<h3 id="shared-navigation-target" tabindex="-1">Target \\(q\\)</h3>');
+    var release, started = false;
+    var gate = new Promise(function (resolve) { release = resolve; });
+    win.MechanismMath = { typesetInitial: function (selector) {
+      started = true;
+      return gate.then(function () { return runtime.typesetInitial(selector); });
+    } };
+    try {
+      var navigation = host.reveal("shared-navigation-target");
+      await T.waitFor(function () { return started; }, 5000);
+      T.assert(host.ownerDocument.activeElement.id !== "shared-navigation-target", "Navigation must not focus unfinished mathematics.");
+      host.querySelector(".learning-sidebar-close").click();
+      release();
+      T.assert(await navigation === null, "Closing the drawer must cancel pending navigation.");
+      win.MechanismMath = runtime;
+      var scroll = win.scrollY;
+      var target = await host.reveal("shared-navigation-target");
+      T.assert(target === host.ownerDocument.activeElement && target.querySelector("mjx-container"), "Reopening must focus the fully rendered target.");
+      T.assertClose(win.scrollY, scroll, 1, "Appendix navigation must preserve the lesson's scroll position.");
+      var error = await host.reveal("missing-navigation-target").then(function () { return null; }, function (failure) { return failure; });
+      T.assert(error && /Unknown appendix target/.test(error.message), "Missing targets must reject with a useful error.");
+    } finally {
+      release();
+      win.MechanismMath = runtime;
+      host.remove();
+    }
+  } });
+
   checks.push({ name: "In-flight tab rendering is shared across switches and close/reopen", run: async function () {
     var win = frame.contentWindow, runtime = win.MechanismMath;
     var host = fixture(), release, calls = 0;

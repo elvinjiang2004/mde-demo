@@ -71,6 +71,7 @@
     ic.dataset.passed = rule.monotone;
     el("bic-verdict").textContent = rule.monotone ? "BIC: passes" : "BIC: fails";
     el("bic-monotonicity").textContent = rule.monotone ? "is weakly increasing" : "is not weakly increasing";
+    var icSummary = el("bic-verdict").textContent + " (Q " + el("bic-monotonicity").textContent + ")";
     feasible.dataset.passed = rule.feasibility.feasible;
     feasible.textContent = rule.feasibility.feasible ? "Feasibility: passes (all capacity constraints hold)" : "Feasibility: fails (allocation exceeds capacity)";
     el("revenue-label").textContent = rule.valid ? "Expected revenue" : "Candidate revenue";
@@ -84,7 +85,7 @@
       return "Optimal ironing quantile: [" + p.lower.toFixed(4) + ", " + p.upper.toFixed(4) + "] (corresponds to [" +
         p.a.toFixed(4) + ", " + p.b.toFixed(4) + "] on value axis)";
     }).join("; ") : "Optimal ironing quantile: none (virtual values are nondecreasing)";
-    el("allocation-description").textContent = ic.textContent + (rule.monotone ? "; Q is nondecreasing. " :
+    el("allocation-description").textContent = icSummary + (rule.monotone ? "; Q is nondecreasing. " :
       "; Q decreases between v = " + rule.monotonicityWitness.from.toFixed(3) + " and " + rule.monotonicityWitness.to.toFixed(3) + ". ") +
       state.points.length + " draggable points. " + el("interpolation-kind").textContent + " " +
       "Solid blue is allocation; vertical scale 0 to 1. Positive pooling intervals are shaded.";
@@ -97,7 +98,7 @@
       ", capacity excess " + fixed(rule.feasibility.witness.excess) +
       ". Blue is n times the allocation integral over the highest-allocation type mass; dotted black is 1 minus (1 minus mass) to the power n.";
     clearTimeout(announceTimer);
-    announceTimer = setTimeout(function () { el("live-summary").textContent = el("distribution-status").textContent + ". " + ic.textContent + ". " + feasible.textContent + ". " + el("revenue-label").textContent + " " + fixed(rule.revenue) + ". " + el("pool-summary").textContent; }, 180);
+    announceTimer = setTimeout(function () { el("live-summary").textContent = el("distribution-status").textContent + ". " + icSummary + ". " + feasible.textContent + ". " + el("revenue-label").textContent + " " + fixed(rule.revenue) + ". " + el("pool-summary").textContent; }, 180);
     document.body.dataset.ready = "true";
   }
   function edit(v, q) {
@@ -203,26 +204,9 @@
   var lipschitzLink = el("lipschitz-continuity-link");
   function openLipschitzProof() {
     var sidebar = document.querySelector('learning-sidebar[page="general-optimal-auctions"]');
-    var drawer = sidebar.querySelector(".learning-sidebar-panel");
-    var insights = sidebar.querySelector(".learning-sidebar-insights");
-    sidebar.querySelector('[aria-controls="' + insights.id + '"]').click();
-    if (drawer.hidden) { sidebar.querySelector(".learning-sidebar-toggle").click(); }
-    // Wait for lazy Insights and MathJax before focusing the proof.
-    var observer = new MutationObserver(focusProof);
-    function focusProof() {
-      if (drawer.hidden || insights.hidden || insights.hasAttribute("data-render-error")) {
-        observer.disconnect();
-        return;
-      }
-      var proof = el("lipschitz-continuity-insight");
-      if (proof && !insights.hasAttribute("aria-busy")) {
-        observer.disconnect();
-        sidebar.querySelector(".learning-sidebar-content").scrollTop = 0;
-        proof.focus({ preventScroll: true });
-      }
-    }
-    observer.observe(drawer, { attributes: true, childList: true, subtree: true });
-    focusProof();
+    sidebar.reveal("lipschitz-continuity-insight").catch(function () {
+      // The drawer presents rendering failures with its Retry control.
+    });
   }
   lipschitzLink.addEventListener("click", function (event) {
     if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) { return; }
@@ -237,6 +221,6 @@
   });
   render();
   EquationChain.initDividers();
-  MechanismMath.typesetInitial(".introduction, #distribution-controls, #auction-demo, #derivation, #expected-revenue");
+  MechanismMath.typesetInitial(".introduction, #distribution-controls, #auction-demo, #derivation, #expected-revenue, #optimal-mechanism");
   if (window.location.hash === lipschitzLink.hash) { openLipschitzProof(); }
 })();

@@ -23,6 +23,8 @@
     var drawCircle = chart.drawCircle;
     var lastChartLayout = { width: 1000, left: 90, right: 975 };
     var valuePdfSignature = null;
+    var curveCache = null;
+    var curveCacheBuildCount = 0;
 
     function drawDiamond(svg, x, y, className) {
       chart.drawDiamond(svg, x, y, className, 8);
@@ -93,6 +95,8 @@
       var densitySamples = sampleDensity(241, current.bid);
       var cdfSamples = sampleCdf(241, current.bid, state.value);
       var densityMax = densityScaleMaximum(densitySamples) * 1.08;
+      svg.dataset.curveCacheKey = curveCache.signature;
+      svg.dataset.curveCacheBuildCount = String(curveCache.buildCount);
 
       var densityPanel = {
         top: layout.densityTop,
@@ -309,17 +313,24 @@
       );
     }
 
-    function sampleDensity(count, selectedBid) {
-      var points = [];
+    function cachedUnderlyingCurves(count) {
+      var signature = [state.n, state.a, state.b, state.alpha, state.beta].join("|");
+      if (curveCache && curveCache.signature === signature) { return curveCache; }
+      var density = [], cdf = [];
       var spec = distributionSpec();
-      var i;
-      for (i = 0; i < count; i += 1) {
+      for (var i = 0; i < count; i += 1) {
         var bid = state.a + (i / (count - 1)) * (state.b - state.a);
-        points.push({
-          bid: bid,
-          density: densityForPlot(bid, spec)
-        });
+        density.push({ bid: bid, density: densityForPlot(bid, spec) });
+        cdf.push({ bid: bid, cdf: model.highestOpponentBidCdf(bid, state.n, state.a, state.b, spec) });
       }
+      curveCacheBuildCount += 1;
+      curveCache = { signature: signature, buildCount: curveCacheBuildCount, density: density, cdf: cdf };
+      return curveCache;
+    }
+
+    function sampleDensity(count, selectedBid) {
+      var points = cachedUnderlyingCurves(count).density.slice();
+      var spec = distributionSpec();
       points.push({
         bid: state.b,
         density: 0
@@ -363,22 +374,8 @@
     }
 
     function sampleCdf(count, selectedBid, value) {
-      var points = [];
+      var points = cachedUnderlyingCurves(count).cdf.slice();
       var spec = distributionSpec();
-      var i;
-      for (i = 0; i < count; i += 1) {
-        var bid = state.a + (i / (count - 1)) * (state.b - state.a);
-        points.push({
-          bid: bid,
-          cdf: model.highestOpponentBidCdf(
-            bid,
-            state.n,
-            state.a,
-            state.b,
-            spec
-          )
-        });
-      }
       [selectedBid, value].forEach(function (bid) {
         points.push({
           bid: bid,

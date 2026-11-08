@@ -41,14 +41,6 @@
     return sharedEnvelope.chatterjeeSamuelsonGrid(CELL_RESOLUTION);
   }
 
-  function countTrue1D(boolArray) {
-    var count = 0;
-    boolArray.forEach(function (value) {
-      if (value) { count += 1; }
-    });
-    return count;
-  }
-
   function checkBuyerMonotonicity(grid, tolerance) {
     var tol = tolerance === undefined ? MONOTONICITY_TOLERANCE : tolerance;
     return sharedEnvelope.checkDsicAllocation(grid, tol).buyer.violations;
@@ -61,60 +53,6 @@
 
   function isDsicImplementable(buyerViolations, sellerViolations) {
     return countTrue(buyerViolations) === 0 && countTrue(sellerViolations) === 0;
-  }
-
-  function interimBuyerProbability(grid) {
-    var result = new Array(CELL_RESOLUTION);
-    var i;
-    var j;
-    for (i = 0; i < CELL_RESOLUTION; i += 1) {
-      var total = 0;
-      for (j = 0; j < CELL_RESOLUTION; j += 1) {
-        total += grid.lower[i][j] + grid.upper[i][j];
-      }
-      result[i] = total / (2 * CELL_RESOLUTION);
-    }
-    return result;
-  }
-
-  function interimSellerProbability(grid) {
-    var result = new Array(CELL_RESOLUTION);
-    var i;
-    var j;
-    for (j = 0; j < CELL_RESOLUTION; j += 1) {
-      var total = 0;
-      for (i = 0; i < CELL_RESOLUTION; i += 1) {
-        total += grid.lower[i][j] + grid.upper[i][j];
-      }
-      result[j] = total / (2 * CELL_RESOLUTION);
-    }
-    return result;
-  }
-
-  function checkInterimBuyerMonotonicity(Q, tolerance) {
-    var tol = tolerance === undefined ? MONOTONICITY_TOLERANCE : tolerance;
-    var violations = new Array(CELL_RESOLUTION).fill(false);
-    var i;
-    for (i = 0; i < CELL_RESOLUTION - 1; i += 1) {
-      if (Q[i + 1] < Q[i] - tol) {
-        violations[i] = true;
-        violations[i + 1] = true;
-      }
-    }
-    return violations;
-  }
-
-  function checkInterimSellerMonotonicity(Q, tolerance) {
-    var tol = tolerance === undefined ? MONOTONICITY_TOLERANCE : tolerance;
-    var violations = new Array(CELL_RESOLUTION).fill(false);
-    var j;
-    for (j = 0; j < CELL_RESOLUTION - 1; j += 1) {
-      if (Q[j + 1] > Q[j] + tol) {
-        violations[j] = true;
-        violations[j + 1] = true;
-      }
-    }
-    return violations;
   }
 
   function triangleCentroid(i, j, isLower) {
@@ -262,12 +200,7 @@
     checkBuyerMonotonicity: checkBuyerMonotonicity,
     checkSellerMonotonicity: checkSellerMonotonicity,
     countTrue: countTrue,
-    countTrue1D: countTrue1D,
     isDsicImplementable: isDsicImplementable,
-    interimBuyerProbability: interimBuyerProbability,
-    interimSellerProbability: interimSellerProbability,
-    checkInterimBuyerMonotonicity: checkInterimBuyerMonotonicity,
-    checkInterimSellerMonotonicity: checkInterimSellerMonotonicity,
     cumulativeBuyerPayoffAt: cumulativeBuyerPayoffAt,
     cumulativeSellerPayoffAt: cumulativeSellerPayoffAt,
     patchGridValueAt: sharedEnvelope.patchGridValueAt,

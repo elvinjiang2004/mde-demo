@@ -11,11 +11,10 @@
   function brush(a, b) { input("brush-q1", "0"); input("brush-q2", "0"); input("brush-q1", String(a)); input("brush-q2", String(b)); }
   async function fresh() {
     frame.style.width = "1280px";
-    var loaded = new Promise(function (resolve) { frame.onload = resolve; });
-    frame.src = "../auction-design/regular-optimal-auctions/index.html?style-test=" + (++serial);
-    await loaded;
-    doc = frame.contentDocument; win = frame.contentWindow;
-    await T.waitFor(function () { return doc.body.dataset.ready === "true" && !!doc.querySelector("mjx-container"); }, 12000, "Page and MathJax readiness");
+    var page = await T.loadFrame(frame, "../auction-design/regular-optimal-auctions/index.html?style-test=" + (++serial), {
+      timeout: 15000, math: "main", ready: function (loaded) { return loaded.body.dataset.ready === "true"; }
+    });
+    doc = page.document; win = page.window;
     simulateCapture(el("allocation-chart")); simulateCapture(el("lottery-chart"));
   }
   function coordinates(svg, x, y) {
@@ -491,6 +490,32 @@
       checks = 0; input("shift-1-number", "0.4");
       assert(checks >= 1600, "A changed distribution recalculates payments");
     } finally { win.NumberUtils = numeric; }
+  });
+  test("Palette-only renders retain diagnostic paths and one-cell painting changes one fill", function () {
+    var selectors = "#interim-1-chart path, #interim-2-chart path, #payment-1-chart path, #payment-2-chart path";
+    var paths = Array.from(doc.querySelectorAll(selectors));
+    assert(paths.length > 0, "Diagnostic paths are present");
+    function samePaths(message) {
+      var current = Array.from(doc.querySelectorAll(selectors));
+      assert(current.length === paths.length && current.every(function (node, i) { return node === paths[i]; }), message);
+    }
+    input("shift-1-number", "0.0");
+    samePaths("An unchanged parameter keeps existing diagnostic nodes");
+    var cells = Array.from(el("allocation-chart").querySelectorAll(".allocation-layer > polygon"));
+    var fills = cells.map(function (node) { return node.getAttribute("fill"); });
+    doc.documentElement.style.setProperty("--heatmap-blue-rgb", "1,2,3");
+    input("shift-1-number", "0.0");
+    samePaths("A palette-only render keeps existing diagnostic nodes");
+    assert(cells.some(function (node, i) { return node.getAttribute("fill") !== fills[i]; }), "The changed palette recolors allocations");
+    var mutations = [];
+    var observer = new win.MutationObserver(function (records) { mutations = mutations.concat(records); });
+    observer.observe(el("allocation-chart").querySelector(".allocation-layer"), { subtree: true, attributes: true, attributeFilter: ["fill"] });
+    try {
+      brush(0.2, 0.3); tap("Enter");
+      mutations = mutations.concat(observer.takeRecords());
+      assert(mutations.length === 1 && cells.indexOf(mutations[0].target) >= 0, "Painting one triangle updates only its fill");
+      close(Number(el("selected-cell").dataset.q1), 0.2); close(Number(el("selected-cell").dataset.q2), 0.3);
+    } finally { observer.disconnect(); }
   });
   T.run(tests);
 }());

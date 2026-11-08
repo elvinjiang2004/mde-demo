@@ -5,7 +5,7 @@
   // MathJax mutates shared state; serialize requests and discard superseded text.
   var typesetQueue = Promise.resolve();
   var loadPromise = null;
-  var requestVersions = new WeakMap();
+  var requests = new WeakMap();
 
   function readyMathJax() {
     var mathJax = window.MathJax;
@@ -44,7 +44,17 @@
     typesetQueue = queue.catch(function () {
     });
     window.mechanismMathReady = typesetQueue;
-    return typesetQueue;
+    // Recover the shared queue, while callers can still observe this request's error.
+    return queue;
+  }
+
+  function assertRendered(mathJax, targets) {
+    if (!mathJax) { throw new Error("The mathematics renderer is unavailable."); }
+    targets.forEach(function (target) {
+      if (target.querySelector('mjx-merror, merror, [data-mml-node="merror"]')) {
+        throw new Error("The mathematics contains a rendering error.");
+      }
+    });
   }
 
   function typesetInitial(selector) {
@@ -55,44 +65,54 @@
     }).then(function () {
       return waitForMathJax();
     }).then(function (mathJax) {
-      if (!mathJax || targets.length === 0) {
-        return null;
-      }
-      return mathJax.typesetPromise(targets);
+      if (targets.length === 0) { return null; }
+      assertRendered(mathJax, []);
+      return mathJax.typesetPromise(targets).then(function () {
+        assertRendered(mathJax, targets);
+      });
     });
     return publish(initialTypeset);
   }
 
   function setText(element, texSource) {
-    if (!element || element.namespaceURI === SVG_NS ||
-        element.dataset.mathSource === texSource) {
+    if (!element || element.namespaceURI === SVG_NS) {
       return window.mechanismMathReady;
     }
 
-    var version = (requestVersions.get(element) || 0) + 1;
-    requestVersions.set(element, version);
+    var previous = requests.get(element);
+    if (previous && previous.source === texSource && previous.status !== "failed") {
+      return previous.promise;
+    }
+    var request = { source: texSource, status: "pending", promise: null };
+    requests.set(element, request);
     element.dataset.mathSource = texSource;
 
     var update = typesetQueue.catch(function () {
     }).then(function () {
-      if (requestVersions.get(element) !== version) {
+      if (requests.get(element) !== request) {
         return null;
       }
       return waitForMathJax().then(function (mathJax) {
-        if (requestVersions.get(element) !== version) {
+        if (requests.get(element) !== request) {
           return null;
         }
         if (mathJax && typeof mathJax.typesetClear === "function") {
           mathJax.typesetClear([element]);
         }
         element.textContent = texSource;
-        if (!mathJax) {
-          return null;
-        }
-        return mathJax.typesetPromise([element]);
+        assertRendered(mathJax, []);
+        return mathJax.typesetPromise([element]).then(function () {
+          assertRendered(mathJax, [element]);
+        });
       });
+    }).then(function () {
+      request.status = "ready";
+    }, function (error) {
+      request.status = "failed";
+      throw error;
     });
-    return publish(update);
+    request.promise = publish(update);
+    return request.promise;
   }
 
   window.MechanismMath = Object.freeze({

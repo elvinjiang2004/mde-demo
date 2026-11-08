@@ -20,15 +20,53 @@
     var started = Date.now();
     return new Promise(function (resolve, reject) {
       function check() {
-        if (predicate()) {
-          resolve();
-        } else if (Date.now() - started >= timeout) {
-          reject(new Error(message || "Timed out waiting for test readiness."));
-        } else {
-          global.setTimeout(check, 25);
+        try {
+          if (predicate()) {
+            resolve();
+          } else if (Date.now() - started >= timeout) {
+            reject(new Error(message || "Timed out waiting for test readiness."));
+          } else {
+            global.setTimeout(check, 25);
+          }
+        } catch (error) {
+          reject(error);
         }
       }
       check();
+    });
+  }
+
+  function loadFrame(frame, url, options) {
+    var settings = options || {};
+    var loaded = false, loadError = null;
+    var expected = new URL(url, frame.ownerDocument.baseURI).href;
+    function onLoad() { loaded = true; }
+    function onError() { loadError = new Error("Could not load test frame: " + url); }
+    frame.addEventListener("load", onLoad);
+    frame.addEventListener("error", onError);
+    frame.src = url;
+    return waitFor(function () {
+      if (loadError) { throw loadError; }
+      if (!loaded) { return false; }
+      var doc = frame.contentDocument, win = frame.contentWindow;
+      assert(doc && doc.body, "Test frame must be readable: " + url);
+      if (doc.URL !== expected) { return false; }
+      if (settings.ready && !settings.ready(doc, win)) { return false; }
+      if (settings.math) {
+        var containers = Array.from(doc.querySelectorAll(settings.math));
+        if (!containers.length) { return false; }
+        assert(!containers.some(function (node) { return node.querySelector("mjx-merror, merror"); }),
+          "Test frame mathematics failed to render: " + url);
+        if (!containers.some(function (node) { return node.querySelector("mjx-container"); }) ||
+            containers.some(function (node) { return /\\\(|\\\[/.test(node.textContent); })) { return false; }
+      }
+      return true;
+    }, settings.timeout === undefined ? 15000 : settings.timeout,
+    settings.message || "Timed out loading test frame and waiting for readiness: " + url).then(function () {
+      return { document: frame.contentDocument, window: frame.contentWindow };
+    }).finally(function () {
+      frame.removeEventListener("load", onLoad);
+      frame.removeEventListener("error", onError);
     });
   }
 
@@ -126,6 +164,7 @@
     assert: assert,
     assertClose: assertClose,
     waitFor: waitFor,
+    loadFrame: loadFrame,
     nextAnimationFrames: nextAnimationFrames,
     dispatch: dispatch,
     addResult: addResult,

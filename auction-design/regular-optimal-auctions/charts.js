@@ -64,15 +64,30 @@ window.OptimalAuctionsCharts = (function () {
     var ticks = svg.querySelectorAll(".axis-text");
     var overlay = append(svg, "g", { "pointer-events": "none" });
     var selected = append(overlay, "polygon", { class: "cell-cursor" });
+    var lastGrid = grid;
+    var lastPalette = JSON.stringify(colors);
+    var lastShifts = null;
     return {
-      update: function (current, shifts) {
+      update: function (current, shifts, changedCells) {
         shifts = shifts || [0, 0];
         var colorsNow = palette();
-        ["lower", "upper"].forEach(function (half) {
-          current[half].forEach(function (row, i) { row.forEach(function (q, j) {
-            nodes[half][i][j].setAttribute("fill", color(q, colorsNow));
-          }); });
-        });
+        var paletteKey = JSON.stringify(colorsNow);
+        function fill(half, i, j) {
+          var node = nodes[half][i][j], next = color(current[half][i][j], colorsNow);
+          if (node.getAttribute("fill") !== next) { node.setAttribute("fill", next); }
+        }
+        if (current !== lastGrid || paletteKey !== lastPalette || !changedCells) {
+          ["lower", "upper"].forEach(function (half) {
+            current[half].forEach(function (row, i) { row.forEach(function (q, j) { fill(half, i, j); }); });
+          });
+        } else {
+          changedCells.forEach(function (cell) { fill(cell.half, cell.i, cell.j); });
+        }
+        lastGrid = current;
+        lastPalette = paletteKey;
+        var shiftsKey = shifts.join(",");
+        if (lastShifts === shiftsKey) { return; }
+        lastShifts = shiftsKey;
         ticks.forEach(function (tick, i) {
           tick.textContent = S.formatTick(Math.floor(i / 2) / 4 + shifts[i % 2]);
         });

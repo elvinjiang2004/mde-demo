@@ -53,6 +53,7 @@ window.MechanismTestCatalog = [
     "file": "general-optimal-auctions-ui-tests.html",
     "name": "General Optimal Auctions interface",
     "kind": "interface",
+    "exclusive": true,
     "module": "general-optimal-auctions",
     "status": "in-progress"
   },
@@ -116,6 +117,7 @@ window.MechanismTestCatalog = [
     "file": "revelation-principle-ui-tests.html",
     "name": "Revelation Principle interface",
     "kind": "interface",
+    "exclusive": true,
     "module": "revelation-principle",
     "status": "complete"
   },
@@ -164,7 +166,8 @@ window.MechanismTestCatalog = [
   {
     "file": "learning-sidebar-tests.html",
     "name": "Page Appendix sidebar",
-    "kind": "interface"
+    "kind": "interface",
+    "exclusive": true
   },
   {
     "file": "mathjax-tests.html",

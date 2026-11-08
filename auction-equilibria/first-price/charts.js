@@ -96,7 +96,7 @@
       var cdfHeight = layout.cdfHeight;
       var cdfBottom = cdfTop + cdfHeight;
       var span = state.b - state.a;
-      var underlying = cachedUnderlyingCurves(321, 361);
+      var underlying = cachedUnderlyingCurves(361);
       var samples = sampleWinningProbabilities(
         underlying.winningProbability, current, equilibrium
       );
@@ -307,44 +307,40 @@
       );
     }
 
-    function cachedUnderlyingCurves(probabilityCount, densityCount) {
+    function cachedUnderlyingCurves(count) {
       var signature = [state.n, state.a, state.b, state.alpha, state.beta].join("|");
       if (curveCache && curveCache.signature === signature) {
         return curveCache;
       }
+      var sampled = sampleUnderlyingCurves(count);
       curveCache = {
         signature: signature,
         buildCount: curveCacheBuildCount + 1,
-        winningProbability: sampleWinningProbabilityBase(probabilityCount),
-        density: sampleDensityBase(densityCount)
+        winningProbability: sampled.winningProbability,
+        density: sampled.density
       };
       curveCacheBuildCount = curveCache.buildCount;
       return curveCache;
     }
 
-    function sampleWinningProbabilityBase(count) {
-      var points = [];
-      var span = state.b - state.a;
+    function sampleUnderlyingCurves(count) {
       var spec = distributionSpec();
-      var i;
-      for (i = 0; i < count; i += 1) {
-        var bid = state.a + (i / (count - 1)) * span;
-        points.push({ bid: bid, winProbability: model.winProbability(
-          bid, state.n, state.a, state.b, spec
-        ) });
-      }
-      return points;
-    }
-
-    function sampleDensityBase(count) {
       var supportEnd = model.maximumEquilibriumBid(
-        state.n, state.a, state.b, distributionSpec()
+        state.n, state.a, state.b, spec
       );
-      var support = [];
+      var support = [], probability = [];
       var i;
       for (i = 0; i < count; i += 1) {
-        var bid = state.a + (i / (count - 1)) * (supportEnd - state.a);
-        support.push({ bid: bid, density: densityForPlot(bid, state.a, supportEnd) });
+        // Plot parametrically in the opponent's value; no inverse solve is
+        // needed at each sample. Cluster samples near both support endpoints.
+        var position = (1 - Math.cos(Math.PI * i / (count - 1))) / 2;
+        var value = state.a + position * (state.b - state.a);
+        var bid = model.equilibriumBid(value, state.n, state.a, state.b, spec);
+        var win = Math.pow(distributions.cdf(value, state.a, state.b, spec), state.n - 1);
+        var density = value > bid ? win / (value - bid) :
+          densityForPlot(bid, state.a, supportEnd);
+        support.push({ bid: bid, density: density });
+        probability.push({ bid: bid, winProbability: win });
       }
       var curve = support.slice();
       curve.push({ bid: supportEnd, density: 0 });
@@ -352,7 +348,9 @@
         curve.push({ bid: state.b, density: 0 });
       }
       // The repeated endpoint draws the vertical density cutoff; do not deduplicate it.
-      return { supportEnd: supportEnd, support: uniqueByBid(support), curve: curve };
+      if (supportEnd < state.b) { probability.push({ bid: state.b, winProbability: 1 }); }
+      return { winningProbability: uniqueByBid(probability),
+        density: { supportEnd: supportEnd, support: uniqueByBid(support), curve: curve } };
     }
 
     function sampleWinningProbabilities(base, current, equilibrium) {

@@ -163,9 +163,9 @@
       }
 
       function renderTab(tab) {
-        if (panel.hidden || tab.panel.hidden) { return; }
+        if (panel.hidden || tab.panel.hidden) { return Promise.resolve(false); }
         content.hidden = false;
-        if (tab.ready) { setStatus("", false); return; }
+        if (tab.ready) { setStatus("", false); return Promise.resolve(true); }
         var version = ++renderVersion;
         tab.panel.removeAttribute("data-render-error");
         tab.panel.setAttribute("aria-busy", "true");
@@ -190,7 +190,7 @@
               throw new Error("The appendix math renderer is unavailable.");
             }
             return window.MechanismMath.typesetInitial("#" + tab.panel.id).then(function () {
-              // The shared queue absorbs failures, so inspect the actual output.
+              // Also detect incomplete output from a renderer that resolves early.
               if (hasMathSource(tab.panel) || tab.panel.querySelector('mjx-merror, merror, [data-mml-node="merror"]')) {
                 throw new Error("The appendix mathematics did not finish rendering.");
               }
@@ -204,21 +204,26 @@
             throw error;
           });
         }
-        tab.pending.then(function (rendered) {
-          if (!isCurrent(tab, version)) { return; }
-          if (!rendered) { renderTab(tab); return; }
+        var completion = tab.pending.then(function (rendered) {
+          if (!isCurrent(tab, version)) { return false; }
+          if (!rendered) { return renderTab(tab); }
           tab.ready = true;
           tab.panel.removeAttribute("aria-busy");
           setStatus("", false);
           // The earlier restore may have been clamped before math created its height.
           content.scrollTop = tab.scrollTop;
-        }, function () {
-          if (!isCurrent(tab, version)) { return; }
+          return true;
+        }, function (error) {
+          if (!isCurrent(tab, version)) { return false; }
           tab.panel.removeAttribute("aria-busy");
           tab.panel.setAttribute("data-render-error", "true");
           content.hidden = true;
           setStatus("Appendix content could not be displayed.", true);
+          throw error;
         });
+        // Button-driven renders are handled here; reveal() also receives the error.
+        completion.catch(function () {});
+        return completion;
       }
 
       function selectTab(index, focus) {
@@ -228,6 +233,7 @@
           return;
         }
         tabs[active].scrollTop = content.scrollTop;
+        navigationVersion += 1;
         renderVersion += 1;
         active = index;
         tabs.forEach(function (tab, tabIndex) {
@@ -242,7 +248,31 @@
       }
 
       var host = this;
+      var navigationVersion = 0;
+      this.reveal = function (targetId) {
+        var tab = tabs[2];
+        selectTab(2, false);
+        if (panel.hidden) { setOpen(true, false); }
+        var navigation = ++navigationVersion;
+        return renderTab(tab).then(function (rendered) {
+          if (!rendered || navigation !== navigationVersion || panel.hidden || tab.panel.hidden || !host.isConnected) {
+            return null;
+          }
+          var target = host.ownerDocument.getElementById(targetId);
+          if (!target || !tab.panel.contains(target)) {
+            throw new Error("Unknown appendix target: " + targetId);
+          }
+          content.scrollTop = 0;
+          var bounds = target.getBoundingClientRect(), viewport = content.getBoundingClientRect();
+          if (bounds.top < viewport.top || bounds.top >= viewport.bottom) {
+            content.scrollTop += bounds.top - viewport.top;
+          }
+          target.focus({ preventScroll: true });
+          return target;
+        });
+      };
       function setOpen(open, restoreFocus) {
+        navigationVersion += 1;
         panel.hidden = !open;
         host.classList.toggle("is-open", open);
         toggle.setAttribute("aria-expanded", String(open));

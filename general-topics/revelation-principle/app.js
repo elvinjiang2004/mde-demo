@@ -145,26 +145,9 @@
   var environmentLink = byId("voting-environment-link");
   function openVotingEnvironment() {
     var sidebar = document.querySelector('learning-sidebar[page="revelation-principle"]');
-    var drawer = sidebar.querySelector(".learning-sidebar-panel");
-    var insights = sidebar.querySelector(".learning-sidebar-insights");
-    sidebar.querySelector('[aria-controls="' + insights.id + '"]').click();
-    if (drawer.hidden) { sidebar.querySelector(".learning-sidebar-toggle").click(); }
-    // Wait for lazy Insights rendering and MathJax before moving focus.
-    var observer = new MutationObserver(focusDescription);
-    function focusDescription() {
-      if (drawer.hidden || insights.hidden || insights.hasAttribute("data-render-error")) {
-        observer.disconnect();
-        return;
-      }
-      var description = byId("voting-environment-insight");
-      if (description && !insights.hasAttribute("aria-busy")) {
-        observer.disconnect();
-        sidebar.querySelector(".learning-sidebar-content").scrollTop = 0;
-        description.focus({ preventScroll: true });
-      }
-    }
-    observer.observe(drawer, { attributes: true, childList: true, subtree: true });
-    focusDescription();
+    sidebar.reveal("voting-environment-insight").catch(function () {
+      // The drawer presents rendering failures with its Retry control.
+    });
   }
   environmentLink.addEventListener("click", function (event) {
     if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) { return; }

@@ -413,11 +413,16 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle -\sum_{i=1}^n U_i(\underline{v}_i)+\mathbb{E}\!\left[\sum_{i=1}^n q_i(V)\,\phi_i(V_i)\right].\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \sum_{i=1}^n \left[-U_i(\underline{v}_i)+\mathbb{E}\!\left[q_i(V)\,\phi_i(V_i)\right]\right].\)</span>
+
+        <span class="equation-step-connector"></span>
+        <span class="equation-step-lhs"></span>
+        <span class="equation-step-relation">\(\displaystyle =\)</span>
+        <span class="equation-step-rhs">\(\displaystyle -\sum_{i=1}^n U_i(\underline{v}_i) + \sum_{i=1}^n \mathbb{E}\!\left[q_i(V)\,\phi_i(V_i)\right].\)</span>
       </div>
     </section>
     <section id="optimal-mechanism" class="derivation" aria-labelledby="optimal-mechanism-title">
-      <h2 id="optimal-mechanism-title">The Optimal Mechanism</h2>
+      <h2 id="optimal-mechanism-title">The optimal mechanism</h2>
       <p>
         Now, we will verify that our proposed optimal mechanism is indeed BIC, IR, and optimal.
         Recall that in a <em>regular</em> environment, \(\phi_i(v_i)\) is weakly increasing
@@ -497,8 +502,8 @@
         <span class="equation-step-rhs">\(\displaystyle v_iQ_i^*(v_i)-\int_{\underline{v}_i}^{v_i}Q_i^*(t)\,dt.\)</span>
       </div>
       <p>
-        Then, this mechanism is BIC and IR. Notice that it sets \(U_i(\underline{v}_i)=0\)
-        for each buyer \(i\) in the payment identity.
+        Then, our proposed mechanism is BIC and IR. Notice that it sets \(U_i(\underline{v}_i)=0\)
+        for each buyer \(i\) in the payment expression.
       </p>
       <p>
         For optimality, we can look at the expected revenue expression we derived earlier.
@@ -507,13 +512,13 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle \sum_{i=1}^n \mathbb{E}\!\left[p_i(V)\right]\)</span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle -\sum_{i=1}^n U_i(\underline{v}_i)+\mathbb{E}\!\left[\sum_{i=1}^n q_i(V)\,\phi_i(V_i)\right].\)</span>
+        <span class="equation-step-rhs">\(\displaystyle -\sum_{i=1}^n U_i(\underline{v}_i)+\sum_{i=1}^n \mathbb{E}\!\left[q_i(V)\,\phi_i(V_i)\right].\)</span>
       </div>
       <p>
-        We've maximized the first term under IR by setting it to zero.
-        We've also maximized the second term because we give the maximum allocation possible
-        only to the highest weakly positive virtual value buyer. This also implies that the maximum
-        expected revenue from any BIC, IR mechanism is
+        We've maximized the contribution from the first summation under IR by setting each term to zero.
+        We've also maximized the contribution from the second summation by giving the maximum allocation possible
+        only to the buyer with the highest, weakly positive virtual value. Thus, our proposed optimal mechanism
+        is BIC, IR, and optimal. This also implies that the maximum expected revenue from any BIC, IR mechanism is
       </p>
       <div id="maximum-expected-revenue" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Maximum expected revenue">
         <span class="equation-step-connector"></span>

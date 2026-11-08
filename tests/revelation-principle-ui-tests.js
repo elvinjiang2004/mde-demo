@@ -18,11 +18,11 @@
   function direct() { el("direct-mode").click(); }
   async function fresh(fragment) {
     frame.style.width = "1280px";
-    frame.src = "../general-topics/revelation-principle/index.html?test=" + (++serial) + (fragment || "");
-    await new Promise(function (resolve) { frame.onload = resolve; });
-    win = frame.contentWindow;
-    doc = frame.contentDocument;
-    await T.waitFor(function () { return doc.body.dataset.ready === "true"; }, 6000, "Demo initialization");
+    var page = await T.loadFrame(frame, "../general-topics/revelation-principle/index.html?test=" + (++serial) + (fragment || ""), {
+      timeout: 15000, math: ".introduction, #derivation", ready: function (loaded) { return loaded.body.dataset.ready === "true"; }
+    });
+    win = page.window;
+    doc = page.document;
     app = win.RevelationPrincipleApp;
   }
   function point(button) {

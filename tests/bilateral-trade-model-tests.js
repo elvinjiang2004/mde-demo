@@ -161,29 +161,12 @@
       "The same within-cell crossing should violate seller monotonicity.");
   });
 
-  test("interimBuyerProbability and interimSellerProbability are exact cell averages", function () {
-    var grid = model.constantCellGrid(0.7);
-    var Q_B = model.interimBuyerProbability(grid);
-    var Q_S = model.interimSellerProbability(grid);
-    var i;
-    for (i = 0; i < R; i += 1) {
-      assertClose(Q_B[i], 0.7, "Q_B should equal the constant q", 1e-12);
-      assertClose(Q_S[i], 0.7, "Q_S should equal the constant q", 1e-12);
-    }
-  });
-
   test("The shared exact interim pipeline detects within-cell IC violations hidden by cell averages", function () {
     var grid = model.createCellGrid(
       function () { return 0; },
       function () { return 1; }
     );
     var summary = model.summarize(grid);
-    model.interimBuyerProbability(grid).forEach(function (value) {
-      assertClose(value, 0.5, "Every buyer cell average should be 0.5", 1e-12);
-    });
-    model.interimSellerProbability(grid).forEach(function (value) {
-      assertClose(value, 0.5, "Every seller cell average should be 0.5", 1e-12);
-    });
     assert(window.BilateralTradeEnvelope.evaluatePolynomial(
       summary.interim.buyerAllocation[0], 0.01
     ) > window.BilateralTradeEnvelope.evaluatePolynomial(
@@ -287,31 +270,6 @@
     assertClose(under.under, 1, "Never trade should miss trade above the diagonal");
     assertClose(efficient.over + efficient.under, 0,
       "The efficient rule should have no pointwise allocation error");
-  });
-
-  test("checkInterimBuyerMonotonicity and checkInterimSellerMonotonicity flag deliberate dips/bumps", function () {
-    var Q_B = [];
-    var i;
-    for (i = 0; i < R; i += 1) {
-      Q_B[i] = i / (R - 1);
-    }
-    Q_B[10] = 0;
-    var buyerViolations = model.checkInterimBuyerMonotonicity(Q_B);
-    assert(model.countTrue1D(buyerViolations) === 2,
-      "Exactly one adjacent pair should be flagged.");
-    assert(buyerViolations[9] && buyerViolations[10],
-      "The dip should flag both endpoints of the violating transition.");
-
-    var Q_S = [];
-    for (i = 0; i < R; i += 1) {
-      Q_S[i] = (R - 1 - i) / (R - 1);
-    }
-    Q_S[10] = 1;
-    var sellerViolations = model.checkInterimSellerMonotonicity(Q_S);
-    assert(model.countTrue1D(sellerViolations) === 2,
-      "Exactly one adjacent pair should be flagged.");
-    assert(sellerViolations[9] && sellerViolations[10],
-      "The bump should flag both endpoints of the violating transition.");
   });
 
   test("The never-trade rule q=0 is exactly, trivially budget balanced", function () {
@@ -504,22 +462,20 @@
     assert(!model.isDsicImplementable(buyerViolations, sellerViolations),
       "A pointwise violation on either side should break DSIC-implementability.");
 
-    var Q_B = model.interimBuyerProbability(grid);
-    var Q_S = model.interimSellerProbability(grid);
-    Q_B.forEach(function (value) {
-      assertClose(value, 0.5, "Q_B should be exactly 0.5 for every v", 1e-9);
-    });
-    Q_S.forEach(function (value) {
-      assertClose(value, 0.5, "Q_S should be exactly 0.5 for every c", 1e-9);
-    });
-    assert(model.countTrue1D(model.checkInterimBuyerMonotonicity(Q_B)) === 0,
-      "Interim buyer probability should be monotonic despite the pointwise failures.");
-    assert(model.countTrue1D(model.checkInterimSellerMonotonicity(Q_S)) === 0,
-      "Interim seller probability should be monotonic despite the pointwise failures.");
-
     var summary = model.summarize(grid);
+    [summary.interim.buyerAllocation, summary.interim.sellerAllocation]
+      .forEach(function (polynomials) {
+        polynomials.forEach(function (polynomial, index) {
+          [index / R, (index + 0.5) / R, (index + 1) / R]
+            .forEach(function (type) {
+              assertClose(window.BilateralTradeEnvelope.evaluatePolynomial(
+                polynomial, type
+              ), 0.5, "The exact interim probability should be constant", 1e-9);
+            });
+        });
+      });
     assert(summary.verdicts.icImplementable,
-      "The live pipeline should report this rule as IC-implementable.");
+      "The exact live pipeline should report this rule as IC-implementable.");
   });
 
   test("Cumulative payoffs are always nonnegative and vanish exactly at the boundary type", function () {

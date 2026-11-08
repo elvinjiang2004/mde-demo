@@ -12,14 +12,15 @@
       assert(!/NaN|Infinity/.test(p.getAttribute("d") || p.getAttribute("transform") || ""), "Finite geometry");
     });
   }
-  async function fresh() {
+  async function fresh(math) {
     frame.style.width = "1280px";
-    var loaded = new Promise(function (resolve) { frame.onload = resolve; });
-    frame.src = "../auction-design/general-optimal-auctions/index.html?test=" + Math.random();
-    await loaded; doc = frame.contentDocument; win = frame.contentWindow;
-    await T.waitFor(function () { return doc.body.dataset.ready === "true" && !!doc.querySelector("#distribution-controls mjx-container"); }, 15000);
+    var page = await T.loadFrame(frame, "../auction-design/general-optimal-auctions/index.html?test=" + Math.random(), {
+      timeout: 15000, math: math || "#distribution-controls",
+      ready: function (loaded) { return loaded.body.dataset.ready === "true"; }
+    });
+    doc = page.document; win = page.window;
   }
-  function test(name, run) { tests.push({ name: name, run: async function () { await fresh(); await run(); } }); }
+  function test(name, run, math) { tests.push({ name: name, run: async function () { await fresh(math); await run(); } }); }
   function captureStub() {
     var svg = el("allocation-chart"), captured = null;
     svg.setPointerCapture = function (id) { captured = id; };
@@ -31,7 +32,8 @@
     p.x = 54 + 560 * v; p.y = 316 - 292 * q; p = p.matrixTransform(svg.getScreenCTM());
     T.dispatch(target, type, win, Object.assign({ pointerId: 17, isPrimary: true, button: 0, buttons: type === "pointerup" ? 0 : 1, clientX: p.x, clientY: p.y }, options));
   }
-  test("Local dependencies and interim editor replace the ex-post lottery grid", function () {
+  // Check the complete lesson once; interaction cases need the control mathematics.
+  test("Local dependencies, lesson mathematics, and the interim editor initialize correctly", function () {
     T.assertScriptOrder(doc, ["../../js/components.js", "../../js/bibliography.js", "../../js/references.js", "../../js/mathjax-config.js",
       "../../assets/mathjax/tex-svg.js", "../../js/mathjax-runtime.js", "../../js/math-utils.js", "../../js/svg-utils.js", "model.js", "charts.js", "app.js"]);
     assert(!el("lottery-chart") && doc.querySelectorAll(".control-points [role=slider]").length === 11);
@@ -47,7 +49,10 @@
     assert(win.getComputedStyle(el("revenue-value").closest("p")).color === win.getComputedStyle(green).color, "Expected revenue text is green"); green.remove();
     assert(doc.querySelectorAll("merror").length === 0);
     assert(doc.querySelector('[data-reference="border-1991"]').textContent.includes("1991"));
-  });
+    ["allocation-description", "live-summary"].forEach(function (id) {
+      assert(!/\\\(|\\\[/.test(el(id).textContent), "Accessible summaries contain plain text: " + id);
+    });
+  }, ".introduction, #distribution-controls, #auction-demo, #derivation, #expected-revenue, #optimal-mechanism");
   test("Editing Q updates payments, revenue, and IC immediately", function () {
     var original = revenue(), payment = el("payment-chart").querySelector(".learner-curve").getAttribute("d");
     choose(0); input("allocation-number", "0.9");
