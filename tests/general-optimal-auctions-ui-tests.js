@@ -48,6 +48,24 @@
     var green = doc.createElement("span"); green.style.color = "var(--green)"; doc.body.appendChild(green);
     assert(win.getComputedStyle(el("revenue-value").closest("p")).color === win.getComputedStyle(green).color, "Expected revenue text is green"); green.remove();
     assert(doc.querySelectorAll("merror").length === 0);
+    ["allocation-chart", "payment-chart", "integrated-chart"].forEach(function (id) {
+      var figure = el(id).closest("figure");
+      assert(figure.querySelector('figcaption mjx-container [data-mml-node="msub"]'), "Each buyer-specific caption renders its subscript i: " + id);
+      assert(figure.querySelector('.chart-x-axis-label mjx-container [data-mml-node="msub"]'), "Value and quantile axes retain indexed buyer notation: " + id);
+    });
+    ["value-number", "allocation-number"].forEach(function (id) {
+      assert(doc.querySelector('label[for="' + id + '"] mjx-container [data-mml-node="msub"]'), "Point controls render indexed notation: " + id);
+    });
+    assert(el("integrated-description").textContent.includes("z=F_i(v_i)") &&
+      el("integrated-description").textContent.includes("H_i(z)") &&
+      !el("integrated-description").textContent.includes("u=F(v)"), "Demo quantiles use z consistently with the proof.");
+    var notation = win.MechanismNotation.pages["general-optimal-auctions"];
+    var demoSymbols = notation.pageNotation.reduce(function (all, group, index) {
+      return notation.pageNotationSections[index] === "Demo" ? all.concat(group.map(function (entry) { return entry[0]; })) : all;
+    }, []);
+    assert(demoSymbols.join("|") === "c|\\pi|m", "Demo notation contains only its breakpoint, interval probability and feasibility mass.");
+    assert(notation.environmentNotation === win.MechanismNotation.pages["auction-design"].environmentNotation,
+      "Indexed buyer definitions retain their shared Environment owner.");
     assert(doc.querySelector('[data-reference="border-1991"]').textContent.includes("1991"));
     ["allocation-description", "live-summary"].forEach(function (id) {
       assert(!/\\\(|\\\[/.test(el(id).textContent), "Accessible summaries contain plain text: " + id);
@@ -435,7 +453,7 @@
       assert(style.strokeDasharray !== "none" && style.strokeLinecap === "round", "Orange segments are dotted");
     });
     var label = el("integrated-chart").querySelector(".virtual-value-label");
-    assert(label.textContent === "φ ∘ F⁻¹"); close(Number(label.getAttribute("x")), 166);
+    assert(label.textContent === "φᵢ ∘ Fᵢ⁻¹"); close(Number(label.getAttribute("x")), 166);
     assert(Number(label.getAttribute("y")) > 200 && Number(label.getAttribute("y")) < 280, "Virtual-value label is near the lower left branch");
     assert(!doc.querySelector(".integrated-axis-labels"));
     doc.querySelectorAll(".chart-640x360").forEach(function (svg) {
@@ -531,8 +549,8 @@
       sameStyle(doc.querySelector(".value-pdf-preview-figure figcaption"), fpa.querySelector(".value-pdf-preview-figure figcaption"), ["fontSize", "fontWeight", "marginLeft"]);
       assert(el("value-pdf-preview").getAttribute("viewBox") === fpa.getElementById("value-pdf-preview").getAttribute("viewBox"));
       assert(el("value-pdf-preview").querySelector(".value-pdf-curve") && el("value-pdf-preview").querySelectorAll(".value-pdf-axis").length === 3);
-      assert(el("value-pdf-preview").querySelector('[data-endpoint="a"]').textContent === "a = 0");
-      assert(el("value-pdf-preview").querySelector('[data-endpoint="b"]').textContent === "b = 1");
+      assert(el("value-pdf-preview").querySelector('[data-endpoint="a"]').textContent === "vᵢ = 0");
+      assert(el("value-pdf-preview").querySelector('[data-endpoint="b"]').textContent === "vᵢ = 1");
       for (var width of [320, 768, 1280]) {
         frame.style.width = width + "px"; await T.nextAnimationFrames(win, 3);
         var demoSize = 0.86 * parseFloat(win.getComputedStyle(doc.documentElement).fontSize);

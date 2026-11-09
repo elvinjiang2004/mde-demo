@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Edit a voting rule and check every unilateral misreport in a two-voter, three-candidate setting.">
+  <title>The Gibbard-Satterthwaite Theorem | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="module.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/bibliography.js"></script>
+  <script defer src="../../js/references.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
+  <script defer src="model.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to the main content</a>
+  <header class="site-header"><page-header category="Voting" home="../../index.html"></page-header></header>
+  <main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">The Gibbard-Satterthwaite Theorem</h1>
+
+      <!-- Insert only user-supplied or explicitly approved lesson prose. -->
+    </section>
+    <section id="voting-demo" class="explorable explorable-divider voting-demo" aria-label="Interactive voting rule">
+      <div class="voting-layout">
+        <figure class="rule-figure" aria-labelledby="rule-table-title">
+          <figcaption id="rule-table-title" class="rule-heading">Voting rule, \(f\)</figcaption>
+          <div class="winner-brush-controls" role="group" aria-label="Winner brush">
+            <span>Winner brush</span>
+            <button class="text-button winner-choice candidate-a" type="button" data-candidate="A" aria-pressed="true">A</button>
+            <button class="text-button winner-choice candidate-b" type="button" data-candidate="B" aria-pressed="false">B</button>
+            <button class="text-button winner-choice candidate-c" type="button" data-candidate="C" aria-pressed="false">C</button>
+          </div>
+          <p id="rule-keyboard" class="sr-only">Rows are Voter 1's ranking; columns are Voter 2's ranking. Choose a winner brush, then click or drag over profiles to paint. Arrow keys move between cells; Enter or Space applies the brush. A, B or C selects that brush and paints the focused profile. A red bottom-left triangle marks a profitable misreport for Voter 1; a red upper-right triangle marks one for Voter 2. All 36 outcomes can be edited independently.</p>
+          <div id="rule-scroll" class="rule-scroll" role="region" aria-label="Voting rule table; scroll horizontally on narrow screens" tabindex="0">
+            <div id="rule-stage" class="rule-stage">
+              <table id="rule-table" class="rule-table" aria-labelledby="rule-table-title" aria-describedby="rule-keyboard">
+                <thead id="rule-head"></thead>
+                <tbody id="rule-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </figure>
+        <div class="rule-diagnostics">
+          <dl class="audit-properties">
+            <div><dt>Onto:</dt><dd id="onto-verdict"></dd></div>
+            <div><dt>Non-dictatorship:</dt><dd id="dictator-verdict"></dd></div>
+            <div><dt>Strategy-proof:</dt><dd id="strategy-verdict"></dd></div>
+          </dl>
+        </div>
+      </div>
+      <p id="live-summary" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+    </section>
+    <section id="derivation" class="derivation" hidden></section>
+    <section id="notes" class="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title">Notes</h2>
+      <ol class="notes-list"></ol>
+    </section>
+    <section class="references" aria-labelledby="references-title">
+      <h2 id="references-title">References</h2>
+      <ul class="reference-list">
+        <li data-reference="gibbard-1973"></li>
+        <li data-reference="satterthwaite-1975"></li>
+      </ul>
+    </section>
+  </main>
+  <footer class="site-footer"><page-footer></page-footer></footer>
+  <learning-sidebar page="gibbard-satterthwaite-theorem">
+    <template data-insights>
+      <!-- User-authored Insights go here. -->
+    </template>
+  </learning-sidebar>
+</body>
+</html>

@@ -34,8 +34,8 @@
     // Formatting never writes the rounded display back into the chosen rule.
     valueNumber.value = p.v.toFixed(3); valueRange.value = p.v;
     el("allocation-number").value = p.q.toFixed(3); el("allocation-range").value = p.q;
-    el("value-range").setAttribute("aria-valuetext", "Value " + p.v.toFixed(3));
-    el("allocation-range").setAttribute("aria-valuetext", "Allocation probability " + p.q.toFixed(3));
+    el("value-range").setAttribute("aria-valuetext", "Value v_i " + p.v.toFixed(3));
+    el("allocation-range").setAttribute("aria-valuetext", "Allocation probability Q_i(v_i) " + p.q.toFixed(3));
     el("bidder-number").value = state.n;
     ["split", "mass"].forEach(function (name) {
       ["number", "range"].forEach(function (kind) { el(name + "-" + kind).value = state.distribution[name]; });
@@ -71,7 +71,7 @@
     ic.dataset.passed = rule.monotone;
     el("bic-verdict").textContent = rule.monotone ? "BIC: passes" : "BIC: fails";
     el("bic-monotonicity").textContent = rule.monotone ? "is weakly increasing" : "is not weakly increasing";
-    var icSummary = el("bic-verdict").textContent + " (Q " + el("bic-monotonicity").textContent + ")";
+    var icSummary = el("bic-verdict").textContent + " (Q_i " + el("bic-monotonicity").textContent + ")";
     feasible.dataset.passed = rule.feasibility.feasible;
     feasible.textContent = rule.feasibility.feasible ? "Feasibility: passes (all capacity constraints hold)" : "Feasibility: fails (allocation exceeds capacity)";
     el("revenue-label").textContent = rule.valid ? "Expected revenue" : "Candidate revenue";
@@ -85,15 +85,15 @@
       return "Optimal ironing quantile: [" + p.lower.toFixed(4) + ", " + p.upper.toFixed(4) + "] (corresponds to [" +
         p.a.toFixed(4) + ", " + p.b.toFixed(4) + "] on value axis)";
     }).join("; ") : "Optimal ironing quantile: none (virtual values are nondecreasing)";
-    el("allocation-description").textContent = icSummary + (rule.monotone ? "; Q is nondecreasing. " :
-      "; Q decreases between v = " + rule.monotonicityWitness.from.toFixed(3) + " and " + rule.monotonicityWitness.to.toFixed(3) + ". ") +
+    el("allocation-description").textContent = icSummary + (rule.monotone ? "; Q_i is nondecreasing. " :
+      "; Q_i decreases between v_i = " + rule.monotonicityWitness.from.toFixed(3) + " and " + rule.monotonicityWitness.to.toFixed(3) + ". ") +
       state.points.length + " draggable points. " + el("interpolation-kind").textContent + " " +
       "Solid blue is allocation; vertical scale 0 to 1. Positive pooling intervals are shaded.";
-    el("payment-description").textContent = el("payment-kind").textContent + ". Payment is plotted against value v. Dotted jump guides connect open left limits to filled right-continuous values. Total expected revenue across all bidders: " + fixed(rule.revenue) + "; fixed vertical scale from −1 to 1.";
-    el("integrated-description").textContent = "Lower-tail quantile u=F(v), from 0 to 1. Solid black is H(u), the integral from 0 to u of virtual value at inverse F, on the left scale " +
+    el("payment-description").textContent = el("payment-kind").textContent + ". Payment P_i(v_i) is plotted against value v_i. Dotted jump guides connect open left limits to filled right-continuous values. Total expected revenue across all bidders: " + fixed(rule.revenue) + "; fixed vertical scale from −1 to 1.";
+    el("integrated-description").textContent = "Lower-tail quantile z=F_i(v_i), from 0 to 1. Solid black is H_i(z), the integral from 0 to z of virtual value at inverse F_i, on the left scale " +
       charts.integrated.domain[0] + " to 0. Dashed gray is raw virtual value on the right scale " + el("integrated-chart").dataset.y2Min +
-      " to 1, labeled phi composed with inverse F, with separate one-sided branches at the density breakpoint. " +
-      "Dotted orange shows the lower convex hull of H and the ironed virtual value only inside each shaded ironing interval, including those below the sale cutoff. " + el("pool-summary").textContent;
+      " to 1, labeled phi_i composed with inverse F_i, with separate one-sided branches at the density breakpoint. " +
+      "Dotted orange shows the lower convex hull G_i of H_i and the ironed virtual value only inside each shaded ironing interval, including those below the sale cutoff. " + el("pool-summary").textContent;
     el("feasibility-description").textContent = feasible.textContent + "; all allocation-level sets are checked. Witness mass " + fixed(1 - rule.feasibility.witness.u) +
       ", capacity excess " + fixed(rule.feasibility.witness.excess) +
       ". Blue is n times the allocation integral over the highest-allocation type mass; dotted black is 1 minus (1 minus mass) to the power n.";

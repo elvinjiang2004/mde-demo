@@ -92,7 +92,7 @@
       });
     }
     S(chart.layer, "text", { x: x(0.2, chart), y: Math.min(frame.bottom - 10, y(rawVirtual(0.2, "right"), virtualDomain) + 17),
-      "class": "virtual-value-label annotation-halo" }, "φ ∘ F⁻¹");
+      "class": "virtual-value-label annotation-halo" }, "φᵢ ∘ Fᵢ⁻¹");
     chart.distribution = d;
   }
   function select(chart, selected) {
@@ -152,7 +152,7 @@
       handle.setAttribute("aria-valuenow", p.q);
       var side = i < rule.points.length - 1 && p.v === rule.points[i + 1].v ? "; left limit" :
         (i > 0 && p.v === rule.points[i - 1].v ? "; right-continuous value" : "");
-      handle.setAttribute("aria-valuetext", "Value " + p.v.toFixed(3) + ", allocation " + p.q.toFixed(3) + side);
+      handle.setAttribute("aria-valuetext", "Value v_i " + p.v.toFixed(3) + ", allocation Q_i(v_i) " + p.q.toFixed(3) + side);
     });
     select(charts.allocation, selected);
   }
@@ -179,9 +179,9 @@
     S(layer, "path", { d: "M" + left + "," + yy(d.lowerDensity) + "H" + xx(d.split) + "V" + yy(d.upperDensity) + "H" + right, "class": "value-pdf-curve" });
     [0, 1].forEach(function (v) {
       S(layer, "line", { x1: xx(v), x2: xx(v), y1: bottom - 4, y2: bottom + 4, "class": "value-pdf-axis" });
-      S(layer, "text", { x: xx(v), y: 108, "text-anchor": v ? "end" : "start", "class": "value-pdf-endpoint-label", "data-endpoint": v ? "b" : "a" }, v ? "b = 1" : "a = 0");
+      S(layer, "text", { x: xx(v), y: 108, "text-anchor": v ? "end" : "start", "class": "value-pdf-endpoint-label", "data-endpoint": v ? "b" : "a" }, v ? "vᵢ = 1" : "vᵢ = 0");
     });
-    document.getElementById("value-pdf-preview-description").textContent = "Piecewise-uniform density " + d.lowerDensity.toFixed(4) + " below value " +
+    document.getElementById("value-pdf-preview-description").textContent = "Piecewise-uniform density f_i(v_i), " + d.lowerDensity.toFixed(4) + " below value v_i = " +
       d.split.toFixed(4) + ", and " + d.upperDensity.toFixed(4) + " above it. Lower-interval probability " + d.mass.toFixed(4) + ".";
   }
   global.IroningCharts = Object.freeze({ create: create, render: render, select: select, density: density, pointer: pointer, frame: frame });

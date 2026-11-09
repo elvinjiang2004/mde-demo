@@ -107,6 +107,7 @@
   });
 
   var lessons = [
+    { path: "voting/gibbard-satterthwaite-theorem", ids: ["gibbard-1973", "satterthwaite-1975"] },
     { path: "auction-equilibria/first-price", ids: ["krishna-2009"], locator: "pp. 14–16" },
     { path: "auction-equilibria/second-price", ids: ["krishna-2009"], locator: "p. 13" },
     { path: "auction-design/regular-optimal-auctions", ids: ["myerson-1981", "krishna-2009"], locator: "sec. 5.2" },

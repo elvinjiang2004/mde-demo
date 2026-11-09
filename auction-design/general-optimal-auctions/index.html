@@ -90,9 +90,9 @@
         \]
       </div>
       <p>
-        In the interactive demo, design a mechanism for a group of symmetric buyers through its interim allocation rule \(Q(v)\).
+        In the interactive demo, design a mechanism for a group of symmetric buyers through a symmetric interim allocation rule \(Q_i(v_i)\).
         Notice where reducing allocation probability increases expected revenue, and be careful not to
-        allocate too much to any group of values. Here, all buyers are symmetric with buyer \(i\)'s value PDF given by
+        allocate too much to any group of values. Here, since all buyers are symmetric, buyer \(i\)'s value PDF is
       </p>
       <div id="demo-value-density" class="equation-display" role="region" tabindex="0" aria-label="Probability density of buyers' values in the demo">
         \[
@@ -130,42 +130,42 @@
       <div class="interaction-layout">
         <div class="chart-column ironing-plots chart-grid">
             <figure class="chart-figure">
-              <figcaption>Interim allocation, \(Q(v)\)</figcaption>
+              <figcaption>Interim allocation, \(Q_i(v_i)\)</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="chart-canvas-frame chart-640x360-frame">
                 <svg id="allocation-chart" class="chart-640x360" width="640" height="360" viewBox="0 0 640 360" role="group" aria-labelledby="allocation-title allocation-description">
-                  <title id="allocation-title">Editable interim allocation rule</title><desc id="allocation-description"></desc>
+                  <title id="allocation-title">Editable interim allocation rule Q_i(v_i)</title><desc id="allocation-description"></desc>
                 </svg>
               </div>
-              <p class="chart-x-axis-label chart-axis-label">Value, \(v\)</p>
+              <p class="chart-x-axis-label chart-axis-label">Value, \(v_i\)</p>
 
               </div>
-              <p id="bic-status" class="chart-diagnostic constraint-status"><span id="bic-verdict"></span> (\(Q\) <span id="bic-monotonicity"></span>)</p>
+              <p id="bic-status" class="chart-diagnostic constraint-status"><span id="bic-verdict"></span> (\(Q_i\) <span id="bic-monotonicity"></span>)</p>
 
             </figure>
             <figure class="chart-figure">
-              <figcaption><span id="payment-caption">Interim payment</span>, \(P(v)\)</figcaption>
+              <figcaption><span id="payment-caption">Interim payment</span>, \(P_i(v_i)\)</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="chart-canvas-frame chart-640x360-frame">
                 <svg id="payment-chart" class="chart-640x360" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="payment-title payment-description">
-                  <title id="payment-title">Interim envelope payment</title><desc id="payment-description"></desc>
+                  <title id="payment-title">Interim envelope payment P_i(v_i)</title><desc id="payment-description"></desc>
                 </svg>
               </div>
-              <p class="chart-x-axis-label chart-axis-label">Value, \(v\)</p>
+              <p class="chart-x-axis-label chart-axis-label">Value, \(v_i\)</p>
 
               </div>
               <p id="payment-kind" class="sr-only">Envelope payment</p>
               <p class="chart-diagnostic plot-diagnostic revenue-diagnostic"><span id="revenue-label">Expected revenue</span>: <output id="revenue-value"></output></p>
             </figure>
             <figure class="chart-figure">
-              <figcaption>Integrated virtual value, \(H(u)\), and virtual value</figcaption>
+              <figcaption>Integrated virtual value, \(H_i(z)\), and virtual value</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="chart-canvas-frame chart-640x360-frame">
                 <svg id="integrated-chart" class="chart-640x360" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="integrated-title integrated-description">
-                  <title id="integrated-title">Integrated virtual value, lower convex hull, and virtual values</title><desc id="integrated-description"></desc>
+                  <title id="integrated-title">Integrated virtual value H_i(z), lower convex hull G_i(z), and virtual values</title><desc id="integrated-description"></desc>
                 </svg>
               </div>
-              <p class="chart-x-axis-label chart-axis-label">Quantile, \(u=F(v)\)</p>
+              <p class="chart-x-axis-label chart-axis-label">Quantile, \(z=F_i(v_i)\)</p>
 
               </div>
               <p id="pool-summary" class="chart-diagnostic plot-diagnostic ironing-diagnostic"></p>
@@ -190,18 +190,18 @@
           <div class="slider-grid">
             <div class="range-group">
               <div class="range-label-row">
-                <label for="value-number">Value, \(v\)</label>
+                <label for="value-number">Value, \(v_i\)</label>
                 <input id="value-number" class="range-number-input" type="number" min="0" max="1" step="0.001">
               </div>
-              <input id="value-range" type="range" min="0" max="1" step="0.001" aria-label="Selected point value">
+              <input id="value-range" type="range" min="0" max="1" step="0.001" aria-label="Selected point value, v_i">
               <div class="range-endpoints" aria-hidden="true"><span id="value-min-label">0</span><span id="value-max-label">1</span></div>
             </div>
             <div class="range-group">
               <div class="range-label-row">
-                <label for="allocation-number">Allocation, \(Q(v)\)</label>
+                <label for="allocation-number">Allocation, \(Q_i(v_i)\)</label>
                 <input id="allocation-number" class="range-number-input" type="number" min="0" max="1" step="0.001">
               </div>
-              <input id="allocation-range" type="range" min="0" max="1" step="0.001" aria-label="Selected point allocation">
+              <input id="allocation-range" type="range" min="0" max="1" step="0.001" aria-label="Selected point allocation, Q_i(v_i)">
               <div class="range-endpoints" aria-hidden="true"><span>0</span><span>1</span></div>
             </div>
           </div>
@@ -398,7 +398,12 @@
         <span class="equation-step-rhs">\(\displaystyle \mathbb{E}\!\left[\max\{0, \bar{\phi}_1(V_1), \ldots, \bar{\phi}_n(V_n)\}\right].\)</span>
       </div>
     </section>
-    <section id="notes" hidden><!-- User-authored notes. --></section>
+    <section id="notes" class="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title">Notes</h2>
+      <ol class="notes-list">
+        <!-- User-authored notes. -->
+      </ol>
+    </section>
     <section id="references" class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>
       <ul class="reference-list">

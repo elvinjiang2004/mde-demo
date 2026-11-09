@@ -47,7 +47,7 @@ window.MechanismTestCatalog = [
     "name": "General Optimal Auctions model",
     "kind": "model",
     "module": "general-optimal-auctions",
-    "status": "in-progress"
+    "status": "complete"
   },
   {
     "file": "general-optimal-auctions-ui-tests.html",
@@ -55,7 +55,7 @@ window.MechanismTestCatalog = [
     "kind": "interface",
     "exclusive": true,
     "module": "general-optimal-auctions",
-    "status": "in-progress"
+    "status": "complete"
   },
   {
     "file": "bargaining-sandbox-model-tests.html",
@@ -120,6 +120,21 @@ window.MechanismTestCatalog = [
     "exclusive": true,
     "module": "revelation-principle",
     "status": "complete"
+  },
+  {
+    "file": "gibbard-satterthwaite-theorem-model-tests.html",
+    "name": "The Gibbard-Satterthwaite Theorem model",
+    "kind": "model",
+    "module": "gibbard-satterthwaite-theorem",
+    "status": "in-progress"
+  },
+  {
+    "file": "gibbard-satterthwaite-theorem-ui-tests.html",
+    "name": "The Gibbard-Satterthwaite Theorem interface",
+    "kind": "interface",
+    "exclusive": true,
+    "module": "gibbard-satterthwaite-theorem",
+    "status": "in-progress"
   },
   {
     "file": "distribution-tests.html",

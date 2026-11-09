@@ -114,6 +114,13 @@
   // Page notation is authored independently in each page's own array.
   // Only environment definitions are shared between related pages.
   var pages = {
+    "gibbard-satterthwaite-theorem": {
+      pageNotation: [
+        [["f", "The deterministic rule selecting a candidate for each pair of reported rankings."]]
+      ],
+      pageNotationSections: ["Demo"],
+      environmentNotation: []
+    },
     "auction-equilibria": {
       pageNotation: [],
       environmentNotation: sharedEnvironmentNotation["auction-equilibria"]
@@ -233,20 +240,9 @@
           ["p^*=(p_1^*,\\ldots,p_n^*)", "The optimal mechanism's payment rule."],
           ["p_i^*(v)=\\begin{cases} \\bar{\\phi}_i^{-1}(\\max_{j\\in W(v)} \\bar{\\phi}_j(v_j)) & \\text{if }i\\in W(v),\\\\ 0 & \\text{otherwise} \\end{cases}", "The optimal mechanism's payment rule for buyer \\(i\\)."]
         ],
-        [["Q(v)=Q_i(v)", "The common interim allocation probability in the symmetric demo, given the other buyers report truthfully."]],
-        [
-          ["f(v)=f_i(v)", "The common value PDF in the symmetric demo."],
-          ["F(v)=F_i(v)", "The common value CDF in the symmetric demo."]
-        ],
         [
           ["c", "The distribution breakpoint."],
           ["\\pi", "The probability that a value lies in the lower interval \\([0,c]\\)."]
-        ],
-        [["P(v)=P_i(v)", "The common interim expected payment in the symmetric demo, given the other buyers report truthfully."]],
-        [
-          ["H(u)=H_i(u)", "The integrated virtual value in the symmetric demo, evaluated at quantile \\(u\\)."],
-          ["u=F(v)", "The value quantile in the demo; the same coordinate denoted by \\(z\\) in the ironing construction."],
-          ["\\phi(v)=\\phi_i(v)", "The common virtual value in the symmetric demo."]
         ],
         [["m", "The probability mass of a highest-allocation type set in the feasibility chart."]],
         [
@@ -271,10 +267,6 @@
         "Introduction",
         "Introduction",
         "Introduction",
-        "Demo",
-        "Demo",
-        "Demo",
-        "Demo",
         "Demo",
         "Demo",
         "Ironed virtual values",

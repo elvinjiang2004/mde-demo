@@ -203,35 +203,39 @@
         }
       },
       {
-        name: "The menu separates auction equilibria and auction design into four groups",
+        name: "The menu includes the five registered module groups",
         run: function () {
           var categories = menuDocument.querySelectorAll(".module-category");
-          assert(categories.length === 4,
-            "The menu should contain exactly four groups.");
+          assert(categories.length === 5,
+            "The menu should contain exactly five groups.");
           var titles = Array.from(categories).map(function (category) {
             return category.querySelector("h2").textContent;
           });
-          assert(titles.join("|") === "General Topics|Auction Equilibria|Auction Design|Bilateral Trade",
-            "The four groups should appear in their established order.");
+          assert(titles.join("|") === "General Topics|Auction Equilibria|Auction Design|Bilateral Trade|Voting",
+            "The five groups should appear in their established order.");
         }
       },
       {
         name: "Modules are arranged in category rows",
         run: function () {
           var rows = menuDocument.querySelectorAll(".module-row");
-          assert(rows.length === 4 &&
+          assert(rows.length === 5 &&
             Array.from(rows).every(function (row) {
               return menuWindow.getComputedStyle(row).display === "flex";
             }),
           "Each category should arrange its modules in a row.");
           rows.forEach(function (row, index) {
-            var count = index === 0 ? 3 : 2;
+            var count = index === 0 ? 3 : (index === 4 ? 1 : 2);
             assert(row.querySelectorAll(":scope > li").length === count &&
               row.querySelectorAll("a.module-link").length === count &&
               !row.querySelector("a.environment-link"),
-            "General Topics should contain its reading and two demos; other rows keep two demos.");
+            "General Topics has three lessons, Voting has one, and the other groups have two.");
             var category = row.closest("section");
             var environment = category.querySelector("a.environment-link");
+            if (category.id === "voting") {
+              assert(!environment, "Voting should keep its setup on the module page.");
+              return;
+            }
             if (index === 0) {
               assert(!environment, "General Topics should have no Environment page.");
               var introduction = row.querySelector("li:first-child a.module-link");
@@ -296,8 +300,8 @@
           assert(link.querySelector(".module-title").textContent ===
             "Second-Price Auction Equilibrium",
           "The second-price module title is incorrect.");
-          assert(menuDocument.querySelectorAll(".module-link").length === 9,
-            "All eight interactive modules and the introductory reading should be links.");
+          assert(menuDocument.querySelectorAll(".module-link").length === 10,
+            "All nine interactive modules and the introductory reading should be links.");
           assert(!menuDocument.querySelector('.module-link[aria-disabled="true"]') &&
             !menuDocument.querySelector("a.module-pending"),
           "No implemented module should remain disabled.");
@@ -353,10 +357,22 @@
           assert(link.querySelector(".module-title").textContent ===
             "General Optimal Auctions",
           "The General Optimal Auctions module title is incorrect.");
-          assert(link.querySelector(".module-status").textContent === "In progress",
-            "General Optimal Auctions should remain accessible while clearly marked in progress.");
+          assert(!link.querySelector(".module-status"),
+            "Completed General Optimal Auctions should have no In progress marker.");
           assert(!menuDocument.querySelector('a[href="general-topics/payments-from-allocation-rule/index.html"]'),
             "The repurposed draft should no longer appear under General Topics.");
+        }
+      },
+      {
+        name: "The Gibbard-Satterthwaite module is selectable under Voting",
+        run: function () {
+          var link = menuDocument.querySelector(
+            '#voting a.module-link[href="voting/gibbard-satterthwaite-theorem/index.html"]'
+          );
+          assert(link && link.querySelector(".module-title").textContent ===
+            "The Gibbard-Satterthwaite Theorem" && link.querySelector(".module-status") &&
+            link.querySelector(".module-status").textContent === "In progress",
+          "Voting should link to the theorem demo using its exact title and In progress marker.");
         }
       },
       {

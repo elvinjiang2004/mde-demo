@@ -4,6 +4,28 @@
   // Add or correct source details here. Pages select IDs and supply only locators.
   // Authoring examples and field definitions: docs/bibliography.md.
   global.MechanismBibliography = Object.freeze({
+    "gibbard-1973": {
+      type: "article",
+      authors: [{ given: "Allan", family: "Gibbard" }],
+      title: "Manipulation of Voting Schemes: A General Result",
+      journal: "Econometrica",
+      volume: 41,
+      issue: 4,
+      year: 1973,
+      pages: "587–601",
+      url: "https://doi.org/10.2307/1914083"
+    },
+    "satterthwaite-1975": {
+      type: "article",
+      authors: [{ given: "Mark Allen", family: "Satterthwaite" }],
+      title: "Strategy-proofness and Arrow's conditions: Existence and correspondence theorems for voting procedures and social welfare functions",
+      journal: "Journal of Economic Theory",
+      volume: 10,
+      issue: 2,
+      year: 1975,
+      pages: "187–217",
+      url: "https://doi.org/10.1016/0022-0531(75)90050-2"
+    },
     "krishna-2009": {
       type: "book",
       authors: [{ given: "Vijay", family: "Krishna" }],
