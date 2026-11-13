@@ -162,6 +162,62 @@
     var d = p.u1 - u, slope = (p.q1 - p.q0) / (p.u1 - p.u0);
     return p.tailAbove + p.q1 * d - slope * d * d / 2;
   }
+  // Allocation-level sets include ties; the right limit excludes an entire flat level.
+  function levelAt(rule, alpha, side) {
+    if (!Number.isFinite(alpha) || alpha < 0 || alpha > 1) {
+      throw new Error("The allocation threshold must lie in [0,1].");
+    }
+    var check = rule.feasibility, strict = side === "right", u = 1;
+    for (var i = 0; i < check.segments.length; i += 1) {
+      var p = check.segments[i];
+      if (p.q0 === p.q1) {
+        if (p.q0 > alpha || (!strict && p.q0 === alpha)) { u = p.u0; break; }
+      } else if (alpha <= p.q0) {
+        u = p.u0; break;
+      } else if (alpha < p.q1) {
+        var z = p.coefficients ? bisect(function (t) { return polynomial(p.coefficients, t) - alpha; }, 0, 1) :
+          (alpha - p.q0) / (p.q1 - p.q0);
+        u = p.u0 + (p.u1 - p.u0) * z; break;
+      }
+    }
+    var mass = clamp(1 - u, 0, 1);
+    return { mass: mass, allocation: mass ? tailAt(check, u) : 0,
+      capacity: (1 - Math.pow(1 - mass, rule.n)) / rule.n };
+  }
+  // Split the level-set graph at extrema and crossings, independently of drawing samples.
+  function feasibilityThresholds(rule) {
+    var check = rule.feasibility, n = rule.n, levels = [0, 1, clamp(check.witness.q, 0, 1)];
+    check.segments.forEach(function (p) {
+      var width = p.u1 - p.u0, extrema;
+      function allocation(u) {
+        var z = (u - p.u0) / width;
+        return p.coefficients ? polynomial(p.coefficients, z) : p.q0 + (p.q1 - p.q0) * z;
+      }
+      function add(u) { levels.push(clamp(allocation(u), 0, 1)); }
+      function excess(u) { return n * tailAt(check, u) - (1 - Math.pow(u, n)); }
+      if (p.coefficients) {
+        var rank = affinePower(p.u0, width, n - 1);
+        var diff = Array.from({ length: Math.max(rank.length, p.coefficients.length) }, function (_, i) {
+          return (p.coefficients[i] || 0) - (rank[i] || 0);
+        });
+        extrema = polynomialRoots(diff).map(function (z) { return p.u0 + width * z; });
+      } else { extrema = stationary(p, n); }
+      var cuts = [p.u0].concat(extrema).concat([p.u1]).sort(function (a, b) { return a - b; })
+        .filter(function (u, i, all) { return !i || u !== all[i - 1]; });
+      cuts.forEach(add);
+      cuts.slice(1).forEach(function (b, i) {
+        var a = cuts[i];
+        // Also split at the verdict tolerance, so every colored interval has one status.
+        [0, TOL].forEach(function (target) {
+          if ((excess(a) - target) * (excess(b) - target) < 0) {
+            add(bisect(function (u) { return excess(u) - target; }, a, b));
+          }
+        });
+      });
+    });
+    return levels.sort(function (a, b) { return a - b; })
+      .filter(function (alpha, i, all) { return !i || alpha !== all[i - 1]; });
+  }
   function diagnose(points, n, d) {
     d = d ? distribution(d.split, d.mass) : DEFAULT;
     validate(points, n);
@@ -357,7 +413,8 @@
   }
   global.IroningModel = Object.freeze({ distribution: distribution, defaultDistribution: DEFAULT, cdf: cdf, pdf: pdf, phi: phi,
     quantile: quantile, primitive: primitive, initial: initial, validate: validate, pieces: pieces, evaluate: evaluate,
-    evaluatePiece: evaluatePiece, diagnose: diagnose, tailAt: tailAt, ironing: ironing, ironedPhi: ironedPhi,
+    evaluatePiece: evaluatePiece, diagnose: diagnose, tailAt: tailAt, levelAt: levelAt, feasibilityThresholds: feasibilityThresholds,
+    ironing: ironing, ironedPhi: ironedPhi,
     integratedVirtual: integratedVirtual, convexIntegrated: convexIntegrated, benchmark: benchmark,
     adoptedRule: adoptedRule, optimalPoints: optimalPoints, efficient: efficient, tolerance: TOL });
 })(window);

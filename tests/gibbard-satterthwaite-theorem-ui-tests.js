@@ -67,7 +67,7 @@
   test("The lesson starts with the complete plurality rule and no starting-rule selector", function () {
     assert(doc.querySelectorAll(".rule-cell").length === 36 && doc.querySelectorAll('#rule-head th[scope="col"]').length === 6 && doc.querySelectorAll('#rule-body th[scope="row"]').length === 6, "Every strict-ranking profile must remain editable.");
     assert(readRule().join("") === model.createRule("plurality").join(""), "Initial outcomes must equal plurality with unchanged tie-breaking.");
-    assert(Array.from(doc.querySelectorAll(".audit-properties dt")).map(function (term) { return term.textContent; }).join("|") === "Onto:|Non-dictatorship:|Strategy-proof:" && !doc.querySelector(".rule-diagnostics h3"), "Diagnostics must use the requested labels without a Rule check heading.");
+    assert(Array.from(doc.querySelectorAll(".audit-properties dt")).map(function (term) { return term.textContent; }).join("|") === "Onto:|Not dictatorial:|Strategy-proof:" && !doc.querySelector(".rule-diagnostics h3"), "Diagnostics must use the requested labels without a Rule check heading.");
     assert(!element("rule-preset") && !element("load-rule") && !element("show-manipulation") && !element("witness-arrow"), "The brush and corner markers replace the preset and witness controls.");
     assert(doc.querySelector('.winner-brush-controls').textContent.indexOf("Winner brush") >= 0 && brushButton("A").getAttribute("aria-pressed") === "true", "The brush must have its requested label and an initial candidate.");
     T.assertScriptOrder(doc, ["../../js/components.js", "../../js/bibliography.js", "../../js/references.js", "../../js/mathjax-config.js", "../../assets/mathjax/tex-svg.js", "../../js/mathjax-runtime.js", "../../js/notation-catalog.js", "../../js/learning-sidebar.js", "model.js", "app.js"]);
@@ -196,7 +196,7 @@
     var before = readRule().join(""); brushButton("A").focus({ preventScroll: true }); choose("A");
     assert(doc.activeElement === brushButton("A") && readRule().join("") === before && element("live-summary").textContent.indexOf("Winner brush A") >= 0, "Changing the brush preserves focus and announces its value without editing a profile.");
     assert(element("notes") && !element("notes").hidden && doc.querySelector('learning-sidebar[page="gibbard-satterthwaite-theorem"] template[data-insights]'), "Authored Notes and Insights slots remain intact.");
-    assert(doc.querySelectorAll(".reference-list a").length === 2 && doc.querySelector(".rule-heading mjx-container") && !doc.querySelector("mjx-merror, merror, [data-render-error]"), "Bibliography and local mathematics must render without errors.");
+    assert(doc.querySelectorAll(".reference-list a").length === 3 && doc.querySelector(".rule-heading mjx-container") && !doc.querySelector("mjx-merror, merror, [data-render-error]"), "Bibliography and local mathematics must render without errors.");
   });
   test("Responsive tables retain the brush, diagonal and all profiles without page overflow", async function () {
     for (var index = 0; index < 4; index += 1) {
@@ -215,7 +215,7 @@
 
   T.loadFrame(frame, "../voting/gibbard-satterthwaite-theorem/index.html", {
     ready: function (documentNode, frameWindow) { return frameWindow.GibbardSatterthwaiteTheoremModel && documentNode.querySelector('#voting-demo[data-ready="true"]'); },
-    math: ".rule-heading", timeout: 30000
+    math: ".introduction, .rule-heading", timeout: 30000
   }).then(function (loaded) {
     doc = loaded.document; win = loaded.window; model = win.GibbardSatterthwaiteTheoremModel;
     return T.run(tests, { title: "Gibbard-Satterthwaite interface tests", cleanup: function () { window.clearInterval(keepAlive); } });

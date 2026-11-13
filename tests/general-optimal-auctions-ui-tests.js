@@ -12,6 +12,19 @@
       assert(!/NaN|Infinity/.test(p.getAttribute("d") || p.getAttribute("transform") || ""), "Finite geometry");
     });
   }
+  function capacityLabelFits() {
+    var plot = el("feasibility-chart").querySelector(".plot-frame").getBoundingClientRect();
+    var formula = el("feasibility-capacity-label"), label = formula.getBoundingClientRect();
+    var exponent = formula.querySelector('tspan[baseline-shift="super"]');
+    var bracket = exponent.previousElementSibling;
+    assert(Number.parseFloat(exponent.getAttribute("dx")) > 0 &&
+      exponent.getBoundingClientRect().left > bracket.getBoundingClientRect().right,
+      "The exponent clears the preceding bracket at every responsive width");
+    assert(label.width > 0 && label.height > 0, "The capacity formula is visible");
+    assert(label.left >= plot.left - 0.5 && label.right <= plot.right + 0.5 &&
+      label.top >= plot.top - 0.5 && label.bottom <= plot.bottom + 0.5,
+      "The capacity formula stays inside the plot at " + win.innerWidth + "px; label=" + [label.left, label.top, label.right, label.bottom].join(",") + "; plot=" + [plot.left, plot.top, plot.right, plot.bottom].join(","));
+  }
   async function fresh(math) {
     frame.style.width = "1280px";
     var page = await T.loadFrame(frame, "../auction-design/general-optimal-auctions/index.html?test=" + Math.random(), {
@@ -33,7 +46,7 @@
     T.dispatch(target, type, win, Object.assign({ pointerId: 17, isPrimary: true, button: 0, buttons: type === "pointerup" ? 0 : 1, clientX: p.x, clientY: p.y }, options));
   }
   // Check the complete lesson once; interaction cases need the control mathematics.
-  test("Local dependencies, lesson mathematics, and the interim editor initialize correctly", function () {
+  test("Local dependencies, lesson mathematics, and the interim editor initialize correctly", async function () {
     T.assertScriptOrder(doc, ["../../js/components.js", "../../js/bibliography.js", "../../js/references.js", "../../js/mathjax-config.js",
       "../../assets/mathjax/tex-svg.js", "../../js/mathjax-runtime.js", "../../js/math-utils.js", "../../js/svg-utils.js", "model.js", "charts.js", "app.js"]);
     assert(!el("lottery-chart") && doc.querySelectorAll(".control-points [role=slider]").length === 11);
@@ -42,8 +55,22 @@
       doc.querySelector("page-header").getAttribute("category") === "Auction Design", "Independent auction title and group");
     assert(el("bic-status").dataset.passed === "true" && el("feasibility-status").dataset.passed === "true");
     assert(el("bic-verdict").textContent === "BIC: passes" && el("bic-monotonicity").textContent === "is weakly increasing");
-    assert(el("feasibility-status").textContent === "Feasibility: passes (all capacity constraints hold)");
-    assert(el("feasibility-chart").closest("figure").querySelector("figcaption").textContent.includes("allocation demand and capacity"));
+    assert(el("feasibility-status").textContent === "Single-item feasibility: passes (the curve lies entirely below or at the dotted curve)");
+    var feasibilityTitle = el("feasibility-chart").closest("figure").querySelector("figcaption");
+    assert(feasibilityTitle.textContent.startsWith("Total allocation above ") &&
+      feasibilityTitle.querySelectorAll("mjx-container").length === 2 &&
+      feasibilityTitle.querySelector('[data-mml-node="msub"]'), "The requested title renders alpha and the total-allocation integral");
+    var capacityLabel = el("feasibility-capacity-label");
+    assert(capacityLabel.tagName === "text" && el("feasibility-chart").contains(capacityLabel) &&
+      capacityLabel.querySelector('tspan[baseline-shift="sub"]').textContent === "α" &&
+      capacityLabel.querySelector('tspan[baseline-shift="super"]').textContent === "n", "The capacity formula uses native text with its subscript and superscript");
+    var capacityStyle = win.getComputedStyle(capacityLabel), virtualStyle = win.getComputedStyle(el("integrated-chart").querySelector(".virtual-value-label"));
+    ["fontFamily", "fontSize", "fill", "paintOrder"].forEach(function (property) {
+      assert(capacityStyle[property] === virtualStyle[property], "Both in-plot annotations share " + property);
+    });
+    assert(!el("feasibility-chart").querySelector("mjx-container"), "Chart annotations contain no MathJax");
+    var feasibilityAxis = el("feasibility-chart").closest("figure").querySelector(".chart-x-axis-label");
+    assert(feasibilityAxis.textContent.includes("Allocation-probability threshold") && feasibilityAxis.querySelector("mjx-container"), "The alpha axis renders with local MathJax");
     assert(revenue() > 0 && !el("benchmark-summary"));
     var green = doc.createElement("span"); green.style.color = "var(--green)"; doc.body.appendChild(green);
     assert(win.getComputedStyle(el("revenue-value").closest("p")).color === win.getComputedStyle(green).color, "Expected revenue text is green"); green.remove();
@@ -63,22 +90,36 @@
     var demoSymbols = notation.pageNotation.reduce(function (all, group, index) {
       return notation.pageNotationSections[index] === "Demo" ? all.concat(group.map(function (entry) { return entry[0]; })) : all;
     }, []);
-    assert(demoSymbols.join("|") === "c|\\pi|m", "Demo notation contains only its breakpoint, interval probability and feasibility mass.");
+    assert(demoSymbols.length === 4 && demoSymbols[0] === "c" && demoSymbols[1] === "\\pi" &&
+      demoSymbols[2].startsWith("\\alpha") && demoSymbols[3].startsWith("E_\\alpha"),
+      "Demo notation defines the breakpoint, interval probability, allocation cutoff and its type set separately.");
     assert(notation.environmentNotation === win.MechanismNotation.pages["auction-design"].environmentNotation,
       "Indexed buyer definitions retain their shared Environment owner.");
     assert(doc.querySelector('[data-reference="border-1991"]').textContent.includes("1991"));
+    var note = el("border-feasibility-note"), noteReference = el("border-feasibility-note-ref");
+    assert(note.querySelector('[data-citation="border-1991"]').textContent === "Border (1991)" &&
+      note.querySelector("mjx-container"), "The supplied Border note renders its citation and allocation-level set");
+    assert(!/\\\(|\\\[/.test(note.textContent), "The note contains rendered mathematics");
+    assert(noteReference.getAttribute("role") === "doc-noteref" &&
+      noteReference.closest("p").textContent.includes("allocate too much to any group of values."),
+      "The numbered note reference accompanies the allocation warning");
+    noteReference.click(); await T.nextAnimationFrames(win, 2);
+    assert(win.location.hash === "#border-feasibility-note", "The reference navigates to the note");
+    note.querySelector('[role="doc-backlink"]').click(); await T.nextAnimationFrames(win, 2);
+    assert(win.location.hash === "#border-feasibility-note-ref", "The note links back to its reference");
     ["allocation-description", "live-summary"].forEach(function (id) {
       assert(!/\\\(|\\\[/.test(el(id).textContent), "Accessible summaries contain plain text: " + id);
     });
-  }, ".introduction, #distribution-controls, #auction-demo, #derivation, #expected-revenue, #optimal-mechanism");
+  }, ".introduction, #distribution-controls, #auction-demo, #derivation, #expected-revenue, #optimal-mechanism, #notes");
   test("Editing Q updates payments, revenue, and IC immediately", function () {
     var original = revenue(), payment = el("payment-chart").querySelector(".learner-curve").getAttribute("d");
+    assert(el("payment-caption").textContent === "Interim payment", "Initial payment caption");
     choose(0); input("allocation-number", "0.9");
     assert(el("bic-status").dataset.passed === "false");
     assert(el("bic-verdict").textContent === "BIC: fails" && el("bic-monotonicity").textContent === "is not weakly increasing");
-    assert(el("revenue-label").textContent === "Candidate revenue");
+    assert(el("revenue-label").textContent === "Expected revenue", "IC failure preserves the expected-revenue label");
     assert(revenue() !== original && el("payment-chart").querySelector(".learner-curve").getAttribute("d") !== payment);
-    assert(el("payment-caption").textContent.includes("Candidate"));
+    assert(el("payment-caption").textContent === "Interim payment", "IC failure preserves the payment caption");
     finiteGeometry();
   });
   test("Number and range controls synchronize and clamp to probability bounds", function () {
@@ -231,21 +272,121 @@
     assert(handle(2).getAttribute("aria-valuetext").includes("right-continuous"));
     finiteGeometry();
   });
-  test("The feasibility demand path includes every analytic knot and its exact violation witness", function () {
+  test("Alpha feasibility paths include allocation knots, both Border values, and the exact witness", function () {
     input("bidder-number", "4"); el("use-optimum").click(); input("mass-number", "0.62");
     var M = win.IroningModel, rule = M.adoptedRule(M.benchmark(4), 4, M.distribution(0.5, 0.62));
-    var vertices = Array.from(el("feasibility-chart").querySelectorAll(".learner-curve")).flatMap(function (path) {
-      var values = path.getAttribute("d").match(/-?\d+(?:\.\d+)?/g).map(Number), result = [];
-      for (var i = 0; i < values.length; i += 2) { result.push([values[i], values[i + 1]]); }
-      return result;
+    var svg = el("feasibility-chart"), cuts = [0, 1, rule.feasibility.witness.q];
+    rule.feasibility.segments.forEach(function (piece) { cuts.push(piece.q0, piece.q1); });
+    assert(!rule.feasibility.feasible);
+    close(Number(svg.dataset.yMax), rule.n);
+    [["allocation", ".learner-curve", ".demand-limit"], ["capacity", ".capacity-curve", ".capacity-limit"]].forEach(function (curve) {
+      var vertices = Array.from(svg.querySelectorAll(curve[1])).flatMap(function (path) {
+        var values = path.getAttribute("d").match(/-?\d+(?:\.\d+)?/g).map(Number), result = [];
+        for (var i = 0; i < values.length; i += 2) { result.push([values[i], values[i + 1]]); }
+        return result;
+      });
+      Array.from(svg.querySelectorAll(curve[2])).forEach(function (point) {
+        vertices.push([Number(point.getAttribute("cx")), Number(point.getAttribute("cy"))]);
+      });
+      cuts.forEach(function (alpha) {
+        alpha = Math.max(0, Math.min(1, alpha));
+        var value = M.levelAt(rule, alpha)[curve[0]], x = 54 + 560 * alpha, y = 316 - 292 * value;
+        assert(vertices.some(function (vertex) { return Math.abs(vertex[0] - x) < 0.0001 && Math.abs(vertex[1] - y) < 0.0001; }),
+          "The " + curve[0] + " curve includes allocation threshold " + alpha);
+      });
     });
-    var cuts = rule.feasibility.segments.map(function (piece) { return piece.u0; });
-    assert(!rule.feasibility.feasible); cuts.push(rule.feasibility.witness.u, 1);
-    cuts.forEach(function (u) {
-      var x = 54 + 560 * (1 - u), y = 316 - 292 * M.tailAt(rule.feasibility, u);
-      assert(vertices.some(function (vertex) { return Math.abs(vertex[0] - x) < 0.0001 && Math.abs(vertex[1] - y) < 0.0001; }),
-        "The demand curve includes quantile " + u);
+    assert(!svg.querySelector(".violation-dot"), "Violations use red curve portions without a separate red point");
+    assert(svg.querySelector(".learner-curve.violation-curve"), "An infeasible rule has a red portion");
+    assert(el("feasibility-description").textContent.includes("Maximum excess " + rule.feasibility.witness.excess.toFixed(6)));
+    assert(el("feasibility-description").textContent.includes("at alpha") && el("feasibility-description").textContent.includes("multiplied by n"));
+  });
+  test("Flat allocation levels keep included endpoints and separate right limits at zero, one half, and one", function () {
+    var svg = el("feasibility-chart");
+    [0, 0.5, 1].forEach(function (q) {
+      for (var i = 0; i < 11; i += 1) { choose(i); input("allocation-number", String(q)); }
+      close(Number(svg.dataset.yMin), 0); close(Number(svg.dataset.yMax), 2);
+      close(sampleChart("feasibility-chart", 0.25), 2 * q, 2e-6);
+      close(sampleChart("feasibility-chart", 0.25, ".capacity-curve"), q === 0 ? 0 : 1, 2e-6);
+      var closed = svg.querySelector(".capacity-limit.limit-closed"), open = svg.querySelector(".capacity-limit.limit-open");
+      close(Number(closed.getAttribute("cx")), 54 + 560 * q, 1e-9);
+      close(Number(closed.getAttribute("cy")), 170, 1e-9);
+      if (q < 1) {
+        assert(open, "A flat level has an open right limit within the alpha domain");
+        close(Number(open.getAttribute("cx")), 54 + 560 * q, 1e-9);
+        close(Number(open.getAttribute("cy")), 316, 1e-9);
+        close(sampleChart("feasibility-chart", 0.75), 0, 2e-6);
+        svg.querySelectorAll(".learner-curve, .capacity-curve").forEach(function (path) {
+          var box = path.getBBox(), cutoff = 54 + 560 * q;
+          assert(box.x >= cutoff - 0.0001 || box.x + box.width <= cutoff + 0.0001, "Paths never interpolate across a flat-level jump");
+        });
+      } else {
+        assert(!open, "Alpha one has no right limit inside the domain");
+        assert(svg.querySelector(".demand-limit.limit-closed") && svg.querySelector(".learner-curve.violation-curve") && !svg.querySelector(".violation-dot"));
+      }
+      finiteGeometry();
     });
+  });
+  test("Alpha curves use disconnected allocation-level sets even when BIC fails", function () {
+    var points = win.IroningModel.initial(2);
+    points.forEach(function (point, i) { choose(i); input("allocation-number", String(Math.abs(2 * point.v - 1))); });
+    assert(el("bic-status").dataset.passed === "false" && el("feasibility-status").dataset.passed === "true");
+    [0.1, 0.3, 0.7, 0.9].forEach(function (alpha) {
+      var expected = 1 - alpha * alpha;
+      close(sampleChart("feasibility-chart", alpha), expected, 2e-5);
+      close(sampleChart("feasibility-chart", alpha, ".capacity-curve"), expected, 2e-5);
+    });
+  });
+  test("Red allocation portions follow exact crossings, including a violation narrower than a drawing step", function () {
+    input("mass-number", "0.5");
+    var height = 2e-8, shift = (0.88 - Math.sqrt(0.768 + 0.8 * height)) / 0.4;
+    var center = (2.8 + shift) / 5, radius = 6 * Math.sqrt(height / 5);
+    var redRadius = 6 * Math.sqrt((height - 1e-9) / 5);
+    for (var i = 0; i <= 10; i += 1) {
+      var v = i / 10, q = v <= 0.5 ? Math.max(0, 0.4 * v - shift) : (v >= 0.6 ? 0.8 - shift : 6 * v - 2.8 - shift);
+      choose(i); input("allocation-number", String(q));
+    }
+    var svg = el("feasibility-chart"), paths = Array.from(svg.querySelectorAll(".learner-curve"));
+    var red = paths.filter(function (path) { return path.classList.contains("violation-curve"); });
+    assert(el("feasibility-status").dataset.passed === "false" && red.length > 0 && red.length < paths.length,
+      "The narrow violation is red while the remaining allocation curve stays blue");
+    assert(!svg.querySelector(".violation-dot"), "The old red witness point is absent");
+    var endpoints = [];
+    paths.forEach(function (path) {
+      var a = Number(path.dataset.alphaStart), b = Number(path.dataset.alphaEnd), midpoint = (a + b) / 2;
+      assert(Number.isFinite(a) && Number.isFinite(b) && a < b, "Every curve portion has a nonempty alpha interval");
+      endpoints.push(a, b);
+      if (midpoint > 0.2 && midpoint < 0.78) {
+        // Direct integration of this affine rule gives the scaled Border excess below.
+        var gap = height - 5 * Math.pow(midpoint - center, 2) / 36;
+        if (Math.abs(gap - 1e-9) > 1e-13) {
+          assert(path.classList.contains("violation-curve") === (gap > 1e-9),
+            "Each portion's color agrees with the independently integrated demand minus capacity");
+        }
+      }
+    });
+    [center - radius, center + radius, center - redRadius, center + redRadius].forEach(function (alpha) {
+      assert(endpoints.some(function (endpoint) { return Math.abs(endpoint - alpha) < 2e-8; }),
+        "Drawing cuts retain the exact crossing at alpha " + alpha);
+    });
+    var redStart = Math.min.apply(null, red.map(function (path) { return Number(path.dataset.alphaStart); }));
+    var redEnd = Math.max.apply(null, red.map(function (path) { return Number(path.dataset.alphaEnd); }));
+    close(redStart, center - redRadius, 2e-8); close(redEnd, center + redRadius, 2e-8);
+    assert(redEnd - redStart < 1 / 350, "The violation is narrower than the ordinary drawing sample step");
+    var colorProbe = doc.createElement("span"); doc.body.appendChild(colorProbe);
+    colorProbe.style.color = "var(--red)";
+    assert(win.getComputedStyle(red[0]).stroke === win.getComputedStyle(colorProbe).color, "Above-capacity portions use red");
+    colorProbe.style.color = "var(--blue)";
+    assert(win.getComputedStyle(paths.find(function (path) { return !path.classList.contains("violation-curve"); })).stroke ===
+      win.getComputedStyle(colorProbe).color, "The remaining allocation portions use blue");
+    colorProbe.remove();
+    el("reset-button").click();
+    assert(el("feasibility-status").dataset.passed === "true" && !svg.querySelector(".violation-curve"),
+      "Exact equality of the efficient rule and capacity has no red portions");
+    [0.13, 0.51, 0.87].forEach(function (alpha) {
+      close(sampleChart("feasibility-chart", alpha), 1 - alpha * alpha, 2e-5);
+      close(sampleChart("feasibility-chart", alpha, ".capacity-curve"), 1 - alpha * alpha, 2e-5);
+    });
+    finiteGeometry();
   });
   test("Adding an interpolated point preserves the rule; removing restores it", function () {
     var before = revenue(), count = el("allocation-chart").querySelectorAll("[data-index]").length;
@@ -295,16 +436,20 @@
       });
     });
   });
-  test("Supply-infeasible rules retain candidate revenue labels with ironing shown", function () {
+  test("Supply-infeasible rules retain expected-revenue labels and identify red allocation portions", function () {
     for (var i = 0; i < 11; i += 1) { choose(i); input("allocation-number", "1"); }
     assert(el("bic-status").dataset.passed === "true" && el("feasibility-status").dataset.passed === "false");
-    assert(el("revenue-label").textContent.includes("Candidate"));
-    assert(el("revenue-label").textContent.includes("Candidate") && !el("revenue-gap"));
+    assert(el("revenue-label").textContent === "Expected revenue" && !el("revenue-gap"));
+    assert(el("feasibility-status").textContent === "Single-item feasibility: fails (the curve lies above the dotted curve where it is red)");
+    assert(el("feasibility-chart").querySelector(".learner-curve.violation-curve") && !el("feasibility-chart").querySelector(".violation-dot"));
+    assert(el("payment-caption").textContent === "Interim payment", "Supply infeasibility preserves the payment caption");
   });
   test("All responsive layouts fit and reserve at least 14px of chart padding", async function () {
-    for (var width of [320, 375, 768, 1280]) {
+    await win.mechanismMathReady;
+    for (var width of [320, 375, 701, 768, 1280]) {
       frame.style.width = width + "px"; await T.nextAnimationFrames(win, 3);
       assert(doc.documentElement.scrollWidth <= width + 1, "No page overflow at " + width);
+      capacityLabelFits();
       var plots = doc.querySelector(".ironing-plots").getBoundingClientRect();
       var controls = doc.querySelector(".ironing-controls").getBoundingClientRect();
       if (width > 1050) { assert(controls.left >= plots.right, "Controls occupy the right sidebar"); }
@@ -321,8 +466,16 @@
       });
       finiteGeometry();
     }
+    frame.style.width = "320px";
+    input("bidder-number", "5");
+    var count = el("allocation-chart").querySelectorAll(".control-points [data-index]").length;
+    for (var i = 0; i < count; i += 1) { choose(i); input("allocation-number", "0"); }
+    await T.nextAnimationFrames(win, 3);
+    capacityLabelFits();
+    assert(el("feasibility-capacity-label").querySelector("tspan"), "The native formula remains rendered after distribution and rule changes");
     frame.style.width = "1280px"; doc.body.style.zoom = "2";
     await T.nextAnimationFrames(win, 3);
+    capacityLabelFits();
     assert(doc.documentElement.scrollWidth <= win.innerWidth + 1, "Parameter controls fit at 200% scale");
     doc.body.style.zoom = "1";
   });
@@ -515,17 +668,35 @@
     input("mass-number", "0.3"); input("split-number", "0.63");
     close(sampleChart("allocation-chart", 0.74), before, 3e-5); close(sampleChart("payment-chart", 0.74), payment, 3e-5);
     choose(0); input("allocation-number", "0.9");
-    assert(el("bic-status").dataset.passed === "false" && el("revenue-label").textContent === "Candidate revenue");
+    assert(el("bic-status").dataset.passed === "false" && el("revenue-label").textContent === "Expected revenue");
     finiteGeometry();
   });
-  test("Revenue is attached below the value-based payment plot and retains its total-bidder interpretation", function () {
+  test("Revenue is attached below the payment plot and equals n times each buyer's expected payment", async function () {
     var figure = el("payment-chart").closest("figure"), viewport = el("payment-chart").closest(".chart-viewport");
     assert(figure.contains(el("revenue-label")) && figure.contains(el("revenue-value")));
     assert(el("revenue-value").getBoundingClientRect().top >= viewport.getBoundingClientRect().bottom - 1);
     assert(viewport.querySelector(".chart-axis-label").textContent.includes("Value"));
     assert(!el("payment-chart").querySelector(".payment-area"));
-    input("bidder-number", "5"); el("use-optimum").click();
-    close(revenue(), win.IroningModel.benchmark(5).revenue, 1e-10);
+    await win.mechanismMathReady;
+    var diagnostic = el("revenue-diagnostic");
+    assert(diagnostic.querySelector('mjx-container [data-mml-node="mo"]') &&
+      diagnostic.textContent.includes("expected payment from each buyer"), "The revenue line renders n times the per-buyer payment");
+    function checkExpectedPayments(n) {
+      var perBuyer = Number(el("expected-payment").dataset.value);
+      assert(el("revenue-label").textContent === "Expected revenue");
+      close(n * perBuyer, revenue(), 1e-12, "All buyers' payments sum to total expected revenue");
+      close(Number(el("expected-payment").textContent), perBuyer, 0.00000051, "The displayed per-buyer payment rounds the same model value");
+      close(Number(el("revenue-value").textContent), revenue(), 0.00000051, "The displayed total rounds the same model value");
+    }
+    checkExpectedPayments(2);
+    [3, 5, 2].forEach(function (n) {
+      input("bidder-number", String(n)); el("use-optimum").click();
+      close(revenue(), win.IroningModel.benchmark(n).revenue, 1e-10);
+      checkExpectedPayments(n);
+    });
+    choose(0); input("allocation-number", "0.9");
+    assert(el("bic-status").dataset.passed === "false", "The payment decomposition also applies when IC fails");
+    checkExpectedPayments(2);
     assert(el("payment-description").textContent.includes("across all bidders"));
   });
   test("Shared FPA controls and preview retain their box sizing, bolding, and compact layout", async function () {

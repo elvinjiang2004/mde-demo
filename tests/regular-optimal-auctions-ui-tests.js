@@ -270,11 +270,12 @@
     brush(0.29, 0.7); T.dispatch(s, "keydown", win, { key: "ArrowUp" });
     assert(el("brush-q2").value === "0.71", "Keyboard edge also suppresses rounding noise");
   });
-  test("An IC-breaking painted hole updates colored monotonicity and candidate labels", function () {
+  test("An IC-breaking painted hole preserves payment captions and updates diagnostics", function () {
     var s = el("allocation-chart");
+    assert(el("payment-caption-1").textContent === "Interim payment", "Initial payment caption");
     pointer(s, "pointerdown", 353, 326); pointer(s, "pointerup", 353, 326);
     assert(el("bic-status-1").dataset.bic === "false", "Interior hole creates an interim downward jump");
-    assert(el("payment-status-1").textContent === " (candidate)" && el("payment-caption-1").textContent === "Payment candidate", "Candidate labels preserved below and above the payment graph");
+    assert(el("payment-status-1").textContent === " (candidate)" && el("payment-caption-1").textContent === "Interim payment", "Payment caption stays unchanged while the diagnostic retains its candidate warning");
     assert(el("bic-status-2").dataset.bic === "true" && el("payment-caption-2").textContent === "Interim payment", "Unaffected bidder keeps a valid label");
     assert(el("payment-status-2").textContent === "", "Valid expected payment has no candidate warning");
     assert(el("revenue-status").textContent === " (candidate)" && /Expected revenue/.test(el("live-summary").textContent), "Combined revenue and live summary retain candidate warnings");
@@ -285,7 +286,7 @@
     probe.remove();
     brush(1, 0); pointer(s, "pointerdown", 353, 326); pointer(s, "pointerup", 353, 326);
     close(totalPayments(), 1 / 3);
-    assert(el("payment-status-1").textContent === "", "Restoring BIC clears the payment warning");
+    assert(el("payment-status-1").textContent === "" && el("payment-caption-1").textContent === "Interim payment", "Restoring BIC clears the warning and preserves the payment caption");
     assert(el("bic-status-1").dataset.bic === "true", "Repainting the original lottery restores passing diagnostics");
   });
   test("Charts fit responsive widths with uniform text and reserved padding", async function () {

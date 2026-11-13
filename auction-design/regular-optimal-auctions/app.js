@@ -59,7 +59,6 @@
       byId("bic-verdict-" + bidder).textContent = agent.bic ? "BIC: passes" : "BIC: fails";
       byId("bic-monotonicity-" + bidder).textContent = agent.bic ? "is weakly increasing" : "is not weakly increasing";
       byId("bic-status-" + bidder).dataset.bic = String(agent.bic);
-      byId("payment-caption-" + bidder).textContent = agent.bic ? "Interim payment" : "Payment candidate";
       byId("expected-payment-" + bidder).textContent = C.fixed(agent.expectedPayment);
       byId("expected-payment-" + bidder).dataset.value = agent.expectedPayment;
       byId("payment-status-" + bidder).textContent = agent.bic ? "" : " (candidate)";

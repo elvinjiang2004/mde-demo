@@ -4,7 +4,8 @@
   var groups = [
     { id: "auction-equilibria", title: "Auction Equilibria", modules: ["auction-equilibria/first-price", "auction-equilibria/second-price"], conditions: 0 },
     { id: "auction-design", title: "Auction Design", modules: ["auction-design/regular-optimal-auctions", "auction-design/general-optimal-auctions"], conditions: 2 },
-    { id: "bilateral-trade", title: "Bilateral Trade", modules: ["bilateral-trade/bargaining-mechanism-sandbox", "bilateral-trade/myerson-satterthwaite-theorem"], conditions: 4 }
+    { id: "bilateral-trade", title: "Bilateral Trade", modules: ["bilateral-trade/bargaining-mechanism-sandbox", "bilateral-trade/myerson-satterthwaite-theorem"], conditions: 4 },
+    { id: "voting", title: "Voting", modules: ["voting/gibbard-satterthwaite-theorem"], conditions: 3 }
   ];
   T.run(groups.map(function (group) {
     return { name: group.title + " Environment: navigation, local math and responsive layout", run: async function () {
@@ -28,7 +29,7 @@
       T.assert(!doc.querySelector("mjx-merror, merror") && !/\\\(|\\\[/.test(doc.querySelector(".introduction").textContent),
         "All setup mathematics should render without errors or raw delimiters.");
       var links = Array.from(doc.querySelectorAll(".environment-modules a"));
-      T.assert(links.length === group.modules.length, "Each Environment page should link to both modules.");
+      T.assert(links.length === group.modules.length, "Each Environment page should link to its modules.");
       group.modules.forEach(function (route) {
         T.assert(links.some(function (link) { return link.getAttribute("href") === "../../" + route + "/index.html"; }),
           "Missing module backlink: " + route);
@@ -48,7 +49,7 @@
       }
       if (group.id === "bilateral-trade") {
         var conditions = doc.querySelector(".introduction > ol").textContent;
-        T.assert(conditions.includes("Bayesian IC (BIC)") && conditions.includes("dominant strategy IC (DSIC)") &&
+        T.assert(conditions.includes("Bayesian IC (BIC)") && /dominant[- ]strategy IC \(DSIC\)/i.test(conditions) &&
           conditions.includes("ex ante, interim, and ex post"),
         "The condition definitions should use the sandbox opening's wording and timing variants.");
       }

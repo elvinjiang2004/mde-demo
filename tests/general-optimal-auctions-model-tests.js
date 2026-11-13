@@ -119,11 +119,121 @@
     var r = M.diagnose(points([[0, 1], [0.5, 1], [0.5, 0], [1, 0]]), 2);
     assert(r.tails.feasible && !r.feasibility.feasible); close(r.feasibility.witness.excess, 0.25, 1e-12);
   });
+  test("Allocation-level sets include flat ties at zero, interior levels, and one", function () {
+    [0, 0.4, 1].forEach(function (q) {
+      var rule = M.diagnose([{ v: 0, q: q }, { v: 1, q: q }], 3, uniform);
+      var included = M.levelAt(rule, q), excluded = M.levelAt(rule, q, "right");
+      close(included.mass, 1); close(included.allocation, q); close(included.capacity, 1 / 3);
+      close(excluded.mass, 0); close(excluded.allocation, 0); close(excluded.capacity, 0);
+      if (q > 0) { close(M.levelAt(rule, 0).mass, 1); }
+      if (q < 1) { close(M.levelAt(rule, 1).mass, 0); }
+    });
+    var step = M.diagnose([{ v: 0, q: 1 }, { v: 0.5, q: 1 }, { v: 0.5, q: 0 }, { v: 1, q: 0 }], 2, uniform);
+    close(M.levelAt(step, 0).mass, 1); close(M.levelAt(step, 0, "right").mass, 0.5);
+    var top = M.levelAt(step, 1);
+    close(top.mass, 0.5); close(top.allocation, 0.5); close(top.capacity, 0.375);
+    close(M.levelAt(step, 1, "right").mass, 0);
+  });
+  test("Disconnected nonmonotone level sets use both value intervals and current probability weights", function () {
+    var chosen = [{ v: 0, q: 1 }, { v: 0.25, q: 0 }, { v: 1, q: 1 }];
+    [uniform, M.defaultDistribution, M.distribution(0.5, 0.25)].forEach(function (d) {
+      var rule = M.diagnose(chosen, 2, d);
+      [0.5, 0.75, 1].forEach(function (alpha) {
+        // E_alpha=[0,(1-alpha)/4] union [(1+3alpha)/4,1].
+        var weight = d.lowerDensity / 4 + 3 * d.upperDensity / 4;
+        var mass = weight * (1 - alpha), allocation = weight * (1 - alpha * alpha) / 2;
+        var actual = M.levelAt(rule, alpha);
+        close(actual.mass, mass, 1e-12); close(actual.allocation, allocation, 1e-12);
+        close(actual.capacity, (1 - Math.pow(1 - mass, 2)) / 2, 1e-12);
+        close(M.levelAt(rule, alpha, "right").mass, mass, 1e-12);
+      });
+    });
+  });
+  test("Exact efficient polynomial level sets agree with the order-statistic identity", function () {
+    [uniform, M.defaultDistribution, M.distribution(0.8, 0.3)].forEach(function (d) {
+      [2, 3, 4, 5].forEach(function (n) {
+        var rule = M.adoptedRule(M.efficient(n, d), n, d);
+        [0, 0.01, 0.25, 0.75, 1].forEach(function (alpha) {
+          var cutoff = Math.pow(alpha, 1 / (n - 1)), actual = M.levelAt(rule, alpha);
+          close(actual.mass, 1 - cutoff, 1e-12);
+          close(actual.allocation, (1 - Math.pow(cutoff, n)) / n, 1e-12);
+          close(actual.capacity, actual.allocation, 1e-12);
+          close(M.levelAt(rule, alpha, "right").mass, actual.mass, 1e-12);
+        });
+      });
+    });
+  });
+  test("Adopted level sets preserve pooling jumps and reweight exact curves after distribution edits", function () {
+    var optimum = M.benchmark(4), pool = optimum.pools[0], pooled = M.adoptedRule(optimum, 4);
+    var included = M.levelAt(pooled, pool.q), excluded = M.levelAt(pooled, pool.q, "right");
+    close(included.mass, 1 - M.cdf(pool.a), 1e-12);
+    close(excluded.mass, 1 - M.cdf(pool.b), 1e-12);
+    close(included.allocation - excluded.allocation, pool.q * (pool.upper - pool.lower), 1e-12);
+    var chosen = M.efficient(4, uniform), d = M.distribution(0.6, 0.2);
+    [2, 5].forEach(function (n) {
+      var rule = M.adoptedRule(chosen, n, d);
+      [0, 0.01, 0.125, 0.729, 1].forEach(function (alpha) {
+        var cutoff = Math.pow(alpha, 1 / 3), mass = 1 - M.cdf(cutoff, d);
+        var lower = cutoff < d.split ? d.lowerDensity * (Math.pow(d.split, 4) - Math.pow(cutoff, 4)) / 4 : 0;
+        var upper = d.upperDensity * (1 - Math.pow(Math.max(cutoff, d.split), 4)) / 4;
+        var actual = M.levelAt(rule, alpha);
+        close(actual.mass, mass, 1e-12); close(actual.allocation, lower + upper, 1e-12);
+        close(actual.capacity, (1 - Math.pow(1 - mass, n)) / n, 1e-12);
+      });
+    });
+  });
   test("Continuum constraints still catch an interior violation missed at every knot", function () {
     var r = M.diagnose(points([[0, 0], [0.5, 0.2], [0.6, 0.8], [1, 0.8]]), 2);
     assert(r.monotone && !r.feasibility.feasible);
     close(r.tails.witness.u, 0.56, 1e-12); close(r.tails.witness.excess, 0.008, 1e-12);
     [0, 0.5, 0.6, 1].forEach(function (u) { assert(2 * M.tailAt(r.tails, u) <= 1 - u * u + 1e-12); });
+  });
+  test("Feasibility graph thresholds include exact crossings and a violation narrower than a drawing step", function () {
+    var height = 2e-8, shift = (0.88 - Math.sqrt(0.768 + 0.8 * height)) / 0.4;
+    var chosen = [];
+    for (var i = 0; i <= 10; i += 1) {
+      var v = i / 10, q = v <= 0.5 ? 0.4 * v - shift : (v < 0.6 ? 6 * v - 2.8 - shift : 0.8 - shift);
+      chosen.push({ v: v, q: Math.max(0, q) });
+    }
+    var rule = M.diagnose(chosen, 2, uniform), cuts = M.feasibilityThresholds(rule);
+    var center = (2.8 + shift) / 5, radius = 6 * Math.sqrt(height / 5);
+    var redRadius = 6 * Math.sqrt((height - M.tolerance) / 5);
+    function has(alpha) { return cuts.some(function (cut) { return Math.abs(cut - alpha) < 2e-10; }); }
+    // On this ramp the independently derived excess is height-5(alpha-center)^2/36.
+    [center - radius, center, center + radius, center - redRadius, center + redRadius].forEach(function (alpha) {
+      assert(has(alpha), "An analytic crossing or extremum must be an exact graph cut");
+    });
+    assert(rule.feasibility.witness.excess > M.tolerance && 2 * radius < 1 / 350);
+    [Math.floor(center * 350) / 350, Math.ceil(center * 350) / 350].forEach(function (alpha) {
+      assert(Math.abs(alpha - center) > radius, "A uniform drawing grid misses the entire violation");
+    });
+    var level = M.levelAt(rule, center);
+    close(2 * (level.allocation - level.capacity), height, 1e-12);
+    cuts.slice(1).forEach(function (b, index) {
+      var a = cuts[index];
+      if (a >= center - radius && b <= center + radius) {
+        var first = a + (b - a) / 4, last = a + 3 * (b - a) / 4;
+        assert((height - 5 * Math.pow(first - center, 2) / 36 > M.tolerance) ===
+          (height - 5 * Math.pow(last - center, 2) / 36 > M.tolerance), "Every color interval has one status");
+      }
+    });
+  });
+  test("Feasibility thresholds preserve flat-level limits and exact polynomial crossings", function () {
+    var step = M.diagnose([{ v: 0, q: 0.1 }, { v: 0.5, q: 0.1 }, { v: 0.5, q: 0.9 }, { v: 1, q: 0.9 }], 2, uniform);
+    var flatCuts = M.feasibilityThresholds(step), included = M.levelAt(step, 0.1), right = M.levelAt(step, 0.1, "right");
+    assert(flatCuts.indexOf(0.1) !== -1 && flatCuts.indexOf(0.9) !== -1);
+    close(2 * (included.allocation - included.capacity), 0, 1e-12);
+    close(2 * (right.allocation - right.capacity), 0.15, 1e-12);
+    var d = M.distribution(0.5, 0.1), rule = M.adoptedRule(M.efficient(3, uniform), 2, d);
+    var cuts = M.feasibilityThresholds(rule);
+    assert(cuts.some(function (alpha) { return Math.abs(alpha - 0.49) < 1e-12; }), "Q(v)=v^2 crosses at v=0.7");
+    assert(cuts.some(function (alpha) { return Math.abs(alpha - 0.64) < 1e-12; }), "The polynomial excess extremum is at v=0.8");
+    [0.6, 0.7, 0.8, 1].forEach(function (v) {
+      var actual = M.levelAt(rule, v * v), expected = Math.pow(1 - v, 2) * (0.84 - 1.2 * v);
+      close(2 * (actual.allocation - actual.capacity), expected, 1e-12);
+    });
+    assert(cuts[0] === 0 && cuts[cuts.length - 1] === 1);
+    cuts.slice(1).forEach(function (alpha, i) { assert(alpha > cuts[i]); });
   });
   test("Jumps preserve utility continuity and right-continuous report ownership", function () {
     var r = M.diagnose([{ v: 0, q: 0 }, { v: 0.4, q: 0 }, { v: 0.4, q: 0.2 }, { v: 1, q: 0.2 }], 2);

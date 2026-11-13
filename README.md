@@ -20,7 +20,7 @@ so navigation works through `file://`.
 - **Auction Equilibria:** [Environment](auction-equilibria/environment/index.html), [First-Price Auction Equilibrium](auction-equilibria/first-price/index.html), [Second-Price Auction Equilibrium](auction-equilibria/second-price/index.html).
 - **Auction Design:** [Environment](auction-design/environment/index.html), [Regular Optimal Auctions](auction-design/regular-optimal-auctions/index.html), [General Optimal Auctions](auction-design/general-optimal-auctions/index.html).
 - **Bilateral Trade:** [Environment](bilateral-trade/environment/index.html), [Bargaining Mechanism Sandbox](bilateral-trade/bargaining-mechanism-sandbox/index.html), [Myerson-Satterthwaite Theorem](bilateral-trade/myerson-satterthwaite-theorem/index.html).
-- **Voting:** [The Gibbard-Satterthwaite Theorem](voting/gibbard-satterthwaite-theorem/index.html) (in progress).
+- **Voting:** [Environment](voting/environment/index.html), [Gibbard-Satterthwaite Theorem](voting/gibbard-satterthwaite-theorem/index.html) (in progress).
 
 ## Browser checks
 

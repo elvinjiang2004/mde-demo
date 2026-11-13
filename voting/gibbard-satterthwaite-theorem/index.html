@@ -24,8 +24,20 @@
   <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
       <h1 id="page-title">The Gibbard-Satterthwaite Theorem</h1>
-
-      <!-- Insert only user-supplied or explicitly approved lesson prose. -->
+      <p>
+        In the <a href="../environment/index.html">voting environment</a>,
+        <span data-citation="gibbard-1973"></span> and
+        <span data-citation="satterthwaite-1975"></span> give the following result:
+      </p>
+      <p>
+        <strong>Theorem (The Gibbard-Satterthwaite Theorem):</strong> When \(|E|\geq 3\), there is no onto, strategy-proof voting mechanism
+        that is not dictatorial.
+      </p>
+      <p>
+        In the interactive demo, design a direct voting mechanism for two voters
+        and three candidates. Notice when there are preference profiles for which
+        a voter can profitably misrepresent her preferences.
+      </p>
     </section>
     <section id="voting-demo" class="explorable explorable-divider voting-demo" aria-label="Interactive voting rule">
       <div class="voting-layout">
@@ -50,7 +62,7 @@
         <div class="rule-diagnostics">
           <dl class="audit-properties">
             <div><dt>Onto:</dt><dd id="onto-verdict"></dd></div>
-            <div><dt>Non-dictatorship:</dt><dd id="dictator-verdict"></dd></div>
+            <div><dt>Not dictatorial:</dt><dd id="dictator-verdict"></dd></div>
             <div><dt>Strategy-proof:</dt><dd id="strategy-verdict"></dd></div>
           </dl>
         </div>
@@ -67,6 +79,7 @@
       <ul class="reference-list">
         <li data-reference="gibbard-1973"></li>
         <li data-reference="satterthwaite-1975"></li>
+        <li data-reference="borgers-2015"></li>
       </ul>
     </section>
   </main>

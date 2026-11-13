@@ -100,6 +100,54 @@
       chart.handles.children[i].classList.toggle("selected", i === selected);
     }
   }
+  function renderFeasibility(chart, rule) {
+    setDomain(chart, [0, rule.n], [0, rule.n / 2, rule.n]);
+    var check = rule.feasibility, cuts = M.feasibilityThresholds(rule);
+    function violates(level) { return rule.n * (level.allocation - level.capacity) > M.tolerance; }
+    // Analytic cuts keep each path on one side of capacity, including narrow violations.
+    cuts.slice(1).forEach(function (b, index) {
+      var a = cuts[index], steps = Math.max(4, Math.ceil((b - a) * 350)), demand = "", capacity = "";
+      for (var i = 0; i <= steps; i += 1) {
+        var alpha = i === 0 ? a : (i === steps ? b : a + (b - a) * i / steps);
+        var level = M.levelAt(rule, alpha, i === 0 ? "right" : undefined);
+        var prefix = (i ? "L" : "M") + x(alpha, chart).toFixed(4) + ",";
+        demand += prefix + y(rule.n * level.allocation, chart.domain).toFixed(4);
+        capacity += prefix + y(rule.n * level.capacity, chart.domain).toFixed(4);
+      }
+      var midpoint = M.levelAt(rule, (a + b) / 2);
+      S(chart.layer, "path", { d: demand, "class": "learner-curve" + (violates(midpoint) ? " violation-curve" : ""),
+        "data-alpha-start": a, "data-alpha-end": b });
+      S(chart.layer, "path", { d: capacity, "class": "capacity-curve" });
+    });
+    cuts.forEach(function (alpha) {
+      var included = M.levelAt(rule, alpha), excluded = M.levelAt(rule, alpha, "right");
+      ["allocation", "capacity"].forEach(function (key) {
+        var className = "feasibility-limit " + (key === "allocation" ? "demand-limit" : "capacity-limit");
+        var includedClass = className + (key === "allocation" && violates(included) ? " violation-limit" : "");
+        var excludedClass = className + (key === "allocation" && violates(excluded) ? " violation-limit" : "");
+        if (alpha < 1 && Math.abs(included[key] - excluded[key]) > 1e-12) {
+          S(chart.layer, "circle", { cx: x(alpha, chart), cy: y(rule.n * excluded[key], chart.domain), r: 3.5, "class": excludedClass + " limit-open" });
+          S(chart.layer, "circle", { cx: x(alpha, chart), cy: y(rule.n * included[key], chart.domain), r: 3.5, "class": includedClass + " limit-closed" });
+        } else if (alpha === 1 && included.mass > 0) {
+          S(chart.layer, "circle", { cx: x(alpha, chart), cy: y(rule.n * included[key], chart.domain), r: 3.5, "class": includedClass + " limit-closed" });
+        }
+      });
+    });
+    chart.witness = null;
+    if (!check.feasible) {
+      var alpha = clampLevel(check.witness.q), level = M.levelAt(rule, alpha), side = "included";
+      var right = M.levelAt(rule, alpha, "right");
+      if (alpha < 1 && right.allocation - right.capacity > level.allocation - level.capacity) { level = right; side = "right"; }
+      chart.witness = { alpha: alpha, side: side, excess: rule.n * (level.allocation - level.capacity) };
+    }
+    var capacityLabel = S(chart.layer, "text", { id: "feasibility-capacity-label", x: frame.right - 12,
+      y: Math.min(frame.bottom - 36, y(rule.n * M.levelAt(rule, 0.75).capacity, chart.domain) - 12),
+      "text-anchor": "end", "class": "capacity-label virtual-value-label annotation-halo" }, "1 − [1 − Fᵢ(E");
+    S(capacityLabel, "tspan", { "baseline-shift": "sub", "font-size": "70%" }, "α");
+    S(capacityLabel, "tspan", {}, ")]");
+    S(capacityLabel, "tspan", { dx: "0.16em", "baseline-shift": "super", "font-size": "70%" }, "n");
+  }
+  function clampLevel(value) { return Math.max(0, Math.min(1, value)); }
   function render(charts, rule, benchmark, selected) {
     ["allocation", "payment", "feasibility"].forEach(function (key) { charts[key].layer.replaceChildren(); });
     setDomain(charts.allocation, [0, 1], [0, 0.5, 1]);
@@ -123,20 +171,7 @@
       }
     });
     renderIntegrated(charts.integrated, rule.distribution, benchmark.ironing);
-    var feasibility = rule.feasibility;
-    setDomain(charts.feasibility, [0, rule.n], [0, rule.n / 2, rule.n]);
-    var masses = [0, 1, 1 - feasibility.witness.u];
-    feasibility.segments.forEach(function (p) { masses.push(1 - p.u0, 1 - p.u1); });
-    masses = masses.sort(function (a, b) { return a - b; }).filter(function (value, i, all) { return !i || value !== all[i - 1]; });
-    // Keep analytic knots and the exact witness in the displayed curves too.
-    masses.slice(1).forEach(function (b, i) {
-      path(charts.feasibility, function (mass) { return rule.n * M.tailAt(feasibility, 1 - mass); }, masses[i], b, "learner-curve");
-      path(charts.feasibility, function (mass) { return 1 - Math.pow(1 - mass, rule.n); }, masses[i], b, "capacity-curve");
-    });
-    if (!feasibility.feasible) {
-      var mass = 1 - feasibility.witness.u;
-      S(charts.feasibility.layer, "circle", { cx: x(mass), cy: y(rule.n * M.tailAt(feasibility, 1 - mass), charts.feasibility.domain), r: 5, "class": "violation-dot" });
-    }
+    renderFeasibility(charts.feasibility, rule);
     var parent = charts.allocation.handles;
     while (parent.children.length > rule.points.length) { parent.lastChild.remove(); }
     rule.points.forEach(function (p, i) {

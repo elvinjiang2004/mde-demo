@@ -92,7 +92,8 @@
       <p>
         In the interactive demo, design a mechanism for a group of symmetric buyers through a symmetric interim allocation rule \(Q_i(v_i)\).
         Notice where reducing allocation probability increases expected revenue, and be careful not to
-        allocate too much to any group of values. Here, since all buyers are symmetric, buyer \(i\)'s value PDF is
+        allocate too much to any group of values.<sup><a id="border-feasibility-note-ref" href="#border-feasibility-note"
+          role="doc-noteref" aria-label="Note 1 about single-item feasibility">1</a></sup> Here, since all buyers are symmetric, buyer \(i\)'s value PDF is
       </p>
       <div id="demo-value-density" class="equation-display" role="region" tabindex="0" aria-label="Probability density of buyers' values in the demo">
         \[
@@ -155,7 +156,7 @@
 
               </div>
               <p id="payment-kind" class="sr-only">Envelope payment</p>
-              <p class="chart-diagnostic plot-diagnostic revenue-diagnostic"><span id="revenue-label">Expected revenue</span>: <output id="revenue-value"></output></p>
+              <p id="revenue-diagnostic" class="chart-diagnostic plot-diagnostic revenue-diagnostic"><span id="revenue-label">Expected revenue</span> = \(n\times\) expected payment from each buyer (<output id="expected-payment"></output>) = <output id="revenue-value"></output></p>
             </figure>
             <figure class="chart-figure">
               <figcaption>Integrated virtual value, \(H_i(z)\), and virtual value</figcaption>
@@ -171,14 +172,14 @@
               <p id="pool-summary" class="chart-diagnostic plot-diagnostic ironing-diagnostic"></p>
             </figure>
             <figure class="chart-figure">
-              <figcaption>Single-item feasibility, allocation demand and capacity</figcaption>
+              <figcaption>Total allocation above \(\alpha\), \(n\int_{E_\alpha} Q_i\,dF_i\)</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="chart-canvas-frame chart-640x360-frame">
                 <svg id="feasibility-chart" class="chart-640x360" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="feasibility-title feasibility-description">
-                  <title id="feasibility-title">Allocation to highest-allocation sets and single-item capacity</title><desc id="feasibility-description"></desc>
+                  <title id="feasibility-title">Total allocation above alpha</title><desc id="feasibility-description"></desc>
                 </svg>
               </div>
-              <p class="chart-x-axis-label chart-axis-label">Highest-allocation type mass, \(m\)</p>
+              <p class="chart-x-axis-label chart-axis-label">Allocation-probability threshold, \(\alpha\)</p>
 
               </div>
               <p id="feasibility-status" class="chart-diagnostic constraint-status"></p>
@@ -401,7 +402,15 @@
     <section id="notes" class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
       <ol class="notes-list">
-        <!-- User-authored notes. -->
+        <li id="border-feasibility-note" tabindex="-1">
+          <span data-citation="border-1991"></span> shows that for i.i.d. buyer values, a reduced-form selling mechanism,
+          which is one where only the rules' symmetric interim quantities are specified, is feasible if and only if for every set of values,
+          the probability of allocating the object to someone in that set of values is less than or equal to the probability at least one
+          buyer has a value in that set. He shows that to check this for all sets, it suffices to check it for the sets
+          \(E_\alpha=\{v_i:Q_i(v_i)\geq\alpha\}\).
+          <a href="#border-feasibility-note-ref" role="doc-backlink"
+            aria-label="Return to the single-item feasibility note reference">↩</a>
+        </li>
       </ol>
     </section>
     <section id="references" class="references" aria-labelledby="references-title">

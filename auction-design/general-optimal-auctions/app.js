@@ -73,10 +73,11 @@
     el("bic-monotonicity").textContent = rule.monotone ? "is weakly increasing" : "is not weakly increasing";
     var icSummary = el("bic-verdict").textContent + " (Q_i " + el("bic-monotonicity").textContent + ")";
     feasible.dataset.passed = rule.feasibility.feasible;
-    feasible.textContent = rule.feasibility.feasible ? "Feasibility: passes (all capacity constraints hold)" : "Feasibility: fails (allocation exceeds capacity)";
-    el("revenue-label").textContent = rule.valid ? "Expected revenue" : "Candidate revenue";
-    el("payment-caption").textContent = rule.valid ? "Interim payment" : "Candidate interim payment";
+    feasible.textContent = rule.feasibility.feasible ? "Single-item feasibility: passes (the curve lies entirely below or at the dotted curve)" : "Single-item feasibility: fails (the curve lies above the dotted curve where it is red)";
     el("payment-kind").textContent = rule.valid ? "Zero lowest-type utility" : "Envelope candidate; truthful implementation fails";
+    var expectedPayment = rule.paymentRevenue / rule.n;
+    el("expected-payment").textContent = fixed(expectedPayment);
+    el("expected-payment").dataset.value = expectedPayment;
     el("revenue-value").textContent = fixed(rule.revenue);
     el("revenue-value").dataset.value = rule.revenue;
     el("interpolation-kind").textContent = state.chosen ? "Exact " + (state.chosen.kind === "efficient" ? "efficient" : "optimal") +
@@ -94,11 +95,16 @@
       charts.integrated.domain[0] + " to 0. Dashed gray is raw virtual value on the right scale " + el("integrated-chart").dataset.y2Min +
       " to 1, labeled phi_i composed with inverse F_i, with separate one-sided branches at the density breakpoint. " +
       "Dotted orange shows the lower convex hull G_i of H_i and the ironed virtual value only inside each shaded ironing interval, including those below the sale cutoff. " + el("pool-summary").textContent;
-    el("feasibility-description").textContent = feasible.textContent + "; all allocation-level sets are checked. Witness mass " + fixed(1 - rule.feasibility.witness.u) +
-      ", capacity excess " + fixed(rule.feasibility.witness.excess) +
-      ". Blue is n times the allocation integral over the highest-allocation type mass; dotted black is 1 minus (1 minus mass) to the power n.";
+    var levelWitness = charts.feasibility.witness;
+    el("feasibility-description").textContent = feasible.textContent + "; all allocation-level sets are checked. " +
+      "Allocation-probability threshold alpha runs from 0 to 1. E_alpha contains types with Q_i(v_i) greater than or equal to alpha. " +
+      "The total allocation curve is n times the integral of Q_i over E_alpha, blue where it is at or below capacity and red where it exceeds capacity; dotted black is 1 minus (1 minus the probability mass of E_alpha) to the power n. Both sides of Border (1991), Proposition 3.2 are multiplied by n. " +
+      "Both curves use the fixed vertical scale 0 to " + rule.n + ". Closed points include tied types; open points show right limits excluding ties." +
+      (levelWitness ? " Maximum excess " + fixed(levelWitness.excess) + " at alpha " + fixed(levelWitness.alpha) +
+        (levelWitness.side === "right" ? " (right limit)." : ".") : "");
+    var revenueSummary = "Expected revenue = " + rule.n + " times expected payment from each buyer (" + fixed(expectedPayment) + ") = " + fixed(rule.revenue);
     clearTimeout(announceTimer);
-    announceTimer = setTimeout(function () { el("live-summary").textContent = el("distribution-status").textContent + ". " + icSummary + ". " + feasible.textContent + ". " + el("revenue-label").textContent + " " + fixed(rule.revenue) + ". " + el("pool-summary").textContent; }, 180);
+    announceTimer = setTimeout(function () { el("live-summary").textContent = el("distribution-status").textContent + ". " + icSummary + ". " + feasible.textContent + ". " + revenueSummary + ". " + el("pool-summary").textContent; }, 180);
     document.body.dataset.ready = "true";
   }
   function edit(v, q) {
@@ -221,6 +227,6 @@
   });
   render();
   EquationChain.initDividers();
-  MechanismMath.typesetInitial(".introduction, #distribution-controls, #auction-demo, #derivation, #expected-revenue, #optimal-mechanism");
+  MechanismMath.typesetInitial(".introduction, #distribution-controls, #auction-demo, #derivation, #expected-revenue, #optimal-mechanism, #notes");
   if (window.location.hash === lipschitzLink.hash) { openLipschitzProof(); }
 })();

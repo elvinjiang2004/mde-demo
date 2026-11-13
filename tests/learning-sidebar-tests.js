@@ -45,9 +45,11 @@
     ["auction-design/general-optimal-auctions", true],
     ["bilateral-trade/bargaining-mechanism-sandbox", true],
     ["bilateral-trade/myerson-satterthwaite-theorem", true],
+    ["voting/gibbard-satterthwaite-theorem", true],
     ["auction-equilibria/environment", false],
     ["auction-design/environment", false],
-    ["bilateral-trade/environment", false]
+    ["bilateral-trade/environment", false],
+    ["voting/environment", false]
   ];
 
   var checks = pages.map(function (page) {

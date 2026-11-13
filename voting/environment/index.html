@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Environment | Voting | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
+  <script defer src="../../js/environment.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to the main content</a>
+  <header class="site-header"><page-header category="Voting" home="../../index.html"></page-header></header>
+  <main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">Environment</h1>
+      <p>
+        There are \(n\geq 2\) voters who must elect one candidate from a finite,
+        nonempty set of candidates \(E\). Voters have private preferences
+        over \(E\), denoted \(\preceq_i\), \(i=1,\ldots,n\). We assume each
+        \(\preceq_i\) is complete, transitive, reflexive, and antisymmetric as a
+        relation over \(E\). That is, it is a <em>linear order</em> over \(E\).
+        We interpret \(a\preceq_i b\) as voter \(i\) weakly
+        prefers \(b\) to \(a\). Additionally, for each \(i=1,\ldots,n\), for any
+        two candidates \(a,b\in E\), if \(a\preceq_i b\) and \(b\preceq_i a\),
+        we can write \(a\sim_i b\); if \(a\preceq_i b\) but not
+        \(b\preceq_i a\), we can write \(a\prec_i b\). Since \(\preceq_i\) is a linear order,
+        \(a\sim_i b\) if and only if \(a=b\), and \(a\prec_i b\) if and only if \(a\preceq_i b\)
+        and \(a\ne b\).
+      </p>
+      <p>
+        By the <a href="../../general-topics/revelation-principle/index.html">Revelation Principle</a>,
+        to implement any outcome rule (sometimes called a <em>social choice function</em>
+        in this setting) that is implementable in dominant strategies, we can
+        restrict attention to <em>direct voting mechanisms</em> which consist of a function
+        \(f:T\to E\), where \(T=\prod_{i=1}^n T_i\) and \(T_i\) is the set of
+        admissible linear orders over \(E\) for voter \(i\).
+      </p>
+      <p>
+        Note that dominant strategies here are defined with preference relations, rather than with
+        utilities. Since there are a finite number of candidates, and the preference relations
+        are linear orders over \(E\), it is equivalent to set utilities as
+        \(u_i(A)=-\text{rank}_i(A)\), where \(\text{rank}_i(A)\) is the rank of candidate \(A\)
+        in voter \(i\)'s preference ordering and use the definition with utilities.
+      </p>
+      <p>Define the following properties of a direct voting mechanism:</p>
+      <ol>
+        <li>
+          <strong>Dominant-Strategy Incentive Compatibility (DSIC or Strategy-Proofness):</strong>
+          For each voter \(i\), truthful reporting is a dominant strategy.
+        </li>
+        <li>
+          <strong>Dictatorial:</strong>
+          There is a voter who always gets her most preferred candidate.
+          Such a voter is called a <em>dictator</em>.
+        </li>
+        <li>
+          <strong>Surjective (Onto):</strong>
+          The mechanism's function is surjective.
+        </li>
+      </ol>
+      <p class="environment-modules"><a href="../../voting/gibbard-satterthwaite-theorem/index.html">The Gibbard-Satterthwaite Theorem</a></p>
+    </section>
+  </main>
+  <footer class="site-footer"><page-footer></page-footer></footer>
+  <learning-sidebar environment="voting">
+    <template data-insights>
+      <!-- User-authored Insights go here. -->
+    </template>
+  </learning-sidebar>
+</body>
+</html>

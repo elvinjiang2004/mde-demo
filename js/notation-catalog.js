@@ -7,6 +7,26 @@
   // Page groups follow their first entry's appearance; parallel section labels
   // supply small headings without changing the groups or Environment notation.
   var sharedEnvironmentNotation = {
+    "voting": [
+      [
+        ["n", "The number of voters."],
+        ["i", "A voter's index."]
+      ],
+      [
+        ["E", "The finite set of candidates."],
+        ["a,b", "Candidates in \\(E\\)."]
+      ],
+      [
+        ["\\preceq_i", "Voter \\(i\\)'s private linear order; \\(a\\preceq_i b\\) means that voter \\(i\\) weakly prefers \\(b\\) to \\(a\\)."],
+        ["\\sim_i", "Voter \\(i\\)'s indifference relation; \\(a\\sim_i b\\) holds if and only if \\(a=b\\)."],
+        ["\\prec_i", "Voter \\(i\\)'s strict preference relation; \\(a\\prec_i b\\) means that voter \\(i\\) strictly prefers \\(b\\) to \\(a\\)."]
+      ],
+      [
+        ["T_i", "The set of admissible linear orders over \\(E\\) for voter \\(i\\)."],
+        ["T=\\prod_{i=1}^n T_i", "The joint preference space."]
+      ],
+      [["f:T\\to E", "The deterministic rule selecting a candidate for each reported preference profile."]]
+    ],
     "auction-equilibria": [
       [
         ["n", "The number of buyers."],
@@ -116,10 +136,15 @@
   var pages = {
     "gibbard-satterthwaite-theorem": {
       pageNotation: [
+        [["|E|", "The number of candidates."]],
         [["f", "The deterministic rule selecting a candidate for each pair of reported rankings."]]
       ],
-      pageNotationSections: ["Demo"],
-      environmentNotation: []
+      pageNotationSections: ["Theorem", "Demo"],
+      environmentNotation: sharedEnvironmentNotation["voting"]
+    },
+    "voting": {
+      pageNotation: [],
+      environmentNotation: sharedEnvironmentNotation["voting"]
     },
     "auction-equilibria": {
       pageNotation: [],
@@ -244,7 +269,10 @@
           ["c", "The distribution breakpoint."],
           ["\\pi", "The probability that a value lies in the lower interval \\([0,c]\\)."]
         ],
-        [["m", "The probability mass of a highest-allocation type set in the feasibility chart."]],
+        [
+          ["\\alpha\\in[0,1]", "The allocation-probability threshold."],
+          ["E_\\alpha=\\{v_i\\in T_i \\mid Q_i(v_i) \\geq \\alpha\\}", "The set of values \\(v_i\\) with interim allocation probability of at least \\(\\alpha\\)."]
+        ],
         [
           ["z", "A quantile in \\([0,1]\\)."],
           ["h_i(z)=\\phi_i(F_i^{-1}(z))", "The buyer \\(i\\)'s virtual value as a function of quantiles."],

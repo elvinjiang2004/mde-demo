@@ -232,10 +232,6 @@
             "General Topics has three lessons, Voting has one, and the other groups have two.");
             var category = row.closest("section");
             var environment = category.querySelector("a.environment-link");
-            if (category.id === "voting") {
-              assert(!environment, "Voting should keep its setup on the module page.");
-              return;
-            }
             if (index === 0) {
               assert(!environment, "General Topics should have no Environment page.");
               var introduction = row.querySelector("li:first-child a.module-link");
@@ -370,7 +366,7 @@
             '#voting a.module-link[href="voting/gibbard-satterthwaite-theorem/index.html"]'
           );
           assert(link && link.querySelector(".module-title").textContent ===
-            "The Gibbard-Satterthwaite Theorem" && link.querySelector(".module-status") &&
+            "Gibbard-Satterthwaite Theorem" && link.querySelector(".module-status") &&
             link.querySelector(".module-status").textContent === "In progress",
           "Voting should link to the theorem demo using its exact title and In progress marker.");
         }
