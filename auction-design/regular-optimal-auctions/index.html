@@ -14,6 +14,8 @@
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../environment/notation.js"></script>
+  <script defer src="notation.js"></script>
   <script defer src="../../js/learning-sidebar.js"></script>
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
@@ -263,8 +265,8 @@
       <h2 id="expected-revenue-title">Expected revenue</h2>
       <p>
         Now that we have interim expected payments, we can calculate ex-ante
-        expected payments from each buyer directly, the sum of which is expected revenue. Write \(V=(V_1,\ldots,V_n)\)
-        for the unrealized profile of buyers' random values. From buyer \(i\), we can expect to receive
+        expected payments from each buyer directly, the sum of which is expected revenue.
+        Write \(V=(V_1,\ldots,V_n)\) for the unrealized profile of buyer values. From buyer \(i\), we can expect to receive
       </p>
 
       <div id="expected-buyer-payment" class="equation-chain-steps equation-chain-wide-rhs" role="region" tabindex="0" aria-label="Expected payment from buyer i">
@@ -322,7 +324,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} Q_i(v_i)\left(1-F_i(v_i)\right)dv_i.\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} Q_i(v_i)\left(1-F_i(v_i)\right)\,dv_i.\)</span>
       </div>
 
       <p>
@@ -333,7 +335,7 @@
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs">\(\displaystyle \mathbb{E}\!\left[p_i(V)\right]\)</span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} v_iQ_i(v_i)\,f_i(v_i)\,dv_i - \int_{\underline{v}_i}^{\overline{v}_i} U_i(\underline{v}_i)\,f_i(v_i)\,dv_i - \int_{\underline{v}_i}^{\overline{v}_i} Q_i(v_i)\left(1-F_i(v_i)\right)dv_i\)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{\underline{v}_i}^{\overline{v}_i} v_iQ_i(v_i)\,f_i(v_i)\,dv_i - \int_{\underline{v}_i}^{\overline{v}_i} U_i(\underline{v}_i)\,f_i(v_i)\,dv_i - \int_{\underline{v}_i}^{\overline{v}_i} Q_i(v_i)\left(1-F_i(v_i)\right)\,dv_i\)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>

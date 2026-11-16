@@ -296,7 +296,7 @@
         }
       },
       {
-        name: "The user-authored introduction, empty Notes, and requested reference are present",
+        name: "The user-authored introduction, Notes, and requested references are present",
         run: function () {
           var introduction = appDocument.querySelector(".introduction");
           assert(introduction && introduction.querySelector("h1") &&
@@ -309,7 +309,7 @@
           });
           var theoremText = introductionCopy.textContent.replace(/\s+/g, " ");
           assert(introduction.querySelectorAll(":scope > ol > li").length === 0 &&
-            /There is no mechanism that is Bayesian incentive compatible(?: \(BIC\))?, interim individually rational(?: \(IR\))?, ex-ante budget balanced(?: \(BB\))?, and ex-post efficient\./.test(theoremText),
+            /There is no (?:direct bargaining )?mechanism that is Bayesian incentive compatible(?: \(BIC\))?, interim individually rational(?: \(IR\))?, ex-ante budget balanced(?: \(BB\))?, and ex-post efficient\./.test(theoremText),
           "The supplied theorem should retain all four conditions inline.");
           assert(introduction.querySelectorAll('mjx-container[jax="SVG"]').length > 0,
             "The introduction's mathematical notation should render with MathJax.");

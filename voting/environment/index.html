@@ -10,6 +10,7 @@
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="notation.js"></script>
   <script defer src="../../js/learning-sidebar.js"></script>
   <script defer src="../../js/environment.js"></script>
 </head>
@@ -36,17 +37,16 @@
       <p>
         By the <a href="../../general-topics/revelation-principle/index.html">Revelation Principle</a>,
         to implement any outcome rule (sometimes called a <em>social choice function</em>
-        in this setting) that is implementable in dominant strategies, we can
-        restrict attention to <em>direct voting mechanisms</em> which consist of a function
+        in this setting), we can restrict attention to <em>direct voting mechanisms</em> which consist of a function
         \(f:T\to E\), where \(T=\prod_{i=1}^n T_i\) and \(T_i\) is the set of
-        admissible linear orders over \(E\) for voter \(i\).
+        linear orders over \(E\) for voter \(i\).
       </p>
       <p>
         Note that dominant strategies here are defined with preference relations, rather than with
         utilities. Since there are a finite number of candidates, and the preference relations
         are linear orders over \(E\), it is equivalent to set utilities as
-        \(u_i(A)=-\text{rank}_i(A)\), where \(\text{rank}_i(A)\) is the rank of candidate \(A\)
-        in voter \(i\)'s preference ordering and use the definition with utilities.
+        \(u_i(X)=-\text{rank}_{\preceq_i}(X)\), where \(\text{rank}_{\preceq_i}(X)\) is the rank of candidate \(X\)
+        in voter \(i\)'s preference ordering and then use the definition with utilities.
       </p>
       <p>Define the following properties of a direct voting mechanism:</p>
       <ol>
@@ -58,10 +58,6 @@
           <strong>Dictatorial:</strong>
           There is a voter who always gets her most preferred candidate.
           Such a voter is called a <em>dictator</em>.
-        </li>
-        <li>
-          <strong>Surjective (Onto):</strong>
-          The mechanism's function is surjective.
         </li>
       </ol>
       <p class="environment-modules"><a href="../../voting/gibbard-satterthwaite-theorem/index.html">The Gibbard-Satterthwaite Theorem</a></p>

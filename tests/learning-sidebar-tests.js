@@ -86,7 +86,17 @@
         T.assert(notation.environmentNotation === win.MechanismNotation.pages[page[0].split("/")[0]].environmentNotation,
           "Related pages must reuse their shared environment definitions.");
       }
-      T.assertScriptOrder(doc, ["../../js/mathjax-runtime.js", "../../js/notation-catalog.js", "../../js/learning-sidebar.js"]);
+      var group = page[0].split("/")[0];
+      var expectedPages = [host.getAttribute("page") || host.getAttribute("environment")];
+      var notationScripts = ["../../js/mathjax-runtime.js", "../../js/notation-catalog.js"];
+      if (page[1] && group !== "general-topics") {
+        notationScripts.push("../environment/notation.js");
+        expectedPages.push(group);
+      }
+      notationScripts.push("notation.js", "../../js/learning-sidebar.js");
+      T.assertScriptOrder(doc, notationScripts);
+      T.assert(Object.keys(win.MechanismNotation.pages).sort().join("|") === expectedPages.sort().join("|"),
+        "Each page must load only its own notation and its shared environment.");
 
       var chart = doc.querySelector("main svg:not(mjx-container svg)");
       var before = chart && chart.getBoundingClientRect();
@@ -277,9 +287,10 @@
   });
 
   checks.push({ name: "Insights render authored inline and display math only when selected", run: async function () {
+    await T.loadFrame(frame, "../auction-equilibria/first-price/index.html", { math: "main" });
     var doc = frame.contentDocument;
     var host = doc.createElement("learning-sidebar");
-    host.setAttribute("environment", "bilateral-trade");
+    host.setAttribute("environment", "auction-equilibria");
     var template = doc.createElement("template");
     template.setAttribute("data-insights", "");
     template.innerHTML = '\\(v\\)<p><strong>Test insight</strong>: \\(q(v,c)\\).</p><div>\\[\\frac{1}{2}\\]</div>';

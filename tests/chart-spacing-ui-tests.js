@@ -2,7 +2,8 @@
   "use strict";
   var T = MechanismTest, frame = document.getElementById("app-frame");
   var routes = ["auction-equilibria/first-price", "auction-equilibria/second-price", "auction-design/regular-optimal-auctions", "auction-design/general-optimal-auctions",
-    "general-topics/envelope-theorem", "bilateral-trade/myerson-satterthwaite-theorem", "bilateral-trade/bargaining-mechanism-sandbox"];
+    "general-topics/envelope-theorem", "bilateral-trade/myerson-satterthwaite-theorem", "bilateral-trade/bargaining-mechanism-sandbox",
+    "general-topics/revelation-principle", "voting/gibbard-satterthwaite-theorem"];
   function border(svg) { return svg.querySelector("rect.plot-frame, rect.diagnostic-frame, rect.axis-line"); }
   function check(doc, win) {
     doc.querySelectorAll(".chart-figure").forEach(function (figure) {
@@ -34,7 +35,27 @@
         T.assert(bottom - label.getBoundingClientRect().bottom >= 13.5, "Density endpoint padding at expanded widths");
       });
     });
-    doc.querySelectorAll(".chart-grid").forEach(function (grid) { T.assertClose(parseFloat(win.getComputedStyle(grid).rowGap), 16, 0.1, "Shared row spacing"); });
+    doc.querySelectorAll(".chart-grid, .surface-editor-grid, .main-diagnostic-layout").forEach(function (grid) {
+      T.assertClose(parseFloat(win.getComputedStyle(grid).rowGap), 16, 0.1, "Shared plot row spacing");
+    });
+    doc.querySelectorAll(".main-diagnostic-layout").forEach(function (layout) {
+      T.assertClose(parseFloat(win.getComputedStyle(layout).columnGap), 20, 0.1, "Main and diagnostic column spacing");
+    });
+    doc.querySelectorAll(".main-column > .choice-controls").forEach(function (controls) {
+      var style = win.getComputedStyle(controls);
+      [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft].forEach(function (value) {
+        T.assertClose(parseFloat(value), 0, 0.1, "Below-plot controls must not inherit sidebar padding");
+      });
+    });
+    doc.querySelectorAll(".explorable-divider").forEach(function (section) {
+      var style = win.getComputedStyle(section);
+      T.assertClose(parseFloat(style.marginTop), win.innerWidth <= 520 ? 24 : 32, 0.1, "Responsive introduction-to-demo spacing");
+      T.assertClose(parseFloat(style.paddingTop), 14.4, 0.1, "Demo separator padding");
+      T.assertClose(parseFloat(style.marginBottom), 22.4, 0.1, "Demo-to-lesson spacing");
+    });
+    var votingLayout = doc.querySelector(".voting-layout");
+    if (votingLayout) { T.assertClose(parseFloat(win.getComputedStyle(votingLayout).marginTop), 0, 0.1, "Voting grid must not double the separator padding"); }
+    T.assert(!doc.querySelector(".notes > li"), "Notes must use their shared list indentation and item spacing");
     T.assert(doc.documentElement.scrollWidth <= doc.documentElement.clientWidth + 1, "No horizontal overflow");
     T.assert(!doc.querySelector("merror, .chart-plot-viewport mjx-merror"), "Valid mathematics");
   }
@@ -58,9 +79,10 @@
       await T.waitFor(function () {
         var doc = frame.contentDocument;
         return doc && doc.URL.includes(route) && doc.querySelector("main mjx-container") &&
-          (doc.querySelector(".chart-figure rect.axis-line, .chart-figure rect.plot-frame, .panel-caption"));
+          (doc.querySelector(".chart-figure rect.axis-line, .chart-figure rect.plot-frame, .panel-caption, #voting-demo"));
       }, 20000);
       var doc = frame.contentDocument, win = frame.contentWindow;
+      if (win.mechanismMathReady) { await win.mechanismMathReady; }
       for (var width of [320, 375, 640, 768, 1280]) {
         frame.style.width = width + "px";
         // Auction redraws debounce resize; observe completed geometry instead

@@ -17,7 +17,9 @@
   text-align: left;
 }
 .chart-grid { row-gap: var(--chart-row-gap); column-gap: 1rem; }
-.main-diagnostic-layout.chart-grid { row-gap: var(--chart-row-gap); }
+.main-diagnostic-layout,
+.main-diagnostic-layout.chart-grid { row-gap: var(--chart-row-gap); column-gap: 1.25rem; }
+.main-column > .choice-controls { padding: 0; }
 .chart-plot-viewport, .chart-density-viewport { padding-block: var(--chart-padding); }
 .chart-canvas-frame {
   position: relative;

@@ -14,6 +14,8 @@
   <script defer src="../../assets/mathjax/tex-svg.js"></script>
   <script defer src="../../js/mathjax-runtime.js"></script>
   <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../environment/notation.js"></script>
+  <script defer src="notation.js"></script>
   <script defer src="../../js/learning-sidebar.js"></script>
   <script defer src="model.js"></script>
   <script defer src="app.js"></script>
@@ -30,8 +32,9 @@
         <span data-citation="satterthwaite-1975"></span> give the following result:
       </p>
       <p>
-        <strong>Theorem (The Gibbard-Satterthwaite Theorem):</strong> When \(|E|\geq 3\), there is no onto, strategy-proof voting mechanism
-        that is not dictatorial.
+        <strong>Theorem (The Gibbard-Satterthwaite Theorem):</strong> When there are three or more candidates,
+        there is no direct voting mechanism that is onto<sup><a id="onto-note-ref" href="#onto-note"
+          role="doc-noteref" aria-label="Note 1 on the onto requirement">1</a></sup>, not dictatorial, and strategy-proof.
       </p>
       <p>
         In the interactive demo, design a direct voting mechanism for two voters
@@ -43,12 +46,6 @@
       <div class="voting-layout">
         <figure class="rule-figure" aria-labelledby="rule-table-title">
           <figcaption id="rule-table-title" class="rule-heading">Voting rule, \(f\)</figcaption>
-          <div class="winner-brush-controls" role="group" aria-label="Winner brush">
-            <span>Winner brush</span>
-            <button class="text-button winner-choice candidate-a" type="button" data-candidate="A" aria-pressed="true">A</button>
-            <button class="text-button winner-choice candidate-b" type="button" data-candidate="B" aria-pressed="false">B</button>
-            <button class="text-button winner-choice candidate-c" type="button" data-candidate="C" aria-pressed="false">C</button>
-          </div>
           <p id="rule-keyboard" class="sr-only">Rows are Voter 1's ranking; columns are Voter 2's ranking. Choose a winner brush, then click or drag over profiles to paint. Arrow keys move between cells; Enter or Space applies the brush. A, B or C selects that brush and paints the focused profile. A red bottom-left triangle marks a profitable misreport for Voter 1; a red upper-right triangle marks one for Voter 2. All 36 outcomes can be edited independently.</p>
           <div id="rule-scroll" class="rule-scroll" role="region" aria-label="Voting rule table; scroll horizontally on narrow screens" tabindex="0">
             <div id="rule-stage" class="rule-stage">
@@ -57,6 +54,12 @@
                 <tbody id="rule-body"></tbody>
               </table>
             </div>
+          </div>
+          <div class="winner-brush-controls" role="group" aria-label="Elected candidate brush">
+            <strong>Elected candidate brush</strong>
+            <button class="text-button winner-choice candidate-a" type="button" data-candidate="A" aria-pressed="true">A</button>
+            <button class="text-button winner-choice candidate-b" type="button" data-candidate="B" aria-pressed="false">B</button>
+            <button class="text-button winner-choice candidate-c" type="button" data-candidate="C" aria-pressed="false">C</button>
           </div>
         </figure>
         <div class="rule-diagnostics">
@@ -69,10 +72,76 @@
       </div>
       <p id="live-summary" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
     </section>
-    <section id="derivation" class="derivation" hidden></section>
+    <section id="derivation" class="derivation" aria-labelledby="monotone-mechanisms">
+      <h2 id="monotone-mechanisms">Monotone mechanisms:</h2>
+      <p>
+        <strong>Definition:</strong> For voter \(i\), for any two of her preference orderings \(\preceq_i\)
+        and \(\preceq_i'\), a candidate \(X\) <em>weakly
+        improves</em> between \(\preceq_i\) and \(\preceq_i'\) if and only if for all candidates \(Y\in E\),
+      </p>
+      <p>
+        \(Y\preceq_i X \implies Y\preceq_i' X\).
+      </p>
+      <p>
+        That is, a candidate weakly improves from one preference ordering to another if it is still ranked
+        above all the candidates it was ranked above in the first ordering.
+      </p>
+      <p>
+        <strong>Definition:</strong> A direct voting mechanism is monotone if and only if for all candidates \(X\in E\)
+      </p>
+      <p>
+        \(f(\preceq)=X\) and \(X\) weakly improves for each voter between \(\preceq\)
+        and \(\preceq' \implies f(\preceq')=X\).
+      </p>
+      <p>
+        That is, a monotone mechanism always retains its elected candidate if that
+        candidate's position in each voter's preference ordering weakly improves.
+      </p>
+      <p>
+        <strong>Lemma 1:</strong> If a direct voting mechanism \(f\) is DSIC, then it is monotone.
+      </p>
+      <p>
+        <strong>Proof:</strong> Suppose \(f\) is DSIC, but it is not monotone. Then, there exist two distinct
+        preference profiles \(\preceq=(\preceq_1,\ldots,\preceq_n)\),
+        \(\preceq'=(\preceq_1',\ldots,\preceq_n')\) such that
+        \(X=f(\preceq)\neq f(\preceq')=Y\), but candidate \(X\) weakly improves
+        for each voter between \(\preceq\) and \(\preceq'\).
+        Consider the sequence of elected candidates:
+      </p>
+      <p>
+        \(X=Z_0=f(\preceq)\),
+        \(Z_1=f(\preceq_1',\preceq_2,\ldots,\preceq_n)\), \(\ldots\),
+        \(Z_{n-1}=f(\preceq_1',\ldots,\preceq_{n-1}',\preceq_n)\),
+        \(Y=Z_n=f(\preceq')\).
+      </p>
+      <p class="has-qed">
+        Since \(X\neq Y\), at some point the sequence of elected candidates switches from \(X\) to a different candidate.
+        Let \(Z_k\) be the candidate the sequence first switches to from \(X\), so \(Z_k\neq X\) and \(Z_{k-1}=X\).
+        By strategy-proofness, \(Z_k\prec_k X\); otherwise, at the reported preference profile
+        \((\preceq_1',\ldots,\preceq_{k-1}',\preceq_k,\ldots,\preceq_n)\),
+        voter \(k\) with preference ordering \(\preceq_k\) can profitably report \(\preceq_k'\) and receive \(Z_k\).
+        Since \(X\) weakly improves for voter \(k\) from \(\preceq_k\) to \(\preceq_k'\),
+        it must also be that \(Z_k\prec_k' X\).
+        But then this mechanism is not DSIC, because at the reported preference profile
+        \((\preceq_1',\ldots,\preceq_k',\preceq_{k+1},\ldots,\preceq_n)\),
+        voter \(k\) with preference ordering \(\preceq_k'\) can instead report \(\preceq_k\)
+        and receive \(X\), which she prefers to \(Z_k\). Thus, \(f\) must be monotone.
+        <span class="qed">\(\blacksquare\)</span>
+      </p>
+    </section>
     <section id="notes" class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
-      <ol class="notes-list"></ol>
+      <ol class="notes-list">
+        <li id="onto-note" tabindex="-1">
+          The requirement that the mechanism be onto does not meaningfully affect the statement from
+          allowing the mechanism's image to be any subset of three or more candidates from the set of candidates.
+          Strategy-proofness ensures that preferences over candidates outside of the mechanism's image cannot
+          affect the outcome and dictatorial-ness would be specified over candidates in the image. The
+          statement is formulated in this way for convenience.
+          <a href="#onto-note-ref" role="doc-backlink"
+            aria-label="Return to the onto requirement in the theorem">↩</a>
+        </li>
+      </ol>
     </section>
     <section class="references" aria-labelledby="references-title">
       <h2 id="references-title">References</h2>

@@ -5,7 +5,7 @@
     { id: "auction-equilibria", title: "Auction Equilibria", modules: ["auction-equilibria/first-price", "auction-equilibria/second-price"], conditions: 0 },
     { id: "auction-design", title: "Auction Design", modules: ["auction-design/regular-optimal-auctions", "auction-design/general-optimal-auctions"], conditions: 2 },
     { id: "bilateral-trade", title: "Bilateral Trade", modules: ["bilateral-trade/bargaining-mechanism-sandbox", "bilateral-trade/myerson-satterthwaite-theorem"], conditions: 4 },
-    { id: "voting", title: "Voting", modules: ["voting/gibbard-satterthwaite-theorem"], conditions: 3 }
+    { id: "voting", title: "Voting", modules: ["voting/gibbard-satterthwaite-theorem"], conditions: 2 }
   ];
   T.run(groups.map(function (group) {
     return { name: group.title + " Environment: navigation, local math and responsive layout", run: async function () {
@@ -52,6 +52,21 @@
         T.assert(conditions.includes("Bayesian IC (BIC)") && /dominant[- ]strategy IC \(DSIC\)/i.test(conditions) &&
           conditions.includes("ex ante, interim, and ex post"),
         "The condition definitions should use the sandbox opening's wording and timing variants.");
+      }
+      if (group.id === "voting") {
+        var votingDefinitions = Array.from(doc.querySelectorAll(".introduction > ol > li"));
+        var strategyProofness = votingDefinitions.find(function (definition) {
+          var label = definition.querySelector("strong");
+          return label && /DSIC|Strategy-Proofness/.test(label.textContent);
+        });
+        var dictatorship = votingDefinitions.find(function (definition) {
+          var label = definition.querySelector("strong");
+          return label && /Dictatorial/.test(label.textContent);
+        });
+        T.assert(strategyProofness && /truthful reporting.*dominant strategy/i.test(strategyProofness.textContent.replace(/\s+/g, " ")),
+          "The DSIC definition should state that truthful reporting is a dominant strategy.");
+        T.assert(dictatorship && /voter.*always.*most preferred candidate/i.test(dictatorship.textContent.replace(/\s+/g, " ")),
+          "The dictatorship definition should identify a voter who always gets her most preferred candidate.");
       }
       for (var width of [320, 375, 768, 1280]) {
         frame.style.width = width + "px";

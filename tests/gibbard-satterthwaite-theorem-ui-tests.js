@@ -69,7 +69,7 @@
     assert(readRule().join("") === model.createRule("plurality").join(""), "Initial outcomes must equal plurality with unchanged tie-breaking.");
     assert(Array.from(doc.querySelectorAll(".audit-properties dt")).map(function (term) { return term.textContent; }).join("|") === "Onto:|Not dictatorial:|Strategy-proof:" && !doc.querySelector(".rule-diagnostics h3"), "Diagnostics must use the requested labels without a Rule check heading.");
     assert(!element("rule-preset") && !element("load-rule") && !element("show-manipulation") && !element("witness-arrow"), "The brush and corner markers replace the preset and witness controls.");
-    assert(doc.querySelector('.winner-brush-controls').textContent.indexOf("Winner brush") >= 0 && brushButton("A").getAttribute("aria-pressed") === "true", "The brush must have its requested label and an initial candidate.");
+    assert(doc.querySelector('.winner-brush-controls').textContent.indexOf("Elected candidate brush") >= 0 && brushButton("A").getAttribute("aria-pressed") === "true", "The brush must have its requested label and an initial candidate.");
     T.assertScriptOrder(doc, ["../../js/components.js", "../../js/bibliography.js", "../../js/references.js", "../../js/mathjax-config.js", "../../assets/mathjax/tex-svg.js", "../../js/mathjax-runtime.js", "../../js/notation-catalog.js", "../../js/learning-sidebar.js", "model.js", "app.js"]);
     checkAudit();
   });
@@ -194,7 +194,7 @@
   });
   test("Brush focus, accessible flags, Notes, references and local math remain available", function () {
     var before = readRule().join(""); brushButton("A").focus({ preventScroll: true }); choose("A");
-    assert(doc.activeElement === brushButton("A") && readRule().join("") === before && element("live-summary").textContent.indexOf("Winner brush A") >= 0, "Changing the brush preserves focus and announces its value without editing a profile.");
+    assert(doc.activeElement === brushButton("A") && readRule().join("") === before && element("live-summary").textContent.indexOf("Elected candidate brush A") >= 0, "Changing the brush preserves focus and announces its value without editing a profile.");
     assert(element("notes") && !element("notes").hidden && doc.querySelector('learning-sidebar[page="gibbard-satterthwaite-theorem"] template[data-insights]'), "Authored Notes and Insights slots remain intact.");
     assert(doc.querySelectorAll(".reference-list a").length === 3 && doc.querySelector(".rule-heading mjx-container") && !doc.querySelector("mjx-merror, merror, [data-render-error]"), "Bibliography and local mathematics must render without errors.");
   });
@@ -206,7 +206,17 @@
       assert(doc.documentElement.scrollWidth <= win.innerWidth + 1 && doc.querySelectorAll(".rule-cell").length === 36, "No page overflow or missing profiles at " + width + "px.");
       var scroller = element("rule-scroll"), tableBounds = element("rule-table").getBoundingClientRect();
       assert(width >= 768 || scroller.scrollWidth > scroller.clientWidth, "Narrow tables need their own scroll region.");
-      Array.from(doc.querySelectorAll(".rule-cell, .winner-choice")).forEach(function (button) { assert(button.getBoundingClientRect().height >= 44, "Brush and profile targets must remain touch-sized."); });
+      assert(doc.querySelector(".winner-brush-controls").getBoundingClientRect().top >= scroller.getBoundingClientRect().bottom, "The elected candidate brush must sit below the mechanism grid.");
+      var gridCells = Array.from(doc.querySelectorAll("#rule-table th, #rule-table td"));
+      var cellBounds = gridCells[0].getBoundingClientRect();
+      assert(gridCells.every(function (node) {
+        var bounds = node.getBoundingClientRect();
+        return Math.abs(bounds.width - cellBounds.width) < 1 && Math.abs(bounds.height - cellBounds.height) < 1;
+      }), "Every ranking header and outcome cell must have the same dimensions.");
+      Array.from(doc.querySelectorAll(".rule-cell, .winner-choice")).forEach(function (button) {
+        var bounds = button.getBoundingClientRect();
+        assert(bounds.width === 48 && bounds.height === 48, "Candidate boxes must match the Revelation Principle page's 48px squares.");
+      });
       choose("B"); cell(35).click(); key(35, "ArrowLeft");
       assert(doc.activeElement === cell(34) && cell(34).getBoundingClientRect().right <= scroller.getBoundingClientRect().right + 1, "Keyboard movement reveals offscreen cells.");
       assert(Math.abs(element("rule-table").getBoundingClientRect().height - tableBounds.height) < 1, "Painting and marker updates must not change table geometry.");

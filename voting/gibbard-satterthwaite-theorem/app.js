@@ -14,7 +14,10 @@
   var rule = model.createRule("plurality");
   var audit = model.audit(rule);
 
-  function ranking(index) { return model.RANKINGS[index].join(" ≻ "); }
+  function ranking(index) { return model.RANKINGS[index].join(" preferred to "); }
+  function rankingMath(index, voter) {
+    return "\\(" + model.RANKINGS[index].slice().reverse().join("\\prec_" + voter + " ") + "\\)";
+  }
   function verdict(id, satisfied, text) {
     var node = document.getElementById(id);
     node.dataset.satisfied = String(satisfied);
@@ -29,7 +32,7 @@
     endStroke();
     brush = candidate;
     renderBrush();
-    document.getElementById("live-summary").textContent = "Winner brush " + brush + ".";
+    document.getElementById("live-summary").textContent = "Elected candidate brush " + brush + ".";
   }
   function paint(index) {
     selected = index;
@@ -105,7 +108,8 @@
     model.RANKINGS.forEach(function (_, index) {
       var th = document.createElement("th");
       th.scope = "col";
-      th.textContent = ranking(index);
+      th.setAttribute("aria-label", "Voter 2: " + ranking(index));
+      th.textContent = rankingMath(index, 2);
       row.appendChild(th);
     });
     head.appendChild(row);
@@ -113,7 +117,8 @@
       var tr = document.createElement("tr");
       var th = document.createElement("th");
       th.scope = "row";
-      th.textContent = ranking(rowIndex);
+      th.setAttribute("aria-label", "Voter 1: " + ranking(rowIndex));
+      th.textContent = rankingMath(rowIndex, 1);
       tr.appendChild(th);
       model.RANKINGS.forEach(function (_, column) { tr.appendChild(makeCell(rowIndex, column)); });
       body.appendChild(tr);
@@ -196,5 +201,5 @@
   buildTable();
   render();
   demo.dataset.ready = "true";
-  window.MechanismMath.typesetInitial(".introduction, .rule-heading, #derivation, .notes, .references");
+  window.MechanismMath.typesetInitial(".introduction, .rule-heading, #rule-table th[scope], #derivation, .notes, .references");
 })();
