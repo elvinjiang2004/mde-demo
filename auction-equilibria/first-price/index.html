@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="A textbook-style interactive treatment of best-response bidding in an independent-private-values first-price auction.">
-  <title>The IPV First-Price Auction Equilibrium | Mechanism Design Explorer</title>
+  <title>The First-Price Auction Equilibrium | Mechanism Design Explorer</title>
   <link rel="stylesheet" href="../../styles.css">
   <script defer src="../../js/components.js"></script>
   <script defer src="../../js/bibliography.js"></script>
@@ -39,54 +39,40 @@
 
 <main id="main-content" class="page-width">
     <section class="introduction" aria-labelledby="page-title">
-      <h1 id="page-title">The IPV First-Price Auction Equilibrium</h1>
+      <h1 id="page-title">The First-Price Auction Equilibrium</h1>
       
       <p>
-        In the <a class="environment-link" href="../../auction-equilibria/environment/index.html">IPV environment</a>,
-        an object will be sold via a <em>first-price sealed-bid auction</em> with no reserve
-        price. Each buyer \(i\) privately observes his realized value \(v_i\),
-        and then all buyers simultaneously submit their bids. The highest buyer
-        wins the object, receives his value for it, and pays his own bid, while
-        losing buyers receive nothing and pay zero. Ties are broken uniformly
-        at random.
+        In a <em>first-price auction</em>, the highest bidder wins and pays his bid.
       </p>
       <p>
-        Consider buyer 1 with value \(v_1\). Let
-        <span class="highest-value-definition" aria-label="Y subscript 1 equals the maximum of V subscript 2 through V subscript n">
-          \(Y_1=\max\{V_2,\ldots,V_n\}\)
-        </span> denote the highest opposing value. Suppose buyers
-        \(2,\ldots,n\) use the following symmetric, increasing bidding strategy
-        for \(v_i\gt \underline{v}\):
+        In the <a class="environment-link" href="../environment/index.html">IPV environment</a>, we have the following result:
       </p>
-      <div class="equation-display" aria-label="beta superscript I of v equals the expected value of Y subscript 1 conditional on v being greater than Y subscript 1">
-        \[
-          \beta^{\mathrm{I}}(v_i)
-          =\mathbb{E}\!\left[Y_1\mid v_i \gt Y_1\right].
-        \]
-      </div>
-      <p>
-        At the lower endpoint, define
-        \(\beta^{\mathrm{I}}(\underline{v})=\underline{v}\) by continuity.
-      </p>
+
       <p>
         <strong>Proposition:</strong>
-        It is also optimal for buyer 1 to use \(\beta^{\mathrm{I}}\). Thus, all
-        buyers using this strategy is a Bayesian Nash equilibrium.
+        For each buyer \(i\), let
+        <span class="highest-value-definition" aria-label="Y subscript i equals the maximum of V subscript j over all j not equal to i">
+          \(Y_i=\max\{V_j\mid j\neq i\}\)
+        </span>
+        When buyers are symmetric, it is an equilibrium for them to bid according to
       </p>
+      <div class="equation-display" aria-label="beta superscript I of v equals the expected value of Y subscript i conditional on v being greater than Y subscript i">
+        <span>\(\displaystyle \beta^{\mathrm{I}}(v_i)=\mathbb{E}\!\left[Y_i\mid v_i \gt Y_i\right]\)<sup><a id="first-price-endpoint-note-ref" href="#first-price-endpoint-note" role="doc-noteref" aria-label="Note 2 on the endpoint conditional expectation">2</a></sup>.</span>
+      </div>
       <p>
-        In the interactive demo, take the perspective of buyer 1 and consider
+        In the interactive demo, take the perspective of buyer \(i\) and consider
         different bids in response to the other buyers using this strategy.
-        Here, \(V_i=a+(b-a)Z_i\), where
+        Here, \(V_i=\underline{v}+(\overline{v}-\underline{v})Z_i\), where
         \(Z_i\overset{\mathrm{i.i.d.}}{\sim}\mathrm{Beta}(\alpha,\beta)\),
         \(i=1,\ldots,n\). When \(\alpha=\beta=1\), values are
-        \(\mathrm{Uniform}[a,b]\). Choose your value \(v_1\) or randomly draw it.
-        Then, propose a bid \(x_1\) and observe how changing it affects your
+        \(\mathrm{Uniform}[\underline{v},\overline{v}]\). Choose your value \(v_i\) or randomly draw it.
+        Then, propose a bid \(x_i\) and observe how changing it affects your
         expected payoff.
       </p>
     </section>
 
     <section class="model-specifications" aria-label="Auction parameters">
-      <model-parameter-controls></model-parameter-controls>
+      <model-parameter-controls lower-symbol="\underline{v}" upper-symbol="\overline{v}"></model-parameter-controls>
     </section>
 
     <section class="explorable" aria-label="Interactive auction graph">
@@ -102,17 +88,17 @@
               aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
             >
               <title id="chart-title">First-price auction outcomes by proposed bid</title>
-              <desc id="chart-description">The panels show the PDF of the highest opposing bid, beta superscript I of Y subscript 1, and its winning area, followed by its CDF. The rectangle from x 1 to v 1 represents expected payoff, and the horizontal axis identifies payment and payoff upon winning.</desc>
+              <desc id="chart-description">The panels show the PDF of the highest opposing bid, beta superscript I of Y subscript i, and its winning area, followed by its CDF. The rectangle from x subscript i to v subscript i represents expected payoff, and the horizontal axis identifies payment and payoff upon winning.</desc>
             </svg>
           </div>
         </div>
 
-        <aside class="choice-controls" aria-label="Bidder controls">
+        <aside class="choice-controls" aria-label="Buyer controls">
           <value-density-preview></value-density-preview>
           <div class="slider-grid">
             <div class="range-group">
               <div class="range-label-row">
-                <label id="value-control-label" for="value-slider">Private value, \(v_1\)</label>
+                <label id="value-control-label" for="value-slider">Private value, \(v_i\)</label>
                 <input
                   id="value-number"
                   class="range-number-input"
@@ -127,15 +113,15 @@
               </div>
               <input id="value-slider" type="range" min="0" max="100" value="50" step="0.2">
               <div class="range-endpoints" aria-hidden="true">
-                <span id="value-min-label">a = 0</span>
-                <span id="value-max-label">b = 100</span>
+                <span id="value-min-label">\(\underline{v}=0\)</span>
+                <span id="value-max-label">\(\overline{v}=100\)</span>
               </div>
               <button id="random-value-button" class="text-button" type="button">Draw a private value</button>
             </div>
 
             <div class="range-group">
               <div class="range-label-row">
-                <label id="bid-control-label" for="bid-slider">Proposed bid, \(x_1\)</label>
+                <label id="bid-control-label" for="bid-slider">Proposed bid, \(x_i\)</label>
                 <input
                   id="bid-number"
                   class="range-number-input"
@@ -150,11 +136,12 @@
               </div>
               <input id="bid-slider" type="range" min="0" max="100" value="30" step="0.2">
               <div class="range-endpoints" aria-hidden="true">
-                <span id="bid-min-label">a = 0</span>
-                <span id="bid-max-label">b = 100</span>
+                <span id="bid-min-label">\(\underline{v}=0\)</span>
+                <span id="bid-max-label">\(\overline{v}=100\)</span>
               </div>
             </div>
           </div>
+          <button id="reset-demo-button" class="text-button" type="button">Reset</button>
         </aside>
       </div>
 
@@ -165,134 +152,142 @@
       class="derivation"
       aria-labelledby="derivation-title"
     >
-      <h2 id="derivation-title">Proof of the optimal bid for bidder 1</h2>
+      <h2 id="derivation-title">Proof of the proposition</h2>
       <p>
-        After playing with the bid slider for a few different parameter
-        settings, you may notice that the best buyer 1 can do, across all
-        possible values he may have, is to follow the same bidding strategy as
-        everyone else. This suggests that \(\beta^{\mathrm{I}}\) is indeed an equilibrium bidding strategy.
-        Let us verify this more rigorously.
+        Suppose buyers share a value distribution \(F=F_1=\cdots=F_n\). Recall that \(F_i\) has
+        support on \([\underline{v}_i,\overline{v}_i]\), and call the common support
+        \([\underline{v}, \overline{v}])
+        Fix buyer \(i\) and suppose all other buyers follow \(\beta^{\mathrm{I}}\).
+        Let \(G(t)=F(t)^{n-1}\) denote the distribution function of
+        \(Y_i\), and let \(g\) denote its density.
       </p>
       <p>
-        Let \(G(y)=F(y)^{n-1}\) denote the distribution function of
-        \(Y_1\), and let \(g\) denote its density. First, notice that it is
-        not optimal to bid above \(\beta^{\mathrm{I}}(b)\), since, by
-        assumption, no opponent will bid above
-        \(\beta^{\mathrm{I}}(b)\). Similarly, there is no gain from bidding
-        below \(\beta^{\mathrm{I}}(a)=a\). Because
+        First, notice that it is
+        not optimal to bid above \(\beta^{\mathrm{I}}(\overline{v})\), since, by
+        assumption, no other buyer will bid above
+        \(\beta^{\mathrm{I}}(\overline{v})\). Similarly, there is no gain from bidding
+        below \(\beta^{\mathrm{I}}(\underline{v})=\underline{v}\). Because
         \(\beta^{\mathrm{I}}\) is continuous and strictly increasing, every
-        remaining bid can be written as \(\beta^{\mathrm{I}}(z)\) for some
-        \(z\in[a,b]\). Then, let's compare bidding
-        \(\beta^{\mathrm{I}}(v_1)\) with bidding
-        \(\beta^{\mathrm{I}}(z)\). Denote buyer 1's expected payoff from bidding some amount
-        \(x_1\in[a,\beta^{\mathrm{I}}(b)]\) by \(U_1(v_1,x_1)\). We have
+        remaining bid can be written as \(\beta^{\mathrm{I}}(v_i')\) for some
+        \(v_i'\in[\underline{v},\overline{v}]\). Then, let's compare bidding
+        \(\beta^{\mathrm{I}}(v_i)\) with bidding
+        \(\beta^{\mathrm{I}}(v_i')\). Denote buyer \(i\)'s expected payoff from bidding some amount
+        \(x_i\in[\underline{v},\beta^{\mathrm{I}}(\overline{v})]\) by \(U_i(v_i,x_i)\). We have
       </p>
       <div id="expected-payoff-proof" class="equation-chain-steps equation-chain-content-widths">
         <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle U_1 \!\left(v_1,\beta^{\mathrm{I}}(z)\right) \)</span>
+        <span class="equation-step-lhs">\(\displaystyle U_i \!\left(v_i,\beta^{\mathrm{I}}(v_i')\right) \)</span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \underbrace{G(z)}_{\text{probability of winning}}\times \underbrace{\left(v_1-\beta^{\mathrm{I}}(z)\right)}_{\text{payoff upon winning}} + \underbrace{(1-G(z))}_{\text{probability of losing}}\times \underbrace{0}_{\text{payoff upon losing}} \)</span>
+        <span class="equation-step-rhs">\(\displaystyle \underbrace{G(v_i')}_{\text{probability of winning}}\times \underbrace{\left(v_i-\beta^{\mathrm{I}}(v_i')\right)}_{\text{payoff upon winning}} + \underbrace{(1-G(v_i'))}_{\text{probability of losing}}\times \underbrace{0}_{\text{payoff upon losing}} \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle G(z)\left(v_1-\beta^{\mathrm{I}}(z)\right) \)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(v_i')\left(v_i-\beta^{\mathrm{I}}(v_i')\right) \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle G(z)v_1-G(z)\mathbb{E}\!\left[Y_1\mid Y_1\leq z\right] \)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(v_i')v_i-G(v_i')\mathbb{E}\!\left[Y_i\mid Y_i\leq v_i'\right] \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
           <span class="equation-step-connector equation-step-extra" hidden></span>
           <span class="equation-step-lhs equation-step-extra" hidden></span>
           <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - G(z)\frac{\mathbb{E}\!\left[Y_1 \cdot \mathbb{1}\{Y_1\leq z\}\right]}{\Pr(Y_1\leq z)} \)</span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(v_i')v_i - G(v_i')\frac{\mathbb{E}\!\left[Y_i \cdot \mathbb{1}\{Y_i\leq v_i'\}\right]}{\Pr(Y_i\leq v_i')} \)</span>
           <span class="equation-step-connector equation-step-extra" hidden></span>
           <span class="equation-step-lhs equation-step-extra" hidden></span>
           <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - G(z)\frac{\int_a^b y g(y) \cdot \mathbb{1}\{y\leq z\}\,dy}{G(z)} \)</span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(v_i')v_i - G(v_i')\frac{\int_{\underline{v}}^{\overline{v}} t g(t) \cdot \mathbb{1}\{t\leq v_i'\}\,dt}{G(v_i')} \)</span>
           <span class="equation-step-connector equation-step-extra" hidden></span>
           <span class="equation-step-lhs equation-step-extra" hidden></span>
           <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - \int_a^b y g(y) \cdot \mathbb{1}\{y\leq z\}\,dy \)</span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(v_i')v_i - \int_{\underline{v}}^{\overline{v}} t g(t) \cdot \mathbb{1}\{t\leq v_i'\}\,dt \)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle G(z)v_1-\int_a^z y g(y)\,dy \)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(v_i')v_i-\int_{\underline{v}}^{v_i'} t g(t)\,dt \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
         <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - \left(G(z)z - G(a)a - \int_a^z G(y)\,dy\right)\text{, by integration by parts}\)</span>
+        <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(v_i')v_i - \left(G(v_i')v_i' - G(\underline{v})\underline{v} - \int_{\underline{v}}^{v_i'} G(t)\,dt\right)\text{, by integration by parts}\)</span>
         <span class="equation-step-connector equation-step-extra" hidden></span>
         <span class="equation-step-lhs equation-step-extra" hidden></span>
         <span class="equation-step-relation equation-step-extra" hidden>\(\displaystyle =\)</span>
-          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(z)v_1 - G(z)z + 0\cdot a + \int_a^z G(y)\,dy \)</span>
+          <span class="equation-step-rhs equation-step-extra" hidden>\(\displaystyle G(v_i')v_i - G(v_i')v_i' + 0\cdot \underline{v} + \int_{\underline{v}}^{v_i'} G(t)\,dt \)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle G(z)v_1-G(z)z+\int_a^z G(y)\,dy \)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(v_i')v_i-G(v_i')v_i'+\int_{\underline{v}}^{v_i'} G(t)\,dt \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle G(z)(v_1-z)+\int_a^z G(y)\,dy. \)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(v_i')(v_i-v_i')+\int_{\underline{v}}^{v_i'} G(t)\,dt. \)</span>
       </div>
       <p>
-        Therefore, the difference in expected payoff between bidding \(\beta^{\mathrm{I}}(v_1)\) and bidding \(\beta^{\mathrm{I}}(z)\) for bidder 1 is
+        Therefore, the difference in expected payoff between bidding \(\beta^{\mathrm{I}}(v_i)\) and bidding \(\beta^{\mathrm{I}}(v_i')\) for buyer \(i\) is
       </p>
       <div id="optimality-gap-proof" class="equation-chain-steps equation-chain-content-widths">
         <span class="equation-step-connector"></span>
-        <span class="equation-step-lhs">\(\displaystyle U_1 \!\left(v_1,\beta^{\mathrm{I}}(v_1)\right)-U_1 \!\left(v_1,\beta^{\mathrm{I}}(z)\right) \)</span>
+        <span class="equation-step-lhs">\(\displaystyle U_i \!\left(v_i,\beta^{\mathrm{I}}(v_i)\right)-U_i \!\left(v_i,\beta^{\mathrm{I}}(v_i')\right) \)</span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \left[G(v_1)(v_1-v_1)+\int_a^{v_1}G(y)\,dy\right]-\left[G(z)(v_1-z)+\int_a^zG(y)\,dy\right] \)</span>
+        <span class="equation-step-rhs">\(\displaystyle \left[G(v_i)(v_i-v_i)+\int_{\underline{v}}^{v_i}G(t)\,dt\right]-\left[G(v_i')(v_i-v_i')+\int_{\underline{v}}^{v_i'}G(t)\,dt\right] \)</span>
 
         <button type="button" class="equation-chain-divider-toggle" aria-expanded="false" aria-label="Show more detail" hidden><span class="equation-chain-divider-toggle-glyph" aria-hidden="true">+</span></button>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle G(z)(z-v_1)+\int_z^{v_1}G(y)\,dy. \)</span>
+        <span class="equation-step-rhs">\(\displaystyle G(v_i')(v_i'-v_i)+\int_{v_i'}^{v_i}G(t)\,dt. \)</span>
 
         <span class="equation-step-connector"></span>
         <span class="equation-step-lhs"></span>
         <span class="equation-step-relation">\(\displaystyle =\)</span>
-        <span class="equation-step-rhs">\(\displaystyle \int_z^{v_1}\left(G(y)-G(z)\right)\,dy. \)</span>
+        <span class="equation-step-rhs">\(\displaystyle \int_{v_i'}^{v_i}\left(G(t)-G(v_i')\right)\,dt. \)</span>
 
       </div>
-      <p>
+      <p class="has-qed">
         Because \(G\) is weakly increasing, this difference is weakly positive for
-        every \(z\in[a,b]\). If \(z\leq v_1\), the integrand is weakly positive, and the limits are in increasing order;
-        if \(z\gt v_1\), the integrand is weakly negative, and the limits are in decreasing order.
-        Thus, given that buyers \(2,\ldots,n\) bid
-        according to \(\beta^{\mathrm{I}}\), it is optimal for buyer 1 to
+        every \(v_i'\in[\underline{v},\overline{v}]\). If \(v_i'\leq v_i\), the integrand is weakly positive, and the limits are in increasing order;
+        if \(v_i'\gt v_i\), the integrand is weakly negative, and the limits are in decreasing order.
+        Thus, given that buyers \(j\neq i\) bid
+        according to \(\beta^{\mathrm{I}}\), it is optimal for buyer \(i\) to
         also bid according to \(\beta^{\mathrm{I}}\).
+        <span class="qed">\(\blacksquare\)</span>
       </p>
       
     </section>
 
     <section class="notes" aria-labelledby="notes-title">
       <h2 id="notes-title">Notes</h2>
-      <ul class="notes-list">
-          <li>
-            IPV stands for independent, private values.
-          </li>
+      <ol class="notes-list">
           <li>
             We have not shown this equilibrium is unique, but a little more work shows that it is the unique symmetric, increasing equilibrium.
             See <span data-citation="krishna-2009"></span>, sec. 2.3, pp. 14–16.
             If we do not restrict to symmetric, increasing equilibria, even more work is required.
           </li>
-      </ul>
+          <li id="first-price-endpoint-note">
+            At \(v_i=\underline{v}\), since the conditioning
+            event has probability zero, we must explicitly define
+            \(\beta^{\mathrm{I}}(\underline{v})=\underline{v}\). The same issue
+            appears when using the conditional expectation in the proof, but notice that
+            a bidder who bids \(\beta^{\mathrm{I}}(\underline{v})=\underline{v}\) will never win
+            so will always get a payoff of 0. Thus, the final difference is still weakly positive.
+            <a href="#first-price-endpoint-note-ref" role="doc-backlink"
+              aria-label="Return to the equilibrium bidding formula">↩</a>
+          </li>
+      </ol>
     </section>
 
     <section class="references" aria-labelledby="references-title">

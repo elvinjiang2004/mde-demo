@@ -12,9 +12,10 @@
       ["v_i", "Buyer \\(i\\)'s realized value."]
     ],
     [
-      ["F", "The buyers' value CDF."],
-      ["f", "The buyers' value PDF."]
+      ["F_i", "Buyer \\(i\\)'s value CDF."],
+      ["f_i", "Buyer \\(i\\)'s value PDF."]
     ],
-    [["[\\underline{v},\\overline{v}]", "The value space and support of each buyer's value distribution."]]
+    [["[\\underline{v}_i,\\overline{v}_i]", "Buyer \\(i\\)'s value space and the support of \\(F_i\\)."]],
+    [["x_i", "Buyer \\(i\\)'s submitted bid."]]
   ]);
 })();

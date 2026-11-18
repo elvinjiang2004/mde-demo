@@ -261,7 +261,7 @@
           assert(Array.from(rows[2].querySelectorAll("a.module-link")).map(function (a) {
             return a.getAttribute("href");
           }).join("|") === "auction-design/regular-optimal-auctions/index.html|auction-design/general-optimal-auctions/index.html",
-          "Auction Design should contain Regular Optimal Auctions and General Optimal Auctions.");
+          "Auction Design should contain Regular Optimal Auction Design and General Optimal Auction Design.");
         }
       },
       {
@@ -273,7 +273,7 @@
           assert(link,
             "The first-price module should use its explicit index.html route.");
           assert(link.querySelector(".module-title").textContent ===
-            "First-Price Auction Equilibrium",
+            "The First-Price Auction Equilibrium",
           "The first-price module title is incorrect.");
         }
       },
@@ -281,7 +281,7 @@
         name: "The regular-optimal-auctions module is selectable",
         run: function () {
           var link = menuDocument.querySelector('a.module-link[href="auction-design/regular-optimal-auctions/index.html"]');
-          assert(link && link.querySelector(".module-title").textContent === "Regular Optimal Auctions",
+          assert(link && link.querySelector(".module-title").textContent === "Regular Optimal Auction Design",
             "The regular-optimal-auctions editor should have an explicit working route.");
         }
       },
@@ -294,7 +294,7 @@
           assert(link,
             "The second-price module should use its explicit index.html route.");
           assert(link.querySelector(".module-title").textContent ===
-            "Second-Price Auction Equilibrium",
+            "The Second-Price Auction Equilibrium",
           "The second-price module title is incorrect.");
           assert(menuDocument.querySelectorAll(".module-link").length === 10,
             "All nine interactive modules and the introductory reading should be links.");
@@ -312,7 +312,7 @@
           assert(link,
             "The bilateral-trade module should use its explicit index.html route.");
           assert(link.querySelector(".module-title").textContent ===
-            "Myerson-Satterthwaite Theorem",
+            "The Myerson-Satterthwaite Theorem",
           "The bilateral-trade module title is incorrect.");
         }
       },
@@ -343,18 +343,18 @@
         }
       },
       {
-        name: "General Optimal Auctions is selectable under Auction Design as a separate module",
+        name: "General Optimal Auction Design is selectable under Auction Design as a separate module",
         run: function () {
           var link = menuDocument.querySelector(
             '#auction-design a.module-link[href="auction-design/general-optimal-auctions/index.html"]'
           );
           assert(link,
-            "General Optimal Auctions should use its own explicit auction route.");
+            "General Optimal Auction Design should use its own explicit auction route.");
           assert(link.querySelector(".module-title").textContent ===
-            "General Optimal Auctions",
-          "The General Optimal Auctions module title is incorrect.");
+            "General Optimal Auction Design",
+          "The General Optimal Auction Design module title is incorrect.");
           assert(!link.querySelector(".module-status"),
-            "Completed General Optimal Auctions should have no In progress marker.");
+            "Completed General Optimal Auction Design should have no In progress marker.");
           assert(!menuDocument.querySelector('a[href="general-topics/payments-from-allocation-rule/index.html"]'),
             "The repurposed draft should no longer appear under General Topics.");
         }
@@ -366,7 +366,7 @@
             '#voting a.module-link[href="voting/gibbard-satterthwaite-theorem/index.html"]'
           );
           assert(link && link.querySelector(".module-title").textContent ===
-            "Gibbard-Satterthwaite Theorem" && link.querySelector(".module-status") &&
+            "The Gibbard-Satterthwaite Theorem" && link.querySelector(".module-status") &&
             link.querySelector(".module-status").textContent === "In progress",
           "Voting should link to the theorem demo using its exact title and In progress marker.");
         }

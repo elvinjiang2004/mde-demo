@@ -1,1240 +1,156 @@
-(function () {
+(function (global) {
   "use strict";
-
-  function create(state, elements, distributionSpec) {
-    var auctionControls = window.AuctionControls;
-    var model = window.SPAModel;
-    var distributions = window.AuctionDistributions;
-    var appendSvg = window.SvgUtils.appendSvg;
-    var formatEditableNumber = auctionControls.formatEditableNumber;
-    var formatChoiceNumber = auctionControls.formatChoiceNumber;
-    var chart = window.AuctionChart;
-    var formatMoney = chart.formatMoney;
-    var formatDensityAxis = chart.formatDensityAxis;
-    var formatProbabilityAxis = chart.formatProbabilityAxis;
-    var formatPercent = chart.formatPercent;
-    var roundCoordinate = chart.roundCoordinate;
-    var yScale = chart.yScale;
-    var densityY = chart.densityY;
-    var densityScaleMaximum = chart.densityScaleMaximum;
-    var uniqueByBid = chart.uniqueByBid;
-    var drawPanelScaffold = chart.drawPanelScaffold;
-    var drawCurve = chart.drawCurve;
-    var drawCircle = chart.drawCircle;
-    var lastChartLayout = { width: 1000, left: 90, right: 975 };
-    var valuePdfSignature = null;
-    var curveCache = null;
-    var curveCacheBuildCount = 0;
-
-    function drawDiamond(svg, x, y, className) {
-      chart.drawDiamond(svg, x, y, className, 8);
+  function create(state, elements) {
+    var appendSvg = global.SvgUtils.appendSvg;
+    var layout;
+    function format(value) {
+      if (value !== 0 && Math.abs(value) < 0.001) { return value.toExponential(1); }
+      return value.toLocaleString("en-US", { maximumFractionDigits: 3 });
     }
-
-    function getChartLayout() {
-      return chart.chartLayout(
-        elements.chart.parentElement.clientWidth ||
-          elements.chart.clientWidth ||
-          1000,
-        { endpointLabelY: 746 },
-        { endpointLabelY: 726 }
-      );
+    function path(points) {
+      return points.map(function (point, index) { return (index ? "L" : "M") + layout.x(point[0]) + "," + layout.y(point[1]); }).join(" ");
     }
-
-    function renderValuePdfPreview() {
-      var svg = elements.valuePdfPreview;
-      if (!svg) {
-        return;
-      }
-      var signature = [state.a, state.b, state.alpha, state.beta].join("|");
-      if (signature === valuePdfSignature && svg.childNodes.length > 0) {
-        return;
-      }
-      valuePdfSignature = signature;
-      chart.drawValueDensityPreview(svg, {
-        lower: state.a,
-        upper: state.b,
-        alpha: state.alpha,
-        beta: state.beta,
-        distribution: distributionSpec(),
-        pdf: distributions.pdf,
-        formatEditableNumber: formatEditableNumber,
-        formatChoiceNumber: formatChoiceNumber
+    function line(x1, y1, x2, y2, className, parent) {
+      return appendSvg(parent || elements.chart, "line", { x1: x1, y1: y1, x2: x2, y2: y2, class: className });
+    }
+    function text(x, y, content, className, anchor, parent) {
+      return appendSvg(parent || elements.chart, "text", { x: x, y: y, class: className || "", "text-anchor": anchor || "start" }, content);
+    }
+    function dot(opposing, payoff, radius, className, parent) {
+      return appendSvg(parent || elements.chart, "circle", { cx: layout.x(opposing), cy: layout.y(payoff), r: radius, class: className });
+    }
+    function labelX(value, label) {
+      var halfWidth = label.length * 3.6;
+      return Math.max(layout.left + halfWidth, Math.min(layout.right - halfWidth, layout.x(value)));
+    }
+    function indexedSymbol(parent, symbol) {
+      appendSvg(parent, "tspan", { class: "spa-math-symbol" }, symbol);
+      appendSvg(parent, "tspan", { class: "spa-math-subscript", "baseline-shift": "sub" }, "i");
+    }
+    function drawPayoffBox(group, result, x, y) {
+      var box = appendSvg(group, "g", { class: "spa-payoff-box" });
+      var background = appendSvg(box, "rect", { class: "plot-probe-box" });
+      var rows = [["truthful", result.truthful, "v"], ["proposed", result.proposed, "x"]].map(function (item, index) {
+        var expression = "u_i(v_i," + item[2] + "_i,p_i)";
+        var readout = text(8, 19 + index * 22, "", "spa-payoff spa-" + item[0] + "-label", "start", box);
+        readout.id = item[0] + "-payoff";
+        readout.setAttribute("aria-label", expression + " = " + format(item[1].payoff));
+        indexedSymbol(readout, "u");
+        appendSvg(readout, "tspan", {}, "("); indexedSymbol(readout, "v");
+        appendSvg(readout, "tspan", {}, ","); indexedSymbol(readout, item[2]);
+        appendSvg(readout, "tspan", {}, ","); indexedSymbol(readout, "p");
+        appendSvg(readout, "tspan", {}, ") = " + format(item[1].payoff));
+        readout.dataset.value = item[1].payoff;
+        readout.dataset.outcome = item[1].outcome;
+        readout.dataset.winProbability = item[1].winProbability;
+        return readout;
+      });
+      var width = Math.ceil(Math.max.apply(null, rows.map(function (row) { return row.getComputedTextLength(); }))) + 16;
+      var height = 52, offset = 10;
+      var boxX = x + offset;
+      if (boxX + width > layout.right) { boxX = x - width - offset; }
+      boxX = Math.max(layout.left + 2, Math.min(layout.right - width - 2, boxX));
+      var boxY = y - height - offset;
+      if (boxY < layout.top) { boxY = y + offset; }
+      boxY = Math.max(layout.top + 2, Math.min(layout.bottom - height - 2, boxY));
+      background.setAttribute("width", width);
+      background.setAttribute("height", height);
+      box.setAttribute("transform", "translate(" + boxX + "," + boxY + ")");
+    }
+    function drawProbe(result) {
+      if (!state.probe) { return; }
+      var group = appendSvg(elements.chart, "g", { class: "spa-probe" });
+      var x = layout.x(state.opposing);
+      var y = state.probe.y === null ? (layout.top + layout.bottom) / 2 : Math.max(layout.top, Math.min(layout.bottom, state.probe.y));
+      line(x, layout.top, x, layout.bottom, "spa-opposing", group);
+      dot(state.opposing, result.truthful.payoff, 6, "spa-truth-dot", group);
+      dot(state.opposing, result.proposed.payoff, result.loss === 0 ? 3 : 5, "spa-proposed-dot", group);
+      var label = "pᵢ = " + format(state.opposing);
+      text(labelX(state.opposing, label), layout.bottom + 18, label, "spa-probe-coordinate spa-halo", "middle", group);
+      drawPayoffBox(group, result, x, y);
+      elements.chart.querySelectorAll(".spa-x-tick").forEach(function (tick) {
+        tick.style.visibility = Math.abs(Number(tick.getAttribute("x")) - layout.x(state.opposing)) < label.length * 3.6 + 14 ? "hidden" : "";
       });
     }
-    function chartPointerToBid(event, clampOutside) {
-      var rectangle = elements.chart.getBoundingClientRect();
-      if (rectangle.width <= 0) {
-        return null;
-      }
-
-      var svgX = (event.clientX - rectangle.left) *
-        lastChartLayout.width / rectangle.width;
-      if (svgX < lastChartLayout.left || svgX > lastChartLayout.right) {
-        if (!clampOutside) {
-          return null;
-        }
-        svgX = model.clamp(
-          svgX,
-          lastChartLayout.left,
-          lastChartLayout.right
-        );
-      }
-      var ratio = (svgX - lastChartLayout.left) /
-        (lastChartLayout.right - lastChartLayout.left);
-
-      return state.a + ratio * (state.b - state.a);
-    }
-
-    function drawChart(current, truthful) {
+    function drawChart(result) {
       var svg = elements.chart;
-      var layout = getChartLayout();
-      var left = layout.left;
-      var right = layout.right;
-      var plotWidth = right - left;
-      var xSpan = state.b - state.a;
-      var densitySamples = sampleDensity(241, current.bid);
-      var cdfSamples = sampleCdf(241, current.bid, state.value);
-      var densityMax = densityScaleMaximum(densitySamples) * 1.08;
-      svg.dataset.curveCacheKey = curveCache.signature;
-      svg.dataset.curveCacheBuildCount = String(curveCache.buildCount);
-
-      var densityPanel = {
-        top: layout.densityTop,
-        height: layout.densityHeight,
-        min: 0,
-        max: densityMax,
-        title: "PDF of highest opposing bid",
-        format: formatDensityAxis,
-        tickCount: 3
+      var bounds = svg.getBoundingClientRect();
+      var width = bounds.width || 300, height = bounds.height || 380;
+      var lower = -Math.max(20, state.bid - state.value + 5);
+      var upper = Math.max(20, state.value + 5);
+      layout = {
+        width: width, height: height, left: 46, right: width - 14, top: 12, bottom: height - 28,
+        x: function (p) { return this.left + p / 100 * (this.right - this.left); },
+        y: function (u) { return this.bottom - (u - lower) / (upper - lower) * (this.bottom - this.top); }
       };
-      var cdfPanel = {
-        top: layout.cdfTop,
-        height: layout.cdfHeight,
-        min: 0,
-        max: 1,
-        title: "Expected payoff",
-        format: formatProbabilityAxis,
-        tickCount: 4
-      };
-
-      lastChartLayout = layout;
-      svg.setAttribute(
-        "viewBox",
-        "0 0 " + layout.width + " " + layout.height
-      );
-      while (svg.firstChild) {
-        svg.removeChild(svg.firstChild);
-      }
-
-      appendSvg(svg, "title", { id: "chart-title" },
-        "Second-price auction expected payoff by proposed bid");
+      svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+      global.ChartLayout.setTextSize(svg);
+      svg.dataset.value = state.value; svg.dataset.bid = state.bid; svg.dataset.opposing = state.opposing;
+      svg.replaceChildren();
+      appendSvg(svg, "title", { id: "chart-title" }, "Truthful and proposed-bid payoffs against highest opposing bids");
       appendSvg(svg, "desc", { id: "chart-description" },
-        chartDescription(current, truthful));
-
-      drawPanelScaffold(svg, densityPanel, left, right);
-      drawPanelScaffold(svg, cdfPanel, left, right);
-
-      var xScale = function (value) {
-        return left + ((value - state.a) / xSpan) * plotWidth;
-      };
-
-      drawDensityArea(
-        svg,
-        densitySamples,
-        current.bid,
-        xScale,
-        densityPanel,
-        left,
-        current.winProbability
-      );
-      drawCurve(
-        svg,
-        densitySamples,
-        function (point) { return xScale(point.bid); },
-        function (point) { return densityY(point.density, densityPanel); },
-        "curve highest-bid-density-curve"
-      );
-
-      var truthfulX = xScale(truthful.bid);
-      appendSvg(svg, "line", {
-        x1: truthfulX,
-        y1: densityPanel.top,
-        x2: truthfulX,
-        y2: densityPanel.top + densityPanel.height,
-        class: "equilibrium-marker density-equilibrium-marker truthful-marker",
-        "data-truthful-bid": truthful.bid
-      });
-      drawDensityTruthfulAnnotation(
-        svg,
-        truthfulX,
-        densityPanel,
-        left,
-        right,
-        truthful.bid
-      );
-
-      var chosenX = xScale(current.bid);
-      var densityAtBid = model.highestOpponentBidDensity(
-        current.bid,
-        state.n,
-        state.a,
-        state.b,
-        distributionSpec()
-      );
-      drawSelectedMarker(
-        svg,
-        chosenX,
-        densityPanel.top,
-        densityPanel.top + densityPanel.height
-      );
-      drawCircle(
-        svg,
-        chosenX,
-        densityY(densityAtBid, densityPanel),
-        "chosen-point"
-      );
-
-      drawSecondPricePayoffArea(
-        svg,
-        current,
-        truthful,
-        cdfSamples,
-        xScale,
-        cdfPanel,
-        left
-      );
-      drawCurve(
-        svg,
-        cdfSamples,
-        function (point) { return xScale(point.bid); },
-        function (point) { return yScale(point.cdf, cdfPanel); },
-        "curve highest-bid-cdf-curve second-price-cdf-curve"
-      );
-
-      var cdfZeroY = yScale(0, cdfPanel);
-      drawBidAxis(svg, xScale, left, right, cdfZeroY);
-      drawWinningProbabilityGuideLine(
-        svg,
-        current,
-        chosenX,
-        cdfPanel,
-        left
-      );
-
-      var cdfTop = cdfPanel.top;
-      var cdfBottom = cdfPanel.top + cdfPanel.height;
-      drawSelectedMarker(svg, chosenX, cdfTop, cdfBottom);
-      drawCircle(
-        svg,
-        chosenX,
-        yScale(current.winProbability, cdfPanel),
-        "chosen-point selected-cdf-point"
-      );
-
-      var truthfulY = yScale(truthful.winProbability, cdfPanel);
-      appendSvg(svg, "line", {
-        x1: truthfulX,
-        y1: cdfTop,
-        x2: truthfulX,
-        y2: cdfBottom,
-        class: "equilibrium-marker truthful-marker",
-        "data-truthful-bid": truthful.bid
-      });
-      drawDiamond(
-        svg,
-        truthfulX,
-        truthfulY,
-        "equilibrium-point truthful-point"
-      );
-      if (Math.abs(current.bid - truthful.bid) <= model.EPSILON) {
-        appendSvg(svg, "circle", {
-          cx: truthfulX,
-          cy: truthfulY,
-          r: 3,
-          class: "chosen-point coincident-choice-point",
-          "data-bid": current.bid,
-          "data-truthful-bid": truthful.bid
-        });
+        "The solid green curve shows truthful-bid payoff; the dashed blue curve shows proposed-bid payoff. " +
+        "The red region marks the payoff loss from deviating. Ties with one other buyer are broken equally: each wins with probability one half. " +
+        "Hover inside the plot for a full-height price guide and a cursor box comparing u_i(v_i,v_i,p_i) and u_i(v_i,x_i,p_i). " +
+        "Touch to inspect, or focus the plot and use Left and Right, Shift for steps of ten, Home and End for endpoints, and Escape to clear." +
+        (state.probe ? " Highest opposing bid " + format(state.opposing) + ". Truthful payoff " + format(result.truthful.payoff) +
+        "; proposed-bid payoff " + format(result.proposed.payoff) + "." : ""));
+      appendSvg(svg, "rect", { x: layout.left, y: layout.top, width: layout.right - layout.left,
+        height: layout.bottom - layout.top, class: "plot-frame spa-frame" });
+      var step = upper - lower > 100 ? 25 : (upper - lower > 50 ? 20 : 10);
+      for (var value = Math.ceil(lower / step) * step; value <= upper; value += step) {
+        line(layout.left, layout.y(value), layout.right, layout.y(value), value === 0 ? "spa-zero" : "spa-grid");
+        text(layout.left - 8, layout.y(value) + 4, format(value), "axis-text", "end");
       }
-      drawTruthfulAnnotation(
-        svg,
-        truthfulX,
-        truthfulY,
-        cdfPanel,
-        left,
-        right,
-        truthful.bid
-      );
-      drawAxisChoiceLabels(
-        svg,
-        current,
-        xScale,
-        cdfZeroY,
-        left,
-        right,
-        layout
-      );
-
-      appendSvg(svg, "rect", {
-        x: left,
-        y: densityPanel.top,
-        width: plotWidth,
-        height: cdfBottom - densityPanel.top,
-        class: "drag-overlay",
-        "aria-hidden": "true"
-      });
-
-      drawExpectedPayoffLabel(
-        svg,
-        current,
-        truthful,
-        xScale,
-        cdfPanel,
-        left,
-        right,
-        layout.compact
-      );
-      drawProbabilityAreaLabel(
-        svg,
-        current,
-        xScale,
-        densityPanel,
-        left,
-        xScale(Math.min(current.bid, state.b)),
-        layout.compact
-      );
-      drawWinningProbabilityGuideLabel(
-        svg,
-        current,
-        cdfPanel,
-        left,
-        right,
-        layout.compact
-      );
-    }
-
-    function cachedUnderlyingCurves(count) {
-      var signature = [state.n, state.a, state.b, state.alpha, state.beta].join("|");
-      if (curveCache && curveCache.signature === signature) { return curveCache; }
-      var density = [], cdf = [];
-      var spec = distributionSpec();
-      for (var i = 0; i < count; i += 1) {
-        var bid = state.a + (i / (count - 1)) * (state.b - state.a);
-        density.push({ bid: bid, density: densityForPlot(bid, spec) });
-        cdf.push({ bid: bid, cdf: model.highestOpponentBidCdf(bid, state.n, state.a, state.b, spec) });
+      var xStep = width < 400 ? 50 : 25;
+      for (var p = 0; p <= 100; p += xStep) {
+        line(layout.x(p), layout.bottom, layout.x(p), layout.bottom + 4, "spa-axis");
+        text(layout.x(p), layout.bottom + 18, String(p), "axis-text spa-x-tick", "middle");
       }
-      curveCacheBuildCount += 1;
-      curveCache = { signature: signature, buildCount: curveCacheBuildCount, density: density, cdf: cdf };
-      return curveCache;
-    }
-
-    function sampleDensity(count, selectedBid) {
-      var points = cachedUnderlyingCurves(count).density.slice();
-      var spec = distributionSpec();
-      points.push({
-        bid: state.b,
-        density: 0
+      var shade;
+      if (state.bid < state.value) { shade = [[state.bid, 0], [state.bid, state.value - state.bid], [state.value, 0]]; }
+      if (state.bid > state.value) { shade = [[state.value, 0], [state.bid, 0], [state.bid, state.value - state.bid]]; }
+      if (shade) { appendSvg(svg, "path", { d: path(shade) + " Z", class: "spa-loss-area" }); }
+      [state.value, state.bid].forEach(function (threshold) {
+        line(layout.x(threshold), layout.top, layout.x(threshold), layout.bottom, "spa-threshold");
       });
-      points.push({
-        bid: selectedBid,
-        density: densityForPlot(selectedBid, spec)
-      });
-      points.sort(function (first, second) {
-        if (Math.abs(first.bid - second.bid) > model.EPSILON) {
-          return first.bid - second.bid;
-        }
-        return second.density - first.density;
-      });
-      return uniqueDensityPoints(points);
-    }
-
-    function densityForPlot(bid, spec) {
-      var density = model.highestOpponentBidDensity(
-        bid,
-        state.n,
-        state.a,
-        state.b,
-        spec
-      );
-      if (Number.isFinite(density) && density >= 0) {
-        return density;
+      appendSvg(svg, "path", { d: path([[0, state.value], [state.value, 0], [100, 0]]), class: "spa-truth" });
+      if (state.bid > 0) { appendSvg(svg, "path", { d: path([[0, state.value], [state.bid, state.value - state.bid]]), class: "spa-proposed" }); }
+      if (state.bid < 100) { appendSvg(svg, "path", { d: path([[state.bid, 0], [100, 0]]), class: "spa-proposed" }); }
+      if (state.bid !== state.value) {
+        dot(state.bid, state.value - state.bid, 4, "spa-open-dot");
+        dot(state.bid, 0, 4, "spa-open-dot");
+        dot(state.bid, global.SPAModel.outcome(state.value, state.bid, state.bid).payoff, 4, "spa-proposed-dot");
       }
-
-      var span = state.b - state.a;
-      var inwardBid = bid <= state.a + span / 2 ?
-        state.a + span / 1000 : state.b - span / 1000;
-      density = model.highestOpponentBidDensity(
-        inwardBid,
-        state.n,
-        state.a,
-        state.b,
-        spec
-      );
-      return Number.isFinite(density) && density >= 0 ? density : 0;
+      var truthLabel = state.bid === state.value ? "Both bids" : "Truthful bid";
+      var truthP = state.value > 15 ? state.value * 0.35 : 20;
+      text(labelX(truthP, truthLabel), Math.max(layout.top + 18, layout.y(Math.max(state.value - truthP, 0)) - 13),
+        truthLabel, "spa-curve-label spa-truthful-label spa-halo", "middle");
+      if (state.bid !== state.value) {
+        var middle = (state.bid + state.value) / 2;
+        var alternativePayoff = state.bid < state.value ? 0 : state.value - middle;
+        text(labelX(middle, "Proposed bid"), Math.min(layout.bottom - 8, layout.y(alternativePayoff) + 22),
+          "Proposed bid", "spa-curve-label spa-proposed-label spa-halo", "middle");
+      }
+      drawProbe(result);
     }
-
-    function sampleCdf(count, selectedBid, value) {
-      var points = cachedUnderlyingCurves(count).cdf.slice();
-      var spec = distributionSpec();
-      [selectedBid, value].forEach(function (bid) {
-        points.push({
-          bid: bid,
-          cdf: model.highestOpponentBidCdf(
-            bid,
-            state.n,
-            state.a,
-            state.b,
-            spec
-          )
-        });
-      });
-      points.sort(function (first, second) { return first.bid - second.bid; });
-      return uniqueByBid(points);
-    }
-
-    function uniqueDensityPoints(points) {
-      return points.filter(function (point, index) {
-        if (index === 0) {
-          return true;
-        }
-        var previous = points[index - 1];
-        return Math.abs(point.bid - previous.bid) > model.EPSILON ||
-          Math.abs(point.density - previous.density) > model.EPSILON;
-      });
-    }
-
-    function drawDensityArea(
-      svg,
-      points,
-      endBid,
-      xScale,
-      panel,
-      left,
-      winProbability
-    ) {
-      var selected = points.filter(function (point) {
-        return point.bid <= endBid + model.EPSILON;
-      });
-      var baseY = yScale(0, panel);
-      var path = "M " + roundCoordinate(left) + " " + roundCoordinate(baseY);
-
-      selected.forEach(function (point) {
-        path += " L " + roundCoordinate(xScale(point.bid)) + " " +
-          roundCoordinate(densityY(point.density, panel));
-      });
-      path += " L " + roundCoordinate(xScale(endBid)) + " " +
-        roundCoordinate(baseY) + " Z";
-
-      appendSvg(svg, "path", {
-        d: path,
-        class: "winning-area",
-        "data-start-bid": state.a,
-        "data-end-bid": endBid,
-        "data-probability": winProbability
-      });
-    }
-
-    function winProbabilityLabelCandidates(winProbability) {
-      var fullLabel = "Probability of winning = " + formatPercent(winProbability);
-      return {
-        fullLabel: fullLabel,
-        lines: [
-          [fullLabel],
-          ["Probability of winning", "= " + formatPercent(winProbability)],
-          ["Probability", "of winning", "= " + formatPercent(winProbability)]
-        ]
-      };
-    }
-
-    function drawProbabilityAreaLabel(
-      svg,
-      current,
-      xScale,
-      panel,
-      left,
-      shadedRight,
-      compact
-    ) {
-      var labelCandidates = winProbabilityLabelCandidates(current.winProbability);
-      var fullLabel = labelCandidates.fullLabel;
-      var candidates = labelCandidates.lines;
-      var availableWidth = shadedRight - left;
-      var lineHeight = 13;
-      var characterWidth = compact ? 5.4 : 5.8;
-      var horizontalPadding = 12;
-      var baseY = yScale(0, panel);
-      var plotWidth = xScale(state.b) - left;
-      var selected = null;
-      var widthFits = false;
-
-      candidates.some(function (candidate) {
-        var block = svgTextBlock(candidate, characterWidth, lineHeight);
-        if (block.width + 2 * horizontalPadding > availableWidth) {
-          return false;
-        }
-        widthFits = true;
-
-        var labelLeft = shadedRight - block.width - horizontalPadding;
-        var labelRight = shadedRight - horizontalPadding;
-        var minimumHeight = Infinity;
-        var sampleCount = 7;
-        var sampleIndex;
-
-        for (sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
-          var sampleX = labelLeft +
-            (sampleIndex / (sampleCount - 1)) * (labelRight - labelLeft);
-          var sampleBid = state.a +
-            ((sampleX - left) / plotWidth) * (state.b - state.a);
-          var sampleDensity = model.highestOpponentBidDensity(
-            sampleBid,
-            state.n,
-            state.a,
-            state.b,
-            distributionSpec()
-          );
-          minimumHeight = Math.min(
-            minimumHeight,
-            baseY - densityY(sampleDensity, panel)
-          );
-        }
-
-        if (minimumHeight >= block.height + 12) {
-          selected = {
-            lines: candidate,
-            block: block,
-            x: (labelLeft + labelRight) / 2,
-            y: baseY - 6 - block.height / 2
-          };
-          return true;
-        }
+    function pointerPosition(event, clampOutside) {
+      if (!layout) { return null; }
+      var bounds = elements.chart.getBoundingClientRect();
+      var x = (event.clientX - bounds.left) / bounds.width * layout.width;
+      var y = (event.clientY - bounds.top) / bounds.height * layout.height;
+      var edgeTolerance = 1e-7;
+      if (!clampOutside && (x < layout.left - edgeTolerance || x > layout.right + edgeTolerance ||
+        y < layout.top - edgeTolerance || y > layout.bottom + edgeTolerance)) { return null; }
+      var opposing = Math.max(0, Math.min(100, (x - layout.left) / (layout.right - layout.left) * 100));
+      // Preserve exact threshold ties despite floating-point coordinate conversion.
+      [0, 100, state.value, state.bid].some(function (threshold) {
+        if (Math.abs(opposing - threshold) < 1e-10) { opposing = threshold; return true; }
         return false;
       });
-
-      var label;
-      if (selected && current.winProbability > model.EPSILON) {
-        label = appendSvgTextLines(
-          svg,
-          selected.x,
-          selected.y,
-          selected.lines,
-          "area-label probability-label annotation-halo",
-          "middle",
-          lineHeight,
-          fullLabel,
-          selected.lines.length === 1 ? "inside-single" : "inside-wrapped"
-        );
-        label.setAttribute("data-placement", "inside");
-      } else {
-        var plotRight = xScale(state.b);
-        var rightSpace = plotRight - shadedRight - horizontalPadding;
-        var outsideLines = null;
-        var placeRight = true;
-
-        candidates.some(function (candidate) {
-          var candidateBlock = svgTextBlock(
-            candidate,
-            characterWidth,
-            lineHeight
-          );
-          if (candidateBlock.width <= rightSpace) {
-            outsideLines = candidate;
-            return true;
-          }
-          return false;
-        });
-
-        if (!outsideLines) {
-          placeRight = false;
-          var leftSpace = shadedRight - left - horizontalPadding;
-          candidates.some(function (candidate) {
-            var candidateBlock = svgTextBlock(
-              candidate,
-              characterWidth,
-              lineHeight
-            );
-            if (candidateBlock.width <= leftSpace) {
-              outsideLines = candidate;
-              return true;
-            }
-            return false;
-          });
-        }
-
-        if (!outsideLines) {
-          outsideLines = candidates[candidates.length - 1];
-        }
-
-        label = appendSvgTextLines(
-          svg,
-          shadedRight + (placeRight ? horizontalPadding : -horizontalPadding),
-          baseY - 10 - ((outsideLines.length - 1) * lineHeight) / 2,
-          outsideLines,
-          "area-label probability-label annotation-halo",
-          placeRight ? "start" : "end",
-          lineHeight,
-          fullLabel,
-          placeRight ? "right-of-highlight" : "left-of-marker"
-        );
-        label.setAttribute(
-          "data-placement",
-          placeRight ? "right-of-highlight" : "left-of-marker"
-        );
-        label.setAttribute("data-vertical-placement", "panel-floor");
-        label.setAttribute("data-marker-distance", horizontalPadding);
-        label.setAttribute(
-          "data-fit-failure",
-          widthFits && current.winProbability > model.EPSILON ?
-            "height" : "width"
-        );
-      }
-      label.setAttribute("data-probability", current.winProbability);
-      label.setAttribute("data-foreground", "true");
+      return { opposing: opposing, y: y };
     }
-
-    function drawSecondPricePayoffArea(
-      svg,
-      current,
-      truthful,
-      points,
-      xScale,
-      panel,
-      left
-    ) {
-      var baseY = yScale(0, panel);
-      var group = appendSvg(svg, "g", {
-        class: "spa-payoff-area",
-        "data-state": current.bid < state.value - model.EPSILON ?
-          "underbid" : (current.bid > state.value + model.EPSILON ?
-            "overbid" : "truthful"),
-        "data-bid": current.bid,
-        "data-value": state.value,
-        "data-expected-payoff": current.expectedPayoff,
-        "data-truthful-payoff": truthful.expectedPayoff,
-        "data-probability": current.winProbability
-      });
-
-      if (current.bid <= state.value + model.EPSILON) {
-        var selectedPoints = points.filter(function (point) {
-          return point.bid <= current.bid + model.EPSILON;
-        });
-        var positivePath = "M " + roundCoordinate(left) + " " +
-          roundCoordinate(baseY);
-        selectedPoints.forEach(function (point) {
-          positivePath += " L " + roundCoordinate(xScale(point.bid)) + " " +
-            roundCoordinate(yScale(point.cdf, panel));
-        });
-        positivePath += " L " + roundCoordinate(xScale(state.value)) + " " +
-          roundCoordinate(yScale(current.winProbability, panel));
-        positivePath += " L " + roundCoordinate(xScale(state.value)) + " " +
-          roundCoordinate(baseY) + " Z";
-
-        appendSvg(group, "path", {
-          d: positivePath,
-          class: "spa-payoff-area-positive",
-          "data-positive-area": current.expectedPayoff,
-          "data-expected-payoff": current.expectedPayoff
-        });
-      } else {
-        var truthfulPoints = points.filter(function (point) {
-          return point.bid <= state.value + model.EPSILON;
-        });
-        var truthfulPath = "M " + roundCoordinate(left) + " " +
-          roundCoordinate(baseY);
-        truthfulPoints.forEach(function (point) {
-          truthfulPath += " L " + roundCoordinate(xScale(point.bid)) + " " +
-            roundCoordinate(yScale(point.cdf, panel));
-        });
-        truthfulPath += " L " + roundCoordinate(xScale(state.value)) + " " +
-          roundCoordinate(baseY) + " Z";
-        appendSvg(group, "path", {
-          d: truthfulPath,
-          class: "spa-payoff-area-positive",
-          "data-positive-area": truthful.expectedPayoff
-        });
-
-        var lossPoints = points.filter(function (point) {
-          return point.bid >= state.value - model.EPSILON &&
-            point.bid <= current.bid + model.EPSILON;
-        }).reverse();
-        var lossPath = "M " + roundCoordinate(xScale(state.value)) + " " +
-          roundCoordinate(yScale(current.winProbability, panel)) +
-          " L " + roundCoordinate(xScale(current.bid)) + " " +
-          roundCoordinate(yScale(current.winProbability, panel));
-        lossPoints.forEach(function (point) {
-          lossPath += " L " + roundCoordinate(xScale(point.bid)) + " " +
-            roundCoordinate(yScale(point.cdf, panel));
-        });
-        lossPath += " Z";
-
-        var loss = truthful.expectedPayoff - current.expectedPayoff;
-        appendSvg(group, "path", {
-          d: lossPath,
-          class: "spa-payoff-area-negative",
-          "data-loss-area": loss,
-          "data-expected-payoff": current.expectedPayoff
-        });
-      }
-
-      if (Math.abs(current.expectedPayoff) <= model.EPSILON) {
-        appendSvg(group, "circle", {
-          cx: xScale(current.bid),
-          cy: baseY,
-          r: 4,
-          class: "zero-expected-payoff",
-          "data-expected-payoff": current.expectedPayoff
-        });
-      }
-    }
-
-    function drawExpectedPayoffLabel(
-      svg,
-      current,
-      truthful,
-      xScale,
-      panel,
-      left,
-      right,
-      compact
-    ) {
-      var baseY = yScale(0, panel);
-      var payoffSign = current.expectedPayoff < -model.EPSILON ?
-        "negative" : (current.expectedPayoff > model.EPSILON ?
-          "positive" : "zero");
-      var negative = payoffSign === "negative";
-      var fullLabel = "Expected payoff = " +
-        formatMoney(current.expectedPayoff, state.b - state.a);
-      var candidates = [
-        [fullLabel],
-        ["Expected payoff", "= " +
-          formatMoney(current.expectedPayoff, state.b - state.a)],
-        ["Expected", "payoff", "= " +
-          formatMoney(current.expectedPayoff, state.b - state.a)]
-      ];
-      var lineHeight = 13;
-      var characterWidth = compact ? 5.4 : 5.8;
-      var horizontalPadding = 9;
-      var bidX = xScale(current.bid);
-      var valueX = xScale(state.value);
-      var overbid = current.bid > state.value + model.EPSILON;
-      var lines = null;
-      var block = null;
-      var labelX;
-      var labelY;
-      var anchor;
-      var placement;
-      var widthFits = false;
-      var heightFits = false;
-
-      function fitLinesToWidth(width) {
-        var match = null;
-        candidates.some(function (candidate) {
-          var candidateBlock = svgTextBlock(
-            candidate,
-            characterWidth,
-            lineHeight
-          );
-          if (candidateBlock.width + 2 * horizontalPadding <= width) {
-            match = { lines: candidate, block: candidateBlock };
-            return true;
-          }
-          return false;
-        });
-        return match;
-      }
-
-      function placeBesideBid(preferredSide) {
-        var sides = preferredSide === "left" ?
-          ["left", "right"] : ["right", "left"];
-        var match = null;
-        var side = sides[0];
-
-        sides.some(function (candidateSide) {
-          var available = candidateSide === "right" ?
-            right - bidX : bidX - left;
-          var candidateMatch = fitLinesToWidth(available);
-          if (candidateMatch) {
-            side = candidateSide;
-            match = candidateMatch;
-            return true;
-          }
-          return false;
-        });
-
-        if (!match) {
-          side = right - bidX >= bidX - left ? "right" : "left";
-          lines = candidates[candidates.length - 1];
-          block = svgTextBlock(lines, characterWidth, lineHeight);
-        } else {
-          lines = match.lines;
-          block = match.block;
-        }
-
-        labelX = bidX + (side === "right" ?
-          horizontalPadding : -horizontalPadding);
-        anchor = side === "right" ? "start" : "end";
-        placement = side === "right" ?
-          "bid-marker-right" : "bid-marker-left";
-        return side;
-      }
-
-      function keepLabelInPanel(rawY, textBlock) {
-        return model.clamp(
-          rawY,
-          panel.top + textBlock.height / 2 + 8,
-          baseY - textBlock.height / 2 - 8
-        );
-      }
-
-      function placeInPayoffRegion() {
-        var regionLeft = negative ? valueX : left;
-        var regionRight = negative ? bidX : valueX;
-        var regionWidth = regionRight - regionLeft;
-        var selectedProbabilityY = yScale(current.winProbability, panel);
-        var spec = distributionSpec();
-        var selected = null;
-
-        candidates.some(function (candidate) {
-          var candidateBlock = svgTextBlock(candidate, characterWidth, lineHeight);
-          if (candidateBlock.width + 2 * horizontalPadding > regionWidth) {
-            return false;
-          }
-          // Monotone G makes this edge the tightest vertical clearance:
-          // green lies below G; red lies above G and below G(bid).
-          var curveX = negative ?
-            regionLeft + horizontalPadding + candidateBlock.width :
-            regionRight - horizontalPadding - candidateBlock.width;
-          var curveBid = state.a + (curveX - left) /
-            (right - left) * (state.b - state.a);
-          var curveY = yScale(model.highestOpponentBidCdf(
-            curveBid, state.n, state.a, state.b, spec
-          ), panel);
-          var top = negative ? selectedProbabilityY : curveY;
-          var bottom = negative ? curveY : baseY;
-          selected = { lines: candidate, block: candidateBlock,
-            top: top, bottom: bottom };
-          return candidateBlock.height + 12 <= bottom - top;
-        });
-
-        if (selected) {
-          lines = selected.lines;
-          block = selected.block;
-          labelX = negative ? regionLeft + horizontalPadding :
-            regionRight - horizontalPadding;
-          anchor = negative ? "start" : "end";
-          labelY = keepLabelInPanel((selected.top + selected.bottom) / 2 + 4, block);
-          widthFits = true;
-          heightFits = block.height + 12 <= selected.bottom - selected.top;
-        } else {
-          // A vanishing region cannot contain readable text. Keep its label
-          // centered on the region as far as the plot boundaries allow.
-          lines = candidates[candidates.length - 1];
-          block = svgTextBlock(lines, characterWidth, lineHeight);
-          labelX = model.clamp((regionLeft + regionRight) / 2,
-            left + block.width / 2 + horizontalPadding,
-            right - block.width / 2 - horizontalPadding);
-          anchor = "middle";
-          var truthfulProbabilityY = yScale(truthful.winProbability, panel);
-          labelY = keepLabelInPanel((negative ?
-            selectedProbabilityY + truthfulProbabilityY :
-            truthfulProbabilityY + baseY) / 2, block);
-        }
-        placement = negative ? "inside-red" : "inside-green";
-      }
-
-      if (overbid) {
-        placeInPayoffRegion();
-      } else {
-        var rectangleTop = yScale(current.winProbability, panel);
-        var rectangleWidth = valueX - bidX;
-        var insideMatch = fitLinesToWidth(rectangleWidth);
-
-        if (insideMatch) {
-          lines = insideMatch.lines;
-          block = insideMatch.block;
-          labelX = (bidX + valueX) / 2;
-          labelY = keepLabelInPanel(
-            (rectangleTop + baseY) / 2,
-            block
-          );
-          anchor = "middle";
-          placement = "inside";
-          widthFits = true;
-          heightFits = block.height + 12 <= baseY - rectangleTop;
-        } else {
-          placeBesideBid("right");
-          labelY = keepLabelInPanel(
-            Math.abs(current.expectedPayoff) <= model.EPSILON ?
-              baseY - 50 : (rectangleTop + baseY) / 2,
-            block
-          );
-        }
-      }
-
-      var label = appendSvgTextLines(
-        svg,
-        labelX,
-        labelY,
-        lines,
-        "expected-payoff-label annotation-halo" +
-          (negative ? " negative-metric" : ""),
-        anchor,
-        lineHeight,
-        fullLabel,
-        placement === "inside" ?
-          (lines.length === 1 ? "inside-single" : "inside-wrapped") :
-          placement
-      );
-      label.setAttribute("data-placement", placement);
-      if (placement === "bid-marker-left" || placement === "bid-marker-right") {
-        label.setAttribute("data-marker-distance", horizontalPadding);
-      }
-      label.setAttribute("data-payoff-sign", payoffSign);
-      label.setAttribute(
-        "data-payoff-region",
-        negative ? "red" : "green"
-      );
-      label.setAttribute("data-width-fit", widthFits);
-      label.setAttribute("data-height-fit", heightFits);
-      if (payoffSign === "zero") {
-        label.setAttribute("style", "fill: var(--ink)");
-      }
-      label.setAttribute("data-expected-payoff", current.expectedPayoff);
-      label.setAttribute("data-foreground", "true");
-    }
-
-    function drawBidAxis(svg, xScale, left, right, zeroY) {
-      appendSvg(svg, "line", {
-        x1: left,
-        y1: zeroY,
-        x2: right,
-        y2: zeroY,
-        class: "axis-line cdf-zero-axis",
-        "data-axis-value": "0"
-      });
-
-      var tickValues = [state.a, state.b];
-      tickValues.forEach(function (value, index) {
-        var x = xScale(value);
-        var anchor = index === 0 ? "start" :
-          (index === tickValues.length - 1 ? "end" : "middle");
-        appendSvg(svg, "line", {
-          x1: x,
-          y1: zeroY,
-          x2: x,
-          y2: zeroY + 6,
-          class: "axis-line"
-        });
-        appendSvg(svg, "text", {
-          x: x + (index === 0 ? 2 :
-            (index === tickValues.length - 1 ? -2 : 0)),
-          y: zeroY + 20,
-          class: "axis-text annotation-halo",
-          "text-anchor": anchor,
-          "data-bid-tick": value
-        }, formatAxisMoney(value));
-      });
-    }
-
-    function drawAxisChoiceLabels(
-      svg,
-      current,
-      xScale,
-      zeroY,
-      left,
-      right,
-      layout
-    ) {
-      var bidX = xScale(current.bid);
-      var valueX = xScale(state.value);
-      var close = Math.abs(bidX - valueX) < (layout.compact ? 105 : 120);
-
-      if (Math.abs(current.bid - state.value) <= model.EPSILON) {
-        appendSvg(svg, "line", {
-          x1: bidX,
-          y1: zeroY - 9,
-          x2: bidX,
-          y2: zeroY + 9,
-          class: "axis-bid-marker axis-value-marker",
-          "data-bid": current.bid,
-          "data-value": state.value
-        });
-        appendSvg(svg, "text", {
-          x: bidX,
-          y: layout.endpointLabelY,
-          class: "axis-bid-label axis-value-label annotation-halo",
-          "text-anchor": axisAnchor(bidX, left, right)
-        }, "x₁ = v₁ = " + formatMoney(state.value, state.b - state.a));
-        return;
-      }
-
-      appendSvg(svg, "line", {
-        x1: bidX,
-        y1: zeroY - 9,
-        x2: bidX,
-        y2: zeroY + 9,
-        class: "axis-bid-marker",
-        "data-bid": current.bid
-      });
-      appendSvg(svg, "line", {
-        x1: valueX,
-        y1: zeroY - 8,
-        x2: valueX,
-        y2: zeroY + 8,
-        class: "axis-value-marker",
-        "data-value": state.value
-      });
-
-      var bidDirection = bidX < valueX ? -1 : 1;
-      var valueDirection = -bidDirection;
-      var bidAnchor = bidDirection < 0 ? "end" : "start";
-      var valueAnchor = valueDirection < 0 ? "end" : "start";
-      var bidLabelX = bidX + bidDirection * 7;
-      var valueLabelX = valueX + valueDirection * 7;
-
-      if (bidLabelX < left + 5) {
-        bidAnchor = "start";
-        bidLabelX = bidX + 7;
-      } else if (bidLabelX > right - 5) {
-        bidAnchor = "end";
-        bidLabelX = bidX - 7;
-      }
-      if (valueLabelX < left + 5) {
-        valueAnchor = "start";
-        valueLabelX = valueX + 7;
-      } else if (valueLabelX > right - 5) {
-        valueAnchor = "end";
-        valueLabelX = valueX - 7;
-      }
-
-      appendSvg(svg, "text", {
-        x: bidLabelX,
-        y: layout.endpointLabelY,
-        class: "axis-bid-label annotation-halo",
-        "text-anchor": bidAnchor
-      }, "x₁ = " + formatMoney(current.bid, state.b - state.a));
-      appendSvg(svg, "text", {
-        x: valueLabelX,
-        y: layout.endpointLabelY + (close ? 15 : 0),
-        class: "axis-value-label annotation-halo",
-        "text-anchor": valueAnchor
-      }, "v₁ = " + formatMoney(state.value, state.b - state.a));
-    }
-
-    function axisAnchor(x, left, right) {
-      if (x < left + 55) {
-        return "start";
-      }
-      if (x > right - 55) {
-        return "end";
-      }
-      return "middle";
-    }
-
-    function drawWinningProbabilityGuideLine(svg, current, selectedX, panel, left) {
-      var guideY = yScale(current.winProbability, panel);
-      appendSvg(svg, "line", {
-        x1: left,
-        y1: guideY,
-        x2: selectedX,
-        y2: guideY,
-        class: "winning-probability-guide-line",
-        "data-probability": current.winProbability
-      });
-    }
-
-    function drawWinningProbabilityGuideLabel(
-      svg,
-      current,
-      panel,
-      left,
-      right,
-      compact
-    ) {
-      var guideY = yScale(current.winProbability, panel);
-      var labelCandidates = winProbabilityLabelCandidates(current.winProbability);
-      var fullLabel = labelCandidates.fullLabel;
-      var candidates = labelCandidates.lines;
-      var characterWidth = compact ? 5.4 : 5.8;
-      var lineHeight = 13;
-      var padding = 10;
-      var available = right - left - padding * 2;
-      var selected = null;
-
-      candidates.some(function (candidate) {
-        var block = svgTextBlock(candidate, characterWidth, lineHeight);
-        if (block.width <= available) {
-          selected = { lines: candidate, block: block };
-          return true;
-        }
-        return false;
-      });
-
-      if (!selected) {
-        selected = {
-          lines: candidates[candidates.length - 1],
-          block: svgTextBlock(
-            candidates[candidates.length - 1],
-            characterWidth,
-            lineHeight
-          )
-        };
-      }
-
-      var roomAbove = guideY - panel.top;
-      var labelY;
-      if (selected.lines.length === 1) {
-        labelY = guideY <= panel.top + 18 ? guideY + 17 : guideY - 8;
-      } else {
-        labelY = roomAbove >= selected.block.height + 18 ?
-          guideY - selected.block.height / 2 - 10 :
-          guideY + selected.block.height / 2 + 10;
-      }
-      var label = appendSvgTextLines(
-        svg,
-        left + padding,
-        labelY,
-        selected.lines,
-        "winning-probability-guide-label annotation-halo",
-        "start",
-        lineHeight,
-        fullLabel,
-        "y-axis-right"
-      );
-      label.setAttribute("data-placement", "y-axis-right");
-      label.setAttribute("data-axis-distance", padding);
-      label.setAttribute("data-guide-y", guideY);
-      label.setAttribute("data-probability", current.winProbability);
-      label.setAttribute("data-foreground", "true");
-    }
-
-    function drawTruthfulAnnotation(
-      svg,
-      x,
-      y,
-      panel,
-      left,
-      right,
-      truthfulBid
-    ) {
-      var placeLeft = x > left + (right - left) * 0.76;
-      var panelBottom = panel.top + panel.height;
-      var labelY = y > panelBottom - 32 ? y - 34 : y - 10;
-      appendSvg(svg, "text", {
-        x: x + (placeLeft ? -10 : 10),
-        y: Math.max(panel.top + 15, labelY),
-        class: "maximum-label truthful-label annotation-halo",
-        "text-anchor": placeLeft ? "end" : "start",
-        "data-truthful-bid": truthfulBid
-      }, "βᴵᴵ(v₁) = " + formatMoney(truthfulBid, state.b - state.a));
-    }
-
-    function drawDensityTruthfulAnnotation(
-      svg,
-      x,
-      panel,
-      left,
-      right,
-      truthfulBid
-    ) {
-      var placeLeft = x > left + (right - left) * 0.76;
-      appendSvg(svg, "text", {
-        x: x + (placeLeft ? -10 : 10),
-        y: panel.top + 17,
-        class: "maximum-label density-equilibrium-label annotation-halo",
-        "text-anchor": placeLeft ? "end" : "start",
-        "data-panel": "pdf",
-        "data-truthful-bid": truthfulBid
-      }, "βᴵᴵ(v₁) = " + formatMoney(truthfulBid, state.b - state.a));
-    }
-
-    function drawSelectedMarker(svg, x, top, bottom) {
-      appendSvg(svg, "line", {
-        x1: x,
-        y1: top,
-        x2: x,
-        y2: bottom,
-        class: "chosen-marker",
-        "data-bid": state.bid
-      });
-    }
-
-    function svgTextBlock(lines, characterWidth, lineHeight) {
-      var maximumLength = lines.reduce(function (maximum, line) {
-        return Math.max(maximum, line.length);
-      }, 0);
-      return {
-        width: maximumLength * characterWidth,
-        height: lines.length * lineHeight
-      };
-    }
-
-    function appendSvgTextLines(
-      parent,
-      x,
-      centerY,
-      lines,
-      className,
-      anchor,
-      lineHeight,
-      ariaLabel,
-      layoutName
-    ) {
-      var text = appendSvg(parent, "text", {
-        x: x,
-        y: centerY - ((lines.length - 1) * lineHeight) / 2,
-        class: className,
-        "text-anchor": anchor,
-        "aria-label": ariaLabel,
-        "data-layout": layoutName
-      });
-      lines.forEach(function (line, index) {
-        appendSvg(text, "tspan", {
-          x: x,
-          dy: index === 0 ? 0 : lineHeight
-        }, line + (index < lines.length - 1 ? " " : ""));
-      });
-      return text;
-    }
-
-    function chartDescription(current, truthful) {
-      var span = state.b - state.a;
-      var payment = current.expectedPaymentIfWin === null ?
-        "undefined at zero winning probability" :
-        formatMoney(current.expectedPaymentIfWin, span);
-      var areaState = current.bid > state.value + model.EPSILON ?
-        "For an overbid, the green and red regions combine to give the " +
-          "selected bid's expected payoff." :
-        "The green CDF area records the selected bid's expected payoff.";
-      return "The first panel shows the density of the highest opposing bid " +
-        "and a shaded winning probability of " +
-        formatPercent(current.winProbability) + ". The second panel plots its " +
-        "CDF against the bid. " + areaState + " The selected bid is " +
-        formatMoney(current.bid, span) + ", expected payment conditional on " +
-        "winning is " + payment + ", expected payoff is " +
-        formatMoney(current.expectedPayoff, span) + ", and the truthful bid " +
-        "beta superscript II of v one equals " +
-        formatMoney(truthful.bid, span) + ".";
-    }
-
-    function distributionSummary() {
-      return "The value distribution is transformed Beta with alpha " +
-        formatChoiceNumber(state.alpha) + ", beta " +
-        formatChoiceNumber(state.beta) + ", and support from " +
-        formatEditableNumber(state.a) + " to " +
-        formatEditableNumber(state.b);
-    }
-
-    function formatAxisMoney(value) {
-      return formatMoney(value, state.b - state.a);
-    }
-
-    return Object.freeze({
-      drawChart: drawChart,
-      renderValuePdfPreview: renderValuePdfPreview,
-      chartPointerToBid: chartPointerToBid,
-      distributionSummary: distributionSummary
-    });
+    return Object.freeze({ drawChart: drawChart, pointerPosition: pointerPosition, format: format });
   }
-
-  window.SecondPriceCharts = Object.freeze({ create: create });
-}());
+  global.SecondPriceCharts = Object.freeze({ create: create });
+})(window);

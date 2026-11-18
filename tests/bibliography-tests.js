@@ -109,7 +109,7 @@
   var lessons = [
     { path: "voting/gibbard-satterthwaite-theorem", ids: ["gibbard-1973", "satterthwaite-1975", "borgers-2015"] },
     { path: "auction-equilibria/first-price", ids: ["krishna-2009"], locator: "pp. 14–16" },
-    { path: "auction-equilibria/second-price", ids: ["krishna-2009"], locator: "p. 13" },
+    { path: "auction-equilibria/second-price", ids: ["vickrey-1961", "krishna-2009"], locator: "p. 13" },
     { path: "auction-design/regular-optimal-auctions", ids: ["myerson-1981", "krishna-2009"], locator: "sec. 5.2" },
     { path: "auction-design/general-optimal-auctions", ids: ["myerson-1981", "border-1991"] },
     { path: "bilateral-trade/myerson-satterthwaite-theorem", ids: ["borgers-2015", "borgers-norman-2009", "myerson-satterthwaite-1983"], locator: "pp. 63–71" },

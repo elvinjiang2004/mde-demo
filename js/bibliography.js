@@ -26,6 +26,17 @@
       pages: "187–217",
       url: "https://doi.org/10.1016/0022-0531(75)90050-2"
     },
+    "vickrey-1961": {
+      type: "article",
+      authors: [{ given: "William", family: "Vickrey" }],
+      title: "Counterspeculation, Auctions, and Competitive Sealed Tenders",
+      journal: "The Journal of Finance",
+      volume: 16,
+      issue: 1,
+      year: 1961,
+      pages: "8–37",
+      url: "https://doi.org/10.1111/j.1540-6261.1961.tb02789.x"
+    },
     "krishna-2009": {
       type: "book",
       authors: [{ given: "Vijay", family: "Krishna" }],

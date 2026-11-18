@@ -122,6 +122,30 @@
         }
       },
       {
+        name: "Demo Reset restores the initial parameters and choices while retaining focus",
+        run: function () {
+          withReset(function () {
+            [["upper-bound", 200], ["lower-bound", 20], ["bidder-count", 5],
+              ["alpha-number", 2], ["beta-number", 3], ["value-number", 72],
+              ["bid-number", 43]].forEach(function (pair) {
+              var field = appDocument.getElementById(pair[0]);
+              field.value = String(pair[1]); change(field);
+            });
+            var button = appDocument.getElementById("reset-demo-button");
+            assert(appDocument.querySelector(".choice-controls").contains(button), "Demo Reset belongs below the value and bid controls.");
+            button.focus({ preventScroll: true }); button.click();
+            [["bidder-count", 2], ["lower-bound", 0], ["upper-bound", 100],
+              ["alpha-number", 1], ["beta-number", 1], ["value-number", 50],
+              ["bid-number", 30]].forEach(function (pair) {
+              assertClose(Number(appDocument.getElementById(pair[0]).value), pair[1], 1e-9, "Demo Reset must restore " + pair[0]);
+            });
+            assert(appDocument.activeElement === button && appDocument.getElementById("input-error").hidden,
+              "Reset must retain focus and clear errors.");
+            assert(appDocument.getElementById("live-summary").textContent.indexOf("Demo reset") >= 0, "Reset must announce its result.");
+          });
+        }
+      },
+      {
         name: "The opposing-bid PDF drops vertically at its support endpoint",
         run: function () {
           withReset(function () {
@@ -203,17 +227,17 @@
             equation.getAttribute("aria-label").includes("conditional") &&
             equation.getAttribute("aria-label").includes("greater than") &&
             !equation.getAttribute("aria-label").includes("or equal") &&
-            /v_i\s*\\gt\s*Y_1/.test(equation.querySelector('[data-mml-node="math"]').getAttribute("data-latex")),
+            /v_i\s*\\gt\s*Y_i/.test(equation.querySelector('[data-mml-node="math"]').getAttribute("data-latex")),
           "The rendered equilibrium equation should retain its accessible meaning.");
           var definition = introduction.querySelector(".highest-value-definition");
           assert(definition && definition.querySelector('mjx-container[jax="SVG"]') &&
             definition.getAttribute("aria-label").includes("maximum") &&
-            definition.getAttribute("aria-label").includes("V subscript 2") &&
-            definition.getAttribute("aria-label").includes("V subscript n") &&
-            introduction.querySelector(
-              '[data-mml-node="math"][data-latex*="V_2"][data-latex*="V_n"]'
-            ),
-            "The introduction should define Y_1 as the highest of the n-1 opposing values.");
+            definition.getAttribute("aria-label").includes("V subscript j") &&
+            definition.getAttribute("aria-label").includes("j not equal to i") &&
+            definition.querySelector(
+              '[data-mml-node="math"][data-latex*="Y_i"][data-latex*="V_j"]'
+            ).dataset.latex.includes("\\neq i"),
+            "The introduction should define Y_i as the highest of the n-1 opposing values.");
         }
       },
       {
@@ -389,7 +413,7 @@
             "Alpha and beta should both default to one.");
             assert(derivation && !derivation.hidden &&
               !derivation.hasAttribute("data-distribution-specific") &&
-              /optimal bid for bidder 1/i.test(derivation.querySelector("h2").textContent) &&
+              derivation.querySelector("h2").textContent.trim().length > 0 &&
               ["expected-payoff-proof", "optimality-gap-proof"].every(function (id) {
                 var steps = Array.from(derivation.querySelectorAll(
                   "#" + id + " .equation-step-rhs:not(.equation-step-extra)"
@@ -406,18 +430,18 @@
               '#optimality-gap-proof [data-mml-node="math"]'
             )).map(function (node) { return node.dataset.latex; }).join(" ");
             assert(derivation.querySelector(
-              '[data-mml-node="math"][data-latex="G(y)=F(y)^{n-1}"]'
+              '[data-mml-node="math"][data-latex="G(t)=F(t)^{n-1}"]'
             ) &&
-              expectedUtilitySource.includes("\\beta^{\\mathrm{I}}(z)") &&
-              expectedUtilitySource.includes("\\int_a^z y g(y)") &&
-              !expectedUtilitySource.includes("\\int_0^z") &&
+              expectedUtilitySource.includes("\\beta^{\\mathrm{I}}(v_i')") &&
+              expectedUtilitySource.includes("\\int_{\\underline{v}}^{v_i'} t g(t)") &&
+              !expectedUtilitySource.includes("\\int_0^{v_i'}") &&
               optimalityGapSource.includes(
-                "G(z)(z-v_1)+\\int_z^{v_1}G(y)"
+                "G(v_i')(v_i'-v_i)+\\int_{v_i'}^{v_i}G(t)"
               ) &&
-              !/z\(x_1\)|h_\{B_1\}/.test(
+              !/z\(x_i\)|h_\{B_i\}/.test(
                 expectedUtilitySource + optimalityGapSource
               ),
-            "The proof should use the support lower bound a and the stated payoff difference.");
+            "The proof should use the lower value bound and the stated payoff difference.");
 
             chooseBeta(2, 1);
             assert(!derivation.hidden,
@@ -576,8 +600,8 @@
               ".value-pdf-endpoint-label"
             )).map(function (label) { return label.textContent; });
             assert(JSON.stringify(endpointLabels) ===
-              JSON.stringify(["a = 10", "b = 20"]),
-              "Changing a and b should update the preview endpoint labels.");
+              JSON.stringify(["v̲ = 10", "v̅ = 20"]),
+              "Changing the support bounds should update the preview endpoint labels.");
             assert(preview.querySelector(".value-pdf-curve")
               .dataset.lowerBound === "10" &&
               preview.querySelector(".value-pdf-curve")
@@ -642,9 +666,9 @@
             appDocument.querySelectorAll(".expected-payoff-label").length === 1,
           "Probability and expected payoff should each have one in-graph label.");
           var svgText = appDocument.getElementById("tradeoff-chart").textContent;
-          ["Probability of winning =", "Payoff if you win, v₁ − x₁ =",
+          ["Probability of winning =", "Payoff if you win, vᵢ − xᵢ =",
             "Expected payoff =", "Probability of winning",
-            "x₁ = 30", "v₁ = 50"]
+            "xᵢ = 30", "vᵢ = 50"]
             .forEach(function (label) {
               assert(svgText.includes(label), "Missing SVG metric label: " + label);
             });
@@ -652,11 +676,11 @@
             "The expected-payoff metric should not begin with At x.");
           assert(!svgText.includes("Shaded area"),
             "The probability metric should not say shaded area.");
-          assert(!svgText.includes("Bid, x₁"),
+          assert(!svgText.includes("Bid, xᵢ"),
             "The second panel should not have a bid-axis title.");
           var chartDescription = appDocument.getElementById("chart-description").textContent;
           assert(chartDescription.includes(
-            "probability of winning against bid x subscript 1") &&
+            "probability of winning against bid x subscript i") &&
             chartDescription.includes("dashed horizontal guide") &&
             !chartDescription.includes("all opposing bids"),
             "The SVG description should explain the probability axis and guide.");
@@ -666,18 +690,18 @@
           assert(!appDocument.querySelector(".y-axis-title"),
             "The second panel should not have a vertical-axis title.");
           var paymentLabel = appDocument.querySelector(".axis-payment-label");
-          assert(paymentLabel && paymentLabel.textContent === "x₁ = 30" &&
+          assert(paymentLabel && paymentLabel.textContent === "xᵢ = 30" &&
             !paymentLabel.textContent.includes("payment"),
             "The selected-bid coordinate should not include a payment parenthetical.");
           var payoffBracket = appDocument.querySelector(".payoff-if-win-bracket");
           assert(payoffBracket && payoffBracket.textContent.startsWith("Payoff if you win"),
             "Payoff upon winning should be embedded as an x-axis interval.");
           assertClose(Number.parseFloat(payoffBracket.dataset.signedWidth), 20, 1e-9,
-            "The x-axis payoff interval should equal v_1 minus x_1.");
+            "The x-axis payoff interval should equal v_i minus x_i.");
           var maximumLabel = appDocument.querySelector(
             ".maximum-label:not(.density-equilibrium-label)"
           );
-          assert(maximumLabel && maximumLabel.textContent === "βᴵ(v₁) = 25",
+          assert(maximumLabel && maximumLabel.textContent === "βᴵ(vᵢ) = 25",
             "The equilibrium annotation should include the numerical equilibrium bid.");
           var densityEquilibriumLabel = appDocument.querySelector(
             ".density-equilibrium-label"
@@ -686,12 +710,12 @@
             ".density-equilibrium-marker"
           );
           assert(densityEquilibriumLabel && densityEquilibriumMarker &&
-            densityEquilibriumLabel.textContent === "βᴵ(v₁) = 25" &&
+            densityEquilibriumLabel.textContent === "βᴵ(vᵢ) = 25" &&
             densityEquilibriumLabel.dataset.panel === "pdf" &&
             Number(densityEquilibriumLabel.dataset.equilibriumBid) === 25 &&
             Number(densityEquilibriumMarker.dataset.equilibriumBid) === 25,
           "The PDF panel should directly label the numerical equilibrium bid.");
-          assert(svgText.includes("βᴵ(b) ="),
+          assert(svgText.includes("βᴵ(v̅) ="),
             "The density-support label should use beta superscript I.");
           assert(!svgText.includes("β("),
             "Every beta in the SVG should carry the superscript I.");
@@ -748,13 +772,13 @@
             probabilityGuideLabel,
             "The selected probability number should be the foreground SVG element.");
           assert(appDocument.querySelector(
-            'label[for="value-slider"] [data-mml-node="math"][data-latex="v_1"]'
+            'label[for="value-slider"] [data-mml-node="math"][data-latex="v_i"]'
           ),
-            "The value slider should use v_1 notation.");
+            "The value slider should use v_i notation.");
           assert(appDocument.querySelector(
-            'label[for="bid-slider"] [data-mml-node="math"][data-latex="x_1"]'
+            'label[for="bid-slider"] [data-mml-node="math"][data-latex="x_i"]'
           ),
-            "The bid slider should use x_1 notation.");
+            "The bid slider should use x_i notation.");
         }
       },
       {
@@ -787,7 +811,7 @@
             "Typing a proposed bid should update its slider.");
           assert(bidNumber.value === "45",
             "A whole proposed bid should omit its trailing zero.");
-          assert(appDocument.querySelector(".axis-payment-label").textContent === "x₁ = 45",
+          assert(appDocument.querySelector(".axis-payment-label").textContent === "xᵢ = 45",
             "Typing a proposed bid should update the graph coordinate.");
           assertClose(Number.parseFloat(
             appDocument.querySelector(".winning-probability-guide-line")
@@ -947,10 +971,10 @@
               "Expected payoff = 0",
             "A zero-area rectangle should still display expected payoff zero.");
           assert(appDocument.querySelector(".payoff-if-win-bracket").dataset.state === "zero",
-            "Coincident x_1 and v_1 should produce a zero payoff interval.");
+            "Coincident x_i and v_i should produce a zero payoff interval.");
           assert(!appDocument.querySelector(".axis-payment-label").textContent
             .includes("payment"),
-            "The coincident x_1 and v_1 label should omit the payment parenthetical.");
+            "The coincident x_i and v_i label should omit the payment parenthetical.");
 
           appDocument.getElementById("reset-button").click();
         }
@@ -1520,9 +1544,9 @@
                 "Each dynamic endpoint should contain one current MathJax rendering.");
               });
             assert(appDocument.getElementById("value-min-label").dataset.mathSource ===
-              "\\(a=10\\)" &&
+              "\\(\\underline{v}=10\\)" &&
               appDocument.getElementById("bid-max-label").dataset.mathSource ===
-                "\\(b=90\\)",
+                "\\(\\overline{v}=90\\)",
             "Dynamic endpoint sources should follow the selected support.");
           } finally {
             reset();

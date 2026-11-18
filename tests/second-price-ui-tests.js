@@ -1,1335 +1,203 @@
 (function () {
   "use strict";
-
-  var frame = document.getElementById("app-frame");
-  var testKeepAlive = window.setInterval(function () {}, 50);
-  frame.addEventListener("load", function () {
-    Promise.resolve(frame.contentWindow.mechanismMathReady).then(runTests).catch(
-      function (error) {
-        addResult("MathJax initializes before the interface tests", error);
-        var summary = document.getElementById("summary");
-        summary.textContent = "The interface tests could not start.";
-        summary.className = "fail";
-        document.body.dataset.status = "failed";
-        document.title = "FAIL — SPA interface tests";
-        window.clearInterval(testKeepAlive);
-      }
-    );
-  });
-
-  var assert = window.MechanismTest.assert;
-  var addResult = window.MechanismTest.addResult;
-
-  function assertClose(actual, expected, message, tolerance) {
-    window.MechanismTest.assertClose(
-      actual, expected, tolerance === undefined ? 1e-9 : tolerance, message
-    );
+  var T = window.MechanismTest, frame = document.getElementById("app-frame");
+  var keepAlive = window.setInterval(function () {}, 50);
+  var doc, win, tests = [];
+  function test(name, run) { tests.push({ name: name, run: run }); }
+  function element(id) { return doc.getElementById(id); }
+  function chart() { return element("second-price-chart"); }
+  function set(id, value, event) {
+    element(id).value = String(value);
+    T.dispatch(element(id), event || "input", win);
+  }
+  function close(actual, expected, message) { T.assertClose(actual, expected, 1e-8, message); }
+  function payoff(id) { return Number(element(id + "-payoff").dataset.value); }
+  function reset() { element("reset-button").click(); }
+  function point(price, fraction) {
+    var rect = chart().querySelector(".plot-frame").getBoundingClientRect();
+    return { clientX: rect.left + price / 100 * rect.width, clientY: rect.top + rect.height * (fraction === undefined ? 0.45 : fraction) };
+  }
+  function pointer(type, price, overrides, fraction) {
+    T.dispatch(chart(), type, win, Object.assign({ pointerId: 7, pointerType: "mouse", isPrimary: true, button: 0, buttons: 0 }, point(price, fraction), overrides || {}));
+  }
+  function hover(price, fraction) { pointer("pointermove", price, {}, fraction); }
+  function key(value, shift) { T.dispatch(chart(), "keydown", win, { key: value, shiftKey: Boolean(shift) }); }
+  function plotBounds() {
+    var box = chart().querySelector(".plot-frame").getBoundingClientRect();
+    return [box.left + win.scrollX, box.top + win.scrollY, box.width, box.height];
   }
 
-  function dispatchChange(element, appWindow) {
-    window.MechanismTest.dispatch(element, "change", appWindow);
-  }
-
-  function dispatchInput(element, appWindow) {
-    window.MechanismTest.dispatch(element, "input", appWindow);
-  }
-
-  async function runTests() {
-    var appDocument = frame.contentDocument;
-    var appWindow = frame.contentWindow;
-    var model = appWindow.SPAModel;
-    var distributions = appWindow.AuctionDistributions;
-
-    function reset() {
-      appDocument.getElementById("reset-button").click();
-      [["value-number", 50], ["bid-number", 30]].forEach(function (choice) {
-        var field = appDocument.getElementById(choice[0]);
-        field.value = String(choice[1]);
-        dispatchChange(field, appWindow);
-      });
-    }
-
-    function withReset(callback) {
-      reset();
-      try {
-        callback();
-      } finally {
-        reset();
-      }
-    }
-
-    function chooseBeta(alpha, beta) {
-      var alphaNumber = appDocument.getElementById("alpha-number");
-      var betaNumber = appDocument.getElementById("beta-number");
-      alphaNumber.value = String(alpha);
-      dispatchChange(alphaNumber, appWindow);
-      betaNumber.value = String(beta);
-      dispatchChange(betaNumber, appWindow);
-    }
-
-    function assertPayoffInsideRegion(sign) {
-      var label = appDocument.querySelector(".expected-payoff-label");
-      var region = appDocument.querySelector(".spa-payoff-area-" + sign);
-      var box = label.getBBox();
-      var svg = appDocument.getElementById("second-price-chart");
-      var point = svg.createSVGPoint();
-      assert(label.dataset.payoffSign === sign && region,
-        "The net payoff should select its matching shaded region.");
-      [0, 0.25, 0.5, 0.75, 1].forEach(function (xFraction) {
-        [0, 0.5, 1].forEach(function (yFraction) {
-          point.x = box.x + box.width * xFraction;
-          point.y = box.y + box.height * yFraction;
-          assert(region.isPointInFill(point),
-            "The whole " + sign + " payoff label should fit its shaded region.");
-        });
-      });
-    }
-
-    function numericSvgAttributes(chart) {
-      var names = [
-        "x", "x1", "x2", "y", "y1", "y2", "cx", "cy",
-        "width", "height", "r", "d", "points", "transform"
-      ];
-      return Array.from(chart.querySelectorAll("*")).map(function (element) {
-        return names.map(function (name) {
-          return element.getAttribute(name) || "";
-        }).join(" ");
-      }).join(" ");
-    }
-
-    var tests = [
-      {
-        name: "A burst of pointer moves redraws once and release commits its final position",
-        run: async function () {
-          reset();
-          var chart = appDocument.getElementById("second-price-chart");
-          var rect = chart.getBoundingClientRect(), viewWidth = chart.viewBox.baseVal.width;
-          var panel = chart.querySelector(".panel-background");
-          var left = Number(panel.getAttribute("x")), width = Number(panel.getAttribute("width"));
-          var redraws = 0;
-          var observer = new appWindow.MutationObserver(function (records) {
-            records.forEach(function (record) {
-              Array.from(record.addedNodes).forEach(function (node) { if (node.localName === "title") { redraws += 1; } });
-            });
-          });
-          function fire(type, fraction) {
-            chart.dispatchEvent(new appWindow.PointerEvent(type, {
-              bubbles: true, pointerId: 91, isPrimary: true, button: 0,
-              clientX: rect.left + (left + width * fraction) / viewWidth * rect.width,
-              clientY: rect.top + 100
-            }));
-          }
-          observer.observe(chart, { childList: true });
-          try {
-            fire("pointerdown", 0.2);
-            for (var i = 0; i <= 20; i += 1) { fire("pointermove", 0.3 + i * 0.02); }
-            await window.MechanismTest.nextAnimationFrames(appWindow, 2);
-            assert(redraws === 1, "A burst before one frame should produce one chart update.");
-            assertClose(Number(appDocument.getElementById("bid-number").value), 70, "Latest move wins");
-            fire("pointermove", 0.8);
-            fire("pointerup", 0.9);
-            assertClose(Number(appDocument.getElementById("bid-number").value), 90, "Release flushes its exact position");
-          } finally {
-            observer.disconnect(); fire("pointercancel", 0.9); reset();
-          }
-        }
-      },
-      {
-        name: "Bid and value edits reuse base curves while parameter changes invalidate them",
-        run: function () {
-          withReset(function () {
-            var chart = appDocument.getElementById("second-price-chart");
-            var key = chart.dataset.curveCacheKey;
-            var builds = Number(chart.dataset.curveCacheBuildCount);
-            var bid = appDocument.getElementById("bid-slider");
-            var value = appDocument.getElementById("value-slider");
-            bid.value = "45"; dispatchInput(bid, appWindow);
-            value.value = "65"; dispatchInput(value, appWindow);
-            assert(chart.dataset.curveCacheKey === key && Number(chart.dataset.curveCacheBuildCount) === builds,
-              "Selected choices should reuse the distribution curves.");
-            assertClose(Number(appDocument.querySelector(".expected-payoff-label").dataset.expectedPayoff),
-              appWindow.SPAModel.expectedPayoff(65, 45, 2, 0, 100), "Selected payoff must still update");
-            chooseBeta(2, 1);
-            assert(chart.dataset.curveCacheKey !== key && Number(chart.dataset.curveCacheBuildCount) === builds + 1,
-              "A new distribution must rebuild both base curves once.");
-          });
-        }
-      },
-      {
-        name: "Parameter reset preserves choices and the preview sits with bidder controls",
-        run: function () {
-          withReset(function () {
-            var button = appDocument.getElementById("reset-button");
-            var parameters = appDocument.querySelector(".model-specifications");
-            var choices = appDocument.querySelector(".choice-controls");
-            assert(parameters.contains(button) && button.textContent === "Reset parameters",
-              "The parameter reset should sit below the model controls on the left.");
-            assert(!parameters.querySelector("h2") && parameters.getAttribute("aria-label"),
-              "Parameters should retain an accessible name without a visible subheading.");
-            assert(choices.contains(appDocument.getElementById("value-pdf-preview")),
-              "The value-density preview should be in the value and bid column.");
-            function set(id, value) {
-              var field = appDocument.getElementById(id);
-              field.value = String(value);
-              dispatchChange(field, appWindow);
-            }
-            set("upper-bound", 200);
-            set("lower-bound", 20);
-            set("bidder-count", 5);
-            set("alpha-number", 2);
-            set("beta-number", 3);
-            set("value-number", 72);
-            set("bid-number", 43);
-            button.click();
-            [["bidder-count", 2], ["lower-bound", 0], ["upper-bound", 100],
-              ["alpha-number", 1], ["beta-number", 1], ["value-number", 72],
-              ["bid-number", 43]].forEach(function (pair) {
-              assert(Number(appDocument.getElementById(pair[0]).value) === pair[1],
-                "Reset should restore parameters and preserve valid choices: " + pair[0]);
-            });
-            set("upper-bound", 400);
-            set("lower-bound", 200);
-            set("value-number", 250);
-            set("bid-number", 350);
-            button.click();
-            assert(Number(appDocument.getElementById("value-number").value) === 100 &&
-              Number(appDocument.getElementById("bid-number").value) === 100,
-              "Choices outside the restored support should clamp to its nearest endpoint.");
-            assert(appDocument.getElementById("input-error").hidden,
-              "Reset should clear parameter validation errors.");
-          });
-        }
-      },
-      {
-        name: "The second-price route loads the shared distribution kernel first",
-        run: function () {
-          window.MechanismTest.assertScriptOrder(appDocument, [
-            "../../js/components.js",
-            "../../js/mathjax-config.js",
-            "../../assets/mathjax/tex-svg.js",
-            "../../js/mathjax-runtime.js",
-            "../../js/distributions.js",
-            "../../js/math-utils.js",
-            "../../js/svg-utils.js",
-            "../../js/auction-controls.js",
-            "../../js/auction-chart.js",
-            "model.js",
-            "charts.js",
-            "controls.js",
-            "app.js"
-          ]);
-          assert(appWindow.MathJax && /^4\./.test(appWindow.MathJax.version) &&
-            typeof appWindow.MathJax.typesetPromise === "function",
-          "The local MathJax 4 SVG renderer should be available.");
-          assert(appWindow.MechanismMath &&
-            typeof appWindow.MechanismMath.typesetInitial === "function" &&
-            typeof appWindow.MechanismMath.setText === "function" &&
-            appWindow.mechanismMathReady &&
-            typeof appWindow.mechanismMathReady.then === "function",
-          "The shared MathJax lifecycle and readiness promise should be available.");
-          assert(distributions && typeof distributions.quantile === "function",
-            "AuctionDistributions should be available to the page.");
-          assert(model && typeof model.outcomes === "function",
-            "SPAModel should be available to the page.");
-          assert(appWindow.FPAModel === undefined,
-            "The second-price page should not load the first-price model.");
-          assert(appDocument.querySelector(".wordmark").getAttribute("href") ===
-            "../../index.html",
-          "The wordmark should link back to the root menu.");
-          assert(appDocument.querySelector('link[rel="stylesheet"]')
-            .getAttribute("href") === "../../styles.css",
-          "The module should use the shared root stylesheet.");
-        }
-      },
-      {
-        name: "The functional demo adds no extra legend or results card",
-        run: function () {
-          var introduction = appDocument.querySelector(".introduction");
-          assert(introduction && introduction.querySelector("h1"),
-            "The introduction should retain its page title.");
-          assert(!appDocument.querySelector(".figure-key") &&
-            !appDocument.querySelector(".current-results"),
-          "The functional demo should not add a legend or results card.");
-          assert(appDocument.querySelector(".wordmark").textContent ===
-            "Mechanism Design Explorer" &&
-            appDocument.title.endsWith("| Mechanism Design Explorer"),
-          "The module should use the Mechanism Design Explorer brand.");
-        }
-      },
-      {
-        name: "HTML mathematics renders locally while graph SVG labels stay native",
-        run: function () {
-          var targets = Array.from(appDocument.querySelectorAll(
-            ".introduction, .model-specifications, .choice-controls, .derivation, .notes"
-          ));
-          assert(targets.every(function (target) {
-            return !/\\\(|\\\[/.test(target.textContent);
-          }), "Typeset HTML regions should not display raw TeX delimiters.");
-          assert(appDocument.querySelectorAll("mjx-container").length >= 10,
-            "The controls should contain rendered inline mathematics.");
-          assert(!appDocument.querySelector("#second-price-chart mjx-container") &&
-            appDocument.querySelector("#second-price-chart .panel-caption"),
-          "The custom graph should retain its native SVG labels.");
-        }
-      },
-      {
-        name: "The page preserves the established typography and desktop layout",
-        run: function () {
-          var chart = appDocument.getElementById("second-price-chart");
-          var parameters = appDocument.querySelector(".model-specifications");
-          var choices = appDocument.querySelector(".choice-controls");
-          [
-            appDocument.body,
-            appDocument.getElementById("bidder-count"),
-            appDocument.getElementById("value-number"),
-            appDocument.getElementById("bid-number"),
-            appDocument.querySelector(".text-button"),
-            appDocument.querySelector(".panel-caption")
-          ].forEach(function (element) {
-            assert(/Times New Roman/i.test(
-              appWindow.getComputedStyle(element).fontFamily
-            ), "Visible page and SVG text should use Times New Roman.");
-          });
-          assert(parameters.getBoundingClientRect().top <
-            chart.getBoundingClientRect().top,
-          "Model parameters should remain above the chart.");
-          assert(choices.getBoundingClientRect().left >=
-            appDocument.querySelector(".chart-column").getBoundingClientRect().right,
-          "Bidder controls should sit to the chart's right at desktop width.");
-          assert(chart.getAttribute("tabindex") === "0" &&
-            chart.getAttribute("role") === "img",
-          "The graph should remain keyboard focusable and exposed as an image.");
-        }
-      },
-      {
-        name: "The compact spacing, aligned parameters, Notes, and References are present",
-        run: function () {
-          var parameters = appDocument.querySelector(".model-specifications");
-          var parameterItems = Array.from(appDocument.querySelector(
-            ".parameter-grid"
-          ).children);
-          var tops = parameterItems.map(function (item) {
-            return item.getBoundingClientRect().top;
-          });
-          var chart = appDocument.getElementById("second-price-chart");
-          var explorable = appDocument.querySelector(".explorable");
-          var notes = appDocument.querySelector(".notes");
-          var references = appDocument.querySelector(".references");
-          var citation = references.querySelector("a");
-
-          assert(Math.max.apply(null, tops) - Math.min.apply(null, tops) < 1,
-            "Desktop parameter options should begin on one aligned row.");
-          assert(Number.parseFloat(appWindow.getComputedStyle(parameters)
-            .marginBottom) <= 24,
-          "The model-to-panel gap should remain compact.");
-          assert(Number.parseFloat(appWindow.getComputedStyle(explorable)
-            .marginBottom) <= 32 && chart.viewBox.baseVal.height === 800,
-          "The interactive demo should not retain its former bottom whitespace.");
-          assert(notes && appWindow.getComputedStyle(notes).borderTopWidth !== "0px" &&
-            notes.querySelector("h2").textContent === "Notes" &&
-            notes.querySelectorAll(".notes-list > li").length > 0 &&
-            Array.from(notes.querySelectorAll(".notes-list > li")).every(function (note) { return note.textContent.trim().length > 0; }),
-          "Notes should have a faint separator and contain the user-authored list.");
-          assert(references.querySelector("h2").textContent === "References" &&
-            references.querySelectorAll(".reference-list > li").length === 1 &&
-            citation.getAttribute("href") ===
-              "https://shop.elsevier.com/books/auction-theory/krishna/978-0-12-374507-1" &&
-            references.textContent.includes("Proposition 2.1") &&
-            references.textContent.includes("p. 13"),
-          "References should contain the requested second-price Krishna citation.");
-        }
-      },
-      {
-        name: "Beta parameters are always available with a uniform-equivalent default",
-        run: function () {
-          withReset(function () {
-            var controls = appDocument.getElementById("beta-shape-controls");
-            var shapeInputs = Array.from(controls.querySelectorAll("input"));
-            assert(!appDocument.getElementById("distribution"),
-              "The page should not expose a distribution selector.");
-            assert(!appDocument.getElementById("parameter-note"),
-              "The value-distribution equation below the parameters should be removed.");
-            assert(!controls.hidden,
-              "Beta shape controls should always be visible.");
-            assert(shapeInputs.every(function (element) { return !element.disabled; }),
-              "Beta shape controls should always be enabled.");
-            assert(appDocument.getElementById("alpha-number").value === "1" &&
-              appDocument.getElementById("beta-number").value === "1",
-            "Beta(1,1) should be the uniform-equivalent default.");
-          });
-        }
-      },
-      {
-        name: "Beta shape number fields and sliders stay synchronized",
-        run: function () {
-          withReset(function () {
-            chooseBeta(2, 2);
-            var alphaNumber = appDocument.getElementById("alpha-number");
-            var alphaSlider = appDocument.getElementById("alpha-slider");
-            var betaNumber = appDocument.getElementById("beta-number");
-            var betaSlider = appDocument.getElementById("beta-slider");
-
-            alphaNumber.value = "3.4";
-            dispatchChange(alphaNumber, appWindow);
-            assertClose(Number(alphaSlider.value), 3.4,
-              "Typing alpha should update its slider.");
-
-            betaSlider.value = "4.6";
-            dispatchInput(betaSlider, appWindow);
-            assertClose(Number(betaNumber.value), 4.6,
-              "Moving the beta slider should update its number field.");
-          });
-        }
-      },
-      {
-        name: "The Beta value PDF preview responds to shapes and support",
-        run: function () {
-          withReset(function () {
-            chooseBeta(2, 2);
-            var preview = appDocument.getElementById("value-pdf-preview");
-            var previewFigure = appDocument.querySelector(
-              ".value-pdf-preview-figure"
-            );
-            var previewCaption = previewFigure.querySelector("figcaption");
-            var curve = preview.querySelector(".value-pdf-curve");
-            var originalPath = curve.getAttribute("d");
-            var previewRect = preview.getBoundingClientRect();
-            var captionRect = previewCaption.getBoundingClientRect();
-            assert(Math.abs(captionRect.left -
-              (previewRect.left + previewRect.width * 14 / 320)) < 1.5,
-            "The value-PDF caption should align with the plotted PDF area.");
-            assert(preview.querySelector("#value-pdf-preview-title")
-              .textContent === "PDF of value, V subscript i" &&
-              preview.querySelector("#value-pdf-preview-description")
-                .textContent.includes("alpha 2") &&
-              preview.getAttribute("aria-labelledby") ===
-                "value-pdf-preview-title value-pdf-preview-description",
-            "The preview should identify the plotted value density accessibly.");
-            assert(/^PDF of value,\s*$/.test(previewCaption.firstChild.nodeValue) &&
-              previewCaption.querySelector(
-                'mjx-container[jax="SVG"] [data-mml-node="math"][data-latex="V_i"]'
-              ), "The caption should retain its current wording and typeset bidder-value symbol.");
-            assert(preview.querySelectorAll(".value-pdf-area").length === 1 &&
-              preview.querySelectorAll(".value-pdf-curve").length === 1 &&
-              preview.querySelectorAll(".value-pdf-endpoint-label").length === 2,
-            "The preview should contain one density, its area, and two endpoints.");
-
-            var alphaSlider = appDocument.getElementById("alpha-slider");
-            alphaSlider.value = "4";
-            dispatchInput(alphaSlider, appWindow);
-            assert(preview.querySelector(".value-pdf-curve").getAttribute("d") !==
-              originalPath,
-            "Changing a shape parameter should redraw the value density.");
-
-            var lower = appDocument.getElementById("lower-bound");
-            var upper = appDocument.getElementById("upper-bound");
-            lower.value = "10";
-            dispatchChange(lower, appWindow);
-            upper.value = "20";
-            dispatchChange(upper, appWindow);
-            var endpoints = Array.from(preview.querySelectorAll(
-              ".value-pdf-endpoint-label"
-            )).map(function (label) { return label.textContent; });
-            assert(endpoints[0] === "a = 10" && endpoints[1] === "b = 20",
-              "The preview endpoints should follow the current support.");
-
-            chooseBeta(0.5, 0.5);
-            assert(!/(NaN|Infinity|undefined)/.test(numericSvgAttributes(preview)),
-              "Endpoint-singular shapes should retain finite preview geometry.");
-          });
-        }
-      },
-      {
-        name: "Value and bid controls both use the support [a,b]",
-        run: function () {
-          withReset(function () {
-            var lower = appDocument.getElementById("lower-bound");
-            var upper = appDocument.getElementById("upper-bound");
-            var valueNumber = appDocument.getElementById("value-number");
-            var valueSlider = appDocument.getElementById("value-slider");
-            var bidNumber = appDocument.getElementById("bid-number");
-            var bidSlider = appDocument.getElementById("bid-slider");
-
-            assert(lower.value === "0" && upper.value === "100",
-              "The valid defaults should satisfy 0 <= a < b.");
-            assert(valueNumber.min === "0" && valueNumber.max === "100" &&
-              valueSlider.min === "0" && valueSlider.max === "100",
-            "Private-value controls should span exactly [a,b].");
-            assert(bidNumber.min === "0" && bidNumber.max === "100" &&
-              bidSlider.min === "0" && bidSlider.max === "100",
-            "Proposed-bid controls should span exactly [a,b].");
-            assert(appDocument.getElementById("value-min-label").dataset.mathSource ===
-              "\\(a=0\\)" &&
-              appDocument.getElementById("value-max-label").dataset.mathSource ===
-              "\\(b=100\\)" &&
-              appDocument.getElementById("bid-min-label").dataset.mathSource ===
-              "\\(a=0\\)" &&
-              appDocument.getElementById("bid-max-label").dataset.mathSource ===
-              "\\(b=100\\)",
-            "Both controls should identify the endpoints a and b.");
-            var bidTicks = Array.from(appDocument.querySelectorAll(
-              "text[data-bid-tick]"
-            )).map(function (tick) { return Number(tick.dataset.bidTick); });
-            assert(bidTicks.includes(0) && bidTicks.includes(100) &&
-              bidTicks.every(function (tick) { return tick >= 0 && tick <= 100; }),
-            "Every bid-axis tick should lie in [a,b] and include both endpoints.");
-          });
-        }
-      },
-      {
-        name: "Initial graph geometry agrees with the second-price model",
-        run: function () {
-          withReset(function () {
-            var spec = { type: "beta", alpha: 1, beta: 1 };
-            var current = model.outcomes(50, 30, 2, 0, 100, spec);
-            var truthful = model.truthfulOutcomes(50, 2, 0, 100, spec);
-            var captions = Array.from(appDocument.querySelectorAll(".panel-caption"))
-              .map(function (element) { return element.textContent; });
-            assert(captions.length === 2 &&
-              captions[0] === "PDF of highest opposing bid" &&
-              captions[1] === "Expected payoff",
-            "The two panels should use the second-price titles.");
-            assert(appDocument.querySelectorAll(".panel-metric").length === 0,
-              "Dynamic metrics should not appear beside panel titles.");
-            assert(appDocument.querySelectorAll(".probability-label").length === 1 &&
-              appDocument.querySelector(".probability-label").textContent
-                .includes("Probability of winning"),
-            "The PDF panel should contain one full winning-probability label.");
-            assert(appDocument.querySelectorAll(".expected-payoff-label")
-              .length === 1 &&
-              appDocument.querySelector(".expected-payoff-label").textContent
-                .includes("Expected payoff"),
-            "The CDF panel should contain one net expected-payoff label.");
-            assert(!appDocument.querySelector(".y-axis-title"),
-              "The lower panel should not repeat probability as a y-axis title.");
-            var guideLabel = appDocument.querySelector(
-              ".winning-probability-guide-label"
-            );
-            var guideLine = appDocument.querySelector(
-              ".winning-probability-guide-line"
-            );
-            var cdfPanelLeft = Number(appDocument.querySelectorAll(
-              ".panel-background"
-            )[1].getAttribute("x"));
-            assert(guideLabel.textContent.replace(/\s+/g, " ").trim()
-              .includes("Probability of winning =") &&
-              guideLabel.dataset.placement === "y-axis-right" &&
-              guideLabel.getAttribute("text-anchor") === "start" &&
-              Number(guideLabel.getAttribute("x")) - cdfPanelLeft === 10 &&
-              Number(guideLabel.dataset.guideY) ===
-                Number(guideLine.getAttribute("y1")),
-            "The dashed guide should carry its full probability label at the y-axis.");
-
-            var winningArea = appDocument.querySelector(".winning-area");
-            assertClose(Number(winningArea.dataset.endBid), 30,
-              "Winning-area endpoint");
-            assertClose(Number(winningArea.dataset.probability),
-              current.winProbability, "Winning-area probability");
-
-            var payoffArea = appDocument.querySelector(".spa-payoff-area");
-            assert(payoffArea.dataset.state === "underbid",
-              "The default bid should be classified as an underbid.");
-            assertClose(Number(payoffArea.dataset.expectedPayoff),
-              current.expectedPayoff, "Displayed expected payoff");
-            assertClose(Number(payoffArea.dataset.truthfulPayoff),
-              truthful.expectedPayoff, "Displayed truthful payoff");
-            assertClose(Number(payoffArea.dataset.probability),
-              current.winProbability, "Displayed winning probability");
-            assertClose(Number(appDocument.querySelector(
-              ".spa-payoff-area-positive"
-            ).dataset.positiveArea), current.expectedPayoff,
-            "Positive CDF area");
-
-            assert(appDocument.querySelectorAll(
-              ".highest-bid-density-curve"
-            ).length === 1, "The PDF curve should be present once.");
-            assert(appDocument.querySelectorAll(
-              ".highest-bid-cdf-curve"
-            ).length === 1, "The CDF curve should be present once.");
-            assert(!appDocument.querySelector(".expected-payoff-rectangle"),
-              "The second-price page should not reuse the first-price rectangle.");
-          });
-        }
-      },
-      {
-        name: "Default Beta(1,1) reproduces Uniform second-price metrics",
-        run: function () {
-          withReset(function () {
-            var betaArea = appDocument.querySelector(".spa-payoff-area");
-            var uniform = model.outcomes(
-              50, 30, 2, 0, 100, { type: "uniform" }
-            );
-            var uniformTruthful = model.truthfulOutcomes(
-              50, 2, 0, 100, { type: "uniform" }
-            );
-            assertClose(Number(betaArea.dataset.probability),
-              uniform.winProbability,
-            "Beta(1,1) winning probability should equal Uniform.", 1e-8);
-            assertClose(Number(betaArea.dataset.expectedPayoff),
-              uniform.expectedPayoff,
-              "Beta(1,1) expected payoff should equal Uniform.", 1e-7);
-            assertClose(Number(betaArea.dataset.truthfulPayoff),
-              uniformTruthful.expectedPayoff,
-              "Beta(1,1) truthful payoff should equal Uniform.", 1e-7);
-            assert(appDocument.getElementById("value-pdf-preview")
-              .dataset.alpha === "1" &&
-              appDocument.getElementById("value-pdf-preview")
-                .dataset.beta === "1",
-            "The default preview should expose alpha and beta equal to one.");
-          });
-        }
-      },
-      {
-        name: "The second-price graph matches a Beta(2,1) benchmark",
-        run: function () {
-          withReset(function () {
-            chooseBeta(2, 1);
-            var value = appDocument.getElementById("value-number");
-            value.value = "80";
-            dispatchChange(value, appWindow);
-            var spec = { type: "beta", alpha: 2, beta: 1 };
-            var current = model.outcomes(80, 30, 2, 0, 100, spec);
-            var truthful = model.truthfulOutcomes(80, 2, 0, 100, spec);
-            var area = appDocument.querySelector(".spa-payoff-area");
-            var winningArea = appDocument.querySelector(".winning-area");
-
-            assertClose(current.winProbability, 0.09,
-              "Analytical Beta(2,1) winning probability", 2e-7);
-            assertClose(current.expectedPayment, 1.8,
-              "Analytical Beta(2,1) expected payment", 2e-5);
-            assertClose(current.expectedPayoff, 5.4,
-              "Analytical Beta(2,1) expected payoff", 2e-5);
-            assertClose(truthful.expectedPayoff, 17.0666666667,
-              "Analytical Beta(2,1) truthful payoff", 2e-4);
-            assertClose(Number(area.dataset.probability), current.winProbability,
-              "Displayed Beta winning probability", 2e-7);
-            assertClose(Number(area.dataset.expectedPayoff), current.expectedPayoff,
-              "Displayed Beta expected payoff", 2e-5);
-            assertClose(Number(area.dataset.truthfulPayoff),
-              truthful.expectedPayoff,
-            "Displayed Beta truthful payoff", 2e-4);
-            assertClose(Number(winningArea.dataset.probability),
-              current.winProbability,
-            "Displayed Beta PDF area", 2e-7);
-          });
-        }
-      },
-      {
-        name: "The graph uses x one and v one notation",
-        run: function () {
-          withReset(function () {
-            var marker = appDocument.querySelector(".truthful-marker");
-            var label = appDocument.querySelector(".truthful-label");
-            assertClose(Number(marker.dataset.truthfulBid), 50,
-              "Truthful marker bid");
-            assert(label.textContent === "βᴵᴵ(v₁) = 50",
-              "The truthful marker should report the numerical beta II bid.");
-            assert(appDocument.querySelector(".axis-bid-label").textContent
-              .startsWith("x₁ =") &&
-              appDocument.querySelector(".axis-value-label").textContent
-                .startsWith("v₁ =") &&
-              !appDocument.getElementById("second-price-chart").textContent
-                .includes("ᵢ"),
-            "Dynamic graph notation should use bidder 1 rather than bidder i.");
-
-            var bidNumber = appDocument.getElementById("bid-number");
-            bidNumber.value = "50";
-            dispatchChange(bidNumber, appWindow);
-            var payoffArea = appDocument.querySelector(".spa-payoff-area");
-            assert(payoffArea.dataset.state === "truthful",
-              "Bidding v₁ should enter the truthful state.");
-            assertClose(Number(payoffArea.dataset.expectedPayoff),
-              Number(payoffArea.dataset.truthfulPayoff),
-              "Truthful displayed payoff");
-            assert(!appDocument.querySelector(".spa-payoff-area-negative"),
-              "Truthful bidding should not add a loss area.");
-          });
-        }
-      },
-      {
-        name: "Overbidding adds a solid red expected-payoff loss area",
-        run: function () {
-          withReset(function () {
-            var bid = appDocument.getElementById("bid-slider");
-            bid.value = "90";
-            dispatchInput(bid, appWindow);
-            var current = model.outcomes(50, 90, 2, 0, 100);
-            var truthful = model.truthfulOutcomes(50, 2, 0, 100);
-            var group = appDocument.querySelector(".spa-payoff-area");
-            var loss = appDocument.querySelector(".spa-payoff-area-negative");
-            assert(group.dataset.state === "overbid" && loss,
-              "An overbid should create the red loss region.");
-            assertClose(Number(loss.dataset.lossArea),
-              truthful.expectedPayoff - current.expectedPayoff,
-              "Expected-payoff loss area");
-            assert(appWindow.getComputedStyle(loss).strokeDasharray === "none",
-              "The red loss boundary should be solid.");
-            var label = appDocument.querySelector(".expected-payoff-label");
-            assert(current.expectedPayoff > 0 &&
-              label.dataset.placement === "inside-green",
-              "A positive overbid payoff should stay in the green area.");
-            assertPayoffInsideRegion("positive");
-          });
-        }
-      },
-      {
-        name: "A substantial overbid displays one net expected payoff",
-        run: function () {
-          withReset(function () {
-            var value = appDocument.getElementById("value-number");
-            var bid = appDocument.getElementById("bid-number");
-            value.value = "30";
-            dispatchChange(value, appWindow);
-            bid.value = "92";
-            dispatchChange(bid, appWindow);
-
-            var current = model.outcomes(30, 92, 2, 0, 100);
-            var truthful = model.truthfulOutcomes(30, 2, 0, 100);
-            var expectedLabels = appDocument.querySelectorAll(
-              ".expected-payoff-label"
-            );
-            var probabilityLabels = appDocument.querySelectorAll(
-              ".probability-label"
-            );
-            var expectedLabel = expectedLabels[0];
-            var lossArea = appDocument.querySelector(".spa-payoff-area-negative");
-
-            assert(current.expectedPayoff < 0,
-              "The substantial overbid should have negative expected payoff.");
-            assert(expectedLabels.length === 1 &&
-              expectedLabel.classList.contains("negative-metric") &&
-              expectedLabel.textContent.includes("Expected payoff") &&
-              expectedLabel.textContent.includes("-"),
-            "A negative overbid should show one red net expected-payoff number.");
-            assert(expectedLabel.dataset.placement === "inside-red",
-              "A negative overbid payoff should stay in the red area.");
-            assertPayoffInsideRegion("negative");
-            assert(probabilityLabels.length === 1,
-              "The winning probability should still have one full label.");
-            assert(!appDocument.querySelector(".truthful-area-label") &&
-              !appDocument.querySelector(".payoff-loss-label") &&
-              !appDocument.getElementById("second-price-chart").textContent
-                .includes("Truthful expected payoff") &&
-              !appDocument.getElementById("second-price-chart").textContent
-                .includes("Payoff loss"),
-            "The graph should not display separate truthful-payoff or loss labels.");
-            assertClose(Number(lossArea.dataset.lossArea),
-              truthful.expectedPayoff - current.expectedPayoff,
-              "Retained red loss geometry");
-          });
-        }
-      },
-      {
-        name: "Probability and expected payoff remain labeled at a zero-area edge",
-        run: function () {
-          withReset(function () {
-            var value = appDocument.getElementById("value-number");
-            var bid = appDocument.getElementById("bid-number");
-            value.value = "0";
-            dispatchChange(value, appWindow);
-            bid.value = "0";
-            dispatchChange(bid, appWindow);
-
-            var probabilityLabels = appDocument.querySelectorAll(
-              ".probability-label"
-            );
-            var expectedLabels = appDocument.querySelectorAll(
-              ".expected-payoff-label"
-            );
-            assert(probabilityLabels.length === 1 &&
-              probabilityLabels[0].dataset.placement === "right-of-highlight" &&
-              Number(probabilityLabels[0].getAttribute("x")) >
-                Number(appDocument.querySelector(".chosen-marker")
-                  .getAttribute("x1")) &&
-              probabilityLabels[0].textContent.includes("0%"),
-            "Zero winning probability should sit right of its zero-width area.");
-            assert(expectedLabels.length === 1 &&
-              expectedLabels[0].dataset.placement === "bid-marker-right" &&
-              expectedLabels[0].dataset.payoffSign === "zero" &&
-              !expectedLabels[0].classList.contains("negative-metric") &&
-              Number(expectedLabels[0].getAttribute("x")) >
-                Number(appDocument.querySelector(".axis-value-marker")
-                  .getAttribute("x1")) &&
-              expectedLabels[0].textContent.includes("Expected payoff") &&
-              Number(expectedLabels[0].dataset.expectedPayoff) === 0,
-            "A zero payoff with no width should move right and remain neutral.");
-            var guide = appDocument.querySelector(
-              ".winning-probability-guide-label"
-            );
-            assert(guide && guide.textContent.replace(/\s+/g, " ").trim() ===
-              "Probability of winning = 0.0%" &&
-              guide.dataset.placement === "y-axis-right" &&
-              Number(guide.getAttribute("x")) -
-                Number(appDocument.querySelectorAll(".panel-background")[1]
-                  .getAttribute("x")) === 10 &&
-              Number(guide.dataset.guideY) === Number(appDocument.querySelector(
-                ".winning-probability-guide-line"
-              ).getAttribute("y1")),
-            "The full CDF probability label should remain at the y-axis.");
-          });
-        }
-      },
-      {
-        name: "A short PDF highlight moves its probability label to the right",
-        run: function () {
-          withReset(function () {
-            chooseBeta(10, 0.2);
-            var bid = appDocument.getElementById("bid-number");
-            bid.value = "70";
-            dispatchChange(bid, appWindow);
-
-            var label = appDocument.querySelector(".probability-label");
-            var markerX = Number(appDocument.querySelector(".chosen-marker")
-              .getAttribute("x1"));
-            assert(Number(label.dataset.probability) > 0 &&
-              label.dataset.fitFailure === "height" &&
-              label.dataset.placement === "right-of-highlight" &&
-              label.getAttribute("text-anchor") === "start" &&
-              Number(label.getAttribute("x")) - markerX === 12,
-            "A nonzero, wide but short PDF area should place its label right of the area.");
-          });
-        }
-      },
-      {
-        name: "Endpoint payoff text stays in its region while probability stays at the y-axis",
-        run: function () {
-          withReset(function () {
-            var value = appDocument.getElementById("value-number");
-            var bid = appDocument.getElementById("bid-number");
-            value.value = "30";
-            dispatchChange(value, appWindow);
-            bid.value = "100";
-            dispatchChange(bid, appWindow);
-
-            var markerX = Number(appDocument.querySelector(
-              ".selected-cdf-point"
-            ).getAttribute("cx"));
-            var payoffLabel = appDocument.querySelector(
-              ".expected-payoff-label"
-            );
-            var guideLabel = appDocument.querySelector(
-              ".winning-probability-guide-label"
-            );
-            assert(payoffLabel.dataset.placement === "inside-red",
-              "The upper-endpoint negative payoff should stay in the red area.");
-            assertPayoffInsideRegion("negative");
-            value.value = "80";
-            dispatchChange(value, appWindow);
-            assertPayoffInsideRegion("positive");
-            assert(guideLabel.dataset.placement === "y-axis-right" &&
-              Number(guideLabel.getAttribute("x")) -
-                Number(appDocument.querySelectorAll(".panel-background")[1]
-                  .getAttribute("x")) === 10 &&
-              Number(guideLabel.getAttribute("x")) < markerX,
-            "The full CDF probability label should stay fixed at the y-axis.");
-
-            chooseBeta(0.2, 10);
-            var pdfLabel = appDocument.querySelector(".probability-label");
-            assert(pdfLabel.dataset.placement === "left-of-marker" &&
-              markerX - Number(pdfLabel.getAttribute("x")) === 12,
-            "A PDF label without right-side room should stay beside x₁ on its left.");
-          });
-        }
-      },
-      {
-        name: "Overbid label containment follows curved CDFs and shifted supports",
-        run: function () {
-          withReset(function () {
-            var value = appDocument.getElementById("value-number");
-            var bid = appDocument.getElementById("bid-number");
-            var lower = appDocument.getElementById("lower-bound");
-            lower.value = "-100";
-            dispatchChange(lower, appWindow);
-            chooseBeta(2, 3);
-            [[60, "positive"], [-60, "negative"]].forEach(function (choice) {
-              value.value = String(choice[0]);
-              dispatchChange(value, appWindow);
-              bid.value = "100";
-              dispatchChange(bid, appWindow);
-              assertPayoffInsideRegion(choice[1]);
-            });
-          });
-        }
-      },
-      {
-        name: "A short but wide payoff highlight keeps its label inside",
-        run: function () {
-          withReset(function () {
-            var count = appDocument.getElementById("bidder-count");
-            var value = appDocument.getElementById("value-number");
-            var bid = appDocument.getElementById("bid-number");
-            count.value = "10";
-            dispatchChange(count, appWindow);
-            value.value = "100";
-            dispatchChange(value, appWindow);
-            bid.value = "50";
-            dispatchChange(bid, appWindow);
-
-            var label = appDocument.querySelector(".expected-payoff-label");
-            assert(label.dataset.widthFit === "true" &&
-              label.dataset.heightFit === "false" &&
-              label.dataset.placement === "inside",
-            "Payoff placement should ignore insufficient height when width fits.");
-          });
-        }
-      },
-      {
-        name: "Typed choices, sliders, and keyboard bidding stay synchronized",
-        run: function () {
-          withReset(function () {
-            var valueNumber = appDocument.getElementById("value-number");
-            var valueSlider = appDocument.getElementById("value-slider");
-            var bidNumber = appDocument.getElementById("bid-number");
-            var bidSlider = appDocument.getElementById("bid-slider");
-            var chart = appDocument.getElementById("second-price-chart");
-
-            assert(valueSlider.step === "0.2" && bidSlider.step === "0.2",
-              "Sliders should be quantized to 1/500 of the [a, b] span, " +
-                "matching the chart's own keyboard-nudge step.");
-
-            var QUANTIZATION_TOLERANCE = 0.1;
-
-            valueNumber.value = "65.26";
-            dispatchChange(valueNumber, appWindow);
-            assert(valueNumber.value === "65.3",
-              "The displayed private value should round to one decimal place.");
-            assertClose(Number(valueSlider.value), 65.26,
-              "Typed value should update its slider.", QUANTIZATION_TOLERANCE);
-            assertClose(Number(appDocument.querySelector(
-              ".truthful-marker"
-            ).dataset.truthfulBid), 65.26,
-            "Typed value should move the truthful marker.");
-            assert(appDocument.querySelector(".truthful-label").textContent ===
-              "βᴵᴵ(v₁) = 65.3",
-            "The truthful label should show the rounded bid without a trailing zero.");
-
-            valueNumber.value = "65.04";
-            dispatchChange(valueNumber, appWindow);
-            assert(valueNumber.value === "65",
-              "A typed value that rounds to a whole number should omit the decimal.");
-            assertClose(Number(valueSlider.value), 65.04,
-              "Rounding to a whole displayed value should still land the " +
-                "quantized slider within one step of the exact typed choice.",
-              QUANTIZATION_TOLERANCE);
-
-            valueSlider.value = "70";
-            dispatchInput(valueSlider, appWindow);
-            assert(valueNumber.value === "70",
-              "A whole displayed private value should omit the trailing zero.");
-
-            bidNumber.value = "95.7";
-            dispatchChange(bidNumber, appWindow);
-            assert(bidNumber.value === "95.7",
-              "The bid field should retain one necessary decimal place.");
-            assertClose(Number(bidSlider.value), 95.7,
-              "Typed bid should update its slider.", QUANTIZATION_TOLERANCE);
-            assertClose(Number(appDocument.querySelector(
-              ".winning-probability-guide-line"
-            ).dataset.probability), 0.957,
-            "A typed bid should update winning probability within [a,b].");
-
-            bidSlider.value = "90";
-            dispatchInput(bidSlider, appWindow);
-            assert(bidNumber.value === "90",
-              "A whole-number slider bid should omit a trailing zero.");
-
-            chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
-              key: "End",
-              bubbles: true,
-              cancelable: true
-            }));
-            assertClose(Number(bidNumber.value), 100,
-              "End should choose the upper endpoint b.");
-            chart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
-              key: "Home",
-              bubbles: true,
-              cancelable: true
-            }));
-            assertClose(Number(bidNumber.value), 0,
-              "Home should choose the lower support endpoint a.");
-
-            bidNumber.value = "140";
-            dispatchChange(bidNumber, appWindow);
-            assertClose(Number(bidNumber.value), 100,
-              "Typed bids above the control domain should clamp to b.");
-            bidNumber.value = "";
-            dispatchChange(bidNumber, appWindow);
-            assertClose(Number(bidNumber.value), 100,
-              "An empty bid should restore the last valid choice.");
-          });
-        }
-      },
-      {
-        name: "A random draw uses the current support and preserves the bid",
-        run: function () {
-          withReset(function () {
-            var lower = appDocument.getElementById("lower-bound");
-            var upper = appDocument.getElementById("upper-bound");
-            lower.value = "10";
-            upper.value = "20";
-            dispatchChange(upper, appWindow);
-
-            var bidBefore = Number(appDocument.getElementById("bid-slider").value);
-            var originalRandom = appWindow.Math.random;
-            appWindow.Math.random = function () { return 0.25; };
-            try {
-              appDocument.getElementById("random-value-button").click();
-            } finally {
-              appWindow.Math.random = originalRandom;
-            }
-            assertClose(Number(appDocument.getElementById("value-slider").value),
-              12.5, "Random value");
-            assertClose(Number(appDocument.getElementById("value-number").value),
-              12.5, "Typed random value");
-            assertClose(Number(appDocument.getElementById("bid-slider").value),
-              bidBefore, "Bid preserved after draw");
-            assert(appDocument.getElementById("value-number").min === "10" &&
-              appDocument.getElementById("value-number").max === "20" &&
-              appDocument.getElementById("bid-number").min === "10" &&
-              appDocument.getElementById("bid-number").max === "20" &&
-              appDocument.getElementById("bid-slider").max === "20",
-            "Shifted value and bid controls should both retain [a,b].");
-          });
-        }
-      },
-      {
-        name: "A random draw uses the current Beta quantile",
-        run: function () {
-          withReset(function () {
-            var lower = appDocument.getElementById("lower-bound");
-            var upper = appDocument.getElementById("upper-bound");
-            lower.value = "10";
-            upper.value = "20";
-            dispatchChange(upper, appWindow);
-            chooseBeta(2, 1);
-
-            var bidBefore = Number(appDocument.getElementById("bid-slider").value);
-            var expected = distributions.quantile(
-              0.25, 10, 20, { type: "beta", alpha: 2, beta: 1 }
-            );
-            var originalRandom = appWindow.Math.random;
-            appWindow.Math.random = function () { return 0.25; };
-            try {
-              appDocument.getElementById("random-value-button").click();
-            } finally {
-              appWindow.Math.random = originalRandom;
-            }
-
-            assertClose(Number(appDocument.getElementById("value-slider").value),
-              expected, "The random value should use the current Beta quantile.",
-              2e-7);
-            assertClose(Number(appDocument.getElementById("bid-slider").value),
-              bidBefore, "Drawing a Beta value should preserve the proposed bid.");
-          });
-        }
-      },
-      {
-        name: "Endpoint-singular Beta shapes keep every SVG coordinate finite",
-        run: function () {
-          withReset(function () {
-            chooseBeta(0.5, 0.5);
-            assert(!/(NaN|Infinity|undefined)/.test(numericSvgAttributes(
-              appDocument.getElementById("second-price-chart")
-            )), "Beta(0.5,0.5) should not put non-finite values in the SVG.");
-          });
-        }
-      },
-      {
-        name: "Invalid bounds revert and never replace the valid auction state",
-        run: function () {
-          withReset(function () {
-            var lower = appDocument.getElementById("lower-bound");
-            var upper = appDocument.getElementById("upper-bound");
-            var valueBefore = Number(appDocument.getElementById("value-slider").value);
-            var bidBefore = Number(appDocument.getElementById("bid-slider").value);
-
-            assert(lower.value === "0" && upper.value === "100",
-              "A zero lower bound should be valid.");
-
-            lower.value = "-1";
-            dispatchChange(lower, appWindow);
-            assert(!appDocument.getElementById("input-error").hidden,
-              "A negative lower bound should expose an error.");
-            assert(lower.value === "0" && upper.value === "100",
-              "A negative lower bound should revert both inputs.");
-
-            upper.value = "0";
-            dispatchChange(upper, appWindow);
-            assert(lower.value === "0" && upper.value === "100",
-              "An upper bound equal to a should revert both inputs.");
-
-            lower.value = "101";
-            dispatchChange(lower, appWindow);
-            assert(lower.value === "0" && upper.value === "100",
-              "A lower bound above b should revert both inputs.");
-            assertClose(Number(appDocument.getElementById("value-slider").value),
-              valueBefore, "Value after invalid bounds");
-            assertClose(Number(appDocument.getElementById("bid-slider").value),
-              bidBefore, "Bid after invalid bounds");
-            assert(appDocument.getElementById("value-slider").min === "0" &&
-              appDocument.getElementById("value-slider").max === "100" &&
-              appDocument.getElementById("bid-slider").min === "0" &&
-              appDocument.getElementById("bid-slider").max === "100",
-            "Invalid bounds should not change either control domain.");
-          });
-        }
-      },
-      {
-        name: "An active graph drag clamps exactly to both bid endpoints",
-        run: function () {
-          withReset(function () {
-            var chart = appDocument.getElementById("second-price-chart");
-            var bidNumber = appDocument.getElementById("bid-number");
-            var rectangle = chart.getBoundingClientRect();
-            var viewWidth = chart.viewBox.baseVal.width;
-            var panel = appDocument.querySelector(".panel-background");
-            var plotLeft = Number(panel.getAttribute("x"));
-            var plotRight = plotLeft + Number(panel.getAttribute("width"));
-            var insideClientX = rectangle.left +
-              ((plotLeft + plotRight) / 2 / viewWidth) * rectangle.width;
-
-            chart.dispatchEvent(new appWindow.PointerEvent("pointerdown", {
-              bubbles: true,
-              clientX: insideClientX,
-              clientY: rectangle.top + 100,
-              pointerId: 81, isPrimary: true
-            }));
-            chart.dispatchEvent(new appWindow.PointerEvent("pointermove", {
-              bubbles: true,
-              clientX: rectangle.right + 80,
-              clientY: rectangle.top + 100,
-              pointerId: 81, isPrimary: true
-            }));
-            chart.dispatchEvent(new appWindow.PointerEvent("pointerup", {
-              bubbles: true,
-              clientX: rectangle.right + 80,
-              clientY: rectangle.top + 100,
-              pointerId: 81, isPrimary: true
-            }));
-            assertClose(Number(bidNumber.value), 100,
-              "Dragging beyond the right side should finish exactly at b.");
-
-            chart.dispatchEvent(new appWindow.PointerEvent("pointerdown", {
-              bubbles: true,
-              clientX: insideClientX,
-              clientY: rectangle.top + 100,
-              pointerId: 82, isPrimary: true
-            }));
-            chart.dispatchEvent(new appWindow.PointerEvent("pointermove", {
-              bubbles: true,
-              clientX: rectangle.left - 80,
-              clientY: rectangle.top + 100,
-              pointerId: 82, isPrimary: true
-            }));
-            chart.dispatchEvent(new appWindow.PointerEvent("pointerup", {
-              bubbles: true,
-              clientX: rectangle.left - 80,
-              clientY: rectangle.top + 100,
-              pointerId: 82, isPrimary: true
-            }));
-            assertClose(Number(bidNumber.value), 0,
-              "Dragging beyond the left side should finish exactly at a.");
-          });
-        }
-      },
-      {
-        name: "Graph drags retain pointer ownership and end after cancellation, capture loss, or reset",
-        run: async function () {
-          reset();
-          var chart = appDocument.getElementById("second-price-chart");
-          var bid = appDocument.getElementById("bid-number");
-          var originalCapture = chart.setPointerCapture;
-          chart.setPointerCapture = function () {};
-          function fire(type, id, fraction, options) {
-            var panel = appDocument.querySelector(".panel-background");
-            var point = chart.createSVGPoint();
-            point.x = Number(panel.getAttribute("x")) + fraction * Number(panel.getAttribute("width"));
-            point.y = Number(panel.getAttribute("y")) + 30;
-            point = point.matrixTransform(chart.getScreenCTM());
-            chart.dispatchEvent(new appWindow.PointerEvent(type, Object.assign({
-              bubbles: true, clientX: point.x, clientY: point.y,
-              pointerId: id, pointerType: "touch", isPrimary: true, button: 0
-            }, options)));
-          }
-          async function settled(expected, message) {
-            await window.MechanismTest.nextAnimationFrames(appWindow, 1);
-            assert(Math.abs(Number(bid.value) - expected) < 1e-9, message);
-          }
-          try {
-            fire("pointerdown", 60, 0.8, { button: 2 });
-            fire("pointermove", 60, 0.9);
-            fire("pointerdown", 60, 0.8, { isPrimary: false });
-            fire("pointermove", 60, 0.9);
-            await settled(30, "Secondary pointers and right clicks must not begin a drag.");
-
-            fire("pointerdown", 61, 0.4);
-            await settled(40, "The primary pointer should begin a drag.");
-            fire("pointerdown", 62, 0.9);
-            fire("pointermove", 62, 0.9);
-            fire("pointerup", 62, 0.9);
-            fire("pointercancel", 62, 0.9);
-            fire("lostpointercapture", 62, 0.9);
-            await settled(40, "Unrelated pointer events must not change the selected bid.");
-            fire("pointermove", 61, 0.6);
-            await settled(60, "An unrelated release must not end the owning pointer's drag.");
-            fire("lostpointercapture", 61, 0.6);
-            fire("pointermove", 61, 0.9);
-            fire("pointerup", 61, 0.9);
-            await settled(60, "Capture loss must end dragging before later movement or release.");
-
-            fire("pointerdown", 63, 0.25);
-            fire("pointerup", 63, 0.75);
-            await settled(75, "The owning pointer's release should commit its final position.");
-            fire("pointerdown", 64, 0.2);
-            await settled(20, "A subsequent gesture should start normally.");
-            appDocument.getElementById("reset-button").click();
-            fire("pointermove", 64, 0.9);
-            await settled(20, "Reset must cancel the active drag while preserving the accepted bid.");
-            fire("pointerdown", 65, 0.45);
-            fire("pointercancel", 65, 0.45);
-            fire("pointermove", 65, 0.9);
-            await settled(45, "Cancellation must finish pending edits and ignore later movement.");
-
-            fire("pointerdown", 66, 0.2);
-            fire("pointermove", 66, 0.4);
-            var upper = appDocument.getElementById("upper-bound");
-            upper.value = "200"; dispatchChange(upper, appWindow);
-            fire("pointermove", 66, 0.9); fire("pointerup", 66, 0.9);
-            await settled(80, "A support edit must flush the old-support bid before rescaling and canceling the drag.");
-            upper.value = "100"; dispatchChange(upper, appWindow);
-            [["alpha-number", "2"], ["bidder-count", "5"]].forEach(function (choice, index) {
-              fire("pointerdown", 67 + index, 0.2);
-              fire("pointermove", 67 + index, 0.6);
-              var field = appDocument.getElementById(choice[0]);
-              field.value = choice[1]; dispatchChange(field, appWindow);
-              fire("pointermove", 67 + index, 0.9); fire("pointerup", 67 + index, 0.9);
-            });
-            await settled(60, "Shape and bidder-count edits must finish pending bids and end the owning drag.");
-          } finally {
-            chart.dispatchEvent(new appWindow.PointerEvent("pointercancel", { pointerId: 65 }));
-            chart.setPointerCapture = originalCapture;
-            reset();
-          }
-        }
-      },
-      {
-        name: "Endpoint annotations remain distinct and off-plot clicks do not change the bid",
-        run: function () {
-          withReset(function () {
-            var chart = appDocument.getElementById("second-price-chart");
-            var bidNumber = appDocument.getElementById("bid-number");
-            var rectangle = chart.getBoundingClientRect();
-            chart.dispatchEvent(new appWindow.PointerEvent("pointerdown", {
-              bubbles: true,
-              clientX: rectangle.left - 20,
-              clientY: rectangle.top + 100,
-              pointerId: 71, isPrimary: true
-            }));
-            assertClose(Number(bidNumber.value), 30,
-              "A click outside the plot should preserve the bid.");
-
-            var valueNumber = appDocument.getElementById("value-number");
-            valueNumber.value = "0";
-            dispatchChange(valueNumber, appWindow);
-            bidNumber.value = "0";
-            dispatchChange(bidNumber, appWindow);
-
-            var truthfulLabel = appDocument.querySelector(".truthful-label");
-            var probabilityLabel = appDocument.querySelector(
-              ".winning-probability-guide-label"
-            );
-            assert(Math.abs(Number(truthfulLabel.getAttribute("y")) -
-              Number(probabilityLabel.getAttribute("y"))) >= 20,
-            "The lower-end truthful and probability labels should not overlap.");
-            assert(appDocument.querySelector(".coincident-choice-point"),
-              "Coincident selected and truthful bids should retain bidder 1's marker.");
-            assert(chart.getAttribute("aria-keyshortcuts").includes("ArrowUp") &&
-              chart.getAttribute("aria-keyshortcuts").includes("ArrowDown"),
-            "Declared keyboard shortcuts should match the implemented arrows.");
-          });
-        }
-      },
-      {
-        name: "Accessible result text and SVG coordinates stay valid",
-        run: function () {
-          withReset(function () {
-            var chart = appDocument.getElementById("second-price-chart");
-            var description = appDocument.getElementById("chart-description");
-            var summary = appDocument.getElementById("live-summary");
-            assert(chart.getAttribute("aria-labelledby") ===
-              "chart-title chart-description",
-            "The chart should retain its accessible title and description.");
-            assert(description.textContent.includes("highest opposing bid") &&
-              description.textContent.includes("expected payment conditional") &&
-              description.textContent.includes("truthful bid"),
-            "The dynamic chart description should identify its economic objects.");
-            assert(summary.getAttribute("aria-live") === "polite" &&
-              summary.textContent.includes("probability of winning") &&
-              summary.textContent.includes("expected payoff"),
-            "The live summary should report changing results.");
-
-            var numericAttributes = [
-              "x", "x1", "x2", "y", "y1", "y2", "cx", "cy",
-              "width", "height", "r", "d", "points", "transform"
-            ];
-            var serialized = Array.from(chart.querySelectorAll("*"))
-              .map(function (element) {
-                return numericAttributes.map(function (attribute) {
-                  return element.getAttribute(attribute) || "";
-                }).join(" ");
-              }).join(" ");
-            assert(!/(NaN|Infinity|undefined)/.test(serialized),
-              "The SVG should contain only finite coordinates.");
-            assert(chart.lastElementChild.classList.contains(
-              "winning-probability-guide-label"
-            ) && chart.lastElementChild.dataset.foreground === "true",
-            "The selected probability should remain in the foreground.");
-          });
-        }
-      },
-      {
-        name: "Dynamic HTML mathematics is replaced and re-typeset without accumulating output",
-        run: async function () {
-          reset();
-          try {
-            var alpha = appDocument.getElementById("alpha-number");
-            var beta = appDocument.getElementById("beta-number");
-            var lower = appDocument.getElementById("lower-bound");
-            var upper = appDocument.getElementById("upper-bound");
-            alpha.value = "3.4";
-            dispatchChange(alpha, appWindow);
-            beta.value = "4.6";
-            dispatchChange(beta, appWindow);
-            lower.value = "10";
-            dispatchChange(lower, appWindow);
-            upper.value = "90";
-            dispatchChange(upper, appWindow);
-            await appWindow.mechanismMathReady;
-
-            ["value-min-label", "value-max-label", "bid-min-label", "bid-max-label"]
-              .forEach(function (id) {
-                var label = appDocument.getElementById(id);
-                assert(label.dataset.mathSource &&
-                  label.querySelectorAll('mjx-container[jax="SVG"]').length === 1,
-                "Each dynamic endpoint should contain one current MathJax rendering.");
-              });
-            assert(appDocument.getElementById("value-min-label").dataset.mathSource ===
-              "\\(a=10\\)" &&
-              appDocument.getElementById("bid-max-label").dataset.mathSource ===
-                "\\(b=90\\)",
-            "Dynamic endpoint sources should follow the selected support.");
-          } finally {
-            reset();
-            await appWindow.mechanismMathReady;
-          }
-        }
-      }
-    ];
-
-    await window.MechanismTest.run(tests, {
-      label: "second-price interface tests",
-      title: "SPA interface tests",
-      cleanup: function () { window.clearInterval(testKeepAlive); }
+  test("The production demo uses the two-control payoff comparison without distributions or outcome text", async function () {
+    var loaded = await T.loadFrame(frame, "../auction-equilibria/second-price/index.html", {
+      ready: function (d) { return d.querySelector('#second-price-demo[data-ready="true"]'); },
+      math: ".introduction, .choice-controls, .chart-x-axis-label, .derivation", timeout: 30000
     });
-  }
-}());
+    doc = loaded.document; win = loaded.window;
+    T.assert(element("value-number").value === "50" && element("bid-number").value === "30", "The original choices must remain the defaults.");
+    T.assert(!doc.querySelector('script[src*="distributions"], script[src*="auction-chart"], script[src*="auction-controls"], value-density-preview, model-parameter-controls'), "No distributional runtime or controls may remain.");
+    T.assert(doc.querySelectorAll('#second-price-demo input[type="range"]').length === 2 && doc.querySelectorAll("#second-price-demo button").length === 1, "Only the value/bid pairs and Reset remain.");
+    T.assert(!doc.querySelector("#second-price-demo table, #second-price-demo details, #opposing-slider, #opposing-number, #payoff-loss, #case-description"), "The outcome table, below-plot text, tie menu and price controls must be absent.");
+    T.assert(!doc.querySelector(".spa-probe") && doc.querySelectorAll(".spa-open-dot").length === 2, "Inspection starts hidden; the nontruthful bid discontinuity remains exact.");
+    T.assertScriptOrder(doc, ["../../js/components.js", "../../js/mathjax-config.js", "../../assets/mathjax/tex-svg.js", "../../js/mathjax-runtime.js", "../../js/svg-utils.js", "../../js/chart-layout.js", "../../js/numeric-controls.js", "model.js", "charts.js", "controls.js", "app.js"]);
+  });
+  test("Hover without a button press spans the full plot and shows both payoff expressions in a cursor box", function () {
+    reset();
+    hover(40, 0.35);
+    close(Number(chart().dataset.opposing), 40);
+    close(payoff("truthful"), 10); close(payoff("proposed"), 0);
+    var line = chart().querySelector(".spa-opposing"), frameBox = chart().querySelector(".plot-frame");
+    var left = Number(frameBox.getAttribute("x")), top = Number(frameBox.getAttribute("y"));
+    var width = Number(frameBox.getAttribute("width")), height = Number(frameBox.getAttribute("height"));
+    close(Number(line.getAttribute("x1")), left + 0.4 * width);
+    close(Number(line.getAttribute("x2")), left + 0.4 * width);
+    close(Number(line.getAttribute("y1")), top);
+    close(Number(line.getAttribute("y2")), top + height);
+    ["truthful-payoff", "proposed-payoff"].forEach(function (id) {
+      var bounds = element(id).getBoundingClientRect(), plot = frameBox.getBoundingClientRect();
+      T.assert(bounds.left >= plot.left && bounds.right <= plot.right && bounds.top >= plot.top && bounds.bottom <= plot.bottom, "Both numeric payoffs must be inside the plot.");
+    });
+    T.assert(element("truthful-payoff").getAttribute("aria-label") === "u_i(v_i,v_i,p_i) = 10" &&
+      element("proposed-payoff").getAttribute("aria-label") === "u_i(v_i,x_i,p_i) = 0", "Readouts must identify the requested payoff arguments.");
+    var box = chart().querySelector(".spa-payoff-box rect").getBoundingClientRect();
+    var cursor = point(40, 0.35);
+    T.assertClose(box.left, cursor.clientX + 10, 0.001, "The payoff box should sit next to the cursor when there is room.");
+    T.assertClose(box.bottom, cursor.clientY - 10, 0.001, "The payoff box should sit above the cursor when there is room.");
+    hover(80, 0.7);
+    var moved = chart().querySelector(".spa-payoff-box rect").getBoundingClientRect();
+    T.assert(moved.left > box.left && moved.top > box.top, "The payoff box must follow the cursor in both dimensions.");
+    hover(40, 0.35);
+    T.assert(element("live-summary").textContent.indexOf("Truthful payoff 10") >= 0, "Inspected results must have a text equivalent.");
+    pointer("pointerleave", 40);
+    T.assert(!doc.querySelector(".spa-probe"), "Leaving the plot must remove the hover guide and readouts.");
+    hover(-5);
+    T.assert(!doc.querySelector(".spa-probe"), "Axis margins outside the plotting box must not select a price.");
+  });
+  test("Underbidding, overbidding and exact ties give the correct hovered payoffs", function () {
+    reset();
+    [[20, 30, 30], [30, 20, 10], [40, 10, 0], [50, 0, 0], [90, 0, 0]].forEach(function (example) {
+      hover(example[0]); close(payoff("truthful"), example[1]); close(payoff("proposed"), example[2]);
+    });
+    hover(30);
+    T.assert(element("proposed-payoff").dataset.outcome === "tie", "Hovering at the exact proposed bid must use a tie.");
+    close(Number(element("proposed-payoff").dataset.winProbability), 0.5);
+    set("bid-number", 70);
+    [[20, 30, 30], [50, 0, 0], [60, 0, -10], [70, 0, -10], [90, 0, 0]].forEach(function (example) {
+      hover(example[0]); close(payoff("truthful"), example[1]); close(payoff("proposed"), example[2]);
+    });
+    set("value-number", 35.7); set("bid-number", 12.345);
+    hover(12.3);
+    close(payoff("proposed"), (35.7 - 12.3) / 2, "Rounded controls and exact fractional-price ties must agree.");
+  });
+  test("Number and slider changes synchronize, clamp and recover invalid commits", function () {
+    reset(); set("value-slider", 75.25); set("bid-number", 80.123);
+    close(Number(element("value-number").value), 75.3); close(Number(element("bid-slider").value), 80.1);
+    close(Number(chart().dataset.value), 75.3); close(Number(chart().dataset.bid), 80.1);
+    set("value-number", "", "change"); close(Number(element("value-number").value), 75.3);
+    ["value", "bid"].forEach(function (field) {
+      T.assert(element(field + "-slider").step === "0.1", "Sliders must move in tenths.");
+      var endpoints = element(field + "-slider").nextElementSibling;
+      T.assert(endpoints.querySelectorAll("mjx-container").length === 2 && endpoints.querySelectorAll('[data-mml-node="msub"]').length === 2,
+        "Both endpoints must render the indexed lower and upper value bounds.");
+    });
+    set("bid-number", 200); close(Number(element("bid-number").value), 100);
+    set("value-number", -5); close(Number(element("value-slider").value), 0);
+    hover(50); close(payoff("proposed"), -50);
+    T.assert(!/NaN|Infinity/.test(chart().innerHTML), "All accepted changes must leave finite geometry.");
+  });
+  test("Coincident bids have identical curves and payoffs at every inspected price", function () {
+    reset(); set("bid-number", 50);
+    T.assert(!doc.querySelector(".spa-loss-area, .spa-open-dot"), "Truthful bidding has no deviation loss or jump.");
+    T.assert(doc.querySelector(".spa-curve-label").textContent === "Both bids", "Coincident curves need one direct label.");
+    [0, 30, 50, 100].forEach(function (price) { hover(price); close(payoff("truthful"), payoff("proposed")); });
+  });
+  test("Keyboard inspection reaches both endpoints, supports larger steps and clears", function () {
+    reset(); chart().focus({ preventScroll: true });
+    T.assert(doc.querySelector(".spa-probe"), "Keyboard focus must expose an inspection point.");
+    key("Home"); close(Number(chart().dataset.opposing), 0);
+    key("ArrowRight"); close(Number(chart().dataset.opposing), 1);
+    key("ArrowRight", true); close(Number(chart().dataset.opposing), 11);
+    key("End"); key("ArrowRight"); close(Number(chart().dataset.opposing), 100);
+    key("ArrowLeft", true); close(Number(chart().dataset.opposing), 90);
+    key("Home"); key("ArrowLeft"); close(Number(chart().dataset.opposing), 0);
+    key("Escape"); T.assert(!doc.querySelector(".spa-probe"), "Escape must dismiss inspection.");
+    key("ArrowRight"); close(Number(chart().dataset.opposing), 1);
+    element("reset-button").focus({ preventScroll: true });
+    T.assert(!doc.querySelector(".spa-probe"), "Leaving keyboard focus clears inspection.");
+  });
+  test("Touch inspection has one owner, clamps endpoints and stops on release, cancel, loss or reset", function () {
+    var svg = chart(), capture = null;
+    var methods = [svg.setPointerCapture, svg.hasPointerCapture, svg.releasePointerCapture];
+    svg.setPointerCapture = function (id) { capture = id; };
+    svg.hasPointerCapture = function (id) { return capture === id; };
+    svg.releasePointerCapture = function () { capture = null; };
+    function touch(type, price, overrides) {
+      pointer(type, price, Object.assign({ pointerType: "touch", pointerId: 8, buttons: 1 }, overrides || {}));
+    }
+    try {
+      reset(); touch("pointerdown", 20, { isPrimary: false });
+      T.assert(capture === null && !doc.querySelector(".spa-probe"), "Secondary touches must not begin inspection.");
+      touch("pointerdown", 20); T.assert(capture === 8, "The primary touch must own capture.");
+      touch("pointermove", 80, { pointerId: 9 }); close(Number(svg.dataset.opposing), 20);
+      touch("pointermove", -20); close(Number(svg.dataset.opposing), 0);
+      touch("pointerup", 120); close(Number(svg.dataset.opposing), 100);
+      T.assert(capture === null, "Release must end capture.");
+      touch("pointermove", 10); close(Number(svg.dataset.opposing), 100);
+      ["pointercancel", "lostpointercapture", "reset"].forEach(function (ending) {
+        touch("pointerdown", 25);
+        if (ending === "reset") { reset(); } else { touch(ending, 25); }
+        var previous = Number(svg.dataset.opposing);
+        touch("pointermove", 80);
+        T.assert(capture === null, "Ending a touch must release its capture.");
+        close(Number(svg.dataset.opposing), previous, "Ending a touch must prevent later moves from changing the price.");
+      });
+    } finally {
+      reset(); svg.setPointerCapture = methods[0]; svg.hasPointerCapture = methods[1]; svg.releasePointerCapture = methods[2];
+    }
+  });
+  test("Reset restores both choices, clears inspection and retains button focus", function () {
+    set("value-number", 80); set("bid-number", 95); hover(90);
+    var button = element("reset-button"); button.focus({ preventScroll: true }); button.click();
+    close(Number(element("value-number").value), 50); close(Number(element("bid-number").value), 30);
+    T.assert(!doc.querySelector(".spa-probe") && doc.activeElement === button, "Reset must clear inspection without moving focus.");
+    T.assert(element("live-summary").textContent.indexOf("reset") >= 0, "Reset must be announced.");
+  });
+  test("Responsive frames stay stable and all readouts remain visible at edge and extreme states", async function () {
+    for (var width of [320, 375, 640, 768, 1280]) {
+      frame.style.width = width + "px";
+      await T.waitFor(function () { return win.innerWidth === width; }, 5000);
+      await T.nextAnimationFrames(win, 4);
+      reset();
+      var original = plotBounds();
+      for (var choice of [[50, 30], [50, 70], [0, 100], [100, 0], [0, 0], [100, 100]]) {
+        set("value-number", choice[0]); set("bid-number", choice[1]);
+        for (var price of [0, 30, 50, 70, 100]) {
+          for (var fraction of [0, 0.25, 1]) {
+            hover(price, fraction);
+            plotBounds().forEach(function (value, index) { close(value, original[index], "Hover and choice edits must leave plot bounds stable."); });
+            var svgBox = chart().getBoundingClientRect(), plotBox = chart().querySelector(".plot-frame").getBoundingClientRect();
+            chart().querySelectorAll("text").forEach(function (label) {
+              if (win.getComputedStyle(label).visibility === "hidden") { return; }
+              var box = label.getBoundingClientRect();
+              T.assert(box.left >= svgBox.left - 1 && box.right <= svgBox.right + 1, "Chart text must fit at " + width + "px: " + label.textContent);
+              if (label.classList.contains("spa-payoff")) {
+                T.assert(box.left >= plotBox.left && box.right <= plotBox.right && box.top >= plotBox.top && box.bottom <= plotBox.bottom, "Both payoffs must stay inside the plotting box at " + width + "px.");
+              }
+            });
+            var tooltip = chart().querySelector(".spa-payoff-box rect").getBoundingClientRect();
+            T.assert(tooltip.left >= plotBox.left && tooltip.right <= plotBox.right && tooltip.top >= plotBox.top && tooltip.bottom <= plotBox.bottom,
+              "The entire cursor box must remain inside the plot at all edges.");
+            T.assert(!/NaN|Infinity/.test(chart().innerHTML), "All endpoint geometry must remain finite.");
+          }
+        }
+      }
+      T.assert(doc.documentElement.scrollWidth <= win.innerWidth + 1, "The page must not overflow at " + width + "px.");
+    }
+  });
+  test("The authored lesson, citations, QED and page appendix remain rendered", function () {
+    T.assert(doc.querySelector('.environment-link[href="../environment/index.html"]'), "Retain the IPV Environment link.");
+    T.assert(doc.querySelector('.qed mjx-container') && doc.querySelector('.reference-list [data-reference="vickrey-1961"] a'), "Retain the proof endpoint and Vickrey citation.");
+    T.assert(doc.querySelector('learning-sidebar[page="second-price"]') && win.MechanismNotation.pages["second-price"], "Keep the page-specific notation and appendix.");
+    T.assert(!doc.querySelector('mjx-merror, merror, [data-render-error]'), "All lesson and control math must render successfully.");
+  });
+  T.run(tests, { title: "Second-price dominance interface tests", cleanup: function () { window.clearInterval(keepAlive); } });
+})();

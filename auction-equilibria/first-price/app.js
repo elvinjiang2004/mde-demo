@@ -66,6 +66,14 @@
       ".notes, .references"
     );
     controls.bindEvents();
+    byId("reset-demo-button").addEventListener("click", function () {
+      elements.resetButton.click();
+      state.value = DEFAULTS.value;
+      state.bid = DEFAULTS.bid;
+      controls.syncControlsFromState();
+      render();
+      elements.liveSummary.textContent = "Demo reset. " + elements.liveSummary.textContent;
+    });
     window.EquationChain.initDividers();
     controls.syncControlsFromState();
     render();
@@ -130,15 +138,15 @@
         "a zero-area rectangle" : "a positive rectangle");
     elements.liveSummary.textContent =
       charts.distributionSummary() + ". With " + state.n +
-      " bidders, your private value is " +
+      " buyers, your private value is " +
       formatMoney(state.value, span) + " and your proposed bid is " +
       formatMoney(state.bid, span) + ". The area under the PDF of beta " +
-      "superscript I of Y subscript 1, the highest opposing bid, gives a " +
+      "superscript I of Y subscript i, the highest opposing bid, gives a " +
       "probability of winning of " +
       formatPercent(current.winProbability) + ". On the CDF panel's bid axis, " +
-      "x subscript 1 is the payment upon winning, " +
+      "x subscript i is the payment upon winning, " +
       formatMoney(current.paymentIfWin, span) +
-      ", and v subscript 1 minus x subscript 1 is the " +
+      ", and v subscript i minus x subscript i is the " +
       "payoff if you win, " + formatMoney(current.surplusIfWin, span) + ". " +
       "The " +
       rectangleState + " has probability height " +

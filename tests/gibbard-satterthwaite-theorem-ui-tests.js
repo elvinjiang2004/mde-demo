@@ -73,6 +73,32 @@
     T.assertScriptOrder(doc, ["../../js/components.js", "../../js/bibliography.js", "../../js/references.js", "../../js/mathjax-config.js", "../../assets/mathjax/tex-svg.js", "../../js/mathjax-runtime.js", "../../js/notation-catalog.js", "../../js/learning-sidebar.js", "model.js", "app.js"]);
     checkAudit();
   });
+  test("Reset restores the initial rule, brush, profile and diagnostics after edits", function () {
+    paintRule(model.createRule("constant-c"));
+    key(35, "ArrowLeft");
+    var reset = element("reset-demo");
+    reset.focus({ preventScroll: true }); reset.click();
+    assert(readRule().join("") === model.createRule("plurality").join(""), "Reset must restore every plurality outcome after arbitrary edits.");
+    assert(doc.querySelectorAll('.winner-choice[aria-pressed="true"]').length === 1 && brushButton("A").getAttribute("aria-pressed") === "true", "Reset must restore only brush A.");
+    assert(doc.querySelectorAll('.rule-cell[tabindex="0"]').length === 1 && cell(0).tabIndex === 0 && cell(0).getAttribute("aria-pressed") === "true", "Reset must restore the initial selected profile and keyboard entry point.");
+    assert(doc.activeElement === reset && element("live-summary").textContent.indexOf("reset to plurality") >= 0, "Reset must retain button focus and announce the restored state.");
+    checkAudit();
+    cell(35).click();
+    assert(cell(35).dataset.winner === "A", "The restored brush must paint normally after reset.");
+    reset.click();
+    assert(readRule().join("") === model.createRule("plurality").join(""), "Reset must work repeatedly.");
+  });
+  test("Reset releases an active painting stroke", function () {
+    choose("C");
+    withCaptureStub(function (capture) {
+      pointer(cell(0), "pointerdown");
+      assert(capture() === 17, "The painting stroke must be active before reset.");
+      element("reset-demo").click();
+      pointer(cell(0), "pointermove");
+      assert(capture() === null && readRule().join("") === model.createRule("plurality").join(""), "Reset must release capture and prevent subsequent moves from painting.");
+    });
+    checkAudit();
+  });
   test("The diagonal corner places Voter 1 below left and Voter 2 above right", function () {
     var corner = doc.querySelector(".table-corner"), line = corner.querySelector("svg line");
     var first = corner.querySelector(".corner-voter-1"), second = corner.querySelector(".corner-voter-2");
@@ -207,6 +233,8 @@
       var scroller = element("rule-scroll"), tableBounds = element("rule-table").getBoundingClientRect();
       assert(width >= 768 || scroller.scrollWidth > scroller.clientWidth, "Narrow tables need their own scroll region.");
       assert(doc.querySelector(".winner-brush-controls").getBoundingClientRect().top >= scroller.getBoundingClientRect().bottom, "The elected candidate brush must sit below the mechanism grid.");
+      var reset = element("reset-demo"), resetBounds = reset.getBoundingClientRect();
+      assert(resetBounds.left >= 0 && resetBounds.right <= win.innerWidth && resetBounds.height >= 44, "Reset must remain accessible without horizontal page scrolling.");
       var gridCells = Array.from(doc.querySelectorAll("#rule-table th, #rule-table td"));
       var cellBounds = gridCells[0].getBoundingClientRect();
       assert(gridCells.every(function (node) {
@@ -220,6 +248,8 @@
       choose("B"); cell(35).click(); key(35, "ArrowLeft");
       assert(doc.activeElement === cell(34) && cell(34).getBoundingClientRect().right <= scroller.getBoundingClientRect().right + 1, "Keyboard movement reveals offscreen cells.");
       assert(Math.abs(element("rule-table").getBoundingClientRect().height - tableBounds.height) < 1, "Painting and marker updates must not change table geometry.");
+      reset.focus({ preventScroll: true }); reset.click();
+      assert(scroller.scrollLeft === 0 && cell(0).tabIndex === 0 && doc.activeElement === reset, "Reset must reveal the initial profile on narrow screens while retaining focus.");
     }
   });
 

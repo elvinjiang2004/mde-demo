@@ -269,11 +269,11 @@
     appendSvg(svg, "text", {
       x: left, y: 108, class: "value-pdf-endpoint-label",
       "text-anchor": "start", "data-endpoint": "a"
-    }, "a = " + formatMoney(options.lower, span));
+    }, (options.lowerSymbol || "a") + " = " + formatMoney(options.lower, span));
     appendSvg(svg, "text", {
       x: right, y: 108, class: "value-pdf-endpoint-label",
       "text-anchor": "end", "data-endpoint": "b"
-    }, "b = " + formatMoney(options.upper, span));
+    }, (options.upperSymbol || "b") + " = " + formatMoney(options.upper, span));
   }
 
   function extend(base, extras) {

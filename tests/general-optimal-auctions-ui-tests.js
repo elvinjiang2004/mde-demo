@@ -51,7 +51,7 @@
       "../../assets/mathjax/tex-svg.js", "../../js/mathjax-runtime.js", "../../js/math-utils.js", "../../js/svg-utils.js", "model.js", "charts.js", "app.js"]);
     assert(!el("lottery-chart") && doc.querySelectorAll(".control-points [role=slider]").length === 11);
     assert(win.IroningModel && !win.OptimalAuctionsModel, "The two auction models have isolated namespaces");
-    assert(doc.getElementById("page-title").textContent === "General Optimal Auctions" &&
+    assert(doc.getElementById("page-title").textContent === "General Optimal Auction Design" &&
       doc.querySelector("page-header").getAttribute("category") === "Auction Design", "Independent auction title and group");
     assert(el("bic-status").dataset.passed === "true" && el("feasibility-status").dataset.passed === "true");
     assert(el("bic-verdict").textContent === "BIC: passes" && el("bic-monotonicity").textContent === "is weakly increasing");
@@ -791,5 +791,5 @@
     assert(nodes()[3] !== before[3] && nodes()[4] !== before[4], "Distribution changes refresh both charts");
     finiteGeometry();
   });
-  T.run(tests, { title: "General Optimal Auctions interface tests" });
+  T.run(tests, { title: "General Optimal Auction Design interface tests" });
 })();

@@ -57,9 +57,9 @@
     if (!isFiniteNumber(a) || !isFiniteNumber(b)) {
       errors.push("The distribution bounds must be finite numbers.");
     } else if (a < 0) {
-      errors.push("The lower bound a must be nonnegative.");
+      errors.push("The lower value bound must be nonnegative.");
     } else if (!(b > a)) {
-      errors.push("The upper bound b must be strictly greater than the lower bound a.");
+      errors.push("The upper value bound must be strictly greater than the lower value bound.");
     }
 
     if (errors.length === 0) {
@@ -83,11 +83,11 @@
     var errors = result.errors.slice();
 
     if (!isFiniteNumber(value) || value < a - EPSILON || value > b + EPSILON) {
-      errors.push("Bidder 1's value must lie in [a, b].");
+      errors.push("Buyer i's value must lie between the lower and upper value bounds.");
     }
 
     if (!isFiniteNumber(bid) || bid < a - EPSILON || bid > b + EPSILON) {
-      errors.push("Bidder 1's bid must lie in [a, b].");
+      errors.push("Buyer i's bid must lie between the lower and upper value bounds.");
     }
 
     return {

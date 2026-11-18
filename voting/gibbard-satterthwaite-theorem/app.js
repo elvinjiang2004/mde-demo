@@ -42,6 +42,16 @@
     }
     render();
   }
+  function reset() {
+    endStroke();
+    selected = 0;
+    brush = "A";
+    rule = model.createRule("plurality");
+    audit = model.audit(rule);
+    render();
+    scroll.scrollLeft = 0;
+    document.getElementById("live-summary").textContent = "Voting rule reset to plurality. Elected candidate brush A.";
+  }
   function makeCell(row, column) {
     var index = row * 6 + column;
     var td = document.createElement("td");
@@ -198,6 +208,7 @@
   brushButtons.forEach(function (button) {
     button.addEventListener("click", function () { selectBrush(button.dataset.candidate); });
   });
+  document.getElementById("reset-demo").addEventListener("click", reset);
   buildTable();
   render();
   demo.dataset.ready = "true";

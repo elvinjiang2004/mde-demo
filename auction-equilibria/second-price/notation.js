@@ -4,29 +4,29 @@
 (function () {
   window.MechanismNotation.registerPage("second-price", {
     pageNotation: [
-      [["\\beta^{\\mathrm{II}}(v)=v", "The dominant bidding strategy in the second-price auction."]],
+      [["v_i", "Buyer \\(i\\)'s private value, also the truthful bid in the demo."]],
+      [["x_i", "Buyer \\(i\\)'s proposed bid in the demo."]],
       [
-        ["a=\\underline{v}", "The lower endpoint of each buyer's value support in the demo."],
-        ["b=\\overline{v}", "The upper endpoint of each buyer's value support in the demo."],
-        ["Z_i\\sim\\mathrm{Beta}(\\alpha,\\beta)", "Buyer \\(i\\)'s auxiliary Beta random variable on \\([0,1]\\), with \\(V_i=a+(b-a)Z_i\\)."]
+        ["u_i(v_i,v_i,p_i)", "Buyer \\(i\\)'s payoff from truthful bidding at the highest opposing bid \\(p_i\\)."],
+        ["u_i(v_i,x_i,p_i)", "Buyer \\(i\\)'s payoff from the proposed bid \\(x_i\\) at the same highest opposing bid. At a tie, payoff averages over equal tie-breaking with one other buyer."]
       ],
-      [["\\alpha, \\beta", "The Beta-distribution shape parameters for \\(Z_i\\)."]],
-      [["x_1", "Buyer 1's proposed bid."]],
-      [["x_2,\\ldots,x_n", "The bids from buyers \\(2,\\ldots,n\\)."]],
-      [["p_1=\\max\\{x_2,\\ldots,x_n\\}", "The highest bid among buyers \\(2,\\ldots,n\\)."]],
       [
-        ["x^-\\lt v_1", "An alternative underbid."],
-        ["x^+\\gt v_1", "An alternative overbid."]
-      ]
+        ["\\underline{v}_i=0", "The demo's lower value and bid endpoint."],
+        ["\\overline{v}_i=100", "The demo's upper value and bid endpoint."]
+      ],
+      [
+        ["p_i=\\max\\{x_j\\mid j\\neq i\\}", "The highest opposing bid faced by buyer \\(i\\)."],
+        ["x_j", "Buyer \\(j\\)'s submitted bid."]
+      ],
+      [["v_i'", "An alternative bid by buyer \\(i\\)."]]
     ],
     pageNotationSections: [
-      "Introduction",
       "Demo",
       "Demo",
       "Demo",
-      "Proof of the dominant strategy for buyer 1",
-      "Proof of the dominant strategy for buyer 1",
-      "Proof of the dominant strategy for buyer 1"
+      "Demo",
+      "Proof of the proposition",
+      "Proof of the proposition"
     ],
     environmentNotation: window.MechanismNotation.pages["auction-equilibria"].environmentNotation
   });

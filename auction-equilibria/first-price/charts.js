@@ -53,6 +53,8 @@
       chart.drawValueDensityPreview(svg, {
         lower: state.a,
         upper: state.b,
+        lowerSymbol: "v̲",
+        upperSymbol: "v̅",
         alpha: state.alpha,
         beta: state.beta,
         distribution: distributionSpec(),
@@ -175,7 +177,7 @@
         y: densityTop + 16,
         class: "support-label annotation-halo",
         "text-anchor": supportX > left + plotWidth * 0.76 ? "end" : "start"
-      }, "βᴵ(b) = " + formatMoney(current.maximumEquilibriumBid, span));
+      }, "βᴵ(v̅) = " + formatMoney(current.maximumEquilibriumBid, span));
 
       var equilibriumX = xScale(equilibrium.bid);
       appendSvg(svg, "line", {
@@ -636,7 +638,7 @@
         y2: baseY,
         class: "cdf-value-guide",
         "data-value": state.value,
-        "data-notation": "v_1"
+        "data-notation": "v_i"
       });
 
       if (rectangleState === "zero") {
@@ -862,9 +864,9 @@
         "positive" : (signedPayoffIfWin < -model.EPSILON ? "negative" : "zero");
       var closeEndpoints = Math.abs(paymentX - valueX) <
         (layout.compact ? 105 : 120);
-      var paymentLabel = "x₁ = " +
+      var paymentLabel = "xᵢ = " +
         formatMoney(current.paymentIfWin, state.b - state.a);
-      var valueLabel = "v₁ = " +
+      var valueLabel = "vᵢ = " +
         formatMoney(state.value, state.b - state.a);
       var paymentPlacement;
       var valuePlacement;
@@ -887,7 +889,7 @@
           "text-anchor": axisCenteredAnchor(paymentX, left, right),
           "data-payment": current.paymentIfWin,
           "data-value": state.value
-        }, "x₁ = v₁ = " +
+        }, "xᵢ = vᵢ = " +
           formatMoney(current.bid, state.b - state.a));
       } else {
         appendSvg(svg, "line", {
@@ -972,7 +974,7 @@
         "data-signed-width": signedPayoffIfWin,
         "data-signed-payoff-if-win": signedPayoffIfWin
       });
-      var label = "Payoff if you win, v₁ − x₁ = " +
+      var label = "Payoff if you win, vᵢ − xᵢ = " +
         formatMoney(signedPayoffIfWin, state.b - state.a);
       var labelWidth = label.length * (layout.compact ? 5.6 : 5.9);
       var labelX = (bracketLeft + bracketRight) / 2;
@@ -1064,7 +1066,7 @@
       right,
       compact
     ) {
-      var label = "βᴵ(v₁) = " +
+      var label = "βᴵ(vᵢ) = " +
         formatMoney(equilibrium.bid, state.b - state.a);
       var useRight = annotationLabelFitsRight(
         label, equilibriumX, left, right, 14, compact
@@ -1092,7 +1094,7 @@
       right,
       compact
     ) {
-      var label = "βᴵ(v₁) = " +
+      var label = "βᴵ(vᵢ) = " +
         formatMoney(equilibriumBid, state.b - state.a);
       var useRight = annotationLabelFitsRight(
         label, equilibriumX, left, right, 12, compact
@@ -1223,23 +1225,23 @@
           "The expected-payoff rectangle has zero area." :
           "The shaded rectangle lies under the CDF.");
       return "The first panel plots the PDF of the highest equilibrium bid " +
-        "among the other " + (state.n - 1) + " bidder" +
+        "among the other " + (state.n - 1) + " buyer" +
         (state.n - 1 === 1 ? "" : "s") + ". Its area through the proposed " +
         "bid gives the probability of winning, " +
         formatPercent(current.winProbability) + ". The second panel plots the " +
-        "probability of winning against bid x subscript 1. A dashed horizontal guide " +
+        "probability of winning against bid x subscript i. A dashed horizontal guide " +
         "marks the selected probability, " +
         formatPercent(current.winProbability) + ". " +
-        "The axis marks x subscript 1, payment upon winning, at " +
+        "The axis marks x subscript i, payment upon winning, at " +
         formatMoney(current.paymentIfWin, span) +
-        ", and brackets v subscript 1 minus x subscript 1, payoff if you win, " +
+        ", and brackets v subscript i minus x subscript i, payoff if you win, " +
         "equal to " + formatMoney(current.surplusIfWin, span) +
-        ". A rectangle from x subscript 1 to v subscript 1 has probability height " +
+        ". A rectangle from x subscript i to v subscript i has probability height " +
         formatPercent(current.winProbability) + ", signed monetary width " +
         formatMoney(state.value - state.bid, span) + ", and signed area equal " +
         "to expected payoff, " + formatMoney(current.expectedPayoff, span) +
         ". " + rectangleDescription + " The maximum occurs at the equilibrium " +
-        "bid beta superscript I of v subscript 1, " +
+        "bid beta superscript I of v subscript i, " +
         formatMoney(equilibrium.bid, span) +
         ", where expected payoff " +
         "is " + formatMoney(equilibrium.expectedPayoff, span) + ".";

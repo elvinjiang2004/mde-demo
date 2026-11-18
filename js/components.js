@@ -147,6 +147,12 @@
   class ModelParameterControls extends HTMLElement {
     connectedCallback() {
       this.innerHTML = MODEL_PARAMETER_CONTROLS_HTML;
+      var lowerSymbol = this.getAttribute("lower-symbol") || "a";
+      var upperSymbol = this.getAttribute("upper-symbol") || "b";
+      this.querySelector('label[for="lower-bound"] > span').textContent =
+        "Lower bound, \\(" + lowerSymbol + "\\)";
+      this.querySelector('label[for="upper-bound"] > span').textContent =
+        "Upper bound, \\(" + upperSymbol + "\\)";
     }
   }
 

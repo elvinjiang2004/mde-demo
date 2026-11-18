@@ -30,28 +30,28 @@ window.MechanismTestCatalog = [
   },
   {
     "file": "regular-optimal-auctions-model-tests.html",
-    "name": "Regular optimal auctions model",
+    "name": "Regular optimal auction design model",
     "kind": "model",
     "module": "regular-optimal-auctions",
     "status": "complete"
   },
   {
     "file": "regular-optimal-auctions-ui-tests.html",
-    "name": "Regular optimal auctions interface",
+    "name": "Regular optimal auction design interface",
     "kind": "interface",
     "module": "regular-optimal-auctions",
     "status": "complete"
   },
   {
     "file": "general-optimal-auctions-model-tests.html",
-    "name": "General Optimal Auctions model",
+    "name": "General Optimal Auction Design model",
     "kind": "model",
     "module": "general-optimal-auctions",
     "status": "complete"
   },
   {
     "file": "general-optimal-auctions-ui-tests.html",
-    "name": "General Optimal Auctions interface",
+    "name": "General Optimal Auction Design interface",
     "kind": "interface",
     "exclusive": true,
     "module": "general-optimal-auctions",

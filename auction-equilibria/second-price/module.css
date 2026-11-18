@@ -1,0 +1,41 @@
+.spa-demo { --spa-truth: var(--green); --spa-proposed: var(--blue); }
+.spa-layout { display: grid; grid-template-columns: minmax(0, 1fr) 285px; gap: 1.25rem; align-items: start; }
+.spa-controls { min-width: 0; padding-top: 2rem; }
+.spa-controls .slider-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+.spa-controls .range-label-row { gap: 0.35rem; }
+.spa-controls .range-label-row label { min-width: 0; }
+.spa-controls .range-number-input { width: 4.5rem; flex: 0 0 4.5rem; }
+.spa-chart-frame { --chart-trim-top: 12px; --chart-trim-bottom: 28px; }
+.spa-chart-frame + .chart-x-axis-label { margin-inline: 46px 14px; }
+#second-price-chart { height: 380px; overflow: visible; touch-action: pan-y; cursor: crosshair; }
+#second-price-chart .spa-frame { fill: none; stroke: var(--axis); stroke-width: 1; }
+#second-price-chart .spa-axis { stroke: var(--axis); stroke-width: 1; }
+#second-price-chart .spa-grid { stroke: var(--line-light); stroke-width: 1; }
+#second-price-chart .spa-zero { stroke: var(--zero-line); stroke-width: 1.4; }
+#second-price-chart .spa-truth { fill: none; stroke: var(--spa-truth); stroke-width: 3; stroke-linejoin: round; }
+#second-price-chart .spa-proposed { fill: none; stroke: var(--spa-proposed); stroke-width: 2.5; stroke-dasharray: 7 5; stroke-linejoin: round; }
+#second-price-chart .spa-loss-area { fill: var(--red-fill); stroke: none; }
+#second-price-chart .spa-threshold { stroke: var(--guide-light); stroke-dasharray: 3 5; stroke-width: 1; }
+#second-price-chart .spa-opposing { stroke: var(--guide); stroke-width: 1.5; stroke-dasharray: 5 4; }
+#second-price-chart .spa-truth-dot { fill: var(--spa-truth); stroke: var(--surface-background); stroke-width: 1.5; }
+#second-price-chart .spa-proposed-dot { fill: var(--spa-proposed); stroke: var(--surface-background); stroke-width: 1.5; }
+#second-price-chart .spa-open-dot { fill: var(--surface-background); stroke: var(--spa-proposed); stroke-width: 1.8; }
+#second-price-chart .spa-truthful-label { fill: var(--spa-truth); }
+#second-price-chart .spa-proposed-label { fill: var(--spa-proposed); }
+#second-price-chart .spa-halo { paint-order: stroke; stroke: var(--surface-background); stroke-width: 4px; stroke-linejoin: round; }
+#second-price-chart .spa-payoff, #second-price-chart .spa-curve-label { font-weight: bold; }
+#second-price-chart .spa-probe-coordinate { fill: var(--guide-label); }
+#second-price-chart .spa-payoff-box { pointer-events: none; }
+#second-price-chart .spa-math-symbol { font-style: italic; }
+#second-price-chart .spa-math-subscript { font-size: 0.72em; font-style: italic; }
+@media (max-width: 800px) {
+  .spa-layout { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .spa-controls { padding-top: 0; }
+  .spa-controls .slider-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+  .spa-controls .range-label-row { flex-wrap: wrap; }
+}
+@media (max-width: 580px) {
+  #second-price-chart { height: 340px; }
+  .spa-controls .slider-grid { grid-template-columns: minmax(0, 1fr); }
+  .spa-controls .range-label-row { flex-wrap: nowrap; }
+}

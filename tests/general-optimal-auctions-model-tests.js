@@ -415,5 +415,5 @@
       close(M.adoptedRule(M.efficient(n, uniform), n, uniform).revenue, (n - 1) / (n + 1), 1e-10);
     });
   });
-  T.run(tests, { title: "General Optimal Auctions model tests" });
+  T.run(tests, { title: "General Optimal Auction Design model tests" });
 })();

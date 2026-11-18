@@ -124,6 +124,9 @@
     var distributions = window.AuctionDistributions;
     var math = window.MechanismMath;
     var formatMoney = window.AuctionChart.formatMoney;
+    var parameterControls = elements.lowerBound.closest("model-parameter-controls");
+    var lowerSymbol = parameterControls && parameterControls.getAttribute("lower-symbol") || "a";
+    var upperSymbol = parameterControls && parameterControls.getAttribute("upper-symbol") || "b";
     var DEFAULTS = defaults;
     var chartPointerId = null;
     var resizeTimer = null;
@@ -352,10 +355,10 @@
       elements.bidSlider.value = String(state.bid);
       elements.valueNumber.value = formatChoiceNumber(state.value);
       elements.bidNumber.value = formatChoiceNumber(state.bid);
-      math.setText(elements.valueMinLabel, "\\(a=" + lowerText + "\\)");
-      math.setText(elements.valueMaxLabel, "\\(b=" + upperText + "\\)");
-      math.setText(elements.bidMinLabel, "\\(a=" + lowerText + "\\)");
-      math.setText(elements.bidMaxLabel, "\\(b=" + upperText + "\\)");
+      math.setText(elements.valueMinLabel, "\\(" + lowerSymbol + "=" + lowerText + "\\)");
+      math.setText(elements.valueMaxLabel, "\\(" + upperSymbol + "=" + upperText + "\\)");
+      math.setText(elements.bidMinLabel, "\\(" + lowerSymbol + "=" + lowerText + "\\)");
+      math.setText(elements.bidMaxLabel, "\\(" + upperSymbol + "=" + upperText + "\\)");
 
       elements.valueSlider.setAttribute(
         "aria-valuetext",

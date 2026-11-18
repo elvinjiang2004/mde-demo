@@ -45,7 +45,7 @@
       if (group.id === "auction-design") {
         T.assert(doc.querySelector(".introduction").textContent.includes("A monopoly seller") &&
           !doc.querySelector(".introduction").textContent.includes("A seller intends to sell"),
-        "General Optimal Auctions should share the Regular Optimal Auctions environment.");
+        "General Optimal Auction Design should share the Regular Optimal Auction Design environment.");
       }
       if (group.id === "bilateral-trade") {
         var conditions = doc.querySelector(".introduction > ol").textContent;
