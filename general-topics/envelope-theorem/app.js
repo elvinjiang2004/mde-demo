@@ -4,7 +4,6 @@
   var model = window.EnvelopeTheoremModel;
   var math = window.MechanismMath;
   var appendSvg = window.SvgUtils.appendSvg;
-  var formatTick = window.SvgUtils.formatTick;
 
   var initialLemmaTarget = window.location.hash === "#myerson-lemma" ?
     document.getElementById("myerson-lemma") : null;
@@ -128,6 +127,7 @@
         return;
       }
       dragActive = true;
+      elements.mainChart.classList.add("plot-dragging");
       dragPointerId = event.pointerId;
       state.selectedIndex = index;
       elements.mainChart.setPointerCapture(event.pointerId);
@@ -179,6 +179,7 @@
       return;
     }
     dragActive = false;
+    elements.mainChart.classList.remove("plot-dragging");
     dragPointerId = null;
     if (elements.mainChart.hasPointerCapture(event.pointerId)) {
       elements.mainChart.releasePointerCapture(event.pointerId);
@@ -205,7 +206,7 @@
     }
     var list = pointList(state.lines);
     var best = -1;
-    var bestDist = POINT_HIT_RADIUS;
+    var bestDist = ChartLayout.svgUnits(elements.mainChart, POINT_HIT_RADIUS);
     list.forEach(function (point, index) {
       var x = svgTOf(point.t, MAIN_LAYOUT);
       var y = svgVOf(point.v, MAIN_LAYOUT);
@@ -306,15 +307,7 @@
     return { yMin: rawMin - pad, yMax: rawMax + pad };
   }
 
-  function niceTicks(yMin, yMax) {
-    var ticks = [yMin, yMax];
-    if (yMin < -1e-9 && yMax > 1e-9) {
-      ticks.push(0);
-    }
-    return ticks.sort(function (a, b) { return a - b; });
-  }
-
-  function drawAxisFrame(svg, layout, xTicks, yTicks, yMapper, formatYTick) {
+  function drawAxisFrame(svg, layout, domain) {
     // Reserve endpoint overhang in both panels so viewport fitting cannot move
     // the plot when a point reaches an edge or its selection radius changes.
     appendSvg(svg, "rect", {
@@ -324,27 +317,8 @@
       height: layout.bottom - layout.top + 2 * SELECTED_POINT_RADIUS,
       fill: "none", stroke: "none", "pointer-events": "none", "aria-hidden": "true"
     });
-    var formatY = formatYTick || formatSigned;
-    xTicks.forEach(function (value) {
-      var x = svgTOf(value, layout);
-      appendSvg(svg, "line", {
-        x1: x, y1: layout.bottom, x2: x, y2: layout.bottom + 6, class: "axis-line"
-      });
-      appendSvg(svg, "text", {
-        x: x, y: layout.bottom + 18, class: "axis-text",
-        "text-anchor": value === 0 ? "start" : (value === 1 ? "end" : "middle")
-      }, formatTick(value));
-    });
-
-    yTicks.forEach(function (value) {
-      var y = yMapper(value);
-      appendSvg(svg, "line", {
-        x1: layout.left - 6, y1: y, x2: layout.left, y2: y, class: "axis-line"
-      });
-      appendSvg(svg, "text", {
-        x: layout.left - 10, y: y + 4, class: "axis-text", "text-anchor": "end"
-      }, formatY(value));
-    });
+    PlotStyle.axis(svg, { orientation: "x", frame: layout, domain: [0, 1] });
+    PlotStyle.axis(svg, { orientation: "y", frame: layout, domain: domain, grid: true });
 
     appendSvg(svg, "rect", {
       x: layout.left, y: layout.top,
@@ -394,11 +368,7 @@
     appendSvg(svg, "title", { id: "main-chart-title" }, "Envelope, V(t)");
     appendSvg(svg, "desc", { id: "main-chart-description" }, mainChartDescription(summary));
 
-    var yMapper = function (value) { return svgVOf(value, MAIN_LAYOUT); };
-    drawAxisFrame(
-      svg, MAIN_LAYOUT,
-      [0, 0.25, 0.5, 0.75, 1], [0, 0.25, 0.5, 0.75, 1], yMapper, formatTick
-    );
+    drawAxisFrame(svg, MAIN_LAYOUT, [0, 1]);
 
     appendSvg(svg, "line", {
       x1: svgTOf(0, MAIN_LAYOUT), y1: svgVOf(0, MAIN_LAYOUT),
@@ -465,6 +435,18 @@
         "text-anchor": "middle", "dominant-baseline": "central"
       }, point.id);
     });
+    bindEnvelopeProbe(summary);
+  }
+
+  function bindEnvelopeProbe(summary) {
+    var P = PlotProbe, s = P.symbol;
+    P.attach(elements.mainChart, { editable: true, modifier: "alt", views: function () { return [{ id: "envelope", name: "Parameter",
+      frame: MAIN_LAYOUT, domain: [0, 1], yDomain: [0, 1], input: [s("t")], knots: summary.kinks.map(function (k) { return k.t; }),
+      sample: function (t) {
+        var active = summary.segments.find(function (segment) { return t >= segment.t0 && t <= segment.t1; });
+        return [{ key: "envelope", label: "Envelope", notation: P.expression("V", "", "t", ""),
+          value: active ? model.V(summary.lines, t) : NaN, color: active ? colorForId(active.id) : "var(--ink)", radius: 5 }];
+      } }]; } });
   }
 
   function drawSlopeChart(summary) {
@@ -478,10 +460,7 @@
     var range = padRange(Math.min.apply(null, slopes), Math.max.apply(null, slopes), SLOPE_PAD_MIN, SLOPE_PAD_FRACTION);
     var yMapper = makeYMapper(range.yMin, range.yMax, SLOPE_LAYOUT);
 
-    drawAxisFrame(
-      svg, SLOPE_LAYOUT,
-      [0, 0.25, 0.5, 0.75, 1], niceTicks(range.yMin, range.yMax), yMapper, formatSigned
-    );
+    drawAxisFrame(svg, SLOPE_LAYOUT, [range.yMin, range.yMax]);
 
     summary.segments.forEach(function (segment, index) {
       var y = yMapper(segment.slope);
@@ -516,6 +495,22 @@
         class: "slope-infinite-marker", stroke: colorForId(line.id)
       });
     });
+    var P = PlotProbe, s = P.symbol;
+    P.attach(svg, { views: function () { return [{ id: "slope", name: "Parameter", frame: SLOPE_LAYOUT,
+      domain: [0, 1], yDomain: [range.yMin, range.yMax], input: [s("t")], knots: summary.kinks.map(function (k) { return k.t; }),
+      sample: function (t) {
+        var adjacent = summary.segments.filter(function (segment) { return t >= segment.t0 && t <= segment.t1; });
+        var rows = adjacent.map(function (segment, index) {
+          return { key: "slope" + (adjacent.length > 1 ? "-" + index : ""), label: "Active slope",
+            notation: [s("f", "t", [s("x", "", [s("t")], "*"), ",", s("t")])], value: segment.slope,
+            color: colorForId(segment.id), open: adjacent.length > 1, side: adjacent.length > 1 ? (index === 0 ? "left limit" : "right limit") : "" };
+        });
+        if (adjacent.length !== 1) {
+          rows.push({ key: "derivative", label: "Envelope derivative", notation: [s("V", "", [s("t")], "′")],
+            value: NaN, text: adjacent.length > 1 ? "not differentiable" : "not defined", marker: false, color: "var(--ink)" });
+        }
+        return rows;
+      } }]; } });
   }
 
   function updateLiveSummary(summary) {
@@ -551,11 +546,6 @@
 
   function formatValue(value) {
     return value.toFixed(2);
-  }
-
-  function formatSigned(value) {
-    var cleaned = Math.abs(value) < 1e-9 ? 0 : value;
-    return cleaned.toFixed(2);
   }
 
 }());

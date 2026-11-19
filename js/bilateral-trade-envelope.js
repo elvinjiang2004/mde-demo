@@ -908,6 +908,10 @@
     return best;
   }
 
+  function lostGains(allocation, v, c) {
+    return Math.max(v - c, 0) - (v - c) * allocation;
+  }
+
   function allocationErrorAt(q, v, c) {
     var allocation = scalarGridValueAt(q, v, c);
     var efficient = v >= c ? 1 : 0;
@@ -920,6 +924,7 @@
   }
 
   global.BilateralTradeEnvelope = Object.freeze({
+    lostGains: lostGains,
     createGrid: createGrid,
     constantGrid: constantGrid,
     efficientGrid: efficientGrid,

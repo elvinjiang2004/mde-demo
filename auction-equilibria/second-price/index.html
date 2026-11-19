@@ -19,6 +19,7 @@
   <script defer src="../../js/learning-sidebar.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
+  <script defer src="../../js/plot-style.js"></script>
   <script defer src="../../js/numeric-controls.js"></script>
   <script defer src="model.js"></script>
   <script defer src="charts.js"></script>
@@ -47,12 +48,17 @@
         In the second-price auction, for each buyer, truthful bidding, that is, bidding one's true value,
         is a weakly dominant strategy.
       </p>
+      <P>
+        In the interactive demo, adjust the value of the highest bid from other buyers from buyer \(i\)'s
+        perspective. Notice where potential losses arise when you overbid or underbid. Here, values and bids
+        are restricted to be in \([0,100]\), and ties are assumed to be with one other bidder.
+      </P>
     </section>
 
     <section id="second-price-demo" class="explorable explorable-divider spa-demo" aria-label="Compare truthful bidding with a proposed bid">
       <div class="spa-layout">
         <figure class="chart-figure" aria-labelledby="payoff-plot-title">
-          <figcaption id="payoff-plot-title">Payoff against opposing bids</figcaption>
+          <figcaption id="payoff-plot-title"><span class="plot-title-line"><span class="plot-legend-line" style="--plot-line-color:var(--spa-truth)" aria-hidden="true"></span>Ex-post payoff from truthful bid, \(u_i(v_i,v_i,p_i)\)</span><span class="plot-title-line"><span class="plot-legend-line plot-legend-dashed" style="--plot-line-color:var(--spa-proposed)" aria-hidden="true"></span>Ex-post payoff from proposed bid, \(u_i(v_i,x_i,p_i)\)</span></figcaption>
           <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
             <div class="chart-canvas-frame spa-chart-frame">
               <svg id="second-price-chart" width="640" height="380" viewBox="0 0 640 380"
@@ -96,28 +102,28 @@
     >
       <h2 id="dominant-strategy-title">Proof of the proposition</h2>
       <p>
-        Let \(p_i=\max\{x_j \mid j \neq i\}\), where \(x_j\) is buyer \(j\)'s bid. Compare bidding \(v_i\) to some other bid \(v_i'\).
-        Suppose first that \(v_i' \lt v_i\). Then, there are three cases to consider:
+        Fix buyer \(i\) and let \(p_i=\max\{x_j \mid j \neq i\}\), where \(x_j\) is buyer \(j\)'s bid.
+        Compare bidding \(v_i\) to some other bid \(x_i\).
+        Suppose first that \(x_i \lt v_i\). Then, there are three cases to consider:
       </p>
       <p>
-        <strong>Case 1:</strong> \(v_i' \lt v_i \leq p_i\). With either bid,
+        <strong>Case 1:</strong> \(x_i \lt v_i \leq p_i\). With either bid,
         buyer \(i\) loses/ties and gets \(0\).
       </p>
       <p>
-        <strong>Case 2:</strong> \(v_i' \leq p_i \lt v_i\). By bidding \(v_i'\),
+        <strong>Case 2:</strong> \(x_i \leq p_i \lt v_i\). By bidding \(x_i\),
         buyer \(i\) loses/ties and gets at most \(v_i-p_i\gt 0\), whereas by bidding \(v_i\), he wins
         and always gets \(v_i-p_i\gt 0\).
       </p>
       <p>
-        <strong>Case 3:</strong> \(p_i \lt v_i' \lt v_i \). With either bid,
+        <strong>Case 3:</strong> \(p_i \lt x_i \lt v_i \). With either bid,
         buyer \(i\) wins and gets \(v_i-p_i\).
       </p>
-      <p class="has-qed">
-        If \(v_i' \gt v_i\), the reasoning is similar; overbidding only introduces
+      <p>
+        If \(x_i \gt v_i\), the reasoning is similar; overbidding only introduces
         the possibility of winning when buyer \(i\) does not want to, that is,
         when the second-highest bid is above his value. Thus, truthful bidding is a weakly dominant strategy for
         each buyer.
-        <span class="qed">\(\blacksquare\)</span>
 
       </p>
     </section>

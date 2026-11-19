@@ -166,8 +166,11 @@
           assert(labels.length === 4,
             "Both plots should have one HTML title and one HTML x-axis label.");
           labels.forEach(function (label) {
-            assert(label.firstChild && label.firstChild.nodeType === 3 &&
-              /, $/.test(label.firstChild.nodeValue),
+            var line = label.querySelector(".plot-title-line") || label;
+            var prefix = Array.prototype.map.call(line.childNodes, function (node) {
+              return node.nodeType === 3 ? node.nodeValue : "";
+            }).join("");
+            assert(/, $/.test(prefix),
             "Each label's plain text should end with a comma and a space.");
             assert(label.querySelector('mjx-container[jax="SVG"]'),
               "Each plot label should contain MathJax-rendered notation.");

@@ -13,7 +13,7 @@
 }
 
 .general-optimal-auctions-page #distribution-controls, .general-optimal-auctions-page #auction-demo { font-size: 0.86rem; }
-.general-optimal-auctions-page .ironing-plots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.general-optimal-auctions-page .ironing-plots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, max(280px, calc(50% - 0.5rem))), 1fr)); align-items: start; }
 .general-optimal-auctions-page .ironing-plots figure { margin: 0; min-width: 0; }
 .general-optimal-auctions-page .chart-640x360 { display: block; width: 100%; height: auto; overflow: visible; }
 .general-optimal-auctions-page svg text { font-family: var(--text-font); fill: var(--ink); font-size: var(--chart-font-size, 13.76px); }
@@ -55,7 +55,6 @@
 .general-optimal-auctions-page .validation-text:not(:empty) { display: block; }
 .general-optimal-auctions-page .distribution-parameter-grid { grid-template-columns: minmax(0, 0.7fr) repeat(2, minmax(0, 1fr)); }
 .general-optimal-auctions-page .ironing-controls .slider-grid { grid-template-columns: 1fr; gap: 1.25rem; }
-.general-optimal-auctions-page #value-pdf-preview text { font-size: 10px; }
 .general-optimal-auctions-page .limit-open { fill: var(--page-background); stroke: var(--muted); stroke-width: 1.5; }
 .general-optimal-auctions-page .limit-closed { fill: var(--muted); }
 .general-optimal-auctions-page .jump-limit { stroke: var(--blue); stroke-width: 2; }

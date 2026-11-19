@@ -9,13 +9,6 @@
       maximumFractionDigits: digits
     });
   });
-  var densityFormat = new Intl.NumberFormat(undefined, {
-    maximumSignificantDigits: 3
-  });
-  var probabilityFormat = new Intl.NumberFormat(undefined, {
-    style: "percent",
-    maximumFractionDigits: 0
-  });
   var percentFormat = new Intl.NumberFormat(undefined, {
     style: "percent",
     minimumFractionDigits: 1,
@@ -33,18 +26,6 @@
     var cleaned = Math.abs(value) < 1e-10 ? 0 : value;
     var digits = span <= 2 ? 3 : (span <= 20 ? 2 : 1);
     return moneyFormats[digits - 1].format(cleaned);
-  }
-
-  function formatDensityAxis(value) {
-    var absolute = Math.abs(value);
-    if (absolute > 0 && (absolute < 0.001 || absolute >= 10000)) {
-      return value.toExponential(1);
-    }
-    return densityFormat.format(value);
-  }
-
-  function formatProbabilityAxis(value) {
-    return probabilityFormat.format(value);
   }
 
   function formatPercent(value) {
@@ -83,15 +64,6 @@
     });
   }
 
-  function panelTicks(minimum, maximum, count) {
-    var ticks = [];
-    var i;
-    for (i = 0; i <= count; i += 1) {
-      ticks.push(minimum + (i / count) * (maximum - minimum));
-    }
-    return ticks;
-  }
-
   function drawPanelScaffold(svg, panel, left, right) {
     ChartLayout.setTextSize(svg);
     appendSvg(svg, "rect", {
@@ -99,33 +71,22 @@
       y: panel.top,
       width: right - left,
       height: panel.height,
-      class: "panel-background"
+      class: "panel-background plot-frame"
     });
 
-    appendSvg(svg, "text", {
-      x: left,
-      y: panel.top - ChartLayout.svgUnits(svg, 26),
-      "dominant-baseline": "text-after-edge",
-      style: "font-size:var(--chart-font-size)",
-      class: "panel-caption"
-    }, panel.title);
-
-    panelTicks(panel.min, panel.max, panel.tickCount).forEach(function (tick) {
-      var y = yScale(tick, panel);
-      appendSvg(svg, "line", {
-        x1: left,
-        y1: y,
-        x2: right,
-        y2: y,
-        class: Math.abs(tick) <= EPSILON ? "zero-line" : "grid-line"
-      });
+    if (panel.title) {
       appendSvg(svg, "text", {
-        x: left - 10,
-        y: y + 4,
-        class: "axis-text",
-        "text-anchor": "end"
-      }, panel.format(tick));
-    });
+        x: left,
+        y: panel.top - ChartLayout.svgUnits(svg, 26),
+        "dominant-baseline": "text-after-edge",
+        style: "font-size:var(--chart-font-size)",
+        class: "panel-caption"
+      }, panel.title);
+    }
+
+    PlotStyle.axis(svg, { id: panel.id, orientation: "y",
+      frame: { left: left, right: right, top: panel.top, bottom: panel.top + panel.height },
+      domain: [panel.min, panel.max], grid: true, percent: panel.percent });
 
     appendSvg(svg, "line", {
       x1: left,
@@ -174,6 +135,7 @@
   }
 
   function drawValueDensityPreview(svg, options) {
+    PlotStyle.watchResize(svg, "density-curve", function () { drawValueDensityPreview(svg, options); });
     var width = 320;
     var height = 120;
     var left = 14;
@@ -181,12 +143,11 @@
     var top = 9;
     var baseY = 91;
     var plotHeight = baseY - top;
-    var sampleCount = 161;
-    var endpointInset = 1 / (sampleCount * 3);
+    // A fixed display inset regularizes singular endpoints without changing
+    // the density or its exact hover values as the preview is resized.
+    var endpointInset = 1 / 483;
     var span = options.upper - options.lower;
-    var points = [];
     var peak = 0;
-    var i;
 
     svg.setAttribute("viewBox", "0 0 " + width + " " + height);
     svg.setAttribute("role", "img");
@@ -199,15 +160,14 @@
     svg.setAttribute("data-lower-bound", options.lower);
     svg.setAttribute("data-upper-bound", options.upper);
     svg.replaceChildren();
-    appendSvg(svg, "title", { id: "value-pdf-preview-title" }, "PDF of value, V subscript i");
+    appendSvg(svg, "title", { id: "value-pdf-preview-title" }, "Value density, f subscript i of v subscript i");
     appendSvg(svg, "desc", { id: "value-pdf-preview-description" },
       "Beta value density on [" + options.formatEditableNumber(options.lower) +
       ", " + options.formatEditableNumber(options.upper) + "] with alpha " +
       options.formatChoiceNumber(options.alpha) + " and beta " +
       options.formatChoiceNumber(options.beta) + ".");
 
-    for (i = 0; i < sampleCount; i += 1) {
-      var ratio = i / (sampleCount - 1);
+    function evaluate(ratio) {
       var evaluationRatio = clamp(ratio, endpointInset, 1 - endpointInset);
       var density = options.pdf(
         options.lower + evaluationRatio * span,
@@ -218,9 +178,14 @@
       if (!Number.isFinite(density) || density < 0) {
         density = 0;
       }
-      peak = Math.max(peak, density);
-      points.push({ ratio: ratio, density: density });
+      return { ratio: ratio, density: density };
     }
+    var mode = (options.alpha - 1) / (options.alpha + options.beta - 2);
+    var cuts = [0, endpointInset, 1 - endpointInset, 1];
+    if (options.alpha > 1 && options.beta > 1 && mode > endpointInset && mode < 1 - endpointInset) { cuts.push(mode); }
+    cuts.sort(function (a, b) { return a - b; });
+    for (var i = 0; i <= 32; i += 1) { peak = Math.max(peak, evaluate(i / 32).density); }
+    cuts.forEach(function (t) { peak = Math.max(peak, evaluate(t).density); });
     peak = peak > 0 ? peak : 1;
 
     function previewX(ratio) {
@@ -230,6 +195,15 @@
     function previewY(density) {
       return baseY - (clamp(density, 0, peak) / peak) * plotHeight;
     }
+
+    var rendered = PlotStyle.dimensions(svg, { left: left, right: right, top: top, bottom: baseY });
+    var scale = rendered.width / (right - left), points = [];
+    cuts.slice(1).forEach(function (end, index) {
+      var segment = PlotStyle.adaptive(evaluate, function (p) {
+        return [[previewX(p.ratio) * scale, previewY(p.density) * scale]];
+      }, cuts[index], end);
+      points = points.concat(index ? segment.slice(1) : segment);
+    });
 
     var curvePath = points.map(function (point, index) {
       return (index === 0 ? "M " : "L ") +
@@ -266,14 +240,25 @@
       x1: right, y1: baseY - 4, x2: right, y2: baseY + 4,
       class: "value-pdf-axis"
     });
-    appendSvg(svg, "text", {
+    var lowerLabel = appendSvg(svg, "text", {
       x: left, y: 108, class: "value-pdf-endpoint-label",
       "text-anchor": "start", "data-endpoint": "a"
-    }, (options.lowerSymbol || "a") + " = " + formatMoney(options.lower, span));
-    appendSvg(svg, "text", {
+    }, (options.lowerSymbol || "a") + " = " + PlotStyle.tick(options.lower, span));
+    var upperLabel = appendSvg(svg, "text", {
       x: right, y: 108, class: "value-pdf-endpoint-label",
       "text-anchor": "end", "data-endpoint": "b"
-    }, (options.upperSymbol || "b") + " = " + formatMoney(options.upper, span));
+    }, (options.upperSymbol || "b") + " = " + PlotStyle.tick(options.upper, span));
+    ChartLayout.mathText(lowerLabel, lowerLabel.textContent);
+    ChartLayout.mathText(upperLabel, upperLabel.textContent);
+    ChartLayout.refresh(svg);
+    if (window.PlotProbe) {
+      PlotProbe.attach(svg, { views: function () { return [{ id: "value-density", name: "Value",
+        frame: { left: left, right: right, top: baseY - plotHeight, bottom: baseY },
+        domain: [options.lower, options.upper], yDomain: [0, peak], input: [PlotProbe.symbol("v", "i")],
+        sample: function (v) { return [{ key: "density", label: "Value density", notation: PlotProbe.expression("f", "i", "v"),
+          value: options.pdf(v, options.lower, options.upper, options.distribution), color: "var(--blue)" }]; }
+      }]; } });
+    }
   }
 
   function extend(base, extras) {
@@ -313,15 +298,12 @@
   window.AuctionChart = Object.freeze({
     EPSILON: EPSILON,
     formatMoney: formatMoney,
-    formatDensityAxis: formatDensityAxis,
-    formatProbabilityAxis: formatProbabilityAxis,
     formatPercent: formatPercent,
     roundCoordinate: roundCoordinate,
     yScale: yScale,
     densityY: densityY,
     densityScaleMaximum: densityScaleMaximum,
     uniqueByBid: uniqueByBid,
-    panelTicks: panelTicks,
     drawPanelScaffold: drawPanelScaffold,
     drawCurve: drawCurve,
     drawCircle: drawCircle,

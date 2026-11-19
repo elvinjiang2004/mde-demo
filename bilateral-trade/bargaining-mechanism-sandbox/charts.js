@@ -7,12 +7,8 @@
     var svgUtils = global.SvgUtils;
     var visuals = global.BilateralTradeVisuals;
     var appendSvg = svgUtils.appendSvg;
-    var paintFieldRaster = svgUtils.paintFieldRaster;
     var R = model.CUSTOM_RESOLUTION;
     var mesh = geometry.mesh;
-    var PREVIEW_RASTER_SIZE = 240;
-    var SURFACE_RASTER_SIZE = 800;
-    var DIAGNOSTIC_RASTER_SIZE = 330;
     var DIAGNOSTIC_KEYS = Object.freeze([
       "buyerIc", "sellerIc", "revenue",
       "buyerPayoff", "sellerPayoff", "efficiency"
@@ -66,7 +62,7 @@
       var frame = appendSvg(svg, "g", { "data-layer": "frame" });
       var overlay = appendSvg(svg, "g", { "data-layer": "overlay" });
       var definitions = appendSvg(svg, "defs", { "data-layer": "definitions" });
-      visuals.drawFrame(frame, LAYOUT, mesh, false);
+      PlotStyle.tradeFrame(frame, LAYOUT, mesh, true);
       chartStructures[svg.id] = {
         svg: svg,
         title: title,
@@ -95,7 +91,7 @@
       var frame = appendSvg(svg, "g", { "data-layer": "frame" });
       var overlay = appendSvg(svg, "g", { "data-layer": "overlay" });
       if (definition.kind === "ic") {
-        visuals.drawLineFrame(frame, LAYOUT, mesh);
+        PlotStyle.tradeFrame(frame, LAYOUT, mesh);
         appendSvg(frame, "line", {
           x1: LAYOUT.left,
           y1: LAYOUT.bottom,
@@ -104,7 +100,7 @@
           class: "truthful-report-line"
         });
       } else {
-        visuals.drawFrame(frame, LAYOUT, mesh, true);
+        PlotStyle.tradeFrame(frame, LAYOUT, mesh, true);
       }
       chartStructures[svg.id] = {
         svg: svg,
@@ -126,7 +122,7 @@
       removeProbe(structure.svg, ".cell-label");
     }
 
-    function drawSurface(key, rasterSize) {
+    function drawSurface(key, quality) {
       if (state.activePreset === "custom") {
         drawCustomSurface(key);
         return;
@@ -138,7 +134,7 @@
       var canvas = ensureCanvas(svg, "formula-canvas");
       clearDynamicSurface(structure);
       canvas.hidden = false;
-      paintSurfaceCanvas(key, canvas, rasterSize);
+      paintSurfaceCanvas(key, canvas, quality);
       if (key === "q") {
         var geometry = surfaceRegionGeometry();
         if (geometry) {
@@ -152,7 +148,6 @@
           });
         }
       }
-      canvas.dataset.rasterSize = String(rasterSize);
       canvas.dataset.stateKey = stateKey;
       structure.title.textContent = definition.title;
       structure.description.textContent = surfaceDescription(key);
@@ -165,7 +160,7 @@
       svg.dataset.renderer = "formula-canvas";
       svg.dataset.colorLow = key === "q" ? "clear" : (key === "pS" ? "green" : "red");
       svg.dataset.colorHigh = key === "q" ? "blue" : (key === "pS" ? "red" : "green");
-      if (rasterSize === PREVIEW_RASTER_SIZE) {
+      if (quality === "preview") {
         state.previewFields[key] = true;
       }
     }
@@ -424,7 +419,7 @@
         noTrade: [[0, 0], [1, 0], [1, threshold], [threshold, 1], [0, 1]] };
     }
 
-    function paintSurfaceCanvas(key, canvas, rasterSize) {
+    function paintSurfaceCanvas(key, canvas, quality) {
       var extent = visuals.SIGNED_COLOR_EXTENT;
       var valueAt = model.fieldEvaluator(state.rule, key);
       var geometry = surfaceRegionGeometry();
@@ -440,9 +435,11 @@
         var polynomial = state.rule.regions[1].fields[key];
         valueAt = function (v, c) { return model.evaluatePolynomial(polynomial, v, c); };
       }
-      paintFieldRaster(
+      PlotStyle.paintRaster(
+        surfaces[key].chart,
         canvas,
-        rasterSize,
+        LAYOUT,
+        quality,
         valueAt,
         function (value) {
           if (key === "q") {
@@ -504,17 +501,16 @@
           canvas.dataset.stateKey !== expectedKey || token !== state.generation) {
         return;
       }
-      paintSurfaceCanvas(key, canvas, SURFACE_RASTER_SIZE);
+      paintSurfaceCanvas(key, canvas, "final");
       if (token !== state.generation || chart.dataset.stateKey !== expectedKey) {
         return;
       }
-      canvas.dataset.rasterSize = String(SURFACE_RASTER_SIZE);
       canvas.dataset.qualityGeneration = String(token);
       state.qualityCounts[key] += 1;
       canvas.dataset.qualityCount = String(state.qualityCounts[key]);
       delete state.previewFields[key];
     }
-    function drawDiagnostic(key, rasterSize) {
+    function drawDiagnostic(key, quality) {
       var definition = diagnostics[key];
       var svg = definition.chart;
       var structure = ensureDiagnosticStructure(key);
@@ -524,8 +520,7 @@
       structure.overlay.replaceChildren();
       removeProbe(svg, ".diagnostic-probe");
       canvas.hidden = false;
-      paintDiagnosticCanvas(key, canvas, rasterSize);
-      canvas.dataset.rasterSize = String(rasterSize);
+      paintDiagnosticCanvas(key, canvas, quality);
       canvas.dataset.stateKey = stateKey;
       structure.title.textContent = definition.title;
       structure.description.textContent = diagnosticDescription(key);
@@ -552,7 +547,7 @@
       svg.dataset.renderCount = String(state.renderCounts[key]);
       svg.dataset.renderer = "formula-diagnostic-canvas";
       setDiagnosticColorDataset(key, svg);
-      if (rasterSize === PREVIEW_RASTER_SIZE) {
+      if (quality === "preview") {
         state.previewFields[key] = true;
       }
       updateDiagnosticText(key);
@@ -591,9 +586,7 @@
         return "Exact seller truthful payoff by buyer value and seller value. " +
           "The raster is display-only and probe values are exact.";
       }
-      return "Exact allocation error relative to efficient trade. Orange " +
-        "forward hatching marks over-trade and blue back hatching marks " +
-        "missing trade. Probe values are exact.";
+      return "Exact lost gains from trade L(v,c). The utility scale is blue for negative values, clear at zero, and yellow for positive values. Probe values are exact.";
     }
 
     function bestReportPathData(segments) {
@@ -625,19 +618,16 @@
       });
     }
 
-    function paintDiagnosticCanvas(key, canvas, rasterSize) {
+    function paintDiagnosticCanvas(key, canvas, quality) {
       var extent = visuals.SIGNED_COLOR_EXTENT;
-      var valueAt = model.diagnosticEvaluator(state.rule, key);
-      paintFieldRaster(
+      var valueAt = key === "efficiency" ? model.lostGainsEvaluator(state.rule) : model.diagnosticEvaluator(state.rule, key);
+      PlotStyle.paintRaster(
+        diagnostics[key].chart,
         canvas,
-        rasterSize,
+        LAYOUT,
+        quality,
         valueAt,
         function (value, pixelX, pixelY) {
-          if (key === "efficiency") {
-            return visuals.efficiencyChannels(
-              value, pixelX, pixelY, state.palette
-            );
-          }
           if (key === "revenue") {
             return visuals.signedChannels(
               value, extent, state.palette.red, state.palette.green
@@ -657,22 +647,16 @@
           canvas.dataset.stateKey !== expectedKey || token !== state.generation) {
         return;
       }
-      paintDiagnosticCanvas(key, canvas, DIAGNOSTIC_RASTER_SIZE);
+      paintDiagnosticCanvas(key, canvas, "final");
       if (token !== state.generation || chart.dataset.stateKey !== expectedKey) {
         return;
       }
-      canvas.dataset.rasterSize = String(DIAGNOSTIC_RASTER_SIZE);
       canvas.dataset.qualityGeneration = String(token);
       state.qualityCounts[key] += 1;
       canvas.dataset.qualityCount = String(state.qualityCounts[key]);
       delete state.previewFields[key];
     }
     function setDiagnosticColorDataset(key, svg) {
-      if (key === "efficiency") {
-        svg.dataset.colorOver = "orange-pattern";
-        svg.dataset.colorUnder = "blue-pattern";
-        return;
-      }
       svg.dataset.colorLow = key === "revenue" ? "red" : "blue";
       svg.dataset.colorZero = "clear";
       svg.dataset.colorHigh = key === "revenue" ? "green" : "yellow";
@@ -691,7 +675,7 @@
       var maximum = state.summary.exPostEfficiency;
       return "largest loss = " + formatDiagnostic(maximum.loss) +
         (maximum.attained ? " at" : " approaching") + " (v, c) = (" +
-        formatDiagnostic(maximum.v) + ", " + formatDiagnostic(maximum.c) + ")";
+        PlotStyle.probe(maximum.v) + ", " + PlotStyle.probe(maximum.c) + ")";
     }
 
     function updateDiagnosticText(key) {
@@ -802,20 +786,22 @@
         boxWidth: key === "q" ? 72 : 82,
         groupClass: "surface-probe chart-480x520-probe",
         radius: 3.5,
-        xValue: visuals.formatProbe(probe.v),
-        yValue: visuals.formatProbe(probe.c)
+        xValue: PlotStyle.probe(probe.v),
+        yValue: PlotStyle.probe(probe.c)
       });
-      visuals.appendProbeValueText(
+      ChartLayout.appendProbeValueText(
         scaffold.group,
         scaffold.textX,
         scaffold.textY,
         key === "q" ? {
           symbol: "q",
-          value: visuals.formatProbe(value)
+          args: ["v", "c"],
+          value: PlotStyle.probe(value)
         } : {
           symbol: "p",
           subscript: key === "pB" ? "B" : "S",
-          value: visuals.formatProbe(value)
+          args: ["v", "c"],
+          value: PlotStyle.probe(value)
         }
       );
     }
@@ -826,9 +812,9 @@
       var name = key === "q" ? "allocation" :
         (key === "pB" ? "buyer payment" : "seller payment");
       elements.probeStatus.textContent = "Buyer value " +
-        visuals.formatProbe(probe.v) + ", seller value " +
-        visuals.formatProbe(probe.c) + ", " + name + " " +
-        visuals.formatProbe(value) + ".";
+        PlotStyle.probe(probe.v) + ", seller value " +
+        PlotStyle.probe(probe.c) + ", " + name + " " +
+        PlotStyle.probe(value) + ".";
     }
 
     function setDiagnosticProbe(key, x, y, announce) {
@@ -854,7 +840,7 @@
       if (!probe.visible) {
         return;
       }
-      var value = model.diagnosticValueAt(state.rule, key, probe.x, probe.y);
+      var value = diagnosticValueAt(key, probe.x, probe.y);
       var scaffold = visuals.drawProbeScaffold(svg, {
         layout: LAYOUT,
         x: mesh.svgXOf(probe.x, LAYOUT),
@@ -862,66 +848,69 @@
         boxWidth: key === "efficiency" ? 94 : 82,
         groupClass: (diagnostics[key].kind === "ic" ? "ic-probe " : "") +
           "diagnostic-probe chart-480x520-probe",
-        xValue: visuals.formatProbe(probe.x),
-        yValue: visuals.formatProbe(probe.y)
+        xValue: PlotStyle.probe(probe.x),
+        yValue: PlotStyle.probe(probe.y)
       });
-      visuals.appendProbeValueText(
+      var label = diagnosticProbeLabel(key, value);
+      label.args = key === "buyerIc" ? ["v", { symbol: "v", superscript: "′" }] :
+        (key === "sellerIc" ? ["c", { symbol: "c", superscript: "′" }] : ["v", "c"]);
+      ChartLayout.appendProbeValueText(
         scaffold.group,
         scaffold.textX,
         scaffold.textY,
-        diagnosticProbeLabel(key, value)
+        label
       );
     }
 
-    function diagnosticScalarValue(key, value) {
-      return key === "efficiency" ? value.q - value.efficient : value;
+    function diagnosticValueAt(key, x, y) {
+      return key === "efficiency" ? model.lostGainsAt(state.rule, x, y) : model.diagnosticValueAt(state.rule, key, x, y);
     }
 
     function diagnosticProbeLabel(key, value) {
-      var scalar = diagnosticScalarValue(key, value);
+      var scalar = value;
       if (key === "buyerIc" || key === "sellerIc") {
         return {
           symbol: "U",
           subscript: key === "buyerIc" ? "B" : "S",
-          value: visuals.formatProbe(scalar)
+          value: PlotStyle.probe(scalar)
         };
       }
       if (key === "buyerPayoff" || key === "sellerPayoff") {
         return {
           symbol: "u",
           subscript: key === "buyerPayoff" ? "B" : "S",
-          value: visuals.formatProbe(scalar)
+          value: PlotStyle.probe(scalar)
         };
       }
       return {
         symbol: key === "revenue" ? "R" : "L",
-        value: visuals.formatProbe(scalar)
+        value: PlotStyle.probe(scalar)
       };
     }
 
     function announceDiagnosticProbe(key) {
       var probe = state.diagnosticProbes[key];
-      var value = model.diagnosticValueAt(state.rule, key, probe.x, probe.y);
+      var value = diagnosticValueAt(key, probe.x, probe.y);
       var prefix;
       var name;
       if (key === "buyerIc") {
-        prefix = "True buyer value " + visuals.formatProbe(probe.x) +
-          ", alternate buyer report " + visuals.formatProbe(probe.y);
+        prefix = "True buyer value " + PlotStyle.probe(probe.x) +
+          ", alternate buyer report " + PlotStyle.probe(probe.y);
         name = "buyer interim utility";
       } else if (key === "sellerIc") {
-        prefix = "True seller value " + visuals.formatProbe(probe.x) +
-          ", alternate seller report " + visuals.formatProbe(probe.y);
+        prefix = "True seller value " + PlotStyle.probe(probe.x) +
+          ", alternate seller report " + PlotStyle.probe(probe.y);
         name = "seller interim utility";
       } else {
-        prefix = "Buyer value " + visuals.formatProbe(probe.x) +
-          ", seller value " + visuals.formatProbe(probe.y);
+        prefix = "Buyer value " + PlotStyle.probe(probe.x) +
+          ", seller value " + PlotStyle.probe(probe.y);
         name = key === "revenue" ? "net revenue R" :
           (key === "buyerPayoff" ? "buyer truthful payoff" :
             (key === "sellerPayoff" ? "seller truthful payoff" :
-              "allocation minus efficient allocation L"));
+              "lost gains from trade L"));
       }
       elements.probeStatus.textContent = prefix + ", " + name + " " +
-        visuals.formatProbe(diagnosticScalarValue(key, value)) + ".";
+        PlotStyle.probe(value) + ".";
     }
 
     function removeProbe(chart, selector) {
@@ -943,13 +932,8 @@
     }
 
     function formatDiagnostic(value) {
-      if (Math.abs(value) < 5e-12) {
-        return "0";
-      }
-      if (Math.abs(value) < 0.001) {
-        return value.toExponential(2);
-      }
-      return value.toFixed(4);
+      // Ignore cancellation at machine precision in exact polynomial integrals.
+      return PlotStyle.summary(Math.abs(value) < 64 * Number.EPSILON ? 0 : value);
     }
 
     function bindProbes() {

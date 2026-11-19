@@ -272,6 +272,14 @@
       "The efficient rule should have no pointwise allocation error");
   });
 
+  test("lostGainsAt measures welfare loss rather than allocation error", function () {
+    assertClose(model.lostGainsAt(model.constantCellGrid(1), .2, .8), .6, "Over-trade loses the value gap");
+    assertClose(model.lostGainsAt(model.constantCellGrid(0), .8, .2), .6, "Missing trade loses the value gap");
+    assertClose(model.lostGainsAt(model.constantCellGrid(.25), .8, .2), .45, "Fractional allocation scales the lost gain");
+    assertClose(model.lostGainsAt(model.constantCellGrid(0), .5, .5), 0, "Equal values have no lost gains");
+    assertClose(model.lostGainsAt(model.efficientGrid(), .8, .2), 0, "Efficient trade has no loss");
+  });
+
   test("The never-trade rule q=0 is exactly, trivially budget balanced", function () {
     var summary = model.summarize(model.constantCellGrid(0));
     var v = summary.verdicts;

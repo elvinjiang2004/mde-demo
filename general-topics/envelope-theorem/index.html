@@ -19,6 +19,8 @@
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
+  <script defer src="../../js/plot-style.js"></script>
+  <script defer src="../../js/plot-probe.js"></script>
   <script defer src="../../js/equation-chain.js"></script>
   <script defer src="model.js"></script>
   <script defer src="app.js"></script>
@@ -127,7 +129,7 @@
         <div class="main-column main-column-660">
           <div class="chart-column">
             <figure class="chart-figure diagnostic-figure envelope-chart-figure">
-              <figcaption>Envelope, \(V(t)\)</figcaption>
+              <figcaption><span class="plot-legend-line plot-legend-family" aria-hidden="true"></span>Envelope, \(V(t)\)</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="envelope-chart-frame chart-canvas-frame chart-660x450-frame">
                 <svg
@@ -161,7 +163,7 @@
         <div class="diagnostic-column diagnostic-column-440">
           <div class="diagnostic-panel">
             <figure class="chart-figure diagnostic-figure envelope-chart-figure">
-              <figcaption>Active slope, \(f_t(x^*(t),t)\)</figcaption>
+              <figcaption><span class="plot-legend-line plot-legend-family" aria-hidden="true"></span>Active slope, \(f_t(x^*(t),t)\)</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="envelope-chart-frame chart-canvas-frame chart-660x450-frame">
                 <svg

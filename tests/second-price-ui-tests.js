@@ -30,9 +30,11 @@
   test("The production demo uses the two-control payoff comparison without distributions or outcome text", async function () {
     var loaded = await T.loadFrame(frame, "../auction-equilibria/second-price/index.html", {
       ready: function (d) { return d.querySelector('#second-price-demo[data-ready="true"]'); },
-      math: ".introduction, .choice-controls, .chart-x-axis-label, .derivation", timeout: 30000
+      math: ".introduction, .choice-controls, #payoff-plot-title, .chart-x-axis-label, .derivation", timeout: 30000
     });
     doc = loaded.document; win = loaded.window;
+    T.assert(element("payoff-plot-title").querySelectorAll("mjx-container").length === 2 && !/\\\(/.test(element("payoff-plot-title").textContent),
+      "Both curve expressions in the title render through local MathJax.");
     T.assert(element("value-number").value === "50" && element("bid-number").value === "30", "The original choices must remain the defaults.");
     T.assert(!doc.querySelector('script[src*="distributions"], script[src*="auction-chart"], script[src*="auction-controls"], value-density-preview, model-parameter-controls'), "No distributional runtime or controls may remain.");
     T.assert(doc.querySelectorAll('#second-price-demo input[type="range"]').length === 2 && doc.querySelectorAll("#second-price-demo button").length === 1, "Only the value/bid pairs and Reset remain.");
@@ -56,8 +58,8 @@
       var bounds = element(id).getBoundingClientRect(), plot = frameBox.getBoundingClientRect();
       T.assert(bounds.left >= plot.left && bounds.right <= plot.right && bounds.top >= plot.top && bounds.bottom <= plot.bottom, "Both numeric payoffs must be inside the plot.");
     });
-    T.assert(element("truthful-payoff").getAttribute("aria-label") === "u_i(v_i,v_i,p_i) = 10" &&
-      element("proposed-payoff").getAttribute("aria-label") === "u_i(v_i,x_i,p_i) = 0", "Readouts must identify the requested payoff arguments.");
+    T.assert(element("truthful-payoff").getAttribute("aria-label") === "u_i(v_i,v_i,p_i) = 10.000" &&
+      element("proposed-payoff").getAttribute("aria-label") === "u_i(v_i,x_i,p_i) = 0.000", "Readouts must identify the requested payoff arguments.");
     var box = chart().querySelector(".spa-payoff-box rect").getBoundingClientRect();
     var cursor = point(40, 0.35);
     T.assertClose(box.left, cursor.clientX + 10, 0.001, "The payoff box should sit next to the cursor when there is room.");
@@ -107,7 +109,7 @@
   test("Coincident bids have identical curves and payoffs at every inspected price", function () {
     reset(); set("bid-number", 50);
     T.assert(!doc.querySelector(".spa-loss-area, .spa-open-dot"), "Truthful bidding has no deviation loss or jump.");
-    T.assert(doc.querySelector(".spa-curve-label").textContent === "Both bids", "Coincident curves need one direct label.");
+    T.assert(!doc.querySelector(".spa-curve-label") && doc.querySelectorAll("#payoff-plot-title .plot-title-line").length === 2, "Both curves are identified in the title and inspector.");
     [0, 30, 50, 100].forEach(function (price) { hover(price); close(payoff("truthful"), payoff("proposed")); });
   });
   test("Keyboard inspection reaches both endpoints, supports larger steps and clears", function () {
@@ -161,6 +163,30 @@
     T.assert(!doc.querySelector(".spa-probe") && doc.activeElement === button, "Reset must clear inspection without moving focus.");
     T.assert(element("live-summary").textContent.indexOf("reset") >= 0, "Reset must be announced.");
   });
+  test("Mouse dragging edits the proposed bid with one pointer and preserves the inspected comparison", function () {
+    reset(); var svg = chart(), capture = null;
+    var methods = [svg.setPointerCapture, svg.hasPointerCapture, svg.releasePointerCapture];
+    svg.setPointerCapture = function (id) { capture = id; };
+    svg.hasPointerCapture = function (id) { return id === capture; };
+    svg.releasePointerCapture = function () { capture = null; };
+    try {
+      pointer("pointerdown", 20, { buttons: 1 });
+      close(Number(element("bid-number").value), 20);
+      pointer("pointermove", 80, { pointerId: 9, buttons: 1 });
+      close(Number(element("bid-slider").value), 20, "Another pointer cannot edit the bid");
+      pointer("pointermove", 70, { buttons: 1 });
+      close(Number(element("bid-number").value), 70);
+      close(payoff("proposed"), -10, "The plot uses the edited bid and exact tie payoff");
+      pointer("pointermove", 120, { buttons: 1 }); close(Number(element("bid-number").value), 100);
+      pointer("pointerup", 80); close(Number(element("bid-slider").value), 80);
+      T.assert(capture === null && !svg.classList.contains("plot-dragging"));
+      pointer("pointermove", 10); close(Number(element("bid-number").value), 80, "Passive hover leaves the edited bid fixed");
+      pointer("pointerdown", 25, { buttons: 1 }); pointer("pointercancel", 25);
+      pointer("pointermove", 50, { buttons: 1 }); close(Number(element("bid-number").value), 25);
+    } finally {
+      reset(); svg.setPointerCapture = methods[0]; svg.hasPointerCapture = methods[1]; svg.releasePointerCapture = methods[2];
+    }
+  });
   test("Responsive frames stay stable and all readouts remain visible at edge and extreme states", async function () {
     for (var width of [320, 375, 640, 768, 1280]) {
       frame.style.width = width + "px";
@@ -193,9 +219,9 @@
       T.assert(doc.documentElement.scrollWidth <= win.innerWidth + 1, "The page must not overflow at " + width + "px.");
     }
   });
-  test("The authored lesson, citations, QED and page appendix remain rendered", function () {
+  test("The authored lesson, citations and page appendix remain rendered", function () {
     T.assert(doc.querySelector('.environment-link[href="../environment/index.html"]'), "Retain the IPV Environment link.");
-    T.assert(doc.querySelector('.qed mjx-container') && doc.querySelector('.reference-list [data-reference="vickrey-1961"] a'), "Retain the proof endpoint and Vickrey citation.");
+    T.assert(doc.querySelector('.reference-list [data-reference="vickrey-1961"] a'), "Retain the Vickrey citation.");
     T.assert(doc.querySelector('learning-sidebar[page="second-price"]') && win.MechanismNotation.pages["second-price"], "Keep the page-specific notation and appendix.");
     T.assert(!doc.querySelector('mjx-merror, merror, [data-render-error]'), "All lesson and control math must render successfully.");
   });

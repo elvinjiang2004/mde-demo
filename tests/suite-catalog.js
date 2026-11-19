@@ -137,6 +137,19 @@ window.MechanismTestCatalog = [
     "status": "in-progress"
   },
   {
+    "file": "plot-style-ui-tests.html",
+    "name": "Plot presentation",
+    "kind": "interface",
+    "group": "layout"
+  },
+  {
+    "file": "plot-probe-ui-tests.html",
+    "name": "Shared plot inspection",
+    "kind": "interface",
+    "group": "layout",
+    "exclusive": true
+  },
+  {
     "file": "distribution-tests.html",
     "name": "Shared distributions",
     "kind": "model"

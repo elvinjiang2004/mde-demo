@@ -22,10 +22,9 @@
 .regular-optimal-auctions-page .allocation-diagnostics > figure { min-width: 0; }
 .regular-optimal-auctions-page .chart-360x300,
 .regular-optimal-auctions-page .chart-260x160 { display: block; width: 100%; height: auto; }
-.regular-optimal-auctions-page .chart-260x160 { max-width: 260px; cursor: crosshair; touch-action: none; }
+.regular-optimal-auctions-page .chart-260x160 { max-width: 260px; margin-block: 14px; overflow: visible; cursor: crosshair; touch-action: none; }
 .regular-optimal-auctions-page .chart-360x300 text,
 .regular-optimal-auctions-page .chart-260x160 text { fill: var(--ink); font-family: var(--text-font); }
-.regular-optimal-auctions-page .chart-260x160 text { font-size: 12px; }
 .regular-optimal-auctions-page #allocation-chart { touch-action: none; cursor: crosshair; }
 .regular-optimal-auctions-page .choice-controls .range-group { max-width: none; }
 .regular-optimal-auctions-page .lottery-brush-row { display: grid; grid-template-columns: minmax(0, 260px) minmax(84px, 112px); gap: 10px; align-items: center; }

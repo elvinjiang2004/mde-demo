@@ -62,7 +62,7 @@
     );
 
     math.typesetInitial(
-      ".introduction, .model-specifications, .choice-controls, .derivation, " +
+      ".introduction, .model-specifications, .choice-controls, .first-price-plot-title, .derivation, " +
       ".notes, .references"
     );
     controls.bindEvents();

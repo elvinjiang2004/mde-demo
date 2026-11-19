@@ -109,5 +109,13 @@
     model[method] = dispatch(method);
   });
 
+  model.lostGainsAt = function (rule, v, c) {
+    return global.BilateralTradeEnvelope.lostGains(model.fieldValueAt(rule, "q", v, c), v, c);
+  };
+  model.lostGainsEvaluator = function (rule) {
+    var allocation = model.fieldEvaluator(rule, "q");
+    return function (v, c) { return global.BilateralTradeEnvelope.lostGains(allocation(v, c), v, c); };
+  };
+
   global.BargainingSandboxModel = Object.freeze(model);
 })(window);

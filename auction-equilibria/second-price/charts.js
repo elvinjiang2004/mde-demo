@@ -4,8 +4,7 @@
     var appendSvg = global.SvgUtils.appendSvg;
     var layout;
     function format(value) {
-      if (value !== 0 && Math.abs(value) < 0.001) { return value.toExponential(1); }
-      return value.toLocaleString("en-US", { maximumFractionDigits: 3 });
+      return global.PlotStyle.probe(value);
     }
     function path(points) {
       return points.map(function (point, index) { return (index ? "L" : "M") + layout.x(point[0]) + "," + layout.y(point[1]); }).join(" ");
@@ -14,7 +13,8 @@
       return appendSvg(parent || elements.chart, "line", { x1: x1, y1: y1, x2: x2, y2: y2, class: className });
     }
     function text(x, y, content, className, anchor, parent) {
-      return appendSvg(parent || elements.chart, "text", { x: x, y: y, class: className || "", "text-anchor": anchor || "start" }, content);
+      var node = appendSvg(parent || elements.chart, "text", { x: x, y: y, class: className || "", "text-anchor": anchor || "start" }, content);
+      return global.ChartLayout.mathText(node, content);
     }
     function dot(opposing, payoff, radius, className, parent) {
       return appendSvg(parent || elements.chart, "circle", { cx: layout.x(opposing), cy: layout.y(payoff), r: radius, class: className });
@@ -24,8 +24,7 @@
       return Math.max(layout.left + halfWidth, Math.min(layout.right - halfWidth, layout.x(value)));
     }
     function indexedSymbol(parent, symbol) {
-      appendSvg(parent, "tspan", { class: "spa-math-symbol" }, symbol);
-      appendSvg(parent, "tspan", { class: "spa-math-subscript", "baseline-shift": "sub" }, "i");
+      global.ChartLayout.appendSymbol(parent, symbol, "i");
     }
     function drawPayoffBox(group, result, x, y) {
       var box = appendSvg(group, "g", { class: "spa-payoff-box" });
@@ -68,7 +67,7 @@
       var label = "pᵢ = " + format(state.opposing);
       text(labelX(state.opposing, label), layout.bottom + 18, label, "spa-probe-coordinate spa-halo", "middle", group);
       drawPayoffBox(group, result, x, y);
-      elements.chart.querySelectorAll(".spa-x-tick").forEach(function (tick) {
+      elements.chart.querySelectorAll(".plot-x-tick").forEach(function (tick) {
         tick.style.visibility = Math.abs(Number(tick.getAttribute("x")) - layout.x(state.opposing)) < label.length * 3.6 + 14 ? "hidden" : "";
       });
     }
@@ -92,21 +91,13 @@
         "The solid green curve shows truthful-bid payoff; the dashed blue curve shows proposed-bid payoff. " +
         "The red region marks the payoff loss from deviating. Ties with one other buyer are broken equally: each wins with probability one half. " +
         "Hover inside the plot for a full-height price guide and a cursor box comparing u_i(v_i,v_i,p_i) and u_i(v_i,x_i,p_i). " +
-        "Touch to inspect, or focus the plot and use Left and Right, Shift for steps of ten, Home and End for endpoints, and Escape to clear." +
+        "Click or touch and drag horizontally to change the proposed bid. Focus the plot and use Left and Right to inspect, Shift for steps of ten, Home and End for endpoints, and Escape to clear." +
         (state.probe ? " Highest opposing bid " + format(state.opposing) + ". Truthful payoff " + format(result.truthful.payoff) +
         "; proposed-bid payoff " + format(result.proposed.payoff) + "." : ""));
       appendSvg(svg, "rect", { x: layout.left, y: layout.top, width: layout.right - layout.left,
         height: layout.bottom - layout.top, class: "plot-frame spa-frame" });
-      var step = upper - lower > 100 ? 25 : (upper - lower > 50 ? 20 : 10);
-      for (var value = Math.ceil(lower / step) * step; value <= upper; value += step) {
-        line(layout.left, layout.y(value), layout.right, layout.y(value), value === 0 ? "spa-zero" : "spa-grid");
-        text(layout.left - 8, layout.y(value) + 4, format(value), "axis-text", "end");
-      }
-      var xStep = width < 400 ? 50 : 25;
-      for (var p = 0; p <= 100; p += xStep) {
-        line(layout.x(p), layout.bottom, layout.x(p), layout.bottom + 4, "spa-axis");
-        text(layout.x(p), layout.bottom + 18, String(p), "axis-text spa-x-tick", "middle");
-      }
+      global.PlotStyle.axis(svg, { orientation: "x", frame: layout, domain: [0, 100] });
+      global.PlotStyle.axis(svg, { orientation: "y", frame: layout, domain: [lower, upper], grid: true });
       var shade;
       if (state.bid < state.value) { shade = [[state.bid, 0], [state.bid, state.value - state.bid], [state.value, 0]]; }
       if (state.bid > state.value) { shade = [[state.value, 0], [state.bid, 0], [state.bid, state.value - state.bid]]; }
@@ -121,16 +112,6 @@
         dot(state.bid, state.value - state.bid, 4, "spa-open-dot");
         dot(state.bid, 0, 4, "spa-open-dot");
         dot(state.bid, global.SPAModel.outcome(state.value, state.bid, state.bid).payoff, 4, "spa-proposed-dot");
-      }
-      var truthLabel = state.bid === state.value ? "Both bids" : "Truthful bid";
-      var truthP = state.value > 15 ? state.value * 0.35 : 20;
-      text(labelX(truthP, truthLabel), Math.max(layout.top + 18, layout.y(Math.max(state.value - truthP, 0)) - 13),
-        truthLabel, "spa-curve-label spa-truthful-label spa-halo", "middle");
-      if (state.bid !== state.value) {
-        var middle = (state.bid + state.value) / 2;
-        var alternativePayoff = state.bid < state.value ? 0 : state.value - middle;
-        text(labelX(middle, "Proposed bid"), Math.min(layout.bottom - 8, layout.y(alternativePayoff) + 22),
-          "Proposed bid", "spa-curve-label spa-proposed-label spa-halo", "middle");
       }
       drawProbe(result);
     }

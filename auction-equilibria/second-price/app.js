@@ -13,7 +13,7 @@
     charts = window.SecondPriceCharts.create(state, elements);
     controls = window.SecondPriceControls.create(state, elements, defaults, render, charts);
     controls.bindEvents();
-    window.MechanismMath.typesetInitial(".introduction, .choice-controls, .chart-x-axis-label, .derivation, .notes, .references");
+    window.MechanismMath.typesetInitial(".introduction, .choice-controls, #payoff-plot-title, .chart-x-axis-label, .derivation, .notes, .references");
     render();
     document.getElementById("second-price-demo").dataset.ready = "true";
   });

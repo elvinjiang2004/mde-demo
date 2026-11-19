@@ -459,6 +459,7 @@
 
     return Object.freeze({
       bindCustomControls: bindCustomControls,
+      isEditing: function () { return Boolean(dragState || keyboardPaintState.enter || keyboardPaintState.space); },
       isSurfaceEditable: isSurfaceEditable,
       syncEditingState: syncEditingState,
       syncSurfaceControls: syncSurfaceControls

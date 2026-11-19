@@ -7,23 +7,35 @@
   function input(id, value) { el(id).value = value; T.dispatch(el(id), "input", win); }
   function choose(i) { handle(i).focus(); }
   function handle(i) { return el("allocation-chart").querySelector('[data-index="' + i + '"]'); }
+  // Model tests retain algebraic precision. Drawn polylines are assessed in
+  // rendered pixels, so their contract does not depend on a fixed sample grid.
+  function curveClose(id, v, expected, selector) {
+    var svg = el(id), secondary = id === "integrated-chart" && (selector === ".raw-curve" || selector === ".ironed-virtual-curve");
+    var lower = Number(svg.dataset[secondary ? "y2Min" : "yMin"]), upper = Number(svg.dataset[secondary ? "y2Max" : "yMax"]);
+    var px = 54 + 560 * v, py = 316 - 292 * (expected - lower) / (upper - lower), distance = Infinity;
+    svg.querySelectorAll(selector || ".learner-curve").forEach(function (path) {
+      var p = path.getAttribute("d").match(/-?\d+(?:\.\d+)?/g).map(Number);
+      for (var i = 2; i < p.length; i += 2) {
+        var ax = p[i - 2], ay = p[i - 1], dx = p[i] - ax, dy = p[i + 1] - ay;
+        var denominator = dx * dx + dy * dy;
+        var t = denominator ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / denominator)) : 0;
+        distance = Math.min(distance, Math.hypot(px - ax - t * dx, py - ay - t * dy));
+      }
+    });
+    assert(distance * Math.hypot(svg.getScreenCTM().a, svg.getScreenCTM().b) < .23,
+      id + " follows the exact function within the shared subpixel drawing tolerance");
+  }
   function finiteGeometry() {
     doc.querySelectorAll("svg:not(mjx-container svg) path[d], .control-points g").forEach(function (p) {
       assert(!/NaN|Infinity/.test(p.getAttribute("d") || p.getAttribute("transform") || ""), "Finite geometry");
     });
   }
   function capacityLabelFits() {
-    var plot = el("feasibility-chart").querySelector(".plot-frame").getBoundingClientRect();
-    var formula = el("feasibility-capacity-label"), label = formula.getBoundingClientRect();
-    var exponent = formula.querySelector('tspan[baseline-shift="super"]');
-    var bracket = exponent.previousElementSibling;
-    assert(Number.parseFloat(exponent.getAttribute("dx")) > 0 &&
-      exponent.getBoundingClientRect().left > bracket.getBoundingClientRect().right,
-      "The exponent clears the preceding bracket at every responsive width");
-    assert(label.width > 0 && label.height > 0, "The capacity formula is visible");
-    assert(label.left >= plot.left - 0.5 && label.right <= plot.right + 0.5 &&
-      label.top >= plot.top - 0.5 && label.bottom <= plot.bottom + 0.5,
-      "The capacity formula stays inside the plot at " + win.innerWidth + "px; label=" + [label.left, label.top, label.right, label.bottom].join(",") + "; plot=" + [plot.left, plot.top, plot.right, plot.bottom].join(","));
+    var figure = el("feasibility-chart").closest("figure"), title = el("feasibility-capacity-title");
+    var label = title.getBoundingClientRect(), bounds = figure.getBoundingClientRect();
+    assert(title.querySelector('mjx-container [data-mml-node="msub"]'), "The total value probability title renders its indexed C_i notation");
+    assert(label.width > 0 && label.height > 0 && label.left >= bounds.left - .5 && label.right <= bounds.right + .5,
+      "The capacity title fits its figure at " + win.innerWidth + "px");
   }
   async function fresh(math) {
     frame.style.width = "1280px";
@@ -57,18 +69,12 @@
     assert(el("bic-verdict").textContent === "BIC: passes" && el("bic-monotonicity").textContent === "is weakly increasing");
     assert(el("feasibility-status").textContent === "Single-item feasibility: passes (the curve lies entirely below or at the dotted curve)");
     var feasibilityTitle = el("feasibility-chart").closest("figure").querySelector("figcaption");
-    assert(feasibilityTitle.textContent.startsWith("Total allocation above ") &&
-      feasibilityTitle.querySelectorAll("mjx-container").length === 2 &&
-      feasibilityTitle.querySelector('[data-mml-node="msub"]'), "The requested title renders alpha and the total-allocation integral");
-    var capacityLabel = el("feasibility-capacity-label");
-    assert(capacityLabel.tagName === "text" && el("feasibility-chart").contains(capacityLabel) &&
-      capacityLabel.querySelector('tspan[baseline-shift="sub"]').textContent === "α" &&
-      capacityLabel.querySelector('tspan[baseline-shift="super"]').textContent === "n", "The capacity formula uses native text with its subscript and superscript");
-    var capacityStyle = win.getComputedStyle(capacityLabel), virtualStyle = win.getComputedStyle(el("integrated-chart").querySelector(".virtual-value-label"));
-    ["fontFamily", "fontSize", "fill", "paintOrder"].forEach(function (property) {
-      assert(capacityStyle[property] === virtualStyle[property], "Both in-plot annotations share " + property);
-    });
-    assert(!el("feasibility-chart").querySelector("mjx-container"), "Chart annotations contain no MathJax");
+    assert(feasibilityTitle.textContent.startsWith("Total allocation probability in ") &&
+      feasibilityTitle.querySelectorAll("mjx-container").length === 4 &&
+      feasibilityTitle.querySelector('[data-mml-node="msub"]'), "The requested title renders E_alpha and the A_i/C_i functions");
+    assert(el("feasibility-capacity-title").querySelector('mjx-container [data-mml-node="msub"]'),
+      "The capacity formula is identified in the MathJax title");
+    assert(!el("feasibility-chart").querySelector("mjx-container, text.feasibility-capacity-label"), "No formula labels inside the graph");
     var feasibilityAxis = el("feasibility-chart").closest("figure").querySelector(".chart-x-axis-label");
     assert(feasibilityAxis.textContent.includes("Allocation-probability threshold") && feasibilityAxis.querySelector("mjx-container"), "The alpha axis renders with local MathJax");
     assert(revenue() > 0 && !el("benchmark-summary"));
@@ -90,9 +96,10 @@
     var demoSymbols = notation.pageNotation.reduce(function (all, group, index) {
       return notation.pageNotationSections[index] === "Demo" ? all.concat(group.map(function (entry) { return entry[0]; })) : all;
     }, []);
-    assert(demoSymbols.length === 4 && demoSymbols[0] === "c" && demoSymbols[1] === "\\pi" &&
-      demoSymbols[2].startsWith("\\alpha") && demoSymbols[3].startsWith("E_\\alpha"),
-      "Demo notation defines the breakpoint, interval probability, allocation cutoff and its type set separately.");
+    assert(demoSymbols.length === 6 && demoSymbols[0] === "c" && demoSymbols[1] === "\\pi" &&
+      demoSymbols[2].startsWith("\\alpha") && demoSymbols[3].startsWith("E_\\alpha") &&
+      demoSymbols[4].startsWith("A_i(\\alpha)=n\\int_") && demoSymbols[5] === "C_i(\\alpha)=1-[1-F_i(E_\\alpha)]^n",
+      "Demo notation defines the primitives, threshold set and both Border probability functions.");
     assert(notation.environmentNotation === win.MechanismNotation.pages["auction-design"].environmentNotation,
       "Indexed buyer definitions retain their shared Environment owner.");
     assert(doc.querySelector('[data-reference="border-1991"]').textContent.includes("1991"));
@@ -199,7 +206,7 @@
     assert(handle(2).hasAttribute("aria-valuetext") && handle(2).getAttribute("aria-describedby") === "point-help");
   });
   test("Pointer drags move both coordinates and clamp beyond the chart", function () {
-    captureStub(); pointer(handle(5).querySelector("circle"), "pointerdown", 0.5, 0.5);
+    captureStub(); pointer(handle(5).querySelector("circle"), "pointerdown", 0.5, Number(handle(5).getAttribute("aria-valuenow")));
     pointer(el("allocation-chart"), "pointermove", 0.53, 0.32);
     close(Number(el("value-number").value), 0.53, 1e-6); close(Number(el("allocation-number").value), 0.32, 1e-6);
     pointer(el("allocation-chart"), "pointermove", 2, -1);
@@ -332,8 +339,8 @@
     assert(el("bic-status").dataset.passed === "false" && el("feasibility-status").dataset.passed === "true");
     [0.1, 0.3, 0.7, 0.9].forEach(function (alpha) {
       var expected = 1 - alpha * alpha;
-      close(sampleChart("feasibility-chart", alpha), expected, 2e-5);
-      close(sampleChart("feasibility-chart", alpha, ".capacity-curve"), expected, 2e-5);
+      curveClose("feasibility-chart", alpha, expected);
+      curveClose("feasibility-chart", alpha, expected, ".capacity-curve");
     });
   });
   test("Red allocation portions follow exact crossings, including a violation narrower than a drawing step", function () {
@@ -383,8 +390,8 @@
     assert(el("feasibility-status").dataset.passed === "true" && !svg.querySelector(".violation-curve"),
       "Exact equality of the efficient rule and capacity has no red portions");
     [0.13, 0.51, 0.87].forEach(function (alpha) {
-      close(sampleChart("feasibility-chart", alpha), 1 - alpha * alpha, 2e-5);
-      close(sampleChart("feasibility-chart", alpha, ".capacity-curve"), 1 - alpha * alpha, 2e-5);
+      curveClose("feasibility-chart", alpha, 1 - alpha * alpha);
+      curveClose("feasibility-chart", alpha, 1 - alpha * alpha, ".capacity-curve");
     });
     finiteGeometry();
   });
@@ -429,8 +436,8 @@
           assert(el("bic-status").dataset.passed === "true" && el("feasibility-status").dataset.passed === "true");
           assert(el("interpolation-kind").textContent.includes("Exact efficient curves"));
           [0.137,0.713,1].forEach(function (v) {
-            close(sampleChart("allocation-chart", v), Math.pow(M.cdf(v,d),n-1), 4e-5);
-            close(sampleChart("payment-chart", v), M.evaluate(expected,v).payment, 4e-5);
+            curveClose("allocation-chart", v, Math.pow(M.cdf(v,d),n-1));
+            curveClose("payment-chart", v, M.evaluate(expected,v).payment);
           });
         });
       });
@@ -472,7 +479,7 @@
     for (var i = 0; i < count; i += 1) { choose(i); input("allocation-number", "0"); }
     await T.nextAnimationFrames(win, 3);
     capacityLabelFits();
-    assert(el("feasibility-capacity-label").querySelector("tspan"), "The native formula remains rendered after distribution and rule changes");
+    assert(el("feasibility-capacity-title").querySelector("mjx-container"), "The title formula remains rendered after distribution and rule changes");
     frame.style.width = "1280px"; doc.body.style.zoom = "2";
     await T.nextAnimationFrames(win, 3);
     capacityLabelFits();
@@ -542,6 +549,17 @@
     assert(Math.abs(revenue() - originalRevenue) > 0.001);
     assert(el("bic-status").dataset.passed === "true");
   });
+  test("An edit supersedes a queued resize redraw without restoring an older rule", async function () {
+    frame.style.width = "375px";
+    win.ChartLayout.refresh(el("allocation-chart"));
+    choose(5); input("allocation-number", "0.91");
+    var currentRevenue = revenue();
+    await T.nextAnimationFrames(win, 4);
+    close(Number(handle(5).getAttribute("aria-valuenow")), .91, 1e-12, "The redraw retains the edited allocation");
+    close(revenue(), currentRevenue, 1e-12);
+    curveClose("allocation-chart", .5, .91);
+    frame.style.width = "1280px";
+  });
   test("Uniform transition preserves the learner rule and loads the correct optimum", function () {
     input("mass-number", "0.5");
     assert(el("distribution-status").textContent === "Regular distribution");
@@ -590,7 +608,7 @@
     close(Number(el("allocation-chart").dataset.yMin), 0); close(Number(el("allocation-chart").dataset.yMax), 1);
     close(sampleChart("integrated-chart", 0, ".raw-curve"), -2 / 3, 1e-6);
     close(sampleChart("integrated-chart", 1, ".raw-curve"), 1, 1e-6);
-    close(sampleChart("integrated-chart", 0.5, ".integrated-curve"), -1 / 6, 1e-5);
+    curveClose("integrated-chart", 0.5, -1 / 6, ".integrated-curve");
     var interval = win.IroningModel.ironing().intervals[0], u = (interval.lower + interval.upper) / 2;
     var chord = -((1 - interval.lower) * interval.a + (1 - interval.upper) * interval.b) / 2;
     close(sampleChart("integrated-chart", u, ".hull-curve"), chord, 1e-5);
@@ -605,9 +623,11 @@
       close(box.x, Number(band.getAttribute("x")), 1e-3); close(box.width, Number(band.getAttribute("width")), 1e-3);
       assert(style.strokeDasharray !== "none" && style.strokeLinecap === "round", "Orange segments are dotted");
     });
-    var label = el("integrated-chart").querySelector(".virtual-value-label");
-    assert(label.textContent === "φᵢ ∘ Fᵢ⁻¹"); close(Number(label.getAttribute("x")), 166);
-    assert(Number(label.getAttribute("y")) > 200 && Number(label.getAttribute("y")) < 280, "Virtual-value label is near the lower left branch");
+    var title = el("integrated-chart").closest("figure").querySelector("figcaption");
+    ["Integrated virtual value", "Convex lower bound", "Virtual value", "Ironed virtual value"].forEach(function (name) {
+      assert(title.textContent.includes(name), "Title identifies " + name);
+    });
+    assert(!el("integrated-chart").querySelector(".virtual-value-label"), "Virtual values are identified by title and inspection");
     assert(!doc.querySelector(".integrated-axis-labels"));
     doc.querySelectorAll(".chart-640x360").forEach(function (svg) {
       var box = svg.querySelector("rect.plot-frame");
@@ -659,14 +679,14 @@
         close(revenue(), optimum.revenue, 1e-10, "Selecting rounded endpoints preserves exact optimal revenue");
       });
       [0.18, 0.42, 0.52, 0.74, 0.91].forEach(function (v) {
-        close(sampleChart("allocation-chart", v), optimum.allocation(v), 3e-5);
-        close(sampleChart("payment-chart", v), optimum.payment(v), 3e-5);
+        curveClose("allocation-chart", v, optimum.allocation(v));
+        curveClose("payment-chart", v, optimum.payment(v));
       });
       assert(!doc.querySelector(".benchmark-curve"));
     }
-    var before = sampleChart("allocation-chart", 0.74), payment = sampleChart("payment-chart", 0.74);
+    var before = optimum.allocation(0.74), payment = optimum.payment(0.74);
     input("mass-number", "0.3"); input("split-number", "0.63");
-    close(sampleChart("allocation-chart", 0.74), before, 3e-5); close(sampleChart("payment-chart", 0.74), payment, 3e-5);
+    curveClose("allocation-chart", 0.74, before); curveClose("payment-chart", 0.74, payment);
     choose(0); input("allocation-number", "0.9");
     assert(el("bic-status").dataset.passed === "false" && el("revenue-label").textContent === "Expected revenue");
     finiteGeometry();
@@ -720,8 +740,8 @@
       sameStyle(doc.querySelector(".value-pdf-preview-figure figcaption"), fpa.querySelector(".value-pdf-preview-figure figcaption"), ["fontSize", "fontWeight", "marginLeft"]);
       assert(el("value-pdf-preview").getAttribute("viewBox") === fpa.getElementById("value-pdf-preview").getAttribute("viewBox"));
       assert(el("value-pdf-preview").querySelector(".value-pdf-curve") && el("value-pdf-preview").querySelectorAll(".value-pdf-axis").length === 3);
-      assert(el("value-pdf-preview").querySelector('[data-endpoint="a"]').textContent === "vᵢ = 0");
-      assert(el("value-pdf-preview").querySelector('[data-endpoint="b"]').textContent === "vᵢ = 1");
+      assert(el("value-pdf-preview").querySelector('[data-endpoint="a"]').getAttribute("aria-label") === "vᵢ = 0");
+      assert(el("value-pdf-preview").querySelector('[data-endpoint="b"]').getAttribute("aria-label") === "vᵢ = 1");
       for (var width of [320, 768, 1280]) {
         frame.style.width = width + "px"; await T.nextAnimationFrames(win, 3);
         var demoSize = 0.86 * parseFloat(win.getComputedStyle(doc.documentElement).fontSize);
@@ -755,7 +775,7 @@
         assert(el("bic-status").dataset.passed === "true" && el("feasibility-status").dataset.passed === "true", "Efficient rule is implementable");
         assert(el("interpolation-kind").textContent.includes("Exact efficient curves"));
         [0,0.137,0.713,1].forEach(function (v) {
-          close(sampleChart("allocation-chart", v), Math.pow(M.cdf(v,d), n - 1), 4e-5, "Efficient curve remains exact between handles");
+          curveClose("allocation-chart", v, Math.pow(M.cdf(v,d), n - 1));
         });
         var rule = M.adoptedRule(M.efficient(n,d),n,d); close(revenue(), rule.revenue, 1e-10);
         close(Number(el("split-number").value), values[0]); close(Number(el("mass-number").value), values[1]);

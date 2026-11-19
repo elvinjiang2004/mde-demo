@@ -5,13 +5,16 @@
     var auctionControls = window.AuctionControls;
     var model = window.FPAModel;
     var distributions = window.AuctionDistributions;
-    var appendSvg = window.SvgUtils.appendSvg;
+    function appendSvg(parent, name, attributes, text) {
+      var node = window.SvgUtils.appendSvg(parent, name, attributes, text);
+      if (name === "text" && typeof text === "string") { ChartLayout.mathText(node, text); }
+      return node;
+    }
+    function units(pixels) { return ChartLayout.svgUnits(elements.chart, pixels); }
     var formatEditableNumber = auctionControls.formatEditableNumber;
     var formatChoiceNumber = auctionControls.formatChoiceNumber;
     var chart = window.AuctionChart;
     var formatMoney = chart.formatMoney;
-    var formatDensityAxis = chart.formatDensityAxis;
-    var formatProbabilityAxis = chart.formatProbabilityAxis;
     var formatPercent = chart.formatPercent;
     var roundCoordinate = chart.roundCoordinate;
     var yScale = chart.yScale;
@@ -27,17 +30,25 @@
     var curveCacheBuildCount = 0;
 
     function drawDiamond(svg, x, y, className) {
-      chart.drawDiamond(svg, x, y, className, 7);
+      chart.drawDiamond(svg, x, y, className, units(5));
     }
 
     function getChartLayout() {
-      return chart.chartLayout(
+      var layout = chart.chartLayout(
         elements.chart.parentElement.clientWidth ||
           elements.chart.clientWidth ||
-          1000,
-        { endpointLabelY: 740, bracketY: 758, bracketLabelY: 780 },
-        { endpointLabelY: 720, bracketY: 738, bracketLabelY: 760 }
+          1000
       );
+      var scale = (elements.chart.clientWidth || layout.width) / layout.width;
+      layout.left = Math.max(layout.left, 68 / scale);
+      layout.densityTop = Math.max(layout.densityTop, 80 / scale);
+      layout.cdfTop = Math.max(layout.cdfTop, layout.densityTop + layout.densityHeight + 110 / scale);
+      var bottom = layout.cdfTop + layout.cdfHeight;
+      layout.endpointLabelY = bottom + 44 / scale;
+      layout.bracketY = bottom + 72 / scale;
+      layout.bracketLabelY = bottom + 94 / scale;
+      layout.height = Math.max(layout.height, bottom + 116 / scale);
+      return layout;
     }
 
     function drawValuePdfPreview() {
@@ -45,7 +56,7 @@
       if (!svg) {
         return;
       }
-      var signature = [state.a, state.b, state.alpha, state.beta].join("|");
+      var signature = [state.a, state.b, state.alpha, state.beta, Math.round(svg.getBoundingClientRect().width)].join("|");
       if (signature === valuePdfSignature && svg.childNodes.length > 0) {
         return;
       }
@@ -53,8 +64,8 @@
       chart.drawValueDensityPreview(svg, {
         lower: state.a,
         upper: state.b,
-        lowerSymbol: "v̲",
-        upperSymbol: "v̅",
+        lowerSymbol: "v̲ᵢ",
+        upperSymbol: "v̅ᵢ",
         alpha: state.alpha,
         beta: state.beta,
         distribution: distributionSpec(),
@@ -98,7 +109,9 @@
       var cdfHeight = layout.cdfHeight;
       var cdfBottom = cdfTop + cdfHeight;
       var span = state.b - state.a;
-      var underlying = cachedUnderlyingCurves(361);
+      svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+      ChartLayout.setTextSize(svg);
+      var underlying = cachedUnderlyingCurves(layout);
       var samples = sampleWinningProbabilities(
         underlying.winningProbability, current, equilibrium
       );
@@ -113,28 +126,28 @@
       svg.dataset.curveCacheKey = underlying.signature;
       svg.dataset.curveCacheBuildCount = String(underlying.buildCount);
       svg.setAttribute("viewBox", "0 0 " + width + " " + height);
+      ChartLayout.setTextSize(svg);
 
       function xScale(value) {
         return left + ((value - state.a) / span) * plotWidth;
       }
 
       var densityPanel = {
+        id: "density-y",
         top: densityTop,
         height: densityHeight,
         min: 0,
         max: densityPeak * 1.12,
-        title: "PDF of highest opposing bid",
-        format: formatDensityAxis,
-        tickCount: 3
+        title: null
       };
       var cdfPanel = {
+        id: "probability-y",
         top: cdfTop,
         height: cdfHeight,
         min: 0,
         max: 1,
-        title: "Expected payoff",
-        format: formatProbabilityAxis,
-        tickCount: 4
+        title: null,
+        percent: true
       };
 
       svg.replaceChildren();
@@ -145,6 +158,7 @@
 
       drawPanelScaffold(svg, densityPanel, left, right);
       drawPanelScaffold(svg, cdfPanel, left, right);
+      drawPanelTitles(svg, densityPanel, cdfPanel, left, right, layout.height);
 
       drawDensityArea(
         svg,
@@ -172,12 +186,7 @@
         class: "support-guide",
         "data-support-bid": current.maximumEquilibriumBid
       });
-      appendSvg(svg, "text", {
-        x: supportX > left + plotWidth * 0.76 ? supportX - 7 : supportX + 7,
-        y: densityTop + 16,
-        class: "support-label annotation-halo",
-        "text-anchor": supportX > left + plotWidth * 0.76 ? "end" : "start"
-      }, "βᴵ(v̅) = " + formatMoney(current.maximumEquilibriumBid, span));
+
 
       var equilibriumX = xScale(equilibrium.bid);
       appendSvg(svg, "line", {
@@ -188,29 +197,9 @@
         class: "equilibrium-marker density-equilibrium-marker",
         "data-equilibrium-bid": equilibrium.bid
       });
-      drawDensityEquilibriumAnnotation(
-        svg,
-        equilibrium.bid,
-        equilibriumX,
-        densityPanel,
-        left,
-        right,
-        layout.compact
-      );
-
-      var shadedRight = xScale(Math.min(current.bid, current.maximumEquilibriumBid));
-      drawProbabilityAreaLabel(
-        svg,
-        current,
-        xScale,
-        densityPanel,
-        left,
-        shadedRight,
-        layout.compact,
-        function (bid) {
-          return interpolatedDensity(underlying.density.support, bid);
-        }
-      );
+      drawProbabilityAreaLabel(svg, current, xScale, densityPanel, left,
+        xScale(Math.min(current.bid, current.maximumEquilibriumBid)), layout.compact,
+        function (bid) { return interpolatedDensity(underlying.density.support, bid); });
       var chosenX = xScale(current.bid);
       drawSelectedMarker(svg, chosenX, densityTop, densityTop + densityHeight);
       drawCircle(
@@ -270,16 +259,6 @@
         equilibriumY,
         "equilibrium-point"
       );
-      drawMaximumAnnotation(
-        svg,
-        equilibrium,
-        equilibriumX,
-        equilibriumY,
-        cdfPanel,
-        left,
-        right,
-        layout.compact
-      );
       drawAxisPayoffDecomposition(
         svg,
         current,
@@ -299,22 +278,62 @@
         "aria-hidden": "true"
       });
 
-      bringMetricLabelsToForeground(svg);
-
-      drawWinningProbabilityGuideLabel(
-        svg,
-        current,
-        cdfPanel,
-        left
-      );
+      bringMetricLabelsToForeground(svg, current);
+      bindProbes(svg, densityPanel, cdfPanel, left, right, equilibrium);
     }
 
-    function cachedUnderlyingCurves(count) {
-      var signature = [state.n, state.a, state.b, state.alpha, state.beta].join("|");
+    function bidDistributionNotation(name) {
+      var s = PlotProbe.symbol;
+      return [s(name, [s("β", "", [s("Y", "i")], "I")], [s("x", "i")])];
+    }
+
+    function drawPanelTitles(svg, densityPanel, cdfPanel, left, right, height) {
+      var scale = 1 / units(1);
+      var reservedHeight = 2 * 1.4 * .86 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+      [densityPanel, cdfPanel].forEach(function (panel, index) {
+        var title = document.getElementById(index === 0 ? "density-plot-title" : "cdf-plot-title");
+        title.style.left = left * scale + "px";
+        title.style.width = (right - left) * scale + "px";
+        title.style.bottom = (height - panel.top) * scale + 26 + "px";
+        // Reserve the HTML title's two-line slot in the composite's fixed bounds.
+        appendSvg(svg, "rect", { x: left, y: panel.top - units(26 + reservedHeight), width: right - left,
+          height: units(reservedHeight), fill: "none", stroke: "none", class: "first-price-title-space", "pointer-events": "none", "aria-hidden": "true" });
+      });
+    }
+
+    function bindProbes(svg, densityPanel, cdfPanel, left, right, equilibrium) {
+      var P = PlotProbe, spec = distributionSpec();
+      var support = model.maximumEquilibriumBid(state.n, state.a, state.b, spec);
+      var knots = [state.a, equilibrium.bid, support, state.b];
+      var references = [{ key: "equilibrium-bid", label: "Equilibrium bid", value: equilibrium.bid, color: "var(--orange)",
+        notation: [P.symbol("β", "", [P.symbol("v", "i")], "I")] }];
+      P.attach(svg, { editable: true, modifier: "alt", views: function () { return [
+        { id: "density", name: "Bid", frame: { left: left, right: right, top: densityPanel.top, bottom: densityPanel.top + densityPanel.height },
+          domain: [state.a, state.b], yDomain: [densityPanel.min, densityPanel.max], input: [P.symbol("x", "i")], knots: knots, references: references,
+          sample: function (bid) {
+            var value = model.highestOpponentBidDensity(bid, state.n, state.a, state.b, spec);
+            var rows = [{ key: "density", label: "Opposing-bid density", notation: bidDistributionNotation("f"), value: value, color: "var(--blue)" }];
+            if (bid === support && support < state.b && value !== 0) {
+              rows.push(Object.assign({}, rows[0], { key: "density-right", value: 0, open: true, side: "right limit" }));
+            }
+            return rows;
+          } },
+        { id: "probability", name: "Bid", frame: { left: left, right: right, top: cdfPanel.top, bottom: cdfPanel.top + cdfPanel.height },
+          domain: [state.a, state.b], yDomain: [0, 1], input: [P.symbol("x", "i")], knots: knots, references: references,
+          sample: function (bid) { return [
+            { key: "cdf", label: "Opposing-bid CDF", notation: bidDistributionNotation("F"),
+              value: model.winProbability(bid, state.n, state.a, state.b, spec), color: "var(--blue)" }
+          ]; } }
+      ]; } });
+    }
+
+    function cachedUnderlyingCurves(layout) {
+      var displayed = PlotStyle.dimensions(elements.chart, { left: layout.left, right: layout.right, top: 0, bottom: layout.height });
+      var signature = [state.n, state.a, state.b, state.alpha, state.beta, Math.ceil(displayed.width / 32), Math.ceil(displayed.height / 32)].join("|");
       if (curveCache && curveCache.signature === signature) {
         return curveCache;
       }
-      var sampled = sampleUnderlyingCurves(count);
+      var sampled = sampleUnderlyingCurves(layout, displayed);
       curveCache = {
         signature: signature,
         buildCount: curveCacheBuildCount + 1,
@@ -325,25 +344,35 @@
       return curveCache;
     }
 
-    function sampleUnderlyingCurves(count) {
+    function sampleUnderlyingCurves(layout, displayed) {
       var spec = distributionSpec();
       var supportEnd = model.maximumEquilibriumBid(
         state.n, state.a, state.b, spec
       );
       var support = [], probability = [];
-      var i;
-      for (i = 0; i < count; i += 1) {
+      function evaluate(t) {
         // Plot parametrically in the opponent's value; no inverse solve is
         // needed at each sample. Cluster samples near both support endpoints.
-        var position = (1 - Math.cos(Math.PI * i / (count - 1))) / 2;
+        var position = (1 - Math.cos(Math.PI * t)) / 2;
         var value = state.a + position * (state.b - state.a);
         var bid = model.equilibriumBid(value, state.n, state.a, state.b, spec);
         var win = Math.pow(distributions.cdf(value, state.a, state.b, spec), state.n - 1);
         var density = value > bid ? win / (value - bid) :
           densityForPlot(bid, state.a, supportEnd);
-        support.push({ bid: bid, density: density });
-        probability.push({ bid: bid, winProbability: win });
+        return { bid: bid, density: density, winProbability: win };
       }
+      var peak = 1;
+      for (var i = 0; i <= 32; i += 1) { peak = Math.max(peak, evaluate(i / 32).density); }
+      var ratio = displayed.height / layout.height;
+      var points = PlotStyle.adaptive(evaluate, function (p) {
+        var px = (p.bid - state.a) / (state.b - state.a) * displayed.width;
+        return [[px, p.winProbability * layout.cdfHeight * ratio],
+          [px, p.density / (peak * 1.12) * layout.densityHeight * ratio]];
+      }, 0, 1, { segments: Math.max(4, Math.ceil(displayed.width / 96)) });
+      points.forEach(function (p) {
+        support.push({ bid: p.bid, density: p.density });
+        probability.push({ bid: p.bid, winProbability: p.winProbability });
+      });
       var curve = support.slice();
       curve.push({ bid: supportEnd, density: 0 });
       if (supportEnd < state.b - model.EPSILON) {
@@ -476,119 +505,6 @@
       });
     }
 
-    function drawProbabilityAreaLabel(
-      svg,
-      current,
-      xScale,
-      panel,
-      left,
-      shadedRight,
-      compact,
-      densityAt
-    ) {
-      var probabilityText = formatPercent(current.winProbability);
-      var label = "Probability of winning = " + probabilityText;
-      var lineHeight = 13;
-      var characterWidth = compact ? 5.7 : 6.1;
-      var horizontalPadding = 12;
-      var availableWidth = shadedRight - left;
-      var right = xScale(state.b);
-      var plotWidth = xScale(state.b) - left;
-      var baseY = yScale(0, panel);
-      var candidates = [
-        [label],
-        ["Probability of winning ", "= " + probabilityText],
-        ["Probability ", "of winning ", "= " + probabilityText]
-      ];
-      var chosen = null;
-      var heightSampleCount = 9;
-      var sampledCandidateWidth = false;
-
-      candidates.some(function (lines) {
-        var block = svgTextBlock(lines, characterWidth, lineHeight);
-        if (availableWidth < block.width + 2 * horizontalPadding) {
-          return false;
-        }
-
-        var labelLeft = shadedRight - block.width - horizontalPadding;
-        var availableHeight = Infinity;
-        var sampleIndex;
-        sampledCandidateWidth = true;
-
-        for (sampleIndex = 0;
-            sampleIndex < heightSampleCount;
-            sampleIndex += 1) {
-          var sampleX = labelLeft +
-            (sampleIndex / (heightSampleCount - 1)) * block.width;
-          var sampleBid = state.a +
-            ((sampleX - left) / plotWidth) * (state.b - state.a);
-          var sampleDensity = densityAt(sampleBid);
-          availableHeight = Math.min(
-            availableHeight,
-            baseY - densityY(sampleDensity, panel)
-          );
-        }
-
-        if (availableHeight < block.height + 10) {
-          return false;
-        }
-
-        chosen = {
-          block: block,
-          labelLeft: labelLeft
-        };
-        return true;
-      });
-
-      if (!chosen) {
-        var selectedX = xScale(current.bid);
-        var fallbackLines = markerAttachedTextPlacement(
-          candidates,
-          characterWidth,
-          lineHeight,
-          selectedX,
-          left,
-          right,
-          8
-        );
-        fallbackLines.y = baseY - 10 -
-          (fallbackLines.block.lines.length - 1) * lineHeight;
-
-        appendSvgTextLines(svg, {
-          x: fallbackLines.x,
-          y: fallbackLines.y,
-          class: "area-label annotation-halo",
-          "text-anchor": fallbackLines.anchor || "middle",
-          "data-metric": "win-probability",
-          "data-probability": current.winProbability,
-          "data-layout": fallbackLines.block.lines.length === 1 ?
-            "single" : "wrapped",
-          "data-placement": fallbackLines.placement,
-          "data-vertical-placement": "panel-floor",
-          "data-height-check": sampledCandidateWidth ?
-            "sampled-width" : "not-applicable",
-          "data-height-samples": sampledCandidateWidth ? heightSampleCount : 0,
-          "data-foreground": "true"
-        }, fallbackLines.block.lines, lineHeight, label);
-        return;
-      }
-
-      appendSvgTextLines(svg, {
-        x: chosen.labelLeft + chosen.block.width / 2,
-        y: baseY - 10 -
-          (chosen.block.lines.length - 1) * lineHeight,
-        class: "area-label annotation-halo",
-        "text-anchor": "middle",
-        "data-metric": "win-probability",
-        "data-probability": current.winProbability,
-        "data-layout": chosen.block.lines.length === 1 ? "single" : "wrapped",
-        "data-placement": "inside-area",
-        "data-height-check": "sampled-width",
-        "data-height-samples": heightSampleCount,
-        "data-foreground": "true"
-      }, chosen.block.lines, lineHeight, label);
-    }
-
     function drawExpectedPayoffRectangle(
       svg,
       current,
@@ -656,8 +572,7 @@
 
       var payoffText = formatMoney(signedPayoff, state.b - state.a);
       var label = "Expected payoff = " + payoffText;
-      var lineHeight = 13;
-      var characterWidth = compact ? 5.6 : 5.9;
+      var lineHeight = units(18);
       var candidates = [
         [label],
         ["Expected payoff ", "= " + payoffText],
@@ -666,8 +581,8 @@
       var chosen = null;
 
       candidates.some(function (lines) {
-        var block = svgTextBlock(lines, characterWidth, lineHeight);
-        if (rectangleWidth >= block.width + 18) {
+        var block = svgTextBlock(lines, lineHeight);
+        if (rectangleWidth >= block.width + units(12)) {
           chosen = block;
           return true;
         }
@@ -675,7 +590,7 @@
       });
 
       if (chosen) {
-        var chosenY = probabilityY + rectangleHeight / 2 + 4 -
+        var chosenY = probabilityY + rectangleHeight / 2 + units(4) -
           (chosen.lines.length - 1) * lineHeight / 2;
         appendSvgTextLines(svg, {
           x: (bidX + valueX) / 2,
@@ -695,14 +610,13 @@
 
       var fallback = markerAttachedTextPlacement(
         candidates,
-        characterWidth,
         lineHeight,
         bidX,
         left,
         right,
-        8
+        units(8)
       );
-      fallback.y = probabilityY + rectangleHeight / 2 + 4 -
+      fallback.y = probabilityY + rectangleHeight / 2 + units(4) -
         (fallback.block.lines.length - 1) * lineHeight / 2;
 
       appendSvgTextLines(svg, {
@@ -784,67 +698,18 @@
       });
     }
 
-    function drawWinningProbabilityGuideLabel(
-      svg,
-      current,
-      panel,
-      left
-    ) {
-      var guideY = yScale(current.winProbability, panel);
-      var labelY = guideY <= panel.top + 18 ? guideY + 17 : guideY - 8;
-      var label = "Probability of winning = " +
-        formatPercent(current.winProbability);
-      appendSvg(svg, "text", {
-        x: left + 8,
-        y: labelY,
-        class: "winning-probability-guide-label annotation-halo",
-        "text-anchor": "start",
-        "data-probability": current.winProbability,
-        "data-placement": "axis-right",
-        "data-guide-y": guideY,
-        "data-foreground": "true"
-      }, label);
-    }
-
-    function bringMetricLabelsToForeground(svg) {
-      [".area-label", ".expected-payoff-label"].forEach(function (selector) {
-        var label = svg.querySelector(selector);
-        if (label) {
-          svg.appendChild(label);
-        }
-      });
-    }
-
     function drawBidAxis(svg, xScale, left, right, zeroY) {
       appendSvg(svg, "line", {
         x1: left,
         y1: zeroY,
         x2: right,
         y2: zeroY,
-        class: "axis-line cdf-zero-axis",
+        class: "axis-line zero-line cdf-zero-axis",
         "data-axis-value": "0"
       });
 
-      var tickCount = 5;
-      var i;
-      for (i = 0; i <= tickCount; i += 1) {
-        var value = state.a + (i / tickCount) * (state.b - state.a);
-        var x = xScale(value);
-        var anchor = i === 0 ? "start" : (i === tickCount ? "end" : "middle");
-        appendSvg(svg, "line", {
-          x1: x,
-          y1: zeroY,
-          x2: x,
-          y2: zeroY + 6,
-          class: "axis-line"
-        });
-        appendSvg(svg, "text", {
-          x: x + (i === 0 ? 2 : (i === tickCount ? -2 : 0)),
-          y: zeroY + 20,
-          class: "axis-text annotation-halo",
-          "text-anchor": anchor
-        }, formatAxisMoney(value));
-      }
+      PlotStyle.axis(svg, { orientation: "x", frame: { left: left, right: right, top: zeroY, bottom: zeroY },
+        domain: [state.a, state.b] });
 
     }
 
@@ -862,8 +727,7 @@
       var signedPayoffIfWin = state.value - current.bid;
       var stateName = signedPayoffIfWin > model.EPSILON ?
         "positive" : (signedPayoffIfWin < -model.EPSILON ? "negative" : "zero");
-      var closeEndpoints = Math.abs(paymentX - valueX) <
-        (layout.compact ? 105 : 120);
+      var closeEndpoints = Math.abs(paymentX - valueX) < units(120);
       var paymentLabel = "xᵢ = " +
         formatMoney(current.paymentIfWin, state.b - state.a);
       var valueLabel = "vᵢ = " +
@@ -927,7 +791,7 @@
 
         appendSvg(svg, "text", {
           x: paymentPlacement.x,
-          y: layout.endpointLabelY - (closeEndpoints ? 7 : 0),
+          y: layout.endpointLabelY - (closeEndpoints ? units(7) : 0),
           class: "axis-payment-label annotation-halo",
           "text-anchor": paymentPlacement.anchor,
           "data-payment": current.paymentIfWin,
@@ -935,7 +799,7 @@
         }, paymentLabel);
         appendSvg(svg, "text", {
           x: valuePlacement.x,
-          y: layout.endpointLabelY + (closeEndpoints ? 7 : 0),
+          y: layout.endpointLabelY + (closeEndpoints ? units(11) : 0),
           class: "axis-value-label annotation-halo",
           "text-anchor": valuePlacement.anchor,
           "data-value": state.value
@@ -976,7 +840,7 @@
       });
       var label = "Payoff if you win, vᵢ − xᵢ = " +
         formatMoney(signedPayoffIfWin, state.b - state.a);
-      var labelWidth = label.length * (layout.compact ? 5.6 : 5.9);
+      var labelWidth = ChartLayout.measureText(svg, label, "payoff-if-win-axis-label");
       var labelX = (bracketLeft + bracketRight) / 2;
       var labelAnchor = "middle";
 
@@ -1023,8 +887,8 @@
     }
 
     function axisEndpointLabelPlacement(x, direction, label, left, right) {
-      var padding = 7;
-      var estimatedWidth = label.length * 5.8;
+      var padding = units(7);
+      var estimatedWidth = ChartLayout.measureText(elements.chart, label, "axis-payment-label");
       var placeLeft = direction < 0;
 
       if (placeLeft && x - padding - estimatedWidth < left) {
@@ -1040,74 +904,13 @@
     }
 
     function axisCenteredAnchor(x, left, right) {
-      if (x < left + 105) {
+      if (x < left + units(105)) {
         return "start";
       }
-      if (x > right - 105) {
+      if (x > right - units(105)) {
         return "end";
       }
       return "middle";
-    }
-
-    function annotationLabelFitsRight(label, x, left, right, padding, compact) {
-      var estimatedWidth = label.length * (compact ? 5.6 : 5.9);
-      var rightSpace = right - x - padding;
-      var leftSpace = x - left - padding;
-      return rightSpace >= estimatedWidth || rightSpace >= leftSpace;
-    }
-
-    function drawMaximumAnnotation(
-      svg,
-      equilibrium,
-      equilibriumX,
-      equilibriumY,
-      panel,
-      left,
-      right,
-      compact
-    ) {
-      var label = "βᴵ(vᵢ) = " +
-        formatMoney(equilibrium.bid, state.b - state.a);
-      var useRight = annotationLabelFitsRight(
-        label, equilibriumX, left, right, 14, compact
-      );
-      var labelY = equilibriumY < panel.top + 34 ?
-        equilibriumY + 24 : equilibriumY - 11;
-
-      appendSvg(svg, "text", {
-        x: equilibriumX + (useRight ? 13 : -13),
-        y: clampLabelY(labelY, panel.top, panel.top + panel.height),
-        class: "maximum-label annotation-halo",
-        "text-anchor": useRight ? "start" : "end",
-        "data-metric": "equilibrium-maximum",
-        "data-equilibrium-bid": equilibrium.bid,
-        "data-equilibrium-payoff": equilibrium.expectedPayoff
-      }, label);
-    }
-
-    function drawDensityEquilibriumAnnotation(
-      svg,
-      equilibriumBid,
-      equilibriumX,
-      panel,
-      left,
-      right,
-      compact
-    ) {
-      var label = "βᴵ(vᵢ) = " +
-        formatMoney(equilibriumBid, state.b - state.a);
-      var useRight = annotationLabelFitsRight(
-        label, equilibriumX, left, right, 12, compact
-      );
-
-      appendSvg(svg, "text", {
-        x: equilibriumX + (useRight ? 10 : -10),
-        y: panel.top + 36,
-        class: "maximum-label density-equilibrium-label annotation-halo",
-        "text-anchor": useRight ? "start" : "end",
-        "data-panel": "pdf",
-        "data-equilibrium-bid": equilibriumBid
-      }, label);
     }
 
     function drawSelectedMarker(svg, x, top, bottom) {
@@ -1120,37 +923,143 @@
       });
     }
 
-    function clampLabelY(value, top, bottom) {
-      return model.clamp(value, top + 14, bottom - 8);
+    function drawProbabilityAreaLabel(
+      svg,
+      current,
+      xScale,
+      panel,
+      left,
+      shadedRight,
+      compact,
+      densityAt
+    ) {
+      var probabilityText = formatPercent(current.winProbability);
+      var label = "Probability of winning = " + probabilityText;
+      var lineHeight = units(18);
+      var horizontalPadding = units(10);
+      var availableWidth = shadedRight - left;
+      var right = xScale(state.b);
+      var plotWidth = xScale(state.b) - left;
+      var baseY = yScale(0, panel);
+      var candidates = [
+        [label],
+        ["Probability of winning ", "= " + probabilityText],
+        ["Probability ", "of winning ", "= " + probabilityText]
+      ];
+      var chosen = null;
+      var heightSampleCount = 9;
+      var sampledCandidateWidth = false;
+
+      candidates.some(function (lines) {
+        var block = svgTextBlock(lines, lineHeight);
+        if (availableWidth < block.width + 2 * horizontalPadding) {
+          return false;
+        }
+
+        var labelLeft = shadedRight - block.width - horizontalPadding;
+        var availableHeight = Infinity;
+        var sampleIndex;
+        sampledCandidateWidth = true;
+
+        for (sampleIndex = 0;
+            sampleIndex < heightSampleCount;
+            sampleIndex += 1) {
+          var sampleX = labelLeft +
+            (sampleIndex / (heightSampleCount - 1)) * block.width;
+          var sampleBid = state.a +
+            ((sampleX - left) / plotWidth) * (state.b - state.a);
+          var sampleDensity = densityAt(sampleBid);
+          availableHeight = Math.min(
+            availableHeight,
+            baseY - densityY(sampleDensity, panel)
+          );
+        }
+
+        if (availableHeight < block.height + units(8)) {
+          return false;
+        }
+
+        chosen = {
+          block: block,
+          labelLeft: labelLeft
+        };
+        return true;
+      });
+
+      if (!chosen) {
+        var selectedX = xScale(current.bid);
+        var fallbackLines = markerAttachedTextPlacement(
+          candidates,
+          lineHeight,
+          selectedX,
+          left,
+          right,
+          units(8)
+        );
+        fallbackLines.y = baseY - units(9) -
+          (fallbackLines.block.lines.length - 1) * lineHeight;
+
+        appendSvgTextLines(svg, {
+          x: fallbackLines.x,
+          y: fallbackLines.y,
+          class: "area-label annotation-halo",
+          "text-anchor": fallbackLines.anchor || "middle",
+          "data-metric": "win-probability",
+          "data-probability": current.winProbability,
+          "data-layout": fallbackLines.block.lines.length === 1 ?
+            "single" : "wrapped",
+          "data-placement": fallbackLines.placement,
+          "data-vertical-placement": "panel-floor",
+          "data-height-check": sampledCandidateWidth ?
+            "sampled-width" : "not-applicable",
+          "data-height-samples": sampledCandidateWidth ? heightSampleCount : 0,
+          "data-foreground": "true"
+        }, fallbackLines.block.lines, lineHeight, label);
+        return;
+      }
+
+      appendSvgTextLines(svg, {
+        x: chosen.labelLeft + chosen.block.width / 2,
+        y: baseY - units(9) -
+          (chosen.block.lines.length - 1) * lineHeight,
+        class: "area-label annotation-halo",
+        "text-anchor": "middle",
+        "data-metric": "win-probability",
+        "data-probability": current.winProbability,
+        "data-layout": chosen.block.lines.length === 1 ? "single" : "wrapped",
+        "data-placement": "inside-area",
+        "data-height-check": "sampled-width",
+        "data-height-samples": heightSampleCount,
+        "data-foreground": "true"
+      }, chosen.block.lines, lineHeight, label);
     }
 
-    function svgTextBlock(lines, characterWidth, lineHeight) {
+    function svgTextBlock(lines, lineHeight) {
       var widestLine = lines.reduce(function (widest, line) {
-        return Math.max(widest, line.trim().length * characterWidth);
+        return Math.max(widest, ChartLayout.measureText(elements.chart, line.trim(), "area-label"));
       }, 0);
       return {
         lines: lines,
         width: widestLine,
-        height: 11 + (lines.length - 1) * lineHeight
+        height: units(15) + (lines.length - 1) * lineHeight
       };
     }
 
     function markerAttachedTextPlacement(
       candidates,
-      characterWidth,
       lineHeight,
       markerX,
       left,
       right,
       gap
     ) {
-      var edgePadding = 4;
+      var edgePadding = units(4);
       var rightSpace = right - markerX - gap - edgePadding;
       var leftSpace = markerX - left - gap - edgePadding;
       var placement = null;
 
       candidates.some(function (lines) {
-        var block = svgTextBlock(lines, characterWidth, lineHeight);
+        var block = svgTextBlock(lines, lineHeight);
         if (rightSpace >= block.width) {
           placement = {
             block: block,
@@ -1165,7 +1074,7 @@
 
       if (!placement) {
         candidates.some(function (lines) {
-          var block = svgTextBlock(lines, characterWidth, lineHeight);
+          var block = svgTextBlock(lines, lineHeight);
           if (leftSpace >= block.width) {
             placement = {
               block: block,
@@ -1183,7 +1092,7 @@
         var fallbackLines = candidates[candidates.length - 1];
         var useRight = rightSpace >= leftSpace;
         placement = {
-          block: svgTextBlock(fallbackLines, characterWidth, lineHeight),
+          block: svgTextBlock(fallbackLines, lineHeight),
           x: markerX + (useRight ? gap : -gap),
           anchor: useRight ? "start" : "end",
           placement: useRight ? "marker-right" : "marker-left"
@@ -1214,6 +1123,16 @@
       });
 
       return textNode;
+    }
+
+    function bringMetricLabelsToForeground(svg, current) {
+      [".area-label", ".expected-payoff-label"].forEach(function (selector) {
+        var label = svg.querySelector(selector);
+        if (label) {
+          label.dataset.value = selector === ".area-label" ? current.winProbability : current.expectedPayoff;
+          svg.appendChild(label);
+        }
+      });
     }
 
     function chartDescription(current, equilibrium) {
@@ -1253,10 +1172,6 @@
         formatChoiceNumber(state.beta) + ", and support from " +
         formatEditableNumber(state.a) + " to " +
         formatEditableNumber(state.b);
-    }
-
-    function formatAxisMoney(value) {
-      return formatMoney(value, state.b - state.a);
     }
 
     return Object.freeze({

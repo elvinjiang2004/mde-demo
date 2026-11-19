@@ -207,6 +207,9 @@
     buyerInterimDeviationUtility: buyerInterimDeviationUtility,
     sellerInterimDeviationUtility: sellerInterimDeviationUtility,
     allocationErrorAt: allocationErrorAt,
+    lostGainsAt: function (grid, v, c) {
+      return sharedEnvelope.lostGains(allocationErrorAt(grid, v, c).q, v, c);
+    },
     zeroBoundaryPayments: zeroBoundaryPayments,
     welfare: welfare,
     expectedBuyerPayoff: expectedBuyerPayoff,

@@ -1,6 +1,13 @@
 (function (global) {
   "use strict";
-  var S = SvgUtils.appendSvg, M = IroningModel;
+  var M = IroningModel;
+  var resizeFrame = 0;
+  var latestRender = null;
+  function S(parent, name, attributes, text) {
+    var node = SvgUtils.appendSvg(parent, name, attributes, text);
+    if (name === "text" && typeof text === "string") { ChartLayout.mathText(node, text); }
+    return node;
+  }
   var frame = { width: 640, height: 360, left: 54, right: 614, top: 24, bottom: 316 };
   function x(v, chart) { var box = chart ? chart.frame : frame; return box.left + v * (box.right - box.left); }
   function y(v, domain) { return frame.bottom - (v - domain[0]) / (domain[1] - domain[0]) * (frame.bottom - frame.top); }
@@ -9,36 +16,26 @@
     svg.dataset.yMin = domain[0]; svg.dataset.yMax = domain[1];
     var axes = S(svg, "g", { "class": "axes" });
     S(axes, "rect", { x: box.left, y: frame.top, width: box.right - box.left, height: frame.bottom - frame.top, "class": "plot-frame" });
-    [0, 0.25, 0.5, 0.75, 1].forEach(function (v) {
-      S(axes, "line", { x1: box.left + v * (box.right - box.left), x2: box.left + v * (box.right - box.left), y1: frame.bottom, y2: frame.bottom + 5, "class": "plot-frame" });
-      S(axes, "text", { x: box.left + v * (box.right - box.left), y: frame.bottom + 23, "text-anchor": "middle" }, String(v));
-    });
-    ticks.forEach(function (v) {
-      var yy = y(v, domain);
-      S(axes, "text", { x: box.left - 10, y: yy + 4, "text-anchor": "end" }, String(v));
-      if (v === 0 && domain[0] < 0) { S(axes, "line", { x1: box.left, x2: box.right, y1: yy, y2: yy, "class": "zero-line" }); }
-    });
-    return { svg: svg, frame: box, domain: domain, axes: axes, layer: S(svg, "g", {}), handles: S(svg, "g", { "class": "control-points" }) };
+    PlotStyle.axis(axes, { orientation: "x", frame: box, domain: [0, 1] });
+    var yAxis = PlotStyle.axis(axes, { orientation: "y", frame: box, domain: domain, grid: true });
+    return { svg: svg, frame: box, domain: domain, axes: axes, yAxis: yAxis,
+      layer: S(svg, "g", {}), handles: S(svg, "g", { "class": "control-points" }) };
   }
   function path(chart, fn, a, b, className, count, domain) {
-    var d = "", steps = count || Math.max(4, Math.ceil((b - a) * 350));
-    for (var i = 0; i <= steps; i += 1) {
-      var v = a + (b - a) * i / steps, value = fn(v);
-      d += (i ? "L" : "M") + x(v, chart).toFixed(4) + "," + y(value, domain || chart.domain).toFixed(4);
-    }
+    var scale = PlotStyle.dimensions(chart.svg, chart.frame).width / (chart.frame.right - chart.frame.left);
+    function evaluate(v) { return { v: v, value: fn(v) }; }
+    var points = count === 1 ? [evaluate(a), evaluate(b)] : PlotStyle.adaptive(evaluate, function (p) {
+      return [[x(p.v, chart) * scale, y(p.value, domain || chart.domain) * scale]];
+    }, a, b);
+    var d = points.map(function (p, i) {
+      return (i ? "L" : "M") + x(p.v, chart).toFixed(4) + "," + y(p.value, domain || chart.domain).toFixed(4);
+    }).join("");
     return S(chart.layer, "path", { d: d, "class": className });
   }
   function setDomain(chart, domain, ticks) {
     chart.domain = domain;
     chart.svg.dataset.yMin = domain[0]; chart.svg.dataset.yMax = domain[1];
-    var labels = chart.axes.querySelectorAll("text");
-    for (var i = 5; i < labels.length; i += 1) { labels[i].style.display = i - 5 < ticks.length ? "" : "none"; }
-    ticks.forEach(function (value, i) {
-      labels[5 + i].textContent = String(value);
-      labels[5 + i].setAttribute("y", y(value, domain) + 4);
-    });
-    var zero = chart.axes.querySelector(".zero-line");
-    if (zero) { zero.setAttribute("y1", y(0, domain)); zero.setAttribute("y2", y(0, domain)); }
+    chart.yAxis.update(domain);
   }
   function shade(chart, benchmark) {
     benchmark.pools.forEach(function (pool) {
@@ -50,10 +47,7 @@
     if (!chart.secondary) { chart.secondary = S(chart.svg, "g", { "class": "secondary-axis" }); }
     chart.secondary.replaceChildren();
     chart.svg.dataset.y2Min = domain[0]; chart.svg.dataset.y2Max = domain[1];
-    [domain[0], 0, domain[1]].forEach(function (value) {
-      S(chart.secondary, "text", { x: chart.frame.right - 7, y: y(value, domain) + 4, "text-anchor": "end", "class": "annotation-halo" }, String(value));
-    });
-    S(chart.secondary, "line", { x1: chart.frame.left, x2: chart.frame.right, y1: y(0, domain), y2: y(0, domain), "class": "secondary-zero-line" });
+    PlotStyle.axis(chart.secondary, { orientation: "right", frame: chart.frame, domain: domain });
   }
   function renderIntegrated(chart, d, solution) {
     if (chart.distribution && chart.distribution.split === d.split && chart.distribution.mass === d.mass) { return; }
@@ -91,8 +85,6 @@
           r: 4, "class": side === "left" ? "limit-open" : "limit-closed" });
       });
     }
-    S(chart.layer, "text", { x: x(0.2, chart), y: Math.min(frame.bottom - 10, y(rawVirtual(0.2, "right"), virtualDomain) + 17),
-      "class": "virtual-value-label annotation-halo" }, "φᵢ ∘ Fᵢ⁻¹");
     chart.distribution = d;
   }
   function select(chart, selected) {
@@ -102,18 +94,30 @@
   }
   function renderFeasibility(chart, rule) {
     setDomain(chart, [0, rule.n], [0, rule.n / 2, rule.n]);
-    var check = rule.feasibility, cuts = M.feasibilityThresholds(rule);
+    if (chart.thresholdRule !== rule) {
+      chart.thresholds = M.feasibilityThresholds(rule).filter(Number.isFinite);
+      chart.thresholdRule = rule;
+    }
+    var check = rule.feasibility, cuts = chart.thresholds;
+    var scale = PlotStyle.dimensions(chart.svg, chart.frame).width / (chart.frame.right - chart.frame.left);
     function violates(level) { return rule.n * (level.allocation - level.capacity) > M.tolerance; }
     // Analytic cuts keep each path on one side of capacity, including narrow violations.
     cuts.slice(1).forEach(function (b, index) {
-      var a = cuts[index], steps = Math.max(4, Math.ceil((b - a) * 350)), demand = "", capacity = "";
-      for (var i = 0; i <= steps; i += 1) {
-        var alpha = i === 0 ? a : (i === steps ? b : a + (b - a) * i / steps);
-        var level = M.levelAt(rule, alpha, i === 0 ? "right" : undefined);
-        var prefix = (i ? "L" : "M") + x(alpha, chart).toFixed(4) + ",";
+      var a = cuts[index], demand = "", capacity = "";
+      if (b <= a) { return; }
+      var points = PlotStyle.adaptive(function (alpha) {
+        return { alpha: alpha, level: M.levelAt(rule, alpha, alpha === a ? "right" : undefined) };
+      }, function (p) {
+        return ["allocation", "capacity"].map(function (key) {
+          return [x(p.alpha, chart) * scale, y(rule.n * p.level[key], chart.domain) * scale];
+        });
+      }, a, b);
+      points.forEach(function (p, i) {
+        var level = p.level;
+        var prefix = (i ? "L" : "M") + x(p.alpha, chart).toFixed(4) + ",";
         demand += prefix + y(rule.n * level.allocation, chart.domain).toFixed(4);
         capacity += prefix + y(rule.n * level.capacity, chart.domain).toFixed(4);
-      }
+      });
       var midpoint = M.levelAt(rule, (a + b) / 2);
       S(chart.layer, "path", { d: demand, "class": "learner-curve" + (violates(midpoint) ? " violation-curve" : ""),
         "data-alpha-start": a, "data-alpha-end": b });
@@ -140,15 +144,10 @@
       if (alpha < 1 && right.allocation - right.capacity > level.allocation - level.capacity) { level = right; side = "right"; }
       chart.witness = { alpha: alpha, side: side, excess: rule.n * (level.allocation - level.capacity) };
     }
-    var capacityLabel = S(chart.layer, "text", { id: "feasibility-capacity-label", x: frame.right - 12,
-      y: Math.min(frame.bottom - 36, y(rule.n * M.levelAt(rule, 0.75).capacity, chart.domain) - 12),
-      "text-anchor": "end", "class": "capacity-label virtual-value-label annotation-halo" }, "1 − [1 − Fᵢ(E");
-    S(capacityLabel, "tspan", { "baseline-shift": "sub", "font-size": "70%" }, "α");
-    S(capacityLabel, "tspan", {}, ")]");
-    S(capacityLabel, "tspan", { dx: "0.16em", "baseline-shift": "super", "font-size": "70%" }, "n");
   }
   function clampLevel(value) { return Math.max(0, Math.min(1, value)); }
   function render(charts, rule, benchmark, selected) {
+    latestRender = { charts: charts, rule: rule, benchmark: benchmark, selected: selected };
     ["allocation", "payment", "feasibility"].forEach(function (key) { charts[key].layer.replaceChildren(); });
     setDomain(charts.allocation, [0, 1], [0, 0.5, 1]);
     shade(charts.allocation, benchmark);
@@ -190,6 +189,68 @@
       handle.setAttribute("aria-valuetext", "Value v_i " + p.v.toFixed(3) + ", allocation Q_i(v_i) " + p.q.toFixed(3) + side);
     });
     select(charts.allocation, selected);
+    bindProbes(charts, rule, benchmark.ironing);
+    Object.keys(charts).forEach(function (key) {
+      PlotStyle.watchResize(charts[key].svg, "curves", function () {
+        if (resizeFrame) { cancelAnimationFrame(resizeFrame); }
+        resizeFrame = requestAnimationFrame(function () {
+          resizeFrame = 0;
+          var latest = latestRender;
+          latest.charts.integrated.distribution = null;
+          render(latest.charts, latest.rule, latest.benchmark, latest.selected);
+        });
+      });
+    });
+  }
+  function bindProbes(charts, rule, solution) {
+    var P = window.PlotProbe, sym = P.symbol, d = rule.distribution;
+    ["allocation", "payment"].forEach(function (key) {
+      var chart = charts[key], field = key === "allocation" ? "q" : "payment";
+      P.attach(chart.svg, { editable: key === "allocation", views: function () { return [{ id: key, name: "Value",
+        frame: chart.frame, domain: [0, 1], yDomain: chart.domain, input: [sym("v", "i")], knots: rule.points.map(function (p) { return p.v; }),
+        sample: function (v) {
+          var value = M.evaluate(rule, v)[field];
+          var rows = [{ key: key, label: key === "allocation" ? "Interim allocation" : "Interim payment", notation: P.expression(key === "allocation" ? "Q" : "P", "i", "v"), value: value, color: "var(--blue)" }];
+          var left = rule.pieces.find(function (p) { return p.v1 === v; });
+          if (left) {
+            var limit = M.evaluatePiece(left, v)[field];
+            if (Math.abs(limit - value) > 1e-10) { rows.push(Object.assign({}, rows[0], { key: key + "-left", value: limit, open: true, side: "left limit" })); }
+          }
+          return rows;
+        } }]; } });
+    });
+    var integrated = charts.integrated;
+    P.attach(integrated.svg, { views: function () { return [{ id: "integrated", name: "Quantile", frame: integrated.frame,
+      domain: [0, 1], yDomain: integrated.domain, input: [sym("z")], knots: solution.intervals.reduce(function (cuts, p) { return cuts.concat([p.lower, p.upper]); }, [0, d.mass, 1]),
+      sample: function (u) {
+        var v = u === d.mass ? d.split : M.quantile(u, d);
+        var rightDomain = [Number(integrated.svg.dataset.y2Min), Number(integrated.svg.dataset.y2Max)];
+        var rows = [{ key: "integrated", label: "Integrated value", notation: P.expression("H", "i", "z", ""), value: M.integratedVirtual(u, d), color: "var(--ink)" },
+          { key: "virtual", label: "Virtual value", notation: P.expression("h", "i", "z", ""), value: M.phi(v, d), color: "var(--muted)", domain: rightDomain }];
+        if (u === d.mass && d.mass !== d.split) { rows.push(Object.assign({}, rows[1], { key: "virtual-left", value: M.phi(d.split, d, "left"), open: true, side: "left limit" })); }
+        var pool = solution.intervals.find(function (p) { return u >= p.lower && u <= p.upper; });
+        if (pool) {
+          rows.push({ key: "convex", label: "Convex lower bound", notation: P.expression("G", "i", "z", ""), value: M.convexIntegrated(u, solution), color: "var(--orange)" });
+          rows.push({ key: "ironed", label: "Ironed value", notation: P.expression("g", "i", "z", ""), value: pool.virtual, color: "var(--orange)", domain: rightDomain });
+        }
+        return rows;
+      } }]; } });
+    var feasibility = charts.feasibility;
+    var demand = P.expression("A", "i", "α", "");
+    var capacity = P.expression("C", "i", "α", "");
+    P.attach(feasibility.svg, { views: function () { return [{ id: "feasibility", name: "Allocation threshold", frame: feasibility.frame,
+      domain: [0, 1], yDomain: feasibility.domain, input: [sym("α")], knots: feasibility.thresholds,
+      sample: function (a) {
+        var included = M.levelAt(rule, a), right = M.levelAt(rule, a, "right"), rows = [];
+        function add(level, suffix) {
+          var color = rule.n * (level.allocation - level.capacity) > M.tolerance ? "var(--red)" : "var(--blue)";
+          rows.push({ key: "demand" + suffix, label: "Total allocation probability in E_alpha", notation: demand, value: rule.n * level.allocation, color: color, open: Boolean(suffix), side: suffix ? "right limit" : "" });
+          rows.push({ key: "capacity" + suffix, label: "Total value probability in E_alpha", notation: capacity, value: rule.n * level.capacity, color: "var(--ink)", open: Boolean(suffix), side: suffix ? "right limit" : "" });
+        }
+        add(included, "");
+        if (a < 1 && (Math.abs(included.allocation - right.allocation) > 1e-10 || Math.abs(included.capacity - right.capacity) > 1e-10)) { add(right, "-right"); }
+        return rows;
+      } }]; } });
   }
   function pointer(svg, event) {
     var point = svg.createSVGPoint(); point.x = event.clientX; point.y = event.clientY;
@@ -218,6 +279,13 @@
     });
     document.getElementById("value-pdf-preview-description").textContent = "Piecewise-uniform density f_i(v_i), " + d.lowerDensity.toFixed(4) + " below value v_i = " +
       d.split.toFixed(4) + ", and " + d.upperDensity.toFixed(4) + " above it. Lower-interval probability " + d.mass.toFixed(4) + ".";
+    ChartLayout.refresh(svg);
+    PlotProbe.attach(svg, { views: function () { return [{ id: "value-density", name: "Value", frame: { left: left, right: right, top: top, bottom: bottom },
+      domain: [0, 1], yDomain: [0, max], input: [PlotProbe.symbol("v", "i")], knots: [0, d.split, 1], sample: function (v) {
+        var rows = [{ key: "density", label: "Value density", notation: PlotProbe.expression("f", "i", "v"), value: M.pdf(v, d), color: "var(--blue)" }];
+        if (v === d.split && d.lowerDensity !== d.upperDensity) { rows.push(Object.assign({}, rows[0], { key: "density-left", value: M.pdf(v, d, "left"), open: true, side: "left limit" })); }
+        return rows;
+      } }]; } });
   }
   global.IroningCharts = Object.freeze({ create: create, render: render, select: select, density: density, pointer: pointer, frame: frame });
 })(window);

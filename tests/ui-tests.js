@@ -21,6 +21,8 @@
   var assert = window.MechanismTest.assert;
   var assertClose = window.MechanismTest.assertClose;
   var addResult = window.MechanismTest.addResult;
+  function chartText(node) { return node.getAttribute("aria-label") || node.textContent; }
+  function chartUnits(pixels) { return frame.contentWindow.ChartLayout.svgUnits(frame.contentDocument.getElementById("tradeoff-chart"), pixels); }
 
   function change(element) {
     window.MechanismTest.dispatch(element, "change", frame.contentWindow);
@@ -61,6 +63,20 @@
       change(alphaNumber);
       betaNumber.value = String(beta);
       change(betaNumber);
+    }
+
+    function inspectBid(bid, panel) {
+      var chart = appDocument.getElementById("tradeoff-chart"), T = window.MechanismTest;
+      function key(name, shift) { T.dispatch(chart, "keydown", appWindow, { key: name, altKey: true, shiftKey: Boolean(shift) }); }
+      chart.focus({ preventScroll: true });
+      if (chart.querySelector(".curve-probe").dataset.view !== (panel || "probability")) { key("ArrowDown"); }
+      key("Home");
+      for (var i = 0; i < Math.floor(bid / 10); i += 1) { key("ArrowRight", true); }
+      for (var j = 0; j < bid % 10; j += 1) { key("ArrowRight"); }
+      return chart.querySelector(".curve-probe");
+    }
+    function inspected(key) {
+      return Number(appDocument.querySelector('.curve-probe-text[data-series="' + key + '"]').dataset.value);
     }
 
     function numericSvgAttributes(chart) {
@@ -261,7 +277,7 @@
             }),
           "Display formulas should contain long MathJax output at compact widths.");
           assert(!appDocument.querySelector("#tradeoff-chart mjx-container") &&
-            appDocument.querySelector("#tradeoff-chart .panel-caption"),
+            appDocument.querySelector(".first-price-plot-title mjx-container"),
           "The custom graph should retain its native SVG labels.");
         }
       },
@@ -274,7 +290,7 @@
             appDocument.getElementById("value-number"),
             appDocument.getElementById("bid-number"),
             appDocument.querySelector(".text-button"),
-            appDocument.querySelector(".panel-caption")
+            appDocument.querySelector(".first-price-plot-title")
           ].forEach(function (element) {
             var family = appWindow.getComputedStyle(element).fontFamily;
             assert(/Times New Roman/i.test(family),
@@ -374,7 +390,7 @@
             .marginBottom) <= 24,
           "The model-to-panel gap should remain compact.");
           assert(Number.parseFloat(appWindow.getComputedStyle(explorable)
-            .marginBottom) <= 32 && chart.viewBox.baseVal.height === 800,
+            .marginBottom) <= 32 && chart.viewBox.baseVal.height >= 800,
           "The interactive demo should not retain its former bottom whitespace.");
           assertClose(Number.parseFloat(appWindow.getComputedStyle(equation).fontSize),
             Number.parseFloat(appWindow.getComputedStyle(appDocument.body).fontSize),
@@ -430,10 +446,10 @@
               '#optimality-gap-proof [data-mml-node="math"]'
             )).map(function (node) { return node.dataset.latex; }).join(" ");
             assert(derivation.querySelector(
-              '[data-mml-node="math"][data-latex="G(t)=F(t)^{n-1}"]'
+              '[data-mml-node="math"][data-latex^="G(t)="]'
             ) &&
               expectedUtilitySource.includes("\\beta^{\\mathrm{I}}(v_i')") &&
-              expectedUtilitySource.includes("\\int_{\\underline{v}}^{v_i'} t g(t)") &&
+              expectedUtilitySource.includes("\\int_{\\underline{v}_i}^{v_i'} t g(t)") &&
               !expectedUtilitySource.includes("\\int_0^{v_i'}") &&
               optimalityGapSource.includes(
                 "G(v_i')(v_i'-v_i)+\\int_{v_i'}^{v_i}G(t)"
@@ -450,9 +466,9 @@
               appDocument.getElementById("value-pdf-preview")),
               "The Beta value-PDF preview should sit with value and bid controls.");
             var previewCaption = appDocument.querySelector(".value-pdf-preview-figure figcaption");
-            assert(/^PDF of value,\s*$/.test(previewCaption.firstChild.nodeValue) &&
+            assert(/^Value density,\s*$/.test(previewCaption.firstChild.nodeValue) &&
               previewCaption.querySelector(
-                'mjx-container[jax="SVG"] [data-mml-node="math"][data-latex="V_i"]'
+                'mjx-container[jax="SVG"] [data-mml-node="math"][data-latex="f_i(v_i)"]'
               ), "The caption should retain its current wording and typeset bidder-value symbol.");
 
             chooseBeta(1, 1);
@@ -570,7 +586,7 @@
               (previewRect.left + previewRect.width * 14 / 320)) < 1.5,
             "The value-PDF caption should align with the plotted PDF area.");
 
-            assert(preview.querySelector("title").textContent === "PDF of value, V subscript i",
+            assert(preview.querySelector("title").textContent === "Value density, f subscript i of v subscript i",
               "The preview should have the requested accessible title.");
             assert(preview.querySelector("desc").textContent.includes("alpha 2") &&
               preview.querySelector("desc").textContent.includes("beta 2"),
@@ -598,9 +614,9 @@
             change(upper);
             var endpointLabels = Array.from(preview.querySelectorAll(
               ".value-pdf-endpoint-label"
-            )).map(function (label) { return label.textContent; });
+            )).map(chartText);
             assert(JSON.stringify(endpointLabels) ===
-              JSON.stringify(["v̲ = 10", "v̅ = 20"]),
+              JSON.stringify(["v̲ᵢ = 10", "v̅ᵢ = 20"]),
               "Changing the support bounds should update the preview endpoint labels.");
             assert(preview.querySelector(".value-pdf-curve")
               .dataset.lowerBound === "10" &&
@@ -613,13 +629,18 @@
       {
         name: "Requested SVG geometry is displayed on initialization",
         run: function () {
-          var captions = Array.from(appDocument.querySelectorAll(".panel-caption"))
+          var captions = Array.from(appDocument.querySelectorAll(".first-price-plot-title"))
             .slice(0, 2)
             .map(function (caption) { return caption.textContent; });
-          assert(JSON.stringify(captions) === JSON.stringify([
-            "PDF of highest opposing bid",
-            "Expected payoff"
-          ]), "The two panel titles do not match the requested wording.");
+          assert(captions[0].includes("PDF of highest opposing bid") && captions[0].includes("f") &&
+            captions[1].includes("CDF of highest opposing bid") && captions[1].includes("F") && !captions.join(" ").includes("Expected payoff"),
+            "Panel titles identify every plotted quantity and its notation.");
+          appDocument.querySelectorAll(".first-price-plot-title").forEach(function (title) {
+            assert(title.querySelector("mjx-container") && !/\\\(/.test(title.textContent), "Plot titles use HTML and local MathJax.");
+          });
+          assert(appDocument.querySelectorAll(".area-label").length === 1 && appDocument.querySelectorAll(".expected-payoff-label").length === 1,
+            "Both highlighted areas retain one numeric label.");
+          assertClose(Number(appDocument.querySelector(".area-label").dataset.value), .6, 1e-9);
           var panelBackgrounds = appDocument.querySelectorAll(".panel-background");
           assert(panelBackgrounds.length === 2,
             "The chart should contain exactly two plot panels.");
@@ -656,41 +677,26 @@
             "Expected an expected-payoff rectangle.");
           assert(appDocument.querySelectorAll(".cdf-zero-axis").length === 1,
             "Expected the CDF graph's bid axis at probability zero.");
-          assert(appDocument.querySelectorAll(".maximum-label").length === 2,
-            "Expected the equilibrium bid to be labeled in both panels.");
+          assert(!appDocument.querySelector(".maximum-label, .support-label, .winning-probability-guide-label"),
+            "Curve names and outputs are conveyed by titles and inspection.");
           assert(!appDocument.querySelector(".current-results"),
             "The separate results section should be removed.");
           assert(appDocument.querySelectorAll(".panel-metric").length === 0,
             "No metric should remain to the right of a graph title.");
-          assert(appDocument.querySelectorAll(".area-label").length === 1 &&
-            appDocument.querySelectorAll(".expected-payoff-label").length === 1,
-          "Probability and expected payoff should each have one in-graph label.");
-          var svgText = appDocument.getElementById("tradeoff-chart").textContent;
-          ["Probability of winning =", "Payoff if you win, vᵢ − xᵢ =",
-            "Expected payoff =", "Probability of winning",
-            "xᵢ = 30", "vᵢ = 50"]
-            .forEach(function (label) {
-              assert(svgText.includes(label), "Missing SVG metric label: " + label);
-            });
-          assert(!svgText.includes("Expected payoff at"),
-            "The expected-payoff metric should not begin with At x.");
-          assert(!svgText.includes("Shaded area"),
-            "The probability metric should not say shaded area.");
-          assert(!svgText.includes("Bid, xᵢ"),
-            "The second panel should not have a bid-axis title.");
+          var svgText = Array.from(appDocument.querySelectorAll("#tradeoff-chart text")).map(chartText).join(" ");
+          ["Payoff if you win, vᵢ − xᵢ =", "xᵢ = 30", "vᵢ = 50"].forEach(function (label) {
+            assert(svgText.includes(label), "Selected-control coordinate remains visible: " + label);
+          });
           var chartDescription = appDocument.getElementById("chart-description").textContent;
           assert(chartDescription.includes(
             "probability of winning against bid x subscript i") &&
             chartDescription.includes("dashed horizontal guide") &&
             !chartDescription.includes("all opposing bids"),
             "The SVG description should explain the probability axis and guide.");
-          var probabilityLabel = appDocument.querySelector(".area-label");
-          assert(probabilityLabel && probabilityLabel.textContent.includes("60.0%"),
-            "The default shaded region should include the 60.0% probability.");
           assert(!appDocument.querySelector(".y-axis-title"),
             "The second panel should not have a vertical-axis title.");
           var paymentLabel = appDocument.querySelector(".axis-payment-label");
-          assert(paymentLabel && paymentLabel.textContent === "xᵢ = 30" &&
+          assert(paymentLabel && chartText(paymentLabel) === "xᵢ = 30" &&
             !paymentLabel.textContent.includes("payment"),
             "The selected-bid coordinate should not include a payment parenthetical.");
           var payoffBracket = appDocument.querySelector(".payoff-if-win-bracket");
@@ -698,27 +704,8 @@
             "Payoff upon winning should be embedded as an x-axis interval.");
           assertClose(Number.parseFloat(payoffBracket.dataset.signedWidth), 20, 1e-9,
             "The x-axis payoff interval should equal v_i minus x_i.");
-          var maximumLabel = appDocument.querySelector(
-            ".maximum-label:not(.density-equilibrium-label)"
-          );
-          assert(maximumLabel && maximumLabel.textContent === "βᴵ(vᵢ) = 25",
-            "The equilibrium annotation should include the numerical equilibrium bid.");
-          var densityEquilibriumLabel = appDocument.querySelector(
-            ".density-equilibrium-label"
-          );
-          var densityEquilibriumMarker = appDocument.querySelector(
-            ".density-equilibrium-marker"
-          );
-          assert(densityEquilibriumLabel && densityEquilibriumMarker &&
-            densityEquilibriumLabel.textContent === "βᴵ(vᵢ) = 25" &&
-            densityEquilibriumLabel.dataset.panel === "pdf" &&
-            Number(densityEquilibriumLabel.dataset.equilibriumBid) === 25 &&
-            Number(densityEquilibriumMarker.dataset.equilibriumBid) === 25,
-          "The PDF panel should directly label the numerical equilibrium bid.");
-          assert(svgText.includes("βᴵ(v̅) ="),
-            "The density-support label should use beta superscript I.");
-          assert(!svgText.includes("β("),
-            "Every beta in the SVG should carry the superscript I.");
+          var densityEquilibriumMarker = appDocument.querySelector(".density-equilibrium-marker");
+          assertClose(Number(densityEquilibriumMarker.dataset.equilibriumBid), 25, 1e-9, "Equilibrium marker retains the exact bid");
           var zeroAxis = appDocument.querySelector(".cdf-zero-axis");
           var matchingZeroLine = Array.from(appDocument.querySelectorAll(".zero-line"))
             .some(function (line) { return line.getAttribute("y1") === zeroAxis.getAttribute("y1"); });
@@ -738,13 +725,9 @@
           var probabilityGuide = appDocument.querySelector(
             ".winning-probability-guide-line"
           );
-          var probabilityGuideLabel = appDocument.querySelector(
-            ".winning-probability-guide-label"
-          );
           var selectedPoints = appDocument.querySelectorAll(".chosen-point");
           var selectedCdfPoint = selectedPoints[selectedPoints.length - 1];
-          assert(probabilityGuide && probabilityGuideLabel,
-            "The selected winning probability should have a guide and label.");
+          assert(probabilityGuide, "The selected winning probability retains its geometric guide.");
           assertClose(Number.parseFloat(probabilityGuide.dataset.probability), 0.6, 1e-9,
             "The guide should store the selected winning probability.");
           assertClose(Number.parseFloat(probabilityGuide.getAttribute("y1")),
@@ -753,24 +736,9 @@
           assertClose(Number.parseFloat(probabilityGuide.getAttribute("x2")),
             Number.parseFloat(selectedCdfPoint.getAttribute("cx")), 1e-9,
             "The probability guide should end at the selected CDF point.");
-          assert(probabilityGuideLabel.textContent ===
-            "Probability of winning = 60.0%" &&
-            probabilityGuideLabel.classList.contains("annotation-halo") &&
-            probabilityGuideLabel.dataset.foreground === "true",
-            "The foreground guide label should state the selected probability.");
-          var cdfBackground = panelBackgrounds[1];
-          assertClose(Number(probabilityGuideLabel.getAttribute("x")),
-            Number(cdfBackground.getAttribute("x")) + 8, 1e-9,
-            "The guide label should sit just inside the probability axis.");
-          assert(probabilityGuideLabel.dataset.placement === "axis-right" &&
-            probabilityGuideLabel.getAttribute("text-anchor") === "start",
-            "The guide label should extend rightward from the probability axis.");
-          assertClose(Number(probabilityGuideLabel.dataset.guideY),
-            Number(probabilityGuide.getAttribute("y1")), 1e-9,
-            "The axis label should identify the dashed guide''s probability level.");
-          assert(appDocument.getElementById("tradeoff-chart").lastElementChild ===
-            probabilityGuideLabel,
-            "The selected probability number should be the foreground SVG element.");
+          inspectBid(30);
+          assertClose(inspected("cdf"), .6, 1e-9, "Inspection reads exact winning probability");
+          assertClose(Number(appDocument.querySelector(".expected-payoff-label").dataset.value), 12, 1e-9, "The area label reads exact expected payoff");
           assert(appDocument.querySelector(
             'label[for="value-slider"] [data-mml-node="math"][data-latex="v_i"]'
           ),
@@ -811,7 +779,7 @@
             "Typing a proposed bid should update its slider.");
           assert(bidNumber.value === "45",
             "A whole proposed bid should omit its trailing zero.");
-          assert(appDocument.querySelector(".axis-payment-label").textContent === "xᵢ = 45",
+          assert(chartText(appDocument.querySelector(".axis-payment-label")) === "xᵢ = 45",
             "Typing a proposed bid should update the graph coordinate.");
           assertClose(Number.parseFloat(
             appDocument.querySelector(".winning-probability-guide-line")
@@ -880,106 +848,6 @@
         }
       },
       {
-        name: "Bid and value changes reuse the cached underlying curves",
-        run: function () {
-          withReset(function () {
-            var chart = appDocument.getElementById("tradeoff-chart");
-            var bid = appDocument.getElementById("bid-slider");
-            var value = appDocument.getElementById("value-slider");
-            var alpha = appDocument.getElementById("alpha-slider");
-            var cacheKey = chart.dataset.curveCacheKey;
-            var buildCount = Number(chart.dataset.curveCacheBuildCount);
-            bid.value = "45";
-            input(bid);
-            value.value = "65";
-            input(value);
-            assert(chart.dataset.curveCacheKey === cacheKey &&
-              Number(chart.dataset.curveCacheBuildCount) === buildCount,
-            "Changing only the learner's value or bid should reuse probability and density samples.");
-            alpha.value = "2";
-            input(alpha);
-            assert(chart.dataset.curveCacheKey !== cacheKey &&
-              Number(chart.dataset.curveCacheBuildCount) === buildCount + 1,
-            "Changing a distribution parameter should rebuild the underlying curves once.");
-          });
-        }
-      },      {
-        name: "The payoff rectangle handles zero and negative bids correctly",
-        run: function () {
-          var value = appDocument.getElementById("value-slider");
-          var bid = appDocument.getElementById("bid-slider");
-
-          value.value = "80";
-          input(value);
-
-          bid.value = "90";
-          input(bid);
-          var negativeRectangle = appDocument.querySelector(".expected-payoff-rectangle");
-          assert(negativeRectangle.dataset.state === "negative",
-            "A bid above value should produce a negative rectangle state.");
-          assertClose(Number.parseFloat(negativeRectangle.dataset.probability), 1, 1e-9,
-            "A bid above the opposing-bid support should win with probability one.");
-          assertClose(Number.parseFloat(negativeRectangle.dataset.signedWidth), -10, 1e-9,
-            "The overbid rectangle should have signed width -10.");
-          assertClose(Number.parseFloat(negativeRectangle.dataset.signedPayoff), -10, 1e-9,
-            "The overbid rectangle should have signed payoff -10.");
-          assert(negativeRectangle.classList.contains("expected-payoff-negative"),
-            "A negative-payoff rectangle should have a distinct loss style.");
-          assert(appWindow.getComputedStyle(negativeRectangle).strokeDasharray === "none",
-            "The negative expected-payoff rectangle should use a solid red outline.");
-          var negativeLabel = appDocument.querySelector(".expected-payoff-label");
-          assert(negativeLabel &&
-            negativeLabel.textContent.replace(/\s+/g, " ").trim() ===
-              "Expected payoff = -10",
-            "The red loss label should use the ordinary Expected payoff wording.");
-          assert(negativeLabel.classList.contains("negative-metric"),
-            "The ordinary expected-payoff wording should remain red for a loss.");
-          assert(!negativeLabel.textContent.includes("Negative expected payoff"),
-            "The loss label should not prefix expected payoff with Negative.");
-          var negativeBracket = appDocument.querySelector(".payoff-if-win-bracket");
-          assert(negativeBracket.dataset.state === "negative",
-            "An overbid should produce a negative x-axis payoff interval.");
-          assertClose(Number.parseFloat(negativeBracket.dataset.signedWidth), -10, 1e-9,
-            "The overbid x-axis interval should have signed width -10.");
-          assert(appWindow.getComputedStyle(
-            negativeBracket.querySelector(".payoff-bracket-line")
-          ).strokeDasharray === "none",
-          "The negative payoff bracket should use a solid red line.");
-          var guideAtOne = appDocument.querySelector(".winning-probability-guide-label");
-          assert(guideAtOne && guideAtOne.textContent ===
-            "Probability of winning = 100.0%" &&
-            appDocument.getElementById("tradeoff-chart").lastElementChild === guideAtOne,
-            "The probability number should remain in the foreground at probability one.");
-          var cdfBackground = appDocument.querySelectorAll(".panel-background")[1];
-          assert(guideAtOne.dataset.placement === "axis-right" &&
-            guideAtOne.getAttribute("text-anchor") === "start",
-          "At the right boundary, the guide label should remain on the probability axis.");
-          assertClose(Number(guideAtOne.getAttribute("x")),
-            Number(cdfBackground.getAttribute("x")) + 8, 1e-9,
-            "The boundary guide label should stay just inside the probability axis.");
-
-          bid.value = "80";
-          input(bid);
-          var zeroRectangle = appDocument.querySelector(".expected-payoff-rectangle");
-          assert(zeroRectangle.dataset.state === "zero",
-            "Bidding exactly value should collapse the expected-payoff rectangle.");
-          assert(appDocument.querySelector(".zero-expected-payoff"),
-            "A collapsed expected-payoff rectangle should retain a visible marker.");
-          var zeroLabel = appDocument.querySelector(".expected-payoff-label");
-          assert(zeroLabel &&
-            zeroLabel.textContent.replace(/\s+/g, " ").trim() ===
-              "Expected payoff = 0",
-            "A zero-area rectangle should still display expected payoff zero.");
-          assert(appDocument.querySelector(".payoff-if-win-bracket").dataset.state === "zero",
-            "Coincident x_i and v_i should produce a zero payoff interval.");
-          assert(!appDocument.querySelector(".axis-payment-label").textContent
-            .includes("payment"),
-            "The coincident x_i and v_i label should omit the payment parenthetical.");
-
-          appDocument.getElementById("reset-button").click();
-        }
-      },
-      {
         name: "Metric labels remain visible when highlighted areas cannot contain them",
         run: function () {
           withReset(function () {
@@ -1043,7 +911,7 @@
             assert(narrowLabel.dataset.placement === "marker-right",
               "A width-constrained probability label should move right.");
             assertClose(Number(narrowLabel.getAttribute("x")),
-              Number(narrowMarker.getAttribute("x1")) + 8, 1e-9,
+              Number(narrowMarker.getAttribute("x1")) + chartUnits(8), 1e-9,
             "The width-constrained label should begin just right of the bid marker.");
             assert(narrowLabel.getAttribute("text-anchor") === "start",
               "The adjacent probability label should extend rightward.");
@@ -1052,9 +920,9 @@
               "A width-constrained probability label should stay on the PDF floor.");
             assertClose(
               Number(narrowLabel.getAttribute("y")) +
-                (Number(narrowLabel.dataset.lineCount) - 1) * 13,
+                (Number(narrowLabel.dataset.lineCount) - 1) * chartUnits(18),
               Number(densityPanel.getAttribute("y")) +
-                Number(densityPanel.getAttribute("height")) - 10,
+                Number(densityPanel.getAttribute("height")) - chartUnits(9),
               1e-9,
               "The last probability-label line should sit above the PDF baseline."
             );
@@ -1075,15 +943,15 @@
               Number(shortLabel.dataset.heightSamples) === 9,
             "Probability height should be checked across the full label width.");
             assertClose(Number(shortLabel.getAttribute("x")),
-              Number(shortMarker.getAttribute("x1")) + 8, 1e-9,
+              Number(shortMarker.getAttribute("x1")) + chartUnits(8), 1e-9,
             "The height-constrained label should begin just right of the bid marker.");
             assert(shortLabel.dataset.verticalPlacement === "panel-floor",
               "A height-constrained probability label should stay on the PDF floor.");
             assertClose(
               Number(shortLabel.getAttribute("y")) +
-                (Number(shortLabel.dataset.lineCount) - 1) * 13,
+                (Number(shortLabel.dataset.lineCount) - 1) * chartUnits(18),
               Number(densityPanel.getAttribute("y")) +
-                Number(densityPanel.getAttribute("height")) - 10,
+                Number(densityPanel.getAttribute("height")) - chartUnits(9),
               1e-9,
               "The height-constrained label should not jump to the panel middle."
             );
@@ -1116,7 +984,7 @@
               "A short-height label should remain centered on its rectangle.");
             assertClose(Number(shortLabel.getAttribute("y")),
               Number(shortRectangle.getAttribute("y")) +
-                Number(shortRectangle.getAttribute("height")) / 2 + 4,
+                Number(shortRectangle.getAttribute("height")) / 2 + chartUnits(4),
               1e-9,
             "A short-height label should retain the rectangle-center y position.");
 
@@ -1133,7 +1001,7 @@
               narrowLabel.dataset.placement === "marker-right",
             "A narrow payoff rectangle should move its label to the right.");
             assertClose(Number(narrowLabel.getAttribute("x")),
-              Number(selectedMarker.getAttribute("x1")) + 8, 1e-9,
+              Number(selectedMarker.getAttribute("x1")) + chartUnits(8), 1e-9,
             "The narrow-rectangle label should stay beside the bid marker.");
             assert(narrowLabel.getAttribute("text-anchor") === "start",
               "The adjacent payoff label should extend rightward.");
@@ -1152,9 +1020,89 @@
               boundaryLabel.getAttribute("text-anchor") === "end",
             "A narrow payoff label at the right boundary should flip left.");
             assertClose(Number(boundaryLabel.getAttribute("x")),
-              Number(selectedMarker.getAttribute("x1")) - 8, 1e-9,
+              Number(selectedMarker.getAttribute("x1")) - chartUnits(8), 1e-9,
             "The flipped payoff label should remain beside the bid marker.");
           });
+        }
+      },
+      {
+        name: "Bid and value changes reuse the cached underlying curves",
+        run: function () {
+          withReset(function () {
+            var chart = appDocument.getElementById("tradeoff-chart");
+            var bid = appDocument.getElementById("bid-slider");
+            var value = appDocument.getElementById("value-slider");
+            var alpha = appDocument.getElementById("alpha-slider");
+            var cacheKey = chart.dataset.curveCacheKey;
+            var buildCount = Number(chart.dataset.curveCacheBuildCount);
+            bid.value = "45";
+            input(bid);
+            value.value = "65";
+            input(value);
+            assert(chart.dataset.curveCacheKey === cacheKey &&
+              Number(chart.dataset.curveCacheBuildCount) === buildCount,
+            "Changing only the learner's value or bid should reuse probability and density samples.");
+            alpha.value = "2";
+            input(alpha);
+            assert(chart.dataset.curveCacheKey !== cacheKey &&
+              Number(chart.dataset.curveCacheBuildCount) === buildCount + 1,
+            "Changing a distribution parameter should rebuild the underlying curves once.");
+          });
+        }
+      },      {
+        name: "The payoff rectangle handles zero and negative bids correctly",
+        run: function () {
+          var value = appDocument.getElementById("value-slider");
+          var bid = appDocument.getElementById("bid-slider");
+
+          value.value = "80";
+          input(value);
+
+          bid.value = "90";
+          input(bid);
+          var negativeRectangle = appDocument.querySelector(".expected-payoff-rectangle");
+          assert(negativeRectangle.dataset.state === "negative",
+            "A bid above value should produce a negative rectangle state.");
+          assertClose(Number.parseFloat(negativeRectangle.dataset.probability), 1, 1e-9,
+            "A bid above the opposing-bid support should win with probability one.");
+          assertClose(Number.parseFloat(negativeRectangle.dataset.signedWidth), -10, 1e-9,
+            "The overbid rectangle should have signed width -10.");
+          assertClose(Number.parseFloat(negativeRectangle.dataset.signedPayoff), -10, 1e-9,
+            "The overbid rectangle should have signed payoff -10.");
+          assert(negativeRectangle.classList.contains("expected-payoff-negative"),
+            "A negative-payoff rectangle should have a distinct loss style.");
+          assert(appWindow.getComputedStyle(negativeRectangle).strokeDasharray === "none",
+            "The negative expected-payoff rectangle should use a solid red outline.");
+          inspectBid(90);
+          assertClose(Number(appDocument.querySelector(".expected-payoff-label").dataset.value), -10, 1e-9, "The area label reports the signed loss");
+          assert(appDocument.querySelector(".expected-payoff-label").textContent.replace(/\s+/g, " ").trim() === "Expected payoff = -10");
+          var negativeBracket = appDocument.querySelector(".payoff-if-win-bracket");
+          assert(negativeBracket.dataset.state === "negative",
+            "An overbid should produce a negative x-axis payoff interval.");
+          assertClose(Number.parseFloat(negativeBracket.dataset.signedWidth), -10, 1e-9,
+            "The overbid x-axis interval should have signed width -10.");
+          assert(appWindow.getComputedStyle(
+            negativeBracket.querySelector(".payoff-bracket-line")
+          ).strokeDasharray === "none",
+          "The negative payoff bracket should use a solid red line.");
+          assertClose(inspected("cdf"), 1, 1e-9, "Inspection reports probability one beyond bid support");
+
+          bid.value = "80";
+          input(bid);
+          var zeroRectangle = appDocument.querySelector(".expected-payoff-rectangle");
+          assert(zeroRectangle.dataset.state === "zero",
+            "Bidding exactly value should collapse the expected-payoff rectangle.");
+          assert(appDocument.querySelector(".zero-expected-payoff"),
+            "A collapsed expected-payoff rectangle should retain a visible marker.");
+          inspectBid(80);
+          assertClose(Number(appDocument.querySelector(".expected-payoff-label").dataset.value), 0, 1e-9, "The area label reports zero payoff at a bid equal to value");
+          assert(appDocument.querySelector(".payoff-if-win-bracket").dataset.state === "zero",
+            "Coincident x_i and v_i should produce a zero payoff interval.");
+          assert(!appDocument.querySelector(".axis-payment-label").textContent
+            .includes("payment"),
+            "The coincident x_i and v_i label should omit the payment parenthetical.");
+
+          appDocument.getElementById("reset-button").click();
         }
       },
       {
@@ -1171,7 +1119,7 @@
               ".expected-payoff-rectangle"
             );
             var betaEquilibriumLabel = appDocument.querySelector(
-              ".maximum-label:not(.density-equilibrium-label)"
+              ".density-equilibrium-marker"
             );
             assertClose(Number(betaRectangle.dataset.probability),
               uniformOutcome.winProbability, 1e-8,
@@ -1544,9 +1492,9 @@
                 "Each dynamic endpoint should contain one current MathJax rendering.");
               });
             assert(appDocument.getElementById("value-min-label").dataset.mathSource ===
-              "\\(\\underline{v}=10\\)" &&
+              "\\(\\underline{v}_i=10\\)" &&
               appDocument.getElementById("bid-max-label").dataset.mathSource ===
-                "\\(\\overline{v}=90\\)",
+                "\\(\\overline{v}_i=90\\)",
             "Dynamic endpoint sources should follow the selected support.");
           } finally {
             reset();

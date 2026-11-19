@@ -8,7 +8,7 @@
 }
 
 .chart-figure { margin: 0; min-width: 0; }
-.chart-figure > figcaption {
+.chart-figure > figcaption, .first-price-plot-title {
   margin: 0;
   min-height: 1.62em;
   font-size: var(--chart-text-size);
@@ -16,6 +16,8 @@
   line-height: 1.4;
   text-align: left;
 }
+.first-price-plot-title { position: absolute; z-index: 2; pointer-events: none; }
+.first-price-chart-frame { position: relative; }
 .chart-grid { row-gap: var(--chart-row-gap); column-gap: 1rem; }
 .main-diagnostic-layout,
 .main-diagnostic-layout.chart-grid { row-gap: var(--chart-row-gap); column-gap: 1.25rem; }
@@ -27,11 +29,12 @@
   margin-top: calc(var(--chart-top-gutter) - var(--chart-trim-top));
   margin-bottom: calc(var(--chart-tick-gutter) - var(--chart-trim-bottom));
 }
-.chart-canvas-frame > svg { display: block; width: 100%; height: auto; }
-.chart-canvas-frame svg text {
+.chart-canvas-frame > svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart-canvas-frame svg text, #tradeoff-chart text, #lottery-chart text {
   font-size: var(--chart-font-size, 13.76px);
   font-family: var(--text-font);
 }
+#tradeoff-chart text:not(.panel-caption) { font-weight: 400; }
 .chart-plot-viewport > .chart-x-axis-label {
   position: static;
   margin: 0;
@@ -47,9 +50,28 @@
   font-size: var(--chart-text-size);
   line-height: 1.4;
 }
-/* Hover coordinates share the numeric tick row, leaving the HTML title clear. */
-.chart-canvas-frame .plot-probe-coordinate[text-anchor="middle"] { transform: translateY(-13px); }
-.chart-220x240-frame .plot-probe-coordinate[text-anchor="middle"] { transform: translateY(-12px); }
+.chart-math-symbol, .plot-probe-symbol { font-style: italic; }
+.chart-math-subscript, .chart-math-superscript, .plot-probe-subscript { font-size: 75%; }
+.chart-math-subscript, .chart-math-superscript { font-style: italic; }
+.chart-math-superscript { font-style: normal; }
+.plot-title-line { display: block; min-height: 1.4em; }
+.plot-legend-line {
+  display: inline-block; width: 22px; height: 2.25px; margin-right: .45em;
+  vertical-align: middle; background: var(--plot-line-color, var(--ink));
+}
+.plot-legend-dashed { height: 1.5px; background: repeating-linear-gradient(to right, var(--plot-line-color) 0 5px, transparent 5px 9px); }
+.plot-legend-dotted { background: radial-gradient(circle at 1px center, var(--plot-line-color) 1px, transparent 1.3px) 0 0 / 6px 2.25px repeat-x; }
+.plot-legend-family { background: linear-gradient(to right, var(--blue) 0 33.33%, var(--orange) 33.33% 66.67%, var(--green) 66.67%); }
+.curve-inspectable { cursor: crosshair; touch-action: none; }
+.curve-probe { pointer-events: none; }
+.curve-probe-line { stroke: var(--guide); stroke-width: 1.2; stroke-dasharray: 5 4; vector-effect: non-scaling-stroke; }
+.curve-probe-dot { stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.curve-probe-text { font-weight: 400; font-variant-numeric: tabular-nums; }
+.chart-canvas-frame svg text.annotation-halo, #tradeoff-chart .annotation-halo,
+#second-price-chart text.spa-halo, .chart-canvas-frame svg .plot-probe-coordinate {
+  stroke-width: calc(var(--chart-unit, 1px) * 3);
+  paint-order: stroke fill;
+}
 .chart-figure .chart-diagnostic, .chart-figure + .diagnostic-text {
   margin: 0;
   min-height: 2.8em;
@@ -58,22 +80,142 @@
   text-align: left;
 }
 
-.chart-480x520-frame { --chart-trim-top: 8.3333333333%; --chart-trim-bottom: 16.6666666667%; }
-.chart-220x240-frame { --chart-trim-top: 6.8181818182%; --chart-trim-bottom: 27.2727272727%; }
-.chart-660x450-frame { --chart-trim-top: 4.8484848485%; --chart-trim-bottom: 9.3939393939%; }
+/* inset = max(0, (gutter - nativeLeft * width / nativeWidth) / (1 - nativeLeft / nativeWidth)).
+   The main gutter is 68px; compact diagnostics reserve 60px for wrapped titles. */
+.chart-480x520-frame {
+  --chart-inline-inset: max(0px, calc(75.9069767442px - 11.6279069767%));
+  --chart-trim-top: calc(8.3333333333% - var(--chart-inline-inset) * 0.083333333333);
+  --chart-trim-bottom: calc(16.6666666667% - var(--chart-inline-inset) * 0.166666666667);
+  padding-left: var(--chart-inline-inset);
+}
+.chart-220x240-frame {
+  --chart-inline-inset: max(0px, calc(71.3513513514px - 18.9189189189%));
+  --chart-trim-top: calc(6.8181818182% - var(--chart-inline-inset) * 0.068181818182);
+  --chart-trim-bottom: calc(27.2727272727% - var(--chart-inline-inset) * 0.272727272727);
+  padding-left: var(--chart-inline-inset);
+}
+.chart-660x450-frame {
+  --chart-inline-inset: max(0px, calc(66px - 10%));
+  --chart-trim-top: calc(4.8484848485% - var(--chart-inline-inset) * 0.048484848485);
+  --chart-trim-bottom: calc(9.3939393939% - var(--chart-inline-inset) * 0.093939393939);
+  padding-left: var(--chart-inline-inset);
+}
 .chart-360x300-frame { --chart-trim-top: 5.5555555556%; --chart-trim-bottom: 8.3333333333%; }
-.chart-640x360-frame { --chart-trim-top: 3.75%; --chart-trim-bottom: 6.875%; }
-#bargaining-sandbox-explorable .chart-480x520-frame { --chart-trim-bottom: 20.8333333333%; }
-.chart-480x520-frame + .chart-x-axis-label { margin-inline: 10.4166666667% 6.25%; }
-.chart-220x240-frame + .chart-x-axis-label { margin-inline: 15.9090909091% 9.0909090909%; }
-.chart-660x450-frame + .chart-x-axis-label { margin-inline: 9.0909090909% 4.5454545455%; }
+.chart-640x360-frame {
+  --chart-inline-inset: max(0px, calc(48.0546075085px - 9.2150170648%));
+  --chart-trim-top: calc(3.75% - var(--chart-inline-inset) * 0.0375);
+  --chart-trim-bottom: calc(6.875% - var(--chart-inline-inset) * 0.06875);
+  padding-left: var(--chart-inline-inset);
+}
+#bargaining-sandbox-explorable .chart-480x520-frame {
+  --chart-inline-inset: max(0px, calc(79.6097560976px - 17.0731707317%));
+  --chart-trim-bottom: calc(20.8333333333% - var(--chart-inline-inset) * 0.208333333333);
+}
+.chart-480x520-frame + .chart-x-axis-label {
+  --chart-inline-inset: max(0px, calc(75.9069767442px - 11.6279069767%));
+  margin-inline: calc(10.4166666667% + var(--chart-inline-inset) * 0.895833333333) calc(6.25% - var(--chart-inline-inset) * 0.0625);
+}
+.chart-220x240-frame + .chart-x-axis-label {
+  --chart-inline-inset: max(0px, calc(71.3513513514px - 18.9189189189%));
+  margin-inline: calc(15.9090909091% + var(--chart-inline-inset) * 0.840909090909) calc(9.0909090909% - var(--chart-inline-inset) * 0.090909090909);
+}
+.chart-660x450-frame + .chart-x-axis-label {
+  --chart-inline-inset: max(0px, calc(66px - 10%));
+  margin-inline: calc(9.0909090909% + var(--chart-inline-inset) * 0.909090909091) calc(4.5454545455% - var(--chart-inline-inset) * 0.045454545455);
+}
 .chart-360x300-frame + .chart-x-axis-label { margin-inline: 11.1111111111% 5.5555555556%; }
-.chart-640x360-frame + .chart-x-axis-label { margin-inline: 8.4375% 4.0625%; }
-#bargaining-sandbox-explorable .chart-480x520-frame + .chart-x-axis-label { margin-inline: 14.5833333333% 6.25%; }
+.chart-640x360-frame + .chart-x-axis-label {
+  --chart-inline-inset: max(0px, calc(48.0546075085px - 9.2150170648%));
+  margin-inline: calc(8.4375% + var(--chart-inline-inset) * 0.915625) calc(4.0625% - var(--chart-inline-inset) * 0.040625);
+}
+#bargaining-sandbox-explorable .chart-480x520-frame + .chart-x-axis-label {
+  --chart-inline-inset: max(0px, calc(79.6097560976px - 17.0731707317%));
+  margin-inline: calc(14.5833333333% + var(--chart-inline-inset) * 0.854166666667) calc(6.25% - var(--chart-inline-inset) * 0.0625);
+}
+/* Fixed readable gutters; SVG and sibling canvases keep the same coordinates. */
+.chart-480x520-frame .math-chart-y-axis-label {
+  left: 12px;
+  top: 46.1538461538%;
+  width: calc((100% - var(--chart-inline-inset)) * 0.791666666667);
+  white-space: normal;
+  text-align: center;
+}
+#bargaining-sandbox-explorable .chart-480x520-frame .math-chart-y-axis-label { top: 44.2307692308%; }
+.chart-220x240-frame .math-chart-y-axis-label {
+  left: 14px;
+  width: calc((100% - var(--chart-inline-inset)) * 0.75);
+  white-space: normal;
+  text-align: center;
+}
+.chart-480x520-frame .chart-480x520-field-canvas {
+  left: calc(var(--chart-inline-inset) + (100% - var(--chart-inline-inset)) * 0.145833333333);
+  width: calc((100% - var(--chart-inline-inset)) * 0.791666666667);
+}
+.chart-220x240-frame .chart-220x240-field-canvas {
+  left: calc(var(--chart-inline-inset) + (100% - var(--chart-inline-inset)) * 0.159090909091);
+  width: calc((100% - var(--chart-inline-inset)) * 0.75);
+}
 
-/* Reserve the preview's known native endpoint row as its whole SVG scales. */
-.value-pdf-preview-figure > figcaption { margin-bottom: 0; }
+/* The preview's endpoint row uses the same readable text size as every plot. */
+.value-pdf-preview-figure > figcaption { margin-bottom: 0; column-gap: 0.25em; font-size: var(--chart-text-size); }
 .chart-density-viewport { --chart-top-gutter: 0px; }
 .chart-320x120-frame { --chart-trim-top: 2.8125%; --chart-trim-bottom: 9.0625%; }
-.chart-density-viewport .chart-canvas-frame { margin-bottom: -2.1875%; }
-.chart-density-viewport .chart-canvas-frame svg text { font-size: 10px; }
+.chart-density-viewport .chart-canvas-frame { margin-bottom: calc(28px - 9.0625%); }
+
+/* Role weights are CSS pixels at every SVG scale. Colors retain their
+   economic meaning within each chart family. */
+:root :is(.chart-canvas-frame, #tradeoff-chart, #lottery-chart) :is(
+  .axis, .axis-line, .plot-frame, .value-pdf-axis, .plot-grid, .zero-line,
+  .curve, .curve-one, .curve-two, .learner-curve, .integrated-curve,
+  .hull-curve, .ironed-virtual-curve, .virtual-value-curve, .raw-curve,
+  .capacity-curve, .family-line, .envelope-segment, .envelope-segment-clamped,
+  .slope-step, .slope-jump, .diagonal-guide, .truthful-report-line,
+  .best-report-line, .preset-boundary, .spa-truth, .spa-proposed,
+  .spa-threshold, .spa-opposing, .support-guide, .equilibrium-marker,
+  .chosen-bid-marker, .value-pdf-curve, .cell-cursor, .plot-probe-line,
+  .curve-probe-line, .curve-probe-dot, .plot-probe-point,
+  .limit-open, .limit-closed, .handle-dot, .line-endpoint, .lottery-point,
+  .kink-marker, .slope-endpoint, .spa-truth-dot, .spa-proposed-dot, .spa-open-dot
+) { vector-effect: non-scaling-stroke; }
+:root :is(.chart-canvas-frame, #tradeoff-chart) :is(.axis, .axis-line, .plot-frame, .value-pdf-axis) {
+  stroke: var(--axis); stroke-width: 1;
+}
+:root .plot-grid { stroke: var(--line-light); stroke-width: 0.75; vector-effect: non-scaling-stroke; }
+:root .plot-zero { stroke: var(--zero-line); stroke-width: 1.25; vector-effect: non-scaling-stroke; }
+:root .secondary-tick { fill: var(--muted); }
+:root .secondary-zero-line { vector-effect: non-scaling-stroke; }
+:root :is(.chart-canvas-frame, #tradeoff-chart) :is(
+  .curve, .curve-one, .curve-two, .learner-curve, .integrated-curve, .hull-curve,
+  .ironed-virtual-curve, .value-pdf-curve, .slope-step, .best-report-line, .spa-truth
+) { stroke-width: 2.25; }
+:root :is(.chart-canvas-frame, #tradeoff-chart) :is(.virtual-value-curve, .raw-curve, .spa-proposed) {
+  stroke-width: 1.5; stroke-dasharray: 5 4;
+}
+:root :is(.chart-canvas-frame, #tradeoff-chart) :is(.capacity-curve, .hull-curve, .ironed-virtual-curve) {
+  stroke-dasharray: 2 4; stroke-linecap: round;
+}
+:root .chart-canvas-frame :is(.envelope-segment, .envelope-segment-clamped) { stroke-width: 3; }
+:root .chart-canvas-frame .family-line { stroke-width: 1.5; }
+:root :is(.chart-canvas-frame, #tradeoff-chart) :is(.diagonal-guide, .truthful-report-line, .support-guide, .spa-threshold) {
+  stroke-width: 1; stroke-dasharray: 5 4;
+}
+:root :is(.chart-canvas-frame, #tradeoff-chart) :is(.plot-probe-line, .curve-probe-line, .spa-opposing) {
+  stroke-width: 1; stroke-dasharray: 5 4;
+}
+:root .chart-canvas-frame .cell-cursor { stroke-width: 2; }
+:root :is(.chart-canvas-frame, #tradeoff-chart, #lottery-chart) :is(
+  .curve-probe-dot, .plot-probe-point, .limit-open, .limit-closed, .kink-marker,
+  .slope-endpoint, .spa-proposed-dot, .spa-open-dot, .lottery-point
+) { r: calc(var(--chart-unit, 1px) * 3.5); stroke-width: 1.5; }
+:root .chart-canvas-frame .spa-truth-dot { r: calc(var(--chart-unit, 1px) * 4.5); }
+:root .chart-canvas-frame [data-best-report-point] { r: calc(var(--chart-unit, 1px) * 1.5); }
+:root .chart-canvas-frame .handle-dot { r: calc(var(--chart-unit, 1px) * 6); }
+:root .chart-canvas-frame .handle-target { r: calc(var(--chart-unit, 1px) * 18); cursor: grab; }
+:root .chart-canvas-frame .line-endpoint { r: calc(var(--chart-unit, 1px) * 9); cursor: grab; }
+:root .chart-canvas-frame .line-endpoint-selected { r: calc(var(--chart-unit, 1px) * 10.5); }
+:root .chart-canvas-frame :is(.handle-target, .line-endpoint):active { cursor: grabbing; }
+:root .chart-canvas-frame .plot-dragging,
+:root .chart-canvas-frame .plot-dragging :is(.handle-target, .line-endpoint) { cursor: grabbing; }
+:root #tradeoff-chart .drag-overlay { cursor: crosshair; }
+:root #tradeoff-chart:active .drag-overlay { cursor: ew-resize; }
+:root #second-price-chart.plot-dragging { cursor: ew-resize; }

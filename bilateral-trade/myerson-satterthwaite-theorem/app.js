@@ -5,9 +5,8 @@
   var math = window.MechanismMath;
   var visuals = window.BilateralTradeVisuals;
   var appendSvg = window.SvgUtils.appendSvg;
-  var paintFieldRaster = window.SvgUtils.paintFieldRaster;
   var plotPointFromEvent = visuals.plotPointFromEvent;
-  var formatProbe = visuals.formatProbe;
+  var formatProbe = PlotStyle.probe;
   var R = model.CELL_RESOLUTION;
   var CELL_SIZE = model.CELL_SIZE;
   var triangleMesh = window.SvgUtils.createTriangleMesh(R);
@@ -17,7 +16,6 @@
   var cellCorners = triangleMesh.cellCorners;
   var trianglePoints = triangleMesh.trianglePoints;
   var drawTriangleMesh = triangleMesh.drawTriangleMesh;
-  var DIAGNOSTIC_RASTER_SIZE = visuals.DIAGNOSTIC_RASTER_SIZE;
 
   var MAIN_LAYOUT = {
     viewWidth: 480,
@@ -539,9 +537,12 @@
       canvas.dataset.chartFor = svg.id;
       svg.parentNode.insertBefore(canvas, svg);
     }
-    paintFieldRaster(canvas, DIAGNOSTIC_RASTER_SIZE, valueAt, colorFn);
+    function paint() { PlotStyle.paintRaster(svg, canvas, DIAG_LAYOUT, "final", valueAt, colorFn); }
+    paint();
     canvas.dataset.renderer = renderer;
-    canvas.dataset.rasterSize = String(DIAGNOSTIC_RASTER_SIZE);
+    PlotStyle.watchResize(svg, "diagnostic-raster", paint, function (target) {
+      return PlotStyle.rasterSize(target, DIAG_LAYOUT, "final");
+    });
   }
 
   function paletteKey(palette) {
@@ -567,10 +568,8 @@
     );
   }
 
-  function efficiencyChannels(value, pixelX, pixelY) {
-    return visuals.efficiencyChannels(
-      value, pixelX, pixelY, state.heatmapPalette
-    );
+  function utilityChannels(value, extent) {
+    return visuals.signedChannels(value, extent, state.heatmapPalette.blue, state.heatmapPalette.yellow);
   }
 
   var qColor = sequentialScale("blue");
@@ -582,7 +581,7 @@
     appendSvg(svg, "desc", { id: "paint-chart-description" }, paintChartDescription());
 
     paintTriangles = drawTriangleMesh(svg, grid, MAIN_LAYOUT, qColor);
-    visuals.drawFrame(svg, MAIN_LAYOUT, triangleMesh, false);
+    PlotStyle.tradeFrame(svg, MAIN_LAYOUT, triangleMesh, true);
 
     drawPaintSelection();
     drawAllocationProbe();
@@ -653,12 +652,11 @@
       xValue: formatProbe(probe.v),
       yValue: formatProbe(probe.c)
     });
-    visuals.appendProbeValueText(
+    ChartLayout.appendProbeValueText(
       scaffold.group,
       scaffold.textX,
       scaffold.textY,
-      { symbol: "q", value: formatProbe(value) },
-      "="
+      { symbol: "q", args: ["v", "c"], value: formatProbe(value) }
     );
   }
 
@@ -704,7 +702,7 @@
           );
         }
     );
-    visuals.drawLineFrame(svg, DIAG_LAYOUT, triangleMesh);
+    PlotStyle.tradeFrame(svg, DIAG_LAYOUT, triangleMesh);
     appendSvg(svg, "line", {
       x1: DIAG_LAYOUT.left,
       y1: DIAG_LAYOUT.bottom,
@@ -794,7 +792,7 @@
     appendSvg(svg, "title", { id: idPrefix + "-title" }, titleText);
     appendSvg(svg, "desc", { id: idPrefix + "-description" }, descText);
     paintDiagnosticRaster(svg, "diagnostic-raster", valueAt, colorFn);
-    visuals.drawFrame(svg, DIAG_LAYOUT, triangleMesh, true);
+    PlotStyle.tradeFrame(svg, DIAG_LAYOUT, triangleMesh, true);
   }
 
   function drawRevenueChart(summary) {
@@ -810,7 +808,7 @@
       },
       function (value) { return revenueChannels(value, extent); }
     );
-    visuals.drawFrame(svg, DIAG_LAYOUT, triangleMesh, true);
+    PlotStyle.tradeFrame(svg, DIAG_LAYOUT, triangleMesh, true);
     svg.dataset.colorLow = "red";
     svg.dataset.colorZero = "clear";
     svg.dataset.colorHigh = "green";
@@ -819,16 +817,19 @@
   function drawEfficiencyChart(summary) {
     var svg = elements.efficiencyChart;
     svg.replaceChildren();
-    appendSvg(svg, "title", { id: "efficiency-chart-title" }, "Efficiency comparison");
+    appendSvg(svg, "title", { id: "efficiency-chart-title" }, "Lost gains from trade, L(v,c)");
     appendSvg(svg, "desc", { id: "efficiency-chart-description" }, efficiencyChartDescription(summary));
 
     paintDiagnosticRaster(svg, "diagnostic-raster",
       function (v, c) {
-        return model.allocationErrorAt(summary.grid, v, c);
+        return model.lostGainsAt(summary.grid, v, c);
       },
-      efficiencyChannels
+      function (value) { return utilityChannels(value, visuals.SIGNED_COLOR_EXTENT); }
     );
-    visuals.drawFrame(svg, DIAG_LAYOUT, triangleMesh, true);
+    PlotStyle.tradeFrame(svg, DIAG_LAYOUT, triangleMesh, true);
+    svg.dataset.colorLow = "blue";
+    svg.dataset.colorZero = "clear";
+    svg.dataset.colorHigh = "yellow";
   }
 
   function diagnosticChart(key) {
@@ -876,7 +877,7 @@
         state.lastSummary.patches.sellerPayoff, x, y
       );
     }
-    return model.allocationErrorAt(state.lastSummary.grid, x, y);
+    return model.lostGainsAt(state.lastSummary.grid, x, y);
   }
 
   function diagnosticValueLabel(key, value) {
@@ -897,7 +898,7 @@
     }
     return {
       symbol: "L",
-      value: formatProbe(value.over + value.under),
+      value: formatProbe(value),
       width: 70
     };
   }
@@ -918,6 +919,8 @@
     }
     var value = diagnosticValueAt(key, probe.x, probe.y);
     var label = diagnosticValueLabel(key, value);
+    label.args = key === "buyerIc" ? ["v", { symbol: "v", superscript: "′" }] :
+      (key === "sellerIc" ? ["c", { symbol: "c", superscript: "′" }] : ["v", "c"]);
     drawCompactDiagnosticProbe(
       svg,
       svgXOf(probe.x, DIAG_LAYOUT),
@@ -939,12 +942,11 @@
       xValue: xValue,
       yValue: yValue
     });
-    visuals.appendProbeValueText(
+    ChartLayout.appendProbeValueText(
       scaffold.group,
       scaffold.textX,
       scaffold.textY,
-      valueLabel,
-      "="
+      valueLabel
     );
   }
 
@@ -971,7 +973,7 @@
       } else if (key === "revenue") {
         result = "R equals " + formatSigned(value);
       } else {
-        result = "allocation loss L equals " + formatProbe(value.over + value.under);
+        result = "lost gains from trade L equals " + formatProbe(value);
       }
     }
     elements.diagnosticProbeStatus.textContent = coordinates + ", " + result + ".";
@@ -988,7 +990,7 @@
 
   function exPostEfficiencyDetail(summary) {
     var maximum = summary.exPostEfficiency;
-    return "largest loss = " + formatSigned(maximum.loss) +
+    return "largest loss = " + formatSummary(maximum.loss) +
       (maximum.attained ? " at" : " approaching") + " (v, c) = (" +
       formatSigned(maximum.v) + ", " + formatSigned(maximum.c) + ")";
   }
@@ -1016,14 +1018,14 @@
         (v.sellerBic ? "lie on" : "do not lie entirely on") +
         " c′ = c");
     renderDiagnosticLine(elements.buyerPayoffText, "Interim IR", v.interimBuyerIr,
-      "minimum = " + formatSigned(v.minBuyerPayoff));
+      "minimum = " + formatSummary(v.minBuyerPayoff));
     renderDiagnosticLine(elements.sellerPayoffText, "Interim IR", v.interimSellerIr,
-      "minimum = " + formatSigned(v.minSellerPayoff));
+      "minimum = " + formatSummary(v.minSellerPayoff));
     renderDiagnosticLine(elements.efficiencyText, "Ex-post efficiency",
       Math.abs(v.efficiencyLoss) <= model.BALANCE_TOLERANCE,
       exPostEfficiencyDetail(summary));
     renderDiagnosticLine(elements.revenueText, "Ex-ante BB", v.expectedNoDeficit,
-      "expected revenue = " + formatSigned(v.expectedRevenue));
+      "expected revenue = " + formatSummary(v.expectedRevenue));
   }
 
   function updateLiveSummary(summary) {
@@ -1036,11 +1038,11 @@
         " (best-response points (orange) " + (v.sellerBic ? "lie on" : "do not lie entirely on") +
         " c′ = c)" +
       ". Buyer interim IR " + (v.interimBuyerIr ? "passes" : "fails") +
-      " (minimum = " + formatSigned(v.minBuyerPayoff) + ")" +
+      " (minimum = " + formatSummary(v.minBuyerPayoff) + ")" +
       ". Seller interim IR " + (v.interimSellerIr ? "passes" : "fails") +
-      " (minimum = " + formatSigned(v.minSellerPayoff) + ")" +
+      " (minimum = " + formatSummary(v.minSellerPayoff) + ")" +
       ". Ex-ante BB: " + (v.expectedNoDeficit ? "passes" : "fails") +
-      " (expected revenue = " + formatSigned(v.expectedRevenue) + "). " +
+      " (expected revenue = " + formatSummary(v.expectedRevenue) + "). " +
       "Ex-post efficiency " + (Math.abs(v.efficiencyLoss) <= model.BALANCE_TOLERANCE ?
         "passes" : "fails") + " (" + exPostEfficiencyDetail(summary) + ").";
   }
@@ -1075,12 +1077,11 @@
 
   function revenueChartDescription(summary) {
     return "Net revenue, red for a deficit, clear at zero, and green for a surplus. " +
-      "Expected revenue is " + formatSigned(summary.verdicts.expectedRevenue) + ".";
+      "Expected revenue is " + formatSummary(summary.verdicts.expectedRevenue) + ".";
   }
 
   function efficiencyChartDescription(summary) {
-    return "The allocation rule with orange marking trade where v is less " +
-      "than c and blue marking missing trade where v is greater than c. " +
+    return "Lost gains from trade L(v,c), using the utility color scale: blue for negative values, clear at zero, and yellow for positive values. " +
       "Ex-post efficiency: " + exPostEfficiencyDetail(summary) + ".";
   }
 
@@ -1108,8 +1109,11 @@
   }
 
   function formatSigned(value) {
-    var cleaned = Math.abs(value) < 1e-9 ? 0 : value;
-    return cleaned.toFixed(3);
+    return PlotStyle.probe(value);
+  }
+
+  function formatSummary(value) {
+    return PlotStyle.summary(Math.abs(value) < 64 * Number.EPSILON ? 0 : value);
   }
 
 }());

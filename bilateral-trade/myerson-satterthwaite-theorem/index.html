@@ -21,6 +21,7 @@
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
+  <script defer src="../../js/plot-style.js"></script>
   <script defer src="../../js/bilateral-trade-envelope.js"></script>
   <script defer src="../../js/bilateral-trade-visuals.js"></script>
   <script defer src="../../js/equation-chain.js"></script>
@@ -120,7 +121,7 @@
         <div class="chart-grid diagnostic-panel-grid">
           <div class="diagnostic-panel">
             <figure class="chart-figure diagnostic-figure">
-              <figcaption>Buyer BIC</figcaption>
+              <figcaption>Buyer interim-deviation payoff, \(U_B(v,v')\)</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
@@ -147,7 +148,7 @@
 
           <div class="diagnostic-panel">
             <figure class="chart-figure diagnostic-figure">
-              <figcaption>Seller BIC</figcaption>
+              <figcaption>Seller interim-deviation payoff, \(U_S(c,c')\)</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
@@ -174,7 +175,7 @@
 
           <div class="diagnostic-panel">
             <figure class="chart-figure diagnostic-figure">
-              <figcaption>Budget Balance</figcaption>
+              <figcaption>Net revenue, \(R(v,c)\)</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
@@ -201,7 +202,7 @@
 
           <div class="diagnostic-panel">
             <figure class="chart-figure diagnostic-figure">
-              <figcaption>Buyer IR</figcaption>
+              <figcaption>Buyer truthful payoff, \(u_B(v,c)\)</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
@@ -228,7 +229,7 @@
 
           <div class="diagnostic-panel">
             <figure class="chart-figure diagnostic-figure">
-              <figcaption>Seller IR</figcaption>
+              <figcaption>Seller truthful payoff, \(u_S(v,c)\)</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
@@ -255,7 +256,7 @@
 
           <div class="diagnostic-panel">
             <figure class="chart-figure diagnostic-figure">
-              <figcaption>Efficiency</figcaption>
+              <figcaption>Lost gains from trade, \(L(v,c)\)</figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-220x240-frame">
                 <svg
@@ -268,8 +269,8 @@
                   aria-describedby="diagnostic-probe-help"
                   aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape"
                 >
-                  <title id="efficiency-chart-title">Efficiency comparison</title>
-                  <desc id="efficiency-chart-description">Orange marks trade where v is less than c; blue marks missing trade where v is greater than c.</desc>
+                  <title id="efficiency-chart-title">Lost gains from trade, L(v,c)</title>
+                  <desc id="efficiency-chart-description">Lost gains from trade L(v,c), clear at zero and yellow for positive loss.</desc>
                 </svg>
 
                 <p class="math-chart-axis-label math-chart-y-axis-label chart-220x240-y-axis-label">Seller value, \(c\)</p>

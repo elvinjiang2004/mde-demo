@@ -23,11 +23,9 @@
 #second-price-chart .spa-truthful-label { fill: var(--spa-truth); }
 #second-price-chart .spa-proposed-label { fill: var(--spa-proposed); }
 #second-price-chart .spa-halo { paint-order: stroke; stroke: var(--surface-background); stroke-width: 4px; stroke-linejoin: round; }
-#second-price-chart .spa-payoff, #second-price-chart .spa-curve-label { font-weight: bold; }
+#second-price-chart .spa-curve-label { font-weight: bold; }
 #second-price-chart .spa-probe-coordinate { fill: var(--guide-label); }
 #second-price-chart .spa-payoff-box { pointer-events: none; }
-#second-price-chart .spa-math-symbol { font-style: italic; }
-#second-price-chart .spa-math-subscript { font-size: 0.72em; font-style: italic; }
 @media (max-width: 800px) {
   .spa-layout { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
   .spa-controls { padding-top: 0; }

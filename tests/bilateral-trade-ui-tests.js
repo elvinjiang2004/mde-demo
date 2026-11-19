@@ -387,21 +387,18 @@
             assert(label.querySelector('mjx-container[jax="SVG"]'),
               "Every mixed plot label should render its notation with MathJax.");
           });
-          var plainTextCaptions = [
-            { id: "buyer-ic-chart", text: "Buyer BIC" },
-            { id: "seller-ic-chart", text: "Seller BIC" },
-            { id: "revenue-chart", text: "Budget Balance" },
-            { id: "buyer-payoff-chart", text: "Buyer IR" },
-            { id: "seller-payoff-chart", text: "Seller IR" },
-            { id: "efficiency-chart", text: "Efficiency" }
+          var captions = [
+            { id: "buyer-ic-chart", text: "Buyer interim-deviation payoff" },
+            { id: "seller-ic-chart", text: "Seller interim-deviation payoff" },
+            { id: "revenue-chart", text: "Net revenue" },
+            { id: "buyer-payoff-chart", text: "Buyer truthful payoff" },
+            { id: "seller-payoff-chart", text: "Seller truthful payoff" },
+            { id: "efficiency-chart", text: "Lost gains from trade" }
           ];
-          plainTextCaptions.forEach(function (entry) {
-            var label = appDocument.getElementById(entry.id)
-              .closest("figure").querySelector("figcaption");
-            assert(label.textContent === entry.text,
-              "The " + entry.id + " figcaption should stay plain text with no math.");
-            assert(!label.querySelector('mjx-container[jax="SVG"]'),
-              "The " + entry.id + " figcaption should not render any MathJax notation.");
+          captions.forEach(function (entry) {
+            var label = appDocument.getElementById(entry.id).closest("figure").querySelector("figcaption");
+            assert(label.textContent.startsWith(entry.text + ", ") && label.querySelector('mjx-container[jax="SVG"]'),
+              "Each diagnostic title names the inspected function and renders its notation.");
           });
           var labeledAxes = Array.from(appDocument.querySelectorAll(
             ".chart-220x240-x-axis-label, " +
@@ -440,6 +437,8 @@
           "The main plot's accessible title should mirror the comma-space convention.");
           var paintRect = appDocument.getElementById("paint-chart")
             .getBoundingClientRect();
+          var paintFrameRect = appDocument.getElementById("paint-chart")
+            .closest(".chart-canvas-frame").getBoundingClientRect();
           var xAxisRect = appDocument.querySelector(".chart-480x520-x-axis-label")
             .getBoundingClientRect();
           var yAxisRect = appDocument.querySelector(".chart-480x520-y-axis-label")
@@ -450,18 +449,18 @@
             "The HTML buyer-value axis label should start at the plotting edge.", 1);
           assertClose(xAxisRect.width, mainLabelWidth,
             "The HTML buyer-value axis label should span the plotting area.", 1);
-          assert(yAxisRect.left >= paintRect.left &&
-            yAxisRect.right <= paintRect.right &&
-            yAxisRect.top >= paintRect.top &&
-            yAxisRect.bottom <= paintRect.bottom,
-          "The rotated seller-cost axis label should remain inside the main plot.");
+          assert(yAxisRect.left >= paintFrameRect.left &&
+            yAxisRect.right <= paintFrameRect.right &&
+            yAxisRect.top >= paintFrameRect.top &&
+            yAxisRect.bottom <= paintFrameRect.bottom,
+          "The rotated seller-value axis label should remain inside its reserved chart frame.");
           [
             "buyer-ic-chart", "seller-ic-chart", "buyer-payoff-chart",
             "seller-payoff-chart", "revenue-chart", "efficiency-chart"
           ].forEach(function (id) {
             var chart = appDocument.getElementById(id);
-            var chartRect = chart.getBoundingClientRect();
             var frame = chart.closest(".math-chart-frame");
+            var chartRect = frame.getBoundingClientRect();
             var xRect = chart.closest(".chart-viewport").querySelector(".chart-220x240-x-axis-label")
               .getBoundingClientRect();
             var yRect = frame.querySelector(".chart-220x240-y-axis-label")
@@ -473,7 +472,7 @@
               "Chart " + id + "'s x label should span its plotting area.", 1);
             assert(yRect.left >= chartRect.left && yRect.right <= chartRect.right &&
               yRect.top >= chartRect.top && yRect.bottom <= chartRect.bottom,
-            "Chart " + id + "'s y label should stay inside its plot.");
+            "Chart " + id + "'s y label should stay inside its reserved chart frame.");
           });
           assert(appDocument.querySelectorAll(".explorable svg .axis-title").length === 0,
             "No static bilateral axis title should remain inside an SVG.");
@@ -503,8 +502,8 @@
           ["buyer-ic-chart", "seller-ic-chart"].forEach(function (id) {
             var chart = appDocument.getElementById(id);
             var canvas = fieldCanvas(id);
-            assert(canvas && canvas.dataset.rasterSize === "330" &&
-              canvas.width === 330 && canvas.height === 330,
+            assert(canvas && canvas.dataset.rasterQuality === "final" &&
+              canvas.width === Number(canvas.dataset.rasterSize) && canvas.height === canvas.width && canvas.width >= 128,
             id + " should render exact interim deviation payoffs.");
             assert(chart.querySelector(".truthful-report-line") &&
               chart.querySelectorAll("circle[data-best-report-point]").length === 61 &&
@@ -516,8 +515,8 @@
             .forEach(function (id) {
               var chart = appDocument.getElementById(id);
               var canvas = fieldCanvas(id);
-              assert(canvas && canvas.dataset.rasterSize === "330" &&
-                canvas.width === 330 && canvas.height === 330,
+              assert(canvas && canvas.dataset.rasterQuality === "final" &&
+                canvas.width === Number(canvas.dataset.rasterSize) && canvas.height === canvas.width && canvas.width >= 128,
               id + " should render one exact model-evaluated field raster.");
               assert(chart.querySelectorAll("polygon[fill]").length === 0,
                 id + " should not flatten its field to one value per triangle.");
@@ -642,7 +641,7 @@
           var allocationProbe = paintChart.querySelector(".allocation-probe");
           assert(allocationProbe && allocationProbe.querySelector(
             ".plot-probe-text"
-          ).textContent === "q=0.000",
+          ).textContent === "q(v,c) = 0.000",
           "The allocation hover box should contain only its exact three-decimal q value.");
           assert(Array.from(allocationProbe.querySelectorAll(
             ".plot-probe-coordinate"
@@ -682,8 +681,10 @@
                 entry.subscript,
               entry.id + " should render the payoff agent as a native SVG subscript.");
             }
-            assert(/^[-A-Za-z]+[BS]?=-?\d+\.\d{3}$/.test(output.textContent),
-              entry.id + " should show only its output, rounded to three decimals.");
+            var args = entry.id === "buyer-ic-chart" ? "v,v′" : (entry.id === "seller-ic-chart" ? "c,c′" : "v,c");
+            var notation = entry.symbol + (entry.subscript || "") + "(" + args + ")";
+            assert(output.textContent.startsWith(notation + " = ") && /^-?\d+\.\d{3}$/.test(output.textContent.split(" = ")[1]),
+              entry.id + " should show its complete function notation and three-decimal value.");
             assert(coordinates.length === 2 &&
               coordinates[0].textContent === "0.250" &&
               coordinates[1].textContent === "0.750",
@@ -698,7 +699,7 @@
             model.summarize(model.efficientGrid()).interim, 0.25, 0.75
           );
           assert(buyerChart.querySelector(".plot-probe-text").textContent ===
-            "UB=" + (Math.abs(expected) < 1e-9 ? 0 : expected).toFixed(3),
+            "UB(v,v′) = " + (Math.abs(expected) < 1e-9 ? 0 : expected).toFixed(3),
           "The buyer IC probe should evaluate the exact interim payoff at the cursor.");
           buyerChart.focus();
           buyerChart.dispatchEvent(new appWindow.KeyboardEvent("keydown", {
@@ -734,11 +735,11 @@
             sellerIc.textContent === "BIC: passes (best-response points (orange) lie on c′ = c)",
           "IC panels should link the BIC verdict to the truthful diagonal.");
           assert(revenue.children.length === 1 &&
-            revenue.textContent === "Ex-ante BB: fails (expected revenue = -0.167)",
+            revenue.textContent === "Ex-ante BB: fails (expected revenue = -0.1667)",
           "The BB panel should contain only the expected-balance verdict and revenue.");
           var efficiencyText = appDocument.getElementById("efficiency-text");
           assert(efficiencyText.children.length === 1 &&
-            efficiencyText.textContent === "Ex-post efficiency: passes (largest loss = 0.000 at (v, c) = (0.000, 0.000))" &&
+            efficiencyText.textContent === "Ex-post efficiency: passes (largest loss = 0.0000 at (v, c) = (0.000, 0.000))" &&
             efficiencyText.querySelector("p").className === "verdict-pass" &&
             appDocument.querySelectorAll(".diagnostic-text").length === 6,
           "The efficient benchmark should show a passing efficiency label with zero loss.");
@@ -844,7 +845,7 @@
           ["buyer-payoff-text", "seller-payoff-text"].forEach(function (id) {
             var payoff = appDocument.getElementById(id);
             assert(payoff.children.length === 1 &&
-              payoff.textContent === "Interim IR: passes (minimum = 0.000)",
+              payoff.textContent === "Interim IR: passes (minimum = 0.0000)",
             "The interim IR verdict should include the exact minimum in parentheses.");
             assert(payoff.querySelector("p").className === "verdict-pass",
               "Zero-boundary envelope payoffs satisfy interim IR for every allocation.");
@@ -1135,11 +1136,11 @@
             press("l");
             assert(chart.querySelector(".cell-label").textContent.endsWith(" T-L"),
               "Pressing l should select the left (upper) triangle of the same cell.");
-            assert(selectedOutput() === "q=0.000" && slider.value === "0.8",
+            assert(selectedOutput() === "q(v,c) = 0.000" && slider.value === "0.8",
               "The T-L triangle should remain untouched while the brush stays at 0.8.");
 
             press("r");
-            assert(selectedOutput() === "q=0.800" && slider.value === "0.8",
+            assert(selectedOutput() === "q(v,c) = 0.800" && slider.value === "0.8",
               "Reselecting B-R should recover its painted value without changing the brush.");
           }());
         }
@@ -1172,19 +1173,19 @@
 
           key("keydown", "Home");
           assert(chart.querySelector(".allocation-probe .plot-probe-text")
-            .textContent === "q=0.600",
+            .textContent === "q(v,c) = 0.600",
           "The starting T-L triangle should receive the held-key brush.");
           key("keydown", "ArrowRight");
           assert(chart.querySelector(".allocation-probe .plot-probe-text")
-            .textContent === "q=0.600",
+            .textContent === "q(v,c) = 0.600",
           "The same cell's B-R triangle should receive the held-key brush.");
           key("keydown", "ArrowRight");
           assert(chart.querySelector(".allocation-probe .plot-probe-text")
-            .textContent === "q=0.600",
+            .textContent === "q(v,c) = 0.600",
           "The next cell's T-L triangle should receive the held-key brush.");
           key("keydown", "ArrowRight");
           assert(chart.querySelector(".allocation-probe .plot-probe-text")
-            .textContent === "q=0.000",
+            .textContent === "q(v,c) = 0.000",
           "Navigation after release should not keep painting.");
         }
       },
@@ -1195,7 +1196,7 @@
             paintEntireGrid(0);
             await new Promise(function (resolve) { appWindow.requestAnimationFrame(resolve); });
             assert(appDocument.getElementById("revenue-text").textContent ===
-              "Ex-ante BB: passes (expected revenue = 0.000)",
+              "Ex-ante BB: passes (expected revenue = 0.0000)",
             "Zero expected revenue should pass ex-ante BB.");
             var chart = appDocument.getElementById("paint-chart");
             var slider = appDocument.getElementById("brush-value-slider");
@@ -1245,7 +1246,7 @@
             var efficiencyText = appDocument.getElementById("efficiency-text");
             var loss = Number(appDocument.getElementById("efficiency-chart").dataset.efficiencyLoss);
             assert(loss > 0.1 && efficiencyText.textContent ===
-              "Ex-post efficiency: fails (largest loss = 1.000 at (v, c) = (1.000, 0.000))" &&
+              "Ex-post efficiency: fails (largest loss = 1.0000 at (v, c) = (1.000, 0.000))" &&
               efficiencyText.querySelector("p").className === "verdict-fail",
             "Painting an inefficient allocation should update the efficiency verdict and loss.");
             assert(Number(buyerIc.dataset.buyerIcViolationCount) > 0,
@@ -1308,7 +1309,7 @@
               key: "End", bubbles: true, cancelable: true
             }));
             assert(chart.querySelector(".allocation-probe .plot-probe-text")
-              .textContent === "q=1.000" && slider.value === "1",
+              .textContent === "q(v,c) = 1.000" && slider.value === "1",
               "Returning to the boundary triangle should show the painted value while preserving the brush.");
           }());
         }
@@ -1347,7 +1348,7 @@
             assert(summary.textContent.includes("Ex-ante BB") &&
               summary.textContent.includes("expected revenue"),
             "The live summary should describe expected balance and revenue.");
-            assert(summary.textContent.includes("minimum = 0.000") &&
+            assert(summary.textContent.includes("minimum = 0.0000") &&
               /Ex-post efficiency (passes|fails) \(largest loss = /.test(summary.textContent),
             "The live summary should include the IR minimum and efficiency loss.");
             assert(!/monotonic|IC-implementable|Ex-post BB|Ex-ante efficiency|Expected buyer payoff/.test(summary.textContent),
@@ -1406,7 +1407,7 @@
               "seller-payoff-chart", "revenue-chart", "efficiency-chart"]
               .forEach(function (id) {
                 var canvas = fieldCanvas(id);
-                assert(canvas && canvas.width === 330 && canvas.height === 330,
+                assert(canvas && canvas.width === Number(canvas.dataset.rasterSize) && canvas.height === canvas.width && canvas.width >= 128,
                   id + " should retain its generated raster under a palette change.");
               });
             assert(appDocument.getElementById("buyer-ic-chart")
@@ -1449,11 +1450,11 @@
         var revenue = appDocument.getElementById("revenue-text");
         assert(expected > model.BALANCE_TOLERANCE &&
           revenue.dataset.expectedNoDeficit === "true" &&
-          revenue.textContent === "Ex-ante BB: passes (expected revenue = " + expected.toFixed(3) + ")" &&
+          revenue.textContent === "Ex-ante BB: passes (expected revenue = " + expected.toFixed(4) + ")" &&
           revenue.firstElementChild.className === "verdict-pass",
         "An allocation producing a positive surplus must pass the displayed BB condition.");
         assert(appDocument.getElementById("live-summary").textContent.includes(
-          "Ex-ante BB: passes (expected revenue = " + expected.toFixed(3) + ")"),
+          "Ex-ante BB: passes (expected revenue = " + expected.toFixed(4) + ")"),
         "The live summary should announce the same passing surplus verdict.");
       }
     });

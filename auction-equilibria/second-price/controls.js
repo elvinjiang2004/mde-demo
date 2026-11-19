@@ -1,7 +1,7 @@
 (function (global) {
   "use strict";
   function create(state, elements, defaults, render, charts) {
-    var touchPointer = null;
+    var dragPointer = null;
     var renderFrame = null;
     var sizeObserver;
 
@@ -17,6 +17,7 @@
       var number = document.getElementById(field + "-number");
       var slider = document.getElementById(field + "-slider");
       function update(value) {
+        endDrag();
         state[field] = Math.round(Math.max(0, Math.min(100, value)) * 10) / 10;
         render();
       }
@@ -25,10 +26,11 @@
         global.NumericControls.commit(number, state[field], update);
       });
     }
-    function inspect(event, clampOutside) {
+    function inspect(event, clampOutside, editBid) {
       var position = charts.pointerPosition(event, clampOutside);
       if (!position) { return; }
       state.opposing = position.opposing;
+      if (editBid) { state.bid = Math.round(position.opposing * 10) / 10; }
       state.probe = { y: position.y };
       render();
     }
@@ -37,10 +39,11 @@
       state.probe = null;
       render();
     }
-    function endTouch(event) {
-      if (touchPointer === null || (event && event.pointerId !== touchPointer)) { return; }
-      var pointer = touchPointer;
-      touchPointer = null;
+    function endDrag(event) {
+      if (dragPointer === null || (event && event.pointerId !== dragPointer)) { return; }
+      var pointer = dragPointer;
+      dragPointer = null;
+      elements.chart.classList.remove("plot-dragging");
       if (elements.chart.hasPointerCapture(pointer)) { elements.chart.releasePointerCapture(pointer); }
     }
     function scheduleRender() {
@@ -50,7 +53,7 @@
     function bindEvents() {
       bindPair("value"); bindPair("bid");
       elements.reset.addEventListener("click", function () {
-        endTouch();
+        endDrag();
         state.value = defaults.value; state.bid = defaults.bid; state.opposing = defaults.opposing;
         state.probe = null;
         render();
@@ -58,36 +61,37 @@
       });
       elements.chart.addEventListener("pointermove", function (event) {
         if (!event.isPrimary) { return; }
-        if (touchPointer !== null) {
-          if (event.pointerId === touchPointer) { inspect(event, true); }
+        if (dragPointer !== null) {
+          if (event.pointerId === dragPointer) { inspect(event, true, true); }
         } else if (event.pointerType !== "touch" && event.buttons === 0) {
           if (charts.pointerPosition(event, false)) { inspect(event, false); }
           else { hideProbe(); }
         }
       });
       elements.chart.addEventListener("pointerdown", function (event) {
-        if (!event.isPrimary || event.button !== 0 || touchPointer !== null) { return; }
+        if (!event.isPrimary || event.button !== 0 || dragPointer !== null) { return; }
         if (!charts.pointerPosition(event, false)) { return; }
-        inspect(event, false);
-        if (event.pointerType === "touch") {
-          touchPointer = event.pointerId;
-          try { elements.chart.setPointerCapture(touchPointer); } catch (error) { /* Synthetic pointers have no native capture. */ }
-        }
+        event.preventDefault();
+        dragPointer = event.pointerId;
+        elements.chart.classList.add("plot-dragging");
+        try { elements.chart.setPointerCapture(dragPointer); } catch (error) { /* Synthetic pointers have no native capture. */ }
+        elements.chart.focus({ preventScroll: true });
+        inspect(event, false, true);
       });
       elements.chart.addEventListener("pointerup", function (event) {
-        if (event.pointerId !== touchPointer) { return; }
-        inspect(event, true);
-        endTouch(event);
+        if (event.pointerId !== dragPointer) { return; }
+        inspect(event, true, true);
+        endDrag(event);
       });
       ["pointercancel", "lostpointercapture"].forEach(function (name) {
-        elements.chart.addEventListener(name, endTouch);
+        elements.chart.addEventListener(name, endDrag);
       });
-      elements.chart.addEventListener("pointerleave", function () { if (touchPointer === null) { hideProbe(); } });
+      elements.chart.addEventListener("pointerleave", function () { if (dragPointer === null) { hideProbe(); } });
       elements.chart.addEventListener("focus", function () {
         state.probe = { y: null };
         render();
       });
-      elements.chart.addEventListener("blur", hideProbe);
+      elements.chart.addEventListener("blur", function () { endDrag(); hideProbe(); });
       elements.chart.addEventListener("keydown", function (event) {
         var next = state.opposing;
         if (event.key === "ArrowLeft") { next -= event.shiftKey ? 10 : 1; }

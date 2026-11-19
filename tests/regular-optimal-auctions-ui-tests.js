@@ -18,8 +18,7 @@
     simulateCapture(el("allocation-chart")); simulateCapture(el("lottery-chart"));
   }
   function coordinates(svg, x, y) {
-    var p = svg.createSVGPoint(); p.x = x; p.y = y;
-    var screen = p.matrixTransform(svg.getScreenCTM());
+    var screen = new win.DOMPoint(x, y).matrixTransform(svg.getScreenCTM());
     return { clientX: screen.x, clientY: screen.y };
   }
   function pointer(svg, type, x, y, id, options) {
@@ -84,7 +83,8 @@
     close(totalPayments(), 1 / 3);
     [1, 2].forEach(function (bidder) {
       assert(el("interim-" + bidder + "-chart").querySelectorAll(".interim-curve").length === 20, "Separate allocation pieces");
-      assert(el("payment-" + bidder + "-chart").querySelectorAll(".payment-area").length === 20, "Separate payment pieces");
+      var payment = el("payment-" + bidder + "-chart");
+      assert(payment.querySelectorAll(".payment-curve").length === 20 && !payment.querySelector(".payment-area"), "Payment pieces remain unshaded");
     });
     assert(!doc.querySelector(".assumption-line, .formula-label, .diagnostic-key, .payment-key, #optimal-revenue, #bic-details, #brush-summary, #bidder-revenues"), "Only requested diagnostic and control labels remain");
     assert(el("optimal-button").textContent === "Use optimal mechanism" && el("distribution-controls"), "Distribution controls and an optimal mechanism button are available");
@@ -158,7 +158,12 @@
       boxes().forEach(function (rect, i) { rect.forEach(function (value, j) { close(value, before[i][j], 0.1, "Fixed chart frame " + ids[i]); }); });
     }
     await T.nextAnimationFrames(win, 3);
-    close(el("allocation-chart").getBoundingClientRect().width, 480);
+    var allocation = el("allocation-chart"), nativeFrame = allocation.closest(".chart-canvas-frame");
+    close(allocation.viewBox.baseVal.width, 480);
+    close(allocation.viewBox.baseVal.height, 520);
+    close(nativeFrame.getBoundingClientRect().width, 480);
+    close(allocation.getBoundingClientRect().width,
+      480 - parseFloat(win.getComputedStyle(nativeFrame).paddingLeft), 0.02, "The SVG leaves its reserved title gutter");
     close(el("interim-1-chart").getBoundingClientRect().width, (doc.querySelector(".allocation-diagnostics").getBoundingClientRect().width - 16) / 2);
     close(el("lottery-chart").getBoundingClientRect().width, 260);
     var before = boxes();
@@ -185,7 +190,13 @@
     var coords = Array.from(g.querySelectorAll(".plot-probe-coordinate")).map(function (n) { return n.textContent; });
     assert(coords.join(",") === "0.750,0.250", "True pointer reports, not cell centroids");
     var outputs = Array.from(g.querySelectorAll(".plot-probe-text")).map(function (n) { return n.textContent; });
-    assert(outputs.join(",") === "q1 = 1.000,q2 = 0.000", "Exact allocation probabilities in the box");
+    assert(outputs.join(",") === "q1(v1,v2) = 1.000,q2(v1,v2) = 0.000", "Exact allocation probabilities in the box");
+    var rows = g.querySelectorAll(".plot-probe-text");
+    var first = rows[0].getBoundingClientRect(), second = rows[1].getBoundingClientRect();
+    assert(second.top >= first.bottom + 3 && Math.abs(first.left - second.left) < .2,
+      "Both complete allocation expressions are stacked and left aligned");
+    assert(rows[0].querySelectorAll(".chart-math-subscript").length === 3,
+      "The function and both value arguments use native mathematical subscripts");
     assert(before === s.querySelector(".allocation-layer").innerHTML, "Hover never changes the rule");
     T.dispatch(s, "pointerleave", win); assert(!s.querySelector(".allocation-probe"), "Mouse departure hides an unfocused probe");
     s.focus(); assert(s.querySelector(".allocation-probe"), "Keyboard focus exposes the probe");
@@ -411,8 +422,11 @@
     assert(el("payment-1-chart").dataset.xMin === "0.3" && el("payment-1-chart").dataset.xMax === "1.3", "Payment x axis follows buyer 1");
     assert(el("interim-2-chart").dataset.xMin === "0.6" && el("interim-2-chart").dataset.xMax === "1.6", "Allocation x axis follows buyer 2");
     assert(el("payment-2-chart").dataset.yMax === "1.6", "Payment scale covers the shifted support");
-    var ticks = Array.from(el("allocation-chart").querySelectorAll(".axis-text")).map(function (n) { return Number(n.textContent); });
-    close(ticks[0], 0.3); close(ticks[1], 0.6); close(ticks[8], 1.3); close(ticks[9], 1.6);
+    ["x", "y"].forEach(function (axis, i) {
+      var ticks = Array.from(el("allocation-chart").querySelectorAll('[data-axis="' + axis + '"] text'));
+      close(Number(ticks[0].textContent), i ? .6 : .3);
+      close(Number(ticks[ticks.length - 1].textContent), i ? 1.6 : 1.3);
+    });
     var total = totalPayments(); input("shift-1-number", ""); close(totalPayments(), total);
     assert(el("distribution-error").textContent && el("shift-1-number").getAttribute("aria-invalid") === "true", "Blank input preserves the last valid calculation");
     T.dispatch(el("shift-1-number"), "change", win); assert(el("shift-1-number").value === "0.3" && !el("distribution-error").textContent, "Invalid value restores on commit");
@@ -473,7 +487,7 @@
     el("reset-button").click();
     close(totalPayments(), 1, 1e-10);
     var chart = el("allocation-chart"); pointer(chart, "pointermove", 410, 356);
-    assert(Array.from(chart.querySelectorAll(".plot-probe-text")).map(function (n) { return n.textContent; }).join() === "q1 = 0.000,q2 = 1.000", "Buyer with the higher actual value wins");
+    assert(Array.from(chart.querySelectorAll(".plot-probe-text")).map(function (n) { return n.textContent; }).join() === "q1(v1,v2) = 0.000,q2(v1,v2) = 1.000", "Buyer with the higher actual value wins");
     close(Number(el("shift-2-number").value), 1);
   });
   test("Resizing and unchanged shifts reuse diagnostics; painting and changed shifts invalidate them", async function () {

@@ -8,8 +8,6 @@
   var visuals = global.BilateralTradeVisuals;
   var R = model.CUSTOM_RESOLUTION;
   var mesh = svgUtils.createTriangleMesh(R);
-  var PREVIEW_RASTER_SIZE = 240;
-  var DIAGNOSTIC_RASTER_SIZE = 330;
   var SURFACE_KEYS = Object.freeze(["q", "pB", "pS"]);
   var DIAGNOSTIC_KEYS = Object.freeze([
     "buyerIc", "sellerIc", "revenue",
@@ -141,6 +139,7 @@
   var activePointers = {};
   var pointerEndGeneration = {};
   var pendingQuality = {};
+  var pendingResizeQuality = {};
   var qualityQueue = [];
   var qualityFrame = null;
   var qualityToken = -1;
@@ -193,7 +192,7 @@
       revenue: {
         chart: byId("revenue-chart"),
         text: byId("revenue-text"),
-        title: "Budget Balance, R(v,c)",
+        title: "Net revenue, R(v,c)",
         kind: "field"
       },
       buyerPayoff: {
@@ -211,7 +210,7 @@
       efficiency: {
         chart: byId("efficiency-chart"),
         text: byId("efficiency-text"),
-        title: "Efficiency comparison",
+        title: "Lost gains from trade, L(v,c)",
         kind: "field"
       }
     };
@@ -241,15 +240,16 @@
     syncPresetUi();
     charts.bindProbes();
     bindPaletteChanges();
-    charts.drawSurface("q", PREVIEW_RASTER_SIZE);
-    charts.drawSurface("pB", PREVIEW_RASTER_SIZE);
-    charts.drawSurface("pS", PREVIEW_RASTER_SIZE);
+    charts.drawSurface("q", "preview");
+    charts.drawSurface("pB", "preview");
+    charts.drawSurface("pS", "preview");
     DIAGNOSTIC_KEYS.forEach(function (key) {
-      charts.drawDiagnostic(key, PREVIEW_RASTER_SIZE);
+      charts.drawDiagnostic(key, "preview");
     });
     charts.updateDiagnosticLiveStatus();
     syncRootState("initial");
     requestQuality(allRenderDependencies());
+    bindRasterResize();
     document.body.dataset.bargainingSandboxReady = "true";
     global.BargainingSandboxApp = Object.freeze({
       snapshot: snapshot
@@ -281,10 +281,10 @@
     state.palette = palette;
     invalidateQuality();
     SURFACE_KEYS.forEach(function (key) {
-      charts.drawSurface(key, PREVIEW_RASTER_SIZE);
+      charts.drawSurface(key, "preview");
     });
     DIAGNOSTIC_KEYS.forEach(function (key) {
-      charts.drawDiagnostic(key, DIAGNOSTIC_RASTER_SIZE);
+      charts.drawDiagnostic(key, "final");
     });
     // Recolor the existing exact state; a palette event must not commit a stroke.
     if (state.activePreset === "custom") {
@@ -485,12 +485,12 @@
     state.summary = model.summarize(state.rule);
     SURFACE_KEYS.forEach(function (key) {
       if (dependencies[key]) {
-        charts.drawSurface(key, PREVIEW_RASTER_SIZE);
+        charts.drawSurface(key, "preview");
       }
     });
     DIAGNOSTIC_KEYS.forEach(function (key) {
       if (dependencies[key]) {
-        charts.drawDiagnostic(key, DIAGNOSTIC_RASTER_SIZE);
+        charts.drawDiagnostic(key, "final");
       }
     });
     charts.updateDiagnosticLiveStatus();
@@ -554,11 +554,11 @@
     syncPresetUi();
     RENDER_KEYS.forEach(function (renderKey) {
       if (SURFACE_KEYS.indexOf(renderKey) >= 0) {
-        charts.drawSurface(renderKey, PREVIEW_RASTER_SIZE);
+        charts.drawSurface(renderKey, "preview");
       } else {
         charts.drawDiagnostic(
           renderKey,
-          key === "custom" ? DIAGNOSTIC_RASTER_SIZE : PREVIEW_RASTER_SIZE
+          key === "custom" ? "final" : "preview"
         );
       }
     });
@@ -703,6 +703,7 @@
     state.generation += 1;
     qualityQueue = [];
     pendingQuality = {};
+    mergeDependencies(pendingQuality, pendingResizeQuality);
     qualityToken = -1;
     if (qualityFrame !== null) {
       global.cancelAnimationFrame(qualityFrame);
@@ -710,6 +711,9 @@
     }
     if (elements.root) {
       elements.root.dataset.qualityStatus = "idle";
+    }
+    if (Object.keys(pendingResizeQuality).length) {
+      global.requestAnimationFrame(function () { requestQuality(pendingResizeQuality); });
     }
   }
 
@@ -725,17 +729,17 @@
     state.rule = currentRule();
     state.summary = model.summarize(state.rule);
     if (dependencies.q) {
-      charts.drawSurface("q", PREVIEW_RASTER_SIZE);
+      charts.drawSurface("q", "preview");
     }
     if (dependencies.pB) {
-      charts.drawSurface("pB", PREVIEW_RASTER_SIZE);
+      charts.drawSurface("pB", "preview");
     }
     if (dependencies.pS) {
-      charts.drawSurface("pS", PREVIEW_RASTER_SIZE);
+      charts.drawSurface("pS", "preview");
     }
     DIAGNOSTIC_KEYS.forEach(function (key) {
       if (dependencies[key]) {
-        charts.drawDiagnostic(key, PREVIEW_RASTER_SIZE);
+        charts.drawDiagnostic(key, "preview");
       }
     });
     charts.updateDiagnosticLiveStatus();
@@ -770,8 +774,26 @@
   }
 
   function hasActivePointer() {
-    return Object.keys(activePointers).some(function (key) {
+    return (editor && editor.isEditing()) || Object.keys(activePointers).some(function (key) {
       return activePointers[key];
+    });
+  }
+
+  function bindRasterResize() {
+    RENDER_KEYS.forEach(function (key) {
+      var svg = SURFACE_KEYS.indexOf(key) >= 0 ? surfaces[key].chart : diagnostics[key].chart;
+      PlotStyle.watchResize(svg, "field-quality", function () {
+        var dependency = {}; dependency[key] = true;
+        pendingResizeQuality[key] = true;
+        requestQuality(dependency);
+      }, function (target) { return PlotStyle.rasterSize(target, LAYOUT, "final"); });
+    });
+    ["pointerup", "pointercancel", "lostpointercapture", "keyup", "blur"].forEach(function (type) {
+      global.addEventListener(type, function () {
+        global.requestAnimationFrame(function () {
+          if (!hasActivePointer() && Object.keys(pendingQuality).length) { requestQuality({}); }
+        });
+      }, true);
     });
   }
 
@@ -807,12 +829,19 @@
       elements.root.dataset.qualityStatus = "superseded";
       return;
     }
+    if (hasActivePointer()) {
+      qualityQueue.forEach(function (key) { pendingQuality[key] = true; });
+      qualityQueue = [];
+      elements.root.dataset.qualityStatus = "waiting";
+      return;
+    }
     var key = qualityQueue.shift();
     if (SURFACE_KEYS.indexOf(key) >= 0) {
       charts.upgradeSurfaceRaster(key, qualityToken);
     } else {
       charts.upgradeDiagnosticRaster(key, qualityToken);
     }
+    delete pendingResizeQuality[key];
     if (qualityToken !== state.generation) {
       qualityQueue = [];
       elements.root.dataset.qualityStatus = "superseded";

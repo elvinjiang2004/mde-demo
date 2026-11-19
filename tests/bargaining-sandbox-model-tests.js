@@ -504,6 +504,17 @@
       "Seller interim payoff maximum");
   });
 
+  test("Lost-gains evaluators agree on formula and Custom rules", function () {
+    var zero = model.createCustomPaymentGrid(0), grid = model.createCustomAllocationGrid(.25);
+    var custom = model.createCustomRule(grid, zero, zero);
+    assertClose(model.lostGainsAt(custom, .8, .2), .45, "Fractional under-trade welfare loss");
+    assertClose(model.lostGainsEvaluator(custom)(.2, .8), .15, "Fractional over-trade welfare loss");
+    var threshold = model.createRevenueThresholdRule(.4, .3, .2);
+    assertClose(model.lostGainsAt(threshold, .3, .2), .1, "Missing trade loses the actual gain");
+    assertClose(model.lostGainsEvaluator(threshold)(.8, .2), 0, "Realized efficient trade has no loss");
+    assertClose(model.lostGainsAt(model.createVcgRule(), .8, .2), 0, "Efficient VCG loss");
+  });
+
   test("The six-diagnostic summary reports exact IC, IR, budget, and efficiency verdicts", function () {
     var rule = model.createRevenueThresholdRule(0.4, 0.3, 0.2);
     var summary = model.summarize(rule);

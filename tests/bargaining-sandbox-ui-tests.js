@@ -213,7 +213,7 @@
           await nextAppFrames(appWindow, 2);
           surfaceIds.forEach(function (id) {
             var layer = image(id);
-            assert(layer.dataset.rasterSize === "240", "Clipping must work during preview");
+            assert(layer.dataset.rasterQuality === "preview", "Clipping must work during preview");
             assert(layer.style.clipPath === "polygon(37% 100%, 100% 100%, 100% 37%)", "The edge must use the current threshold, independently of raster pixels");
           });
           await selectPreset("posted-price");
@@ -287,8 +287,9 @@
               firePointer(chart, "pointermove", point.x, point.y, 101, appWindow);
               var marker = chart.querySelector(".plot-probe-point");
               assert(marker, "Margin hover should remain active: " + id);
-              assertClose(Number(marker.getAttribute("cx")), sample[2], "Clamped x", 1e-4);
-              assertClose(Number(marker.getAttribute("cy")), sample[3], "Clamped y", 1e-4);
+              // Fractional responsive widths introduce subpixel roundoff in SVGPoint.
+              assertClose(Number(marker.getAttribute("cx")), sample[2], "Clamped x", 1e-3);
+              assertClose(Number(marker.getAttribute("cy")), sample[3], "Clamped y", 1e-3);
               assert(chart.querySelectorAll(".plot-probe-line").length === 2);
             });
             var center = clientPoint(chart, 260, 230);
@@ -569,18 +570,18 @@
             "The DSIC line must use the ex-post gain even when BIC passes.");
           });
           assert(lines("revenue-text").join("|") ===
-            "Ex-ante BB: passes (expected revenue = 0)|Ex-post BB: passes (largest deficit = 0)",
+            "Ex-ante BB: passes (expected revenue = 0.0000)|Ex-post BB: passes (largest deficit = 0.0000)",
           "Balanced transfers should show precisely the two requested BB lines.");
           await selectPreset("vcg");
           assert(lines("buyer-ic-text").join("|") ===
-            "BIC: passes (best-response points (orange) lie on v′ = v)|DSIC: passes (maximum deviation gain = 0)",
+            "BIC: passes (best-response points (orange) lie on v′ = v)|DSIC: passes (maximum deviation gain = 0.0000)",
           "VCG should report zero profitable deviations.");
           assert(lines("revenue-text").join("|") ===
             "Ex-ante BB: fails (expected revenue = -0.1667)|Ex-post BB: fails (largest deficit = 1.0000)",
           "VCG's worst shortfall is positive one, not negative revenue.");
           await resetDefaults();
           assert(lines("revenue-text").join("|") ===
-            "Ex-ante BB: passes (expected revenue = 0.0417)|Ex-post BB: passes (largest deficit = 0)",
+            "Ex-ante BB: passes (expected revenue = 0.0417)|Ex-post BB: passes (largest deficit = 0.0000)",
           "A surplus should pass both ex-ante and ex-post BB.");
           assert(appDocument.getElementById("revenue-text").children[1].className ===
             "verdict-pass", "A zero largest deficit should use the pass color for ex-post BB.");
@@ -592,14 +593,14 @@
           var text = appDocument.getElementById("efficiency-text");
           await selectPreset("vcg");
           assert(text.children.length === 2 && text.children[0].textContent ===
-            "Ex-ante efficiency: passes (expected loss = 0)" &&
+            "Ex-ante efficiency: passes (expected loss = 0.0000)" &&
             text.children[1].textContent ===
-            "Ex-post efficiency: passes (largest loss = 0 at (v, c) = (0, 0))",
+            "Ex-post efficiency: passes (largest loss = 0.0000 at (v, c) = (0.000, 0.000))",
           "Efficient trade should pass both notions and show zero worst loss.");
           await selectPreset("chatterjee-samuelson");
           assert(text.children[0].textContent === "Ex-ante efficiency: fails (expected loss = 0.0260)" &&
             text.children[1].textContent ===
-            "Ex-post efficiency: fails (largest loss = 0.2500 approaching (v, c) = (0.2500, 0))",
+            "Ex-post efficiency: fails (largest loss = 0.2500 approaching (v, c) = (0.250, 0.000))",
           "The exact boundary limit must differ from expected welfare loss.");
           assert(Array.from(text.children).every(function (line) {
             return line.className === "verdict-fail";
@@ -609,8 +610,8 @@
             live.textContent.includes(text.children[1].textContent),
           "Accessible output must include both losses and the worst-loss location.");
           await selectPreset("custom");
-          assert(text.children[0].textContent === "Ex-ante efficiency: passes (expected loss = 0)" &&
-            text.children[1].textContent.includes("Ex-post efficiency: passes (largest loss = 0 at"),
+          assert(text.children[0].textContent === "Ex-ante efficiency: passes (expected loss = 0.0000)" &&
+            text.children[1].textContent.includes("Ex-post efficiency: passes (largest loss = 0.0000 at"),
           "Switching representation must refresh both efficiency readouts.");
           await resetDefaults();
         }
@@ -1128,7 +1129,7 @@
             renderCount("efficiency-chart") === counts.efficiency + 1,
           "Threshold should invalidate all nine formula fields.");
           allChartIds.forEach(function (id) {
-              assert(image(id).dataset.rasterSize === "240",
+              assert(image(id).dataset.rasterQuality === "preview",
                 id + " should use live preview resolution during the gesture.");
             });
           assert(appDocument.getElementById("buyer-ic-chart").dataset.bic === "false",
@@ -1233,7 +1234,7 @@
           "Beta should increment only seller payment, seller IC, seller payoff, and revenue.");
           assert(root.dataset.lastLiveDependencies ===
               "pS revenue sellerIc sellerPayoff" &&
-            image("seller-payment-chart").dataset.rasterSize === "240",
+            image("seller-payment-chart").dataset.rasterQuality === "preview",
           "The dependency key and preview layers should identify seller fields only.");
           firePointer(slider, "pointerup", 0, 0, 5, appWindow);
           await waitForQuality();
@@ -1242,7 +1243,7 @@
             image("buyer-ic-chart") === icImage &&
             image("buyer-payoff-chart") === buyerPayoffImage &&
             image("efficiency-chart") === efficiencyImage &&
-            image("seller-payment-chart").dataset.rasterSize === "800",
+            image("seller-payment-chart").dataset.rasterQuality === "final",
           "The quality-only beta upgrade should still leave unrelated nodes untouched.");
           await resetDefaults();
         }
@@ -1296,13 +1297,13 @@
           ["allocation-chart", "buyer-payment-chart", "seller-payment-chart"]
             .forEach(function (id) {
               var layer = image(id);
-              assert(layer.dataset.rasterSize === "800" &&
+              assert(layer.dataset.rasterQuality === "final" &&
                 layer.dataset.stateKey === appDocument.getElementById(id).dataset.stateKey &&
                 layer.dataset.qualityGeneration === root.dataset.appliedGeneration,
               id + " should contain only the latest full-quality state.");
             });
           diagnosticIds.forEach(function (id) {
-            assert(image(id).dataset.rasterSize === "330" &&
+            assert(image(id).dataset.rasterQuality === "final" &&
               image(id).dataset.stateKey ===
                 appDocument.getElementById(id).dataset.stateKey &&
               image(id).dataset.qualityGeneration ===
@@ -1347,21 +1348,21 @@
             8, appWindow
           );
           assert(allocation.querySelector(".surface-probe .plot-probe-text")
-            .textContent.includes("1.000"),
+            .textContent === "q(v,c) = 1.000",
           "The allocation pointer probe should evaluate q(0.8,0.2)=1 exactly.");
 
           var seller = appDocument.getElementById("seller-payment-chart");
           seller.focus();
           dispatchKey(seller, "End", appWindow);
           assert(seller.querySelector(".surface-probe .plot-probe-text")
-            .textContent.includes("0.500"),
+            .textContent === "pS(v,c) = 0.500",
           "The seller-payment keyboard probe should evaluate pS(1,0.5)=0.5.");
 
           var buyerIc = appDocument.getElementById("buyer-ic-chart");
           buyerIc.focus();
           dispatchKey(buyerIc, "ArrowUp", appWindow, true);
           assert(buyerIc.querySelector(".ic-probe .plot-probe-text")
-            .textContent.includes("-0.005"),
+            .textContent === "UB(v,v′) = -0.005",
           "The buyer-IC keyboard probe should evaluate U B(0.5,0.6) exactly.");
           assert(appDocument.getElementById("formula-probe-status")
             .textContent.includes("buyer interim utility"),
@@ -1372,7 +1373,7 @@
             ["revenue-chart", 0.8, 0.2, "0.400"],
             ["buyer-payoff-chart", 0.8, 0.2, "0.100"],
             ["seller-payoff-chart", 0.8, 0.2, "0.100"],
-            ["efficiency-chart", 0.6, 0.55, "-1.000"]
+            ["efficiency-chart", 0.6, 0.55, "0.050"]
           ].forEach(function (fixture, index) {
             var chart = appDocument.getElementById(fixture[0]);
             var point = clientPoint(
@@ -1382,8 +1383,10 @@
             );
             firePointer(chart, "pointerdown", point.x, point.y,
               20 + index, appWindow);
+            var notation = { "seller-ic-chart": "US(c,c′)", "revenue-chart": "R(v,c)",
+              "buyer-payoff-chart": "uB(v,c)", "seller-payoff-chart": "uS(v,c)", "efficiency-chart": "L(v,c)" };
             assert(chart.querySelector(".diagnostic-probe .plot-probe-text")
-              .textContent.includes(fixture[3]),
+              .textContent === notation[fixture[0]] + " = " + fixture[3],
             fixture[0] + " should evaluate its exact formula probe.");
           });
 

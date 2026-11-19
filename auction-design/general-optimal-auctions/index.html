@@ -20,6 +20,8 @@
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
+  <script defer src="../../js/plot-style.js"></script>
+  <script defer src="../../js/plot-probe.js"></script>
   <script defer src="../../js/numeric-controls.js"></script>
   <script defer src="../../js/equation-chain.js"></script>
 
@@ -161,11 +163,11 @@
               <p id="revenue-diagnostic" class="chart-diagnostic plot-diagnostic revenue-diagnostic"><span id="revenue-label">Expected revenue</span> = \(n\times\) expected payment from each buyer (<output id="expected-payment"></output>) = <output id="revenue-value"></output></p>
             </figure>
             <figure class="chart-figure">
-              <figcaption>Integrated virtual value, \(H_i(z)\), and virtual value</figcaption>
+              <figcaption><span class="plot-title-line"><span class="plot-legend-line" style="--plot-line-color:var(--ink)" aria-hidden="true"></span>Integrated virtual value, \(H_i(z)\) (left scale)</span><span class="plot-title-line"><span class="plot-legend-line plot-legend-dotted" style="--plot-line-color:var(--orange)" aria-hidden="true"></span>Convex lower bound, \(G_i(z)\) (left scale)</span><span class="plot-title-line"><span class="plot-legend-line plot-legend-dashed" style="--plot-line-color:var(--muted)" aria-hidden="true"></span>Virtual value, \(h_i(z)\) (right scale)</span><span class="plot-title-line"><span class="plot-legend-line plot-legend-dotted" style="--plot-line-color:var(--orange)" aria-hidden="true"></span>Ironed virtual value, \(g_i(z)\) (right scale)</span></figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="chart-canvas-frame chart-640x360-frame">
                 <svg id="integrated-chart" class="chart-640x360" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="integrated-title integrated-description">
-                  <title id="integrated-title">Integrated virtual value H_i(z), lower convex hull G_i(z), and virtual values</title><desc id="integrated-description"></desc>
+                  <title id="integrated-title">Integrated virtual value H_i(z), convex lower bound G_i(z), and virtual values</title><desc id="integrated-description"></desc>
                 </svg>
               </div>
               <p class="chart-x-axis-label chart-axis-label">Quantile, \(z=F_i(v_i)\)</p>
@@ -174,11 +176,11 @@
               <p id="pool-summary" class="chart-diagnostic plot-diagnostic ironing-diagnostic"></p>
             </figure>
             <figure class="chart-figure">
-              <figcaption>Total allocation above \(\alpha\), \(n\int_{E_\alpha} Q_i\,dF_i\)</figcaption>
+              <figcaption><span class="plot-title-line"><span class="plot-legend-line" style="--plot-line-color:var(--blue)" aria-hidden="true"></span>Total allocation probability in \(E_\alpha\), \(A_i(\alpha)\)</span><span class="plot-title-line" id="feasibility-capacity-title"><span class="plot-legend-line plot-legend-dotted" style="--plot-line-color:var(--ink)" aria-hidden="true"></span>Total value probability in \(E_\alpha\), \(C_i(\alpha)\)</span></figcaption>
               <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="chart-canvas-frame chart-640x360-frame">
                 <svg id="feasibility-chart" class="chart-640x360" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="feasibility-title feasibility-description">
-                  <title id="feasibility-title">Total allocation above alpha</title><desc id="feasibility-description"></desc>
+                  <title id="feasibility-title">Total allocation probability A_i(alpha) and total value probability C_i(alpha) in E_alpha</title><desc id="feasibility-description"></desc>
                 </svg>
               </div>
               <p class="chart-x-axis-label chart-axis-label">Allocation-probability threshold, \(\alpha\)</p>

@@ -11,10 +11,11 @@
   };
   var benchmark = M.benchmark(state.n, state.distribution), announceTimer = null;
   var cachedRule = null, drawnRule = null, drawnBenchmark = null, drawnDistribution = null;
-  function fixed(x) { return (Math.abs(x) < 0.0000005 ? 0 : x).toFixed(6); }
+  function fixed(x) { return PlotStyle.summary(x, 6); }
   function cancelDrag() {
     var pointerId = state.drag, svg = el("allocation-chart");
     state.drag = null;
+    svg.classList.remove("plot-dragging");
     if (pointerId !== null && svg.hasPointerCapture(pointerId)) { svg.releasePointerCapture(pointerId); }
   }
   function limits() {
@@ -94,11 +95,11 @@
     el("integrated-description").textContent = "Lower-tail quantile z=F_i(v_i), from 0 to 1. Solid black is H_i(z), the integral from 0 to z of virtual value at inverse F_i, on the left scale " +
       charts.integrated.domain[0] + " to 0. Dashed gray is raw virtual value on the right scale " + el("integrated-chart").dataset.y2Min +
       " to 1, labeled phi_i composed with inverse F_i, with separate one-sided branches at the density breakpoint. " +
-      "Dotted orange shows the lower convex hull G_i of H_i and the ironed virtual value only inside each shaded ironing interval, including those below the sale cutoff. " + el("pool-summary").textContent;
+      "Dotted orange shows the convex lower bound G_i of H_i and the ironed virtual value only inside each shaded ironing interval, including those below the sale cutoff. " + el("pool-summary").textContent;
     var levelWitness = charts.feasibility.witness;
     el("feasibility-description").textContent = feasible.textContent + "; all allocation-level sets are checked. " +
       "Allocation-probability threshold alpha runs from 0 to 1. E_alpha contains types with Q_i(v_i) greater than or equal to alpha. " +
-      "The total allocation curve is n times the integral of Q_i over E_alpha, blue where it is at or below capacity and red where it exceeds capacity; dotted black is 1 minus (1 minus the probability mass of E_alpha) to the power n. Both sides of Border (1991), Proposition 3.2 are multiplied by n. " +
+      "The total allocation probability A_i(alpha) is n times the integral of Q_i over E_alpha, blue where it is at or below capacity and red where it exceeds capacity; dotted black is C_i(alpha), 1 minus (1 minus the probability mass of E_alpha) to the power n, the probability that at least one buyer has a value in E_alpha. Both sides of Border (1991), Proposition 3.2 are multiplied by n. " +
       "Both curves use the fixed vertical scale 0 to " + rule.n + ". Closed points include tied types; open points show right limits excluding ties." +
       (levelWitness ? " Maximum excess " + fixed(levelWitness.excess) + " at alpha " + fixed(levelWitness.alpha) +
         (levelWitness.side === "right" ? " (right limit)." : ".") : "");
@@ -180,8 +181,16 @@
   svg.addEventListener("pointerdown", function (event) {
     var handle = event.target.closest("[data-index]");
     if (!handle || !event.isPrimary || event.button !== 0 || state.drag !== null) { return; }
+    // Large targets can overlap. Select the nearest visible point, so an
+    // enlarged touch target never silently selects its neighbor.
+    var position = C.pointer(svg, event), nearest = Number(handle.dataset.index), distance = Infinity;
+    state.points.forEach(function (p, i) {
+      var d = Math.hypot((p.v - position.v) * 560, (p.q - position.q) * 292);
+      if (d < distance) { distance = d; nearest = i; }
+    });
+    handle = svg.querySelector('[data-index="' + nearest + '"]');
     event.preventDefault(); state.selected = Number(handle.dataset.index); handle.focus();
-    state.drag = event.pointerId; svg.setPointerCapture(event.pointerId); render();
+    state.drag = event.pointerId; svg.classList.add("plot-dragging"); svg.setPointerCapture(event.pointerId); render();
   });
   svg.addEventListener("pointermove", function (event) {
     if (state.drag !== event.pointerId) { return; }

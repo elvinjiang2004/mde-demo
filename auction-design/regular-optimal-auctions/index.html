@@ -20,6 +20,8 @@
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
+  <script defer src="../../js/plot-style.js"></script>
+  <script defer src="../../js/plot-probe.js"></script>
   <script defer src="../../js/bilateral-trade-visuals.js"></script>
   <script defer src="../../js/equation-chain.js"></script>
   <script defer src="model.js"></script>
@@ -166,7 +168,7 @@
         </div>
         <div class="allocation-diagnostics chart-grid">
           <figure class="chart-figure diagnostic-figure">
-            <figcaption>Interim allocation, \(Q_1(v_1)\)</figcaption>
+            <figcaption><span class="plot-title-line"><span class="plot-legend-line" style="--plot-line-color:var(--blue)" aria-hidden="true"></span>Interim allocation, \(Q_1(v_1)\)</span><span class="plot-title-line"><span class="plot-legend-line plot-legend-dashed" style="--plot-line-color:var(--muted)" aria-hidden="true"></span>Virtual value, \(\phi_1(v_1)\)</span></figcaption>
             <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-for="interim-1-chart">
               <div class="chart-canvas-frame chart-360x300-frame">
                 <svg width="360" height="300" id="interim-1-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="interim-1-title interim-1-description">
@@ -180,7 +182,7 @@
             <p id="bic-status-1" class="chart-diagnostic constraint-status"><span id="bic-verdict-1"></span> (\(Q_1\) <span id="bic-monotonicity-1"></span>)</p>
           </figure>
           <figure class="chart-figure diagnostic-figure">
-            <figcaption>Interim allocation, \(Q_2(v_2)\)</figcaption>
+            <figcaption><span class="plot-title-line"><span class="plot-legend-line" style="--plot-line-color:var(--orange)" aria-hidden="true"></span>Interim allocation, \(Q_2(v_2)\)</span><span class="plot-title-line"><span class="plot-legend-line plot-legend-dashed" style="--plot-line-color:var(--muted)" aria-hidden="true"></span>Virtual value, \(\phi_2(v_2)\)</span></figcaption>
             <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-for="interim-2-chart">
               <div class="chart-canvas-frame chart-360x300-frame">
                 <svg width="360" height="300" id="interim-2-chart" class="chart-360x300" viewBox="0 0 360 300" role="img" aria-labelledby="interim-2-title interim-2-description">

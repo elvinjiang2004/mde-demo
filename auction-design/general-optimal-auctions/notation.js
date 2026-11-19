@@ -19,7 +19,9 @@
       ],
       [
         ["\\alpha\\in[0,1]", "The allocation-probability threshold."],
-        ["E_\\alpha=\\{v_i\\in T_i \\mid Q_i(v_i) \\geq \\alpha\\}", "The set of values \\(v_i\\) with interim allocation probability of at least \\(\\alpha\\)."]
+        ["E_\\alpha=\\{v_i\\in T_i \\mid Q_i(v_i) \\geq \\alpha\\}", "The set of values \\(v_i\\) with interim allocation probability of at least \\(\\alpha\\)."],
+        ["A_i(\\alpha)=n\\int_{E_\\alpha}Q_i(v_i)\\,dF_i(v_i)", "The total allocation probability assigned to buyers whose values lie in \\(E_\\alpha\\) in the symmetric demo."],
+        ["C_i(\\alpha)=1-[1-F_i(E_\\alpha)]^n", "The probability that at least one of the \\(n\\) independent buyers has a value in \\(E_\\alpha\\), which is the Border upper bound for \\(A_i(\\alpha)\\)."]
       ],
       [
         ["z", "A quantile in \\([0,1]\\)."],

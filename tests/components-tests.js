@@ -88,9 +88,9 @@
       "Parameters should have their reset button and no subheading.");
     var preview = render("value-density-preview", {});
     assert(preview.querySelector(".value-pdf-preview-figure figcaption").textContent ===
-      "PDF of value, \\(V_i\\)", "The HTML caption should retain its MathJax source.");
+      "Value density, \\(f_i(v_i)\\)", "The HTML caption should identify the inspected density with MathJax.");
     assert(preview.querySelector("#value-pdf-preview-title").textContent ===
-      "PDF of value, V subscript i", "The initial SVG title should use readable plain text.");
+      "Value density, f subscript i of v subscript i", "The initial SVG title should use readable plain text.");
     ["\\(n\\)", "\\(a\\)", "\\(b\\)", "\\(\\alpha\\)", "\\(\\beta\\)"].forEach(function (delimiter) {
       assert(html.indexOf(delimiter) >= 0,
         "The rendered controls should still contain " + delimiter + " for MathJax.");

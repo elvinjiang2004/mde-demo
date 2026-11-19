@@ -20,6 +20,7 @@
   <script defer src="../../js/math-utils.js"></script>
   <script defer src="../../js/svg-utils.js"></script>
   <script defer src="../../js/chart-layout.js"></script>
+  <script defer src="../../js/plot-style.js"></script>
   <script defer src="../../js/bilateral-trade-envelope.js"></script>
   <script defer src="../../js/bilateral-trade-visuals.js"></script>
   <script defer src="formula-diagonal.js"></script>
@@ -372,7 +373,7 @@
 
         <div class="diagnostic-panel">
           <figure class="chart-figure diagnostic-figure math-chart-figure">
-            <figcaption>Budget Balance, \(R(v,c)\)</figcaption>
+            <figcaption>Net revenue, \(R(v,c)\)</figcaption>
             <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="revenue-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="revenue-chart-title revenue-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
@@ -426,12 +427,12 @@
 
         <div class="diagnostic-panel">
           <figure class="chart-figure diagnostic-figure math-chart-figure">
-            <figcaption>Efficiency</figcaption>
+            <figcaption>Lost gains from trade, \(L(v,c)\)</figcaption>
             <div class="chart-viewport stable-chart-viewport chart-plot-viewport" data-chart-padding="14">
                 <div class="math-chart-frame chart-canvas-frame chart-480x520-frame">
               <svg id="efficiency-chart" class="diagnostic-chart chart-480x520" viewBox="0 0 480 520" role="img" tabindex="0" aria-labelledby="efficiency-chart-title efficiency-chart-description" aria-describedby="formula-probe-help" aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End Escape">
-                <title id="efficiency-chart-title">Efficiency comparison</title>
-                <desc id="efficiency-chart-description">Over-trade and missing-trade deviations from efficient allocation.</desc>
+                <title id="efficiency-chart-title">Lost gains from trade, L(v,c)</title>
+                <desc id="efficiency-chart-description">Lost gains from trade, max(v-c,0)-(v-c)q(v,c), using the utility color scale.</desc>
               </svg>
 
               <p class="math-chart-axis-label math-chart-y-axis-label chart-480x520-y-axis-label">Seller value, \(c\)</p>
