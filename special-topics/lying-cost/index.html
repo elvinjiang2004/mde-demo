@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Bilateral Trade with Lying Costs: asymmetric lying costs, support overlap, and the k-Double-Auction.">
+  <title>Bilateral Trade with Lying Costs | Mechanism Design Explorer</title>
+  <link rel="stylesheet" href="../../styles.css">
+  <link rel="stylesheet" href="../../css/trade-demo.css">
+  <link rel="stylesheet" href="module.css">
+  <script defer src="../../js/components.js"></script>
+  <script defer src="../../js/bibliography.js"></script>
+  <script defer src="../../js/references.js"></script>
+  <script defer src="../../js/mathjax-config.js"></script>
+  <script defer src="../../assets/mathjax/tex-svg.js"></script>
+  <script defer src="../../js/mathjax-runtime.js"></script>
+  <script defer src="../../js/notation-catalog.js"></script>
+  <script defer src="../environment/notation.js"></script>
+  <script defer src="notation.js"></script>
+  <script defer src="../../js/learning-sidebar.js"></script>
+  <script defer src="../../js/math-utils.js"></script>
+  <script defer src="../../js/svg-utils.js"></script>
+  <script defer src="../../js/chart-layout.js"></script>
+  <script defer src="../../js/plot-style.js"></script>
+  <script defer src="../../js/bilateral-trade-visuals.js"></script>
+  <script defer src="../../js/trade-demo-style.js"></script>
+  <script defer src="model.js"></script>
+  <script defer src="charts.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <header class="site-header"><page-header home="../../index.html" category="Special Topics"></page-header></header>
+  <main id="main-content" class="page-width">
+    <section class="introduction" aria-labelledby="page-title">
+      <h1 id="page-title">Bilateral Trade with Lying Costs</h1>
+      <p>
+        In my paper <a href="../../assets/papers/Bilateral_Trade_with_Lying_Costs.pdf">Bilateral Trade with Lying Costs</a>,
+        I consider the (bilateral trade environment), but agents incur a disutility
+        from misreporting their values. For the buyer, given his true value \(v\), reporting to have value
+        \(v'\) gives a commonly known disutility of \(\gamma_B|v-v'|\) and likewise for a seller with
+        true value \(c\), report \(c'\), and coefficient \(\gamma_S\).
+      </p>
+      <p>
+        I show the following results:
+      </p>
+      <p>
+        <strong>Proposition 1:</strong>
+        If and only if \(\gamma_B=\gamma_S=0\), for all value distributions, the efficient allocation rule
+        is not implementable.
+      </p>
+      <p>
+        <strong>Proposition 2:</strong>
+        If and only if \(\gamma_B+\gamma_S\geq 1\), for all value distributions, the efficient allocation
+        rule is implementable.
+      </p>
+      <p>
+        <strong>Proposition 3:</strong>
+        If and only if \(\sqrt{\gamma_B}+\sqrt{\gamma_S}\geq 1\), when the buyer and seller have the same value distribution,
+        the efficient allocation rule is implementable.
+      </p>
+      <p>
+        In the interactive demo, consider a specific example with the buyer
+        value \(V\sim\mathrm{Uniform}[0,1]\) and the seller value
+        \(C\sim\mathrm{Uniform}[1-\epsilon,2-\epsilon]\) with
+        \(0\leq\epsilon\leq 1\). Adjust the buyer's and seller's lying costs and the value
+        supports' overlap to see when the efficient allocation rule is
+        implementable. For the k-Double-Auction,
+        adjust \(k\), the weight on the buyer's report in the price \(kv+(1-k)c\), and notice when the
+        mechanism becomes incentive compatible.
+      </p>
+    </section>
+    <section id="lying-cost-explorable" class="explorable explorable-divider" aria-label="Lying-cost mechanism preset">
+      <aside class="sandbox-toolbar parameter-presets" aria-label="Mechanism presets">
+        <div id="preset-buttons" class="preset-buttons" role="group" aria-labelledby="preset-buttons-label">
+          <span id="preset-buttons-label" class="preset-buttons-label">Presets:</span>
+        </div>
+      </aside>
+      <aside class="sticky-parameter-bar" aria-label="Mechanism parameters">
+        <div class="sandbox-action-row">
+          <div class="range-group sandbox-parameter-control">
+            <div class="range-label-row">
+              <label id="gammaB-label" for="gammaB-slider">Buyer lying cost, \(\gamma_B\)</label>
+              <input id="gammaB-number" class="range-number-input" type="number" min="0" max="1" step="any" value="0.25" inputmode="decimal" aria-labelledby="gammaB-label" aria-describedby="input-error">
+            </div>
+            <input id="gammaB-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.25" aria-labelledby="gammaB-label">
+            <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
+          </div>
+          <div class="range-group sandbox-parameter-control">
+            <div class="range-label-row">
+              <label id="gammaS-label" for="gammaS-slider">Seller lying cost, \(\gamma_S\)</label>
+              <input id="gammaS-number" class="range-number-input" type="number" min="0" max="1" step="any" value="0.25" inputmode="decimal" aria-labelledby="gammaS-label" aria-describedby="input-error">
+            </div>
+            <input id="gammaS-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.25" aria-labelledby="gammaS-label">
+            <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
+          </div>
+          <div class="range-group sandbox-parameter-control">
+            <div class="range-label-row">
+              <label id="epsilon-label" for="epsilon-slider">Support overlap, \(\epsilon\)</label>
+              <input id="epsilon-number" class="range-number-input" type="number" min="0" max="1" step="any" value="1" inputmode="decimal" aria-labelledby="epsilon-label" aria-describedby="input-error">
+            </div>
+            <input id="epsilon-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="1" aria-labelledby="epsilon-label">
+            <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
+          </div>
+          <div class="range-group sandbox-parameter-control" id="k-control" hidden>
+            <div class="range-label-row">
+              <label id="k-label" for="k-slider">Buyer-report weight, \(k\)</label>
+              <input id="k-number" class="range-number-input" type="number" min="0" max="1" step="any" value="0.5" inputmode="decimal" aria-labelledby="k-label" aria-describedby="input-error">
+            </div>
+            <input id="k-slider" class="slider-220" type="range" min="0" max="1" step="0.01" value="0.5" aria-labelledby="k-label">
+            <div class="range-endpoints slider-220" aria-hidden="true"><span>0</span><span>1</span></div>
+          </div>
+        </div>
+        <p id="input-error" class="control-status" role="alert"></p>
+      </aside>
+      <div class="color-legends" role="group" aria-label="Plot color scales">
+        <div class="color-legend"><span class="color-legend-title">Allocation</span><span class="color-scale-bar allocation-gradient"></span><div class="color-scale-ticks"><span>0</span><span>1</span></div></div>
+        <div class="color-legend"><span class="color-legend-title">Effect on revenue</span><span class="color-scale-bar payment-gradient"></span><div class="color-scale-ticks"><span>−1</span><span>0</span><span>+1</span></div></div>
+        <div class="color-legend"><span class="color-legend-title">Utility</span><span class="color-scale-bar utility-gradient"></span><div class="color-scale-ticks"><span>−1</span><span>0</span><span>+1</span></div></div>
+      </div>
+      <div id="surfaces" class="surface-editor-grid" aria-label="Allocation and payment rules"></div>
+      <div id="diagnostics" class="diagnostic-panel-grid sandbox-diagnostic-grid" aria-label="Mechanism diagnostics"></div>
+      <p id="probe-help" class="sr-only">Move the pointer over a plot or focus it and use arrow keys to inspect values. Shift and arrow keys move in larger steps. Home and End select the horizontal endpoints. Escape hides the probe. Plots are read-only.</p>
+      <p id="live-status" class="sr-only" role="status" aria-live="polite"></p>
+      <p id="probe-announcement" class="sr-only" aria-live="polite"></p>
+    </section>
+    <details class="derivation mechanism-details" aria-labelledby="mechanism-details-title">
+      <summary id="mechanism-details-title">Mechanism Details</summary>
+      <div
+        class="mechanism-details-table-region"
+        role="region"
+        aria-labelledby="mechanism-details-title"
+        tabindex="0"
+      >
+        <table class="mechanism-details-table">
+          <thead>
+            <tr>
+              <th scope="col">Mechanism</th>
+              <th scope="col">Allocation rule</th>
+              <th scope="col">Buyer's payment rule</th>
+              <th scope="col">Seller's payment rule</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Minimum-rent efficient mechanism</th>
+              <td>\(\mathbb{1}(v\geq c)\)</td>
+              <td>\(v q(v,c)-\frac{1}{2}\max\{v-1+\epsilon-\gamma_B,0\}^{2}\)</td>
+              <td>\(c q(v,c)+\frac{1}{2}\max\{1-c-\gamma_S,0\}^{2}\)</td>
+            </tr>
+            <tr>
+              <th scope="row">k-Double-Auction</th>
+              <td>\(\mathbb{1}(v\geq c)\)</td>
+              <td>\([kv+(1-k)c]q(v,c)\)</td>
+              <td>\([kv+(1-k)c]q(v,c)\)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+    <section class="notes" aria-labelledby="notes-title">
+      <h2 id="notes-title">Notes</h2>
+      <!-- Notes reserved for the author. -->
+    </section>
+    <section class="references" aria-labelledby="references-title">
+      <h2 id="references-title">References</h2>
+      <ul class="reference-list">
+        <li data-reference="jiang2026lyingcosts"></li>
+        <li data-reference="myerson-satterthwaite-1983"></li>
+      </ul>
+    </section>
+    <noscript><p>Enable JavaScript to use the interactive module.</p></noscript>
+  </main>
+  <footer class="site-footer"><page-footer></page-footer></footer>
+  <learning-sidebar page="lying-cost" environment="special-topics">
+    <template data-insights>
+      <!-- User-authored Insights go here. -->
+    </template>
+  </learning-sidebar>
+</body>
+</html>

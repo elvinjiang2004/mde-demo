@@ -70,6 +70,9 @@
         text(content, "With a chapter by " + joinNames(source.contributors.map(personName)) + ". ");
       }
       text(content, source.publisher + ", " + source.year + ".");
+    } else if (source.type === "manuscript") {
+      title(content, source.title, source.url, true);
+      text(content, ". " + source.date + ".");
     } else if (source.type === "lecture") {
       title(content, source.title, source.url, false);
       text(content, " " + source.section + " of ");

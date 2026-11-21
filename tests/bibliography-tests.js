@@ -30,12 +30,15 @@
       assert(source.title && Number.isInteger(source.year) && source.authors.length,
         "Title, publication year, and authors: " + id);
       source.authors.forEach(function (person) { assert(person.given && person.family, "Complete name: " + id); });
-      assert(/^https:\/\//.test(source.url) && !seen[source.url], "A single record per linked work: " + id);
+      var urlPattern = source.type === "manuscript" ? /^\.\.\/\.\.\/assets\/papers\/[^/]+\.pdf$/ : /^https:\/\//;
+      assert(urlPattern.test(source.url) && !seen[source.url], "A single record per linked work: " + id);
       seen[source.url] = true;
       if (source.type === "article") {
         assert(source.journal && source.volume && source.pages, "Journal metadata: " + id);
       } else if (source.type === "book") {
         assert(source.publisher, "Book publisher: " + id);
+      } else if (source.type === "manuscript") {
+        assert(source.date, "Manuscript date: " + id);
       } else {
         assert(source.type === "lecture" && source.section && source.container && source.publisher &&
           source.course && source.date, "Lecture-copy metadata: " + id);
@@ -115,7 +118,8 @@
     { path: "bilateral-trade/myerson-satterthwaite-theorem", ids: ["borgers-2015", "borgers-norman-2009", "myerson-satterthwaite-1983"], locator: "pp. 63–71" },
     { path: "bilateral-trade/bargaining-mechanism-sandbox", ids: ["groves-1973", "daspremont-gerard-varet-1979", "chatterjee-samuelson-1983", "myerson-satterthwaite-1983", "leininger-linhart-radner-1989"] },
     { path: "general-topics/envelope-theorem", ids: ["borgers-2015", "milgrom-segal-2002", "myerson-1981"], locator: "Lemma 2, pp. 63–64" },
-    { path: "general-topics/revelation-principle", ids: ["borgers-2015", "stole-contracts-2017"] }
+    { path: "general-topics/revelation-principle", ids: ["borgers-2015", "stole-contracts-2017"] },
+    { path: "special-topics/lying-cost", ids: ["jiang2026lyingcosts", "myerson-satterthwaite-1983"] }
   ];
   var repeated = {};
   lessons.forEach(function (lesson) {

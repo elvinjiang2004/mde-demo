@@ -4,8 +4,9 @@
 Thumbs.db
 .DS_Store
 
-# Reference PDFs (copyrighted texts) are kept locally, never committed.
+# Reference PDFs stay local. The author's research snapshot is a site asset.
 *.pdf
+!/assets/papers/Bilateral_Trade_with_Lying_Costs.pdf
 
 build/
 __pycache__/

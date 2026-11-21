@@ -94,6 +94,14 @@
       pages: "1175–1187",
       url: "https://doi.org/10.2307/2938181"
     },
+    "jiang2026lyingcosts": {
+      type: "manuscript",
+      authors: [{ given: "Elvin", family: "Jiang" }],
+      title: "Bilateral Trade with Lying Costs",
+      year: 2026,
+      date: "September 2026",
+      url: "../../assets/papers/Bilateral_Trade_with_Lying_Costs.pdf"
+    },
     "myerson-satterthwaite-1983": {
       type: "article",
       authors: [

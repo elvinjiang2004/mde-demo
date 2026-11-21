@@ -16,15 +16,12 @@ so navigation works through `file://`.
 
 ## Current menu
 
-- **General Topics:** [What is Mechanism Design?](general-topics/what-is-mechanism-design/index.html), [The Envelope Theorem](general-topics/envelope-theorem/index.html), [The Revelation Principle](general-topics/revelation-principle/index.html).
+- **General Topics:** [Environment](general-topics/environment/index.html), [What is Mechanism Design?](general-topics/what-is-mechanism-design/index.html), [The Envelope Theorem](general-topics/envelope-theorem/index.html), [The Revelation Principle](general-topics/revelation-principle/index.html).
 - **Auction Equilibria:** [Environment](auction-equilibria/environment/index.html), [The First-Price Auction Equilibrium](auction-equilibria/first-price/index.html), [The Second-Price Auction Equilibrium](auction-equilibria/second-price/index.html).
 - **Auction Design:** [Environment](auction-design/environment/index.html), [Regular Optimal Auction Design](auction-design/regular-optimal-auctions/index.html), [General Optimal Auction Design](auction-design/general-optimal-auctions/index.html).
 - **Bilateral Trade:** [Environment](bilateral-trade/environment/index.html), [Bargaining Mechanism Sandbox](bilateral-trade/bargaining-mechanism-sandbox/index.html), [The Myerson-Satterthwaite Theorem](bilateral-trade/myerson-satterthwaite-theorem/index.html).
 - **Voting:** [Environment](voting/environment/index.html), [The Gibbard-Satterthwaite Theorem](voting/gibbard-satterthwaite-theorem/index.html) (proof in progress; demo complete).
-
-The current implementation is complete and receives minor maintenance and
-refinements. The only unfinished lesson work is the Gibbard-Satterthwaite
-theorem proof. New features and redesigns require a separate request.
+- **Special Topics:** [Environment](special-topics/environment/index.html), [Bilateral Trade with Lying Costs](special-topics/lying-cost/index.html).
 
 ## Browser checks
 

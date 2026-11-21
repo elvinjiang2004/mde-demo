@@ -203,42 +203,40 @@
         }
       },
       {
-        name: "The menu includes the five registered module groups",
+        name: "The menu includes the six registered module groups",
         run: function () {
           var categories = menuDocument.querySelectorAll(".module-category");
-          assert(categories.length === 5,
-            "The menu should contain exactly five groups.");
+          assert(categories.length === 6,
+            "The menu should contain exactly six groups.");
           var titles = Array.from(categories).map(function (category) {
             return category.querySelector("h2").textContent;
           });
-          assert(titles.join("|") === "General Topics|Auction Equilibria|Auction Design|Bilateral Trade|Voting",
-            "The five groups should appear in their established order.");
+          assert(titles.join("|") === "General Topics|Auction Equilibria|Auction Design|Bilateral Trade|Voting|Special Topics",
+            "The six groups should appear in their established order.");
         }
       },
       {
         name: "Modules are arranged in category rows",
         run: function () {
           var rows = menuDocument.querySelectorAll(".module-row");
-          assert(rows.length === 5 &&
+          assert(rows.length === 6 &&
             Array.from(rows).every(function (row) {
               return menuWindow.getComputedStyle(row).display === "flex";
             }),
           "Each category should arrange its modules in a row.");
           rows.forEach(function (row, index) {
-            var count = index === 0 ? 3 : (index === 4 ? 1 : 2);
+            var count = [3, 2, 2, 2, 1, 1][index];
             assert(row.querySelectorAll(":scope > li").length === count &&
               row.querySelectorAll("a.module-link").length === count &&
               !row.querySelector("a.environment-link"),
-            "General Topics has three lessons, Voting has one, and the other groups have two.");
+            "General Topics has three lessons, Voting and Special Topics have one each, and the other groups have two.");
             var category = row.closest("section");
             var environment = category.querySelector("a.environment-link");
             if (index === 0) {
-              assert(!environment, "General Topics should have no Environment page.");
               var introduction = row.querySelector("li:first-child a.module-link");
               assert(introduction.getAttribute("href") === "general-topics/what-is-mechanism-design/index.html" &&
                 introduction.querySelector(".module-title").textContent === "What is Mechanism Design?",
               "The introductory reading should come first in General Topics.");
-              return;
             }
             assert(environment && environment.textContent.trim() === "Environment" &&
               environment.getAttribute("href") === category.id + "/environment/index.html" &&
@@ -296,8 +294,8 @@
           assert(link.querySelector(".module-title").textContent ===
             "The Second-Price Auction Equilibrium",
           "The second-price module title is incorrect.");
-          assert(menuDocument.querySelectorAll(".module-link").length === 10,
-            "All nine interactive modules and the introductory reading should be links.");
+          assert(menuDocument.querySelectorAll(".module-link").length === 11,
+            "All ten interactive modules and the introductory reading should be links.");
           assert(!menuDocument.querySelector('.module-link[aria-disabled="true"]') &&
             !menuDocument.querySelector("a.module-pending"),
           "No implemented module should remain disabled.");

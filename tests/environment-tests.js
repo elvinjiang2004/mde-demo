@@ -2,10 +2,12 @@
   "use strict";
   var T = MechanismTest, frame = document.getElementById("environment-frame");
   var groups = [
+    { id: "general-topics", title: "General Topics", modules: ["general-topics/what-is-mechanism-design", "general-topics/envelope-theorem", "general-topics/revelation-principle"] },
     { id: "auction-equilibria", title: "Auction Equilibria", modules: ["auction-equilibria/first-price", "auction-equilibria/second-price"], conditions: 0 },
     { id: "auction-design", title: "Auction Design", modules: ["auction-design/regular-optimal-auctions", "auction-design/general-optimal-auctions"], conditions: 2 },
     { id: "bilateral-trade", title: "Bilateral Trade", modules: ["bilateral-trade/bargaining-mechanism-sandbox", "bilateral-trade/myerson-satterthwaite-theorem"], conditions: 4 },
-    { id: "voting", title: "Voting", modules: ["voting/gibbard-satterthwaite-theorem"], conditions: 2 }
+    { id: "voting", title: "Voting", modules: ["voting/gibbard-satterthwaite-theorem"], conditions: 2 },
+    { id: "special-topics", title: "Special Topics", modules: ["special-topics/lying-cost"] }
   ];
   T.run(groups.map(function (group) {
     return { name: group.title + " Environment: navigation, local math and responsive layout", run: async function () {
@@ -13,17 +15,21 @@
       frame.src = "../" + group.id + "/environment/index.html";
       await loaded;
       var doc = frame.contentDocument;
-      await T.waitFor(function () {
-        return !!doc.querySelector(".introduction mjx-container") &&
-          !/\\\(|\\\[/.test(doc.querySelector(".introduction").textContent);
-      }, 15000);
+      await T.waitFor(function () { return !!frame.contentWindow.mechanismMathReady; }, 15000);
+      await frame.contentWindow.mechanismMathReady;
+      if ("conditions" in group) {
+        T.assert(doc.querySelector(".introduction mjx-container"), "Existing setup math should render.");
+      }
       T.assert(doc.querySelector("h1").textContent === "Environment", "The page title should be Environment.");
       T.assert(doc.querySelector("page-header .header-content > span").textContent === group.title,
         "The header should identify the group.");
       T.assert(doc.querySelector(".wordmark").getAttribute("href") === "../../index.html",
         "The home link must work from the Environment page.");
       T.assertScriptOrder(doc, ["../../js/components.js", "../../js/mathjax-config.js",
-        "../../assets/mathjax/tex-svg.js", "../../js/mathjax-runtime.js", "../../js/environment.js"]);
+        "../../assets/mathjax/tex-svg.js", "../../js/mathjax-runtime.js", "../../js/notation-catalog.js",
+        "notation.js", "../../js/learning-sidebar.js", "../../js/environment.js"]);
+      T.assert(doc.querySelector('learning-sidebar[environment="' + group.id + '"]'),
+        "The Appendix should use the group's notation.");
       T.assert(!doc.querySelector('script[src="model.js"], script[src="app.js"]'),
         "Static setup pages should load no economic model.");
       T.assert(!doc.querySelector("mjx-merror, merror") && !/\\\(|\\\[/.test(doc.querySelector(".introduction").textContent),
@@ -36,8 +42,10 @@
       });
       T.assert(!doc.querySelector("main h2, .introduction section"),
         "Environment pages should have no subsections.");
-      T.assert(doc.querySelectorAll(".introduction > ol > li").length === group.conditions,
-        "The shared condition definitions should be on the Environment page.");
+      if ("conditions" in group) {
+        T.assert(doc.querySelectorAll(".introduction > ol > li").length === group.conditions,
+          "The shared condition definitions should be on the Environment page.");
+      }
       if (group.conditions) {
         T.assert(doc.querySelector('a[href="../../general-topics/revelation-principle/index.html"]'),
           "The direct-mechanism passage should retain its Revelation Principle link.");

@@ -137,6 +137,20 @@ window.MechanismTestCatalog = [
     "status": "in-progress"
   },
   {
+    "file": "lying-cost-model-tests.html",
+    "name": "Bilateral Trade with Lying Costs model",
+    "kind": "model",
+    "module": "lying-cost",
+    "status": "complete"
+  },
+  {
+    "file": "lying-cost-ui-tests.html",
+    "name": "Bilateral Trade with Lying Costs interface",
+    "kind": "interface",
+    "module": "lying-cost",
+    "status": "complete"
+  },
+  {
     "file": "plot-style-ui-tests.html",
     "name": "Plot presentation",
     "kind": "interface",

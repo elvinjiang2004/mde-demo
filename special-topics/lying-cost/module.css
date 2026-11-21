@@ -1,0 +1,46 @@
+/* These plots use the same 70/450 horizontal and 40/420 vertical bounds as the sandbox. */
+#lying-cost-explorable .chart-480x520-frame,
+#lying-cost-explorable .chart-480x520-frame + .chart-x-axis-label {
+  --chart-inline-inset: max(0px, calc(79.6097560976px - 17.0731707317%));
+}
+
+#lying-cost-explorable .chart-480x520-frame {
+  --chart-trim-bottom: calc(20.8333333333% - var(--chart-inline-inset) * 0.208333333333);
+}
+
+#lying-cost-explorable .chart-480x520-frame + .chart-x-axis-label {
+  margin-inline: calc(14.5833333333% + var(--chart-inline-inset) * 0.854166666667) calc(6.25% - var(--chart-inline-inset) * 0.0625);
+}
+
+#lying-cost-explorable .chart-480x520-frame .math-chart-y-axis-label {
+  top: 44.2307692308%;
+}
+
+/* Keep the auction-only control hidden even inside the shared grid layout. */
+#k-control[hidden] { display: none; }
+@media (max-width: 1050px) {
+  .sticky-parameter-bar .sandbox-action-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem 1rem;
+  }
+  .sticky-parameter-bar .sandbox-parameter-control {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(60px, 0.8fr) 3.5rem;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .sticky-parameter-bar .range-label-row { display: contents; }
+  .sticky-parameter-bar .range-label-row label {
+    grid-column: 1; grid-row: 1; font-size: 0.76rem; line-height: 1.2;
+  }
+  .sticky-parameter-bar .range-number-input {
+    grid-column: 3; grid-row: 1; width: 100%; padding-block: 0.2rem;
+  }
+  .sticky-parameter-bar input[type="range"] {
+    grid-column: 2; grid-row: 1; min-width: 0; margin: 0; height: 32px;
+  }
+  .sticky-parameter-bar .range-endpoints { display: none; }
+}
+@media (max-width: 680px) {
+  .sticky-parameter-bar .sandbox-action-row { grid-template-columns: minmax(0, 1fr); }
+}

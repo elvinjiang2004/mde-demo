@@ -2,6 +2,6 @@
 # LF keeps it independent of each machine's core.autocrlf setting, so a
 # checkout on Windows and a checkout on Linux hold identical bytes.
 #
-# No binaries are tracked: the vendored MathJax build under assets/ is all
-# JavaScript and JSON, and reference PDFs are excluded by .gitignore.
+# Keep the author's paper snapshots byte-identical to their originals.
 * text=auto eol=lf
+*.pdf binary
